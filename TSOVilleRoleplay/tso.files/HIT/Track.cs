@@ -1,0 +1,118 @@
+﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+If a copy of the MPL was not distributed with this file, You can obtain one at
+http://mozilla.org/MPL/2.0/.
+
+The Original Code is the SimsLib.
+
+The Initial Developer of the Original Code is
+Mats 'Afr0' Vederhus. All Rights Reserved.
+
+Contributor(s):
+*/
+
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.IO;
+
+namespace TSO.Files.HIT
+{
+    /// <summary>
+    /// TRK is a CSV format that defines a HIT track.
+    /// </summary>
+    public class Track
+    {
+        private bool TWODKT = false; //Optional encoding as Pascal string, typical Maxis...
+        public string MagicNumber;
+        public uint Version;
+        public string TrackName;
+        public uint SoundID;
+        public uint TrackID;
+        public HITArgs ArgType;
+        public HITControlGroups ControlGroup;
+        public HITDuckingPriorities DuckingPriority;
+        public uint Looped;
+        public uint Volume;
+
+        /// <summary>
+        /// Creates a new track.
+        /// </summary>
+        /// <param name="Filedata">The data to create the track from.</param>
+        public Track(byte[] Filedata)
+        {
+            BinaryReader Reader = new BinaryReader(new MemoryStream(Filedata));
+
+            MagicNumber = new string(Reader.ReadChars(4));
+
+            if(MagicNumber == "2DKT")
+                TWODKT = true;
+
+            int CurrentVal = 8;
+            string data;
+
+            if(!TWODKT)
+                data = new string(Reader.ReadChars(Filedata.Length));
+            else
+                data = new string(Reader.ReadChars(Reader.ReadInt32()));
+            string[] Values = data.Split(',');
+
+            //MagicNumber = Values[0];
+            Version = ParseHexString(Values[1]);
+            TrackName = Values[2];
+            SoundID = ParseHexString(Values[3]);
+            TrackID = ParseHexString(Values[4]);
+            if (Values[5] != "\r\n" && Values[5] != "ETKD" && Values[5] != "") //some tracks terminate here...
+            {
+                ArgType = (HITArgs)ParseHexString(Values[5]);
+                ControlGroup = (HITControlGroups)ParseHexString(Values[7]);
+
+                if (Version == 2)
+                    CurrentVal++;
+
+                CurrentVal += 2;
+
+                DuckingPriority = (HITDuckingPriorities)ParseHexString(Values[CurrentVal]);
+                CurrentVal++;
+                Looped = ParseHexString(Values[CurrentVal]);
+                CurrentVal++;
+                Volume = ParseHexString(Values[CurrentVal]);
+            }
+
+            Reader.Close();
+        }
+
+        private uint ParseHexString(string input)
+        {
+            bool IsHex = false;
+
+            if (input == "") return 0;
+            if (input.StartsWith("0x"))
+            {
+                input = input.Substring(2);
+                IsHex = true;
+            }
+            //Sigh, Maxis...
+            else if (input.Contains("a") || input.Contains("b") || input.Contains("b") ||
+                input.Contains("c") || input.Contains("d") || input.Contains("e") || input.Contains("f"))
+            {
+                IsHex = true;
+            }
+
+            if (IsHex)
+            {
+                return Convert.ToUInt32(input, 16);
+            }
+            else
+            {
+                try
+                {
+                    return Convert.ToUInt32(input);
+                }
+                catch (Exception)
+                {
+                    return 0;
+                }
+            }
+        }
+    }
+}
