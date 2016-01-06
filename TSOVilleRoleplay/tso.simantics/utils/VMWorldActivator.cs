@@ -34,6 +34,7 @@ namespace TSO.Simantics.utils
             this.Blueprint = new Blueprint(model.Size, model.Size);
             VM.Context.Blueprint = Blueprint;
             VM.Context.Architecture = new VMArchitecture(model.Size, model.Size, Blueprint, VM.Context);
+            VM.Context.Clock.Hours = model.TimeofDay;
 
             var arch = VM.Context.Architecture;
 

@@ -19,6 +19,7 @@ namespace TSO.Simantics
             {
                 return (Hours >= 6 && Hours < 18) ? 1 : 0;
             }
+
         }
         public int Seconds
         {

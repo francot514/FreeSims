@@ -33,6 +33,7 @@ namespace TSOVille.Code.UI.Panels
         public UIImage Background;
         public UIImage Divider;
         public UIMotiveDisplay MotiveDisplay;
+        public UISkillDisplay SkillDisplay;
         public Texture2D DividerImg { get; set; }
         public Texture2D PeopleListBackgroundImg { get; set; }
         public Texture2D EODButtonLayoutNoneImg { get; set; }
@@ -62,10 +63,14 @@ namespace TSOVille.Code.UI.Panels
             MoodPanelButton.Position = new Vector2(31, 63);
             this.Add(MoodPanelButton);
 
+            
             Thumbnail = new UIImage(GetTexture((ulong)FileIDs.UIFileIDs.thumbtemplate1frame));
             Thumbnail.Size = new Point(33, 33);
             Thumbnail.Position = new Vector2(63, 73);
             this.Add(Thumbnail);
+
+
+
 
             var PeopleListBg = new UIImage(PeopleListBackgroundImg);
             PeopleListBg.Position = new Microsoft.Xna.Framework.Vector2(375, 38);
@@ -78,6 +83,11 @@ namespace TSOVille.Code.UI.Panels
             MotiveDisplay = new UIMotiveDisplay();
             MotiveDisplay.Position = new Vector2(165, 59);
             this.Add(MotiveDisplay);
+
+            SkillDisplay = new UISkillDisplay();
+            SkillDisplay.Position = new Vector2(365, 59);
+            this.Add(SkillDisplay);
+
 
             EODHelpButton.Visible = false;
             EODCloseButton.Visible = false;
@@ -100,6 +110,7 @@ namespace TSOVille.Code.UI.Panels
                 Thumbnail.Texture = SelectedAvatar.GetIcon(GameFacade.GraphicsDevice);
                 Thumbnail.Tooltip = SelectedAvatar.Name;
                 UpdateMotives();
+                UpdateSkills();
 
             }
 
@@ -116,6 +127,18 @@ namespace TSOVille.Code.UI.Panels
             MotiveDisplay.MotiveValues[5] = SelectedAvatar.GetMotiveData(VMMotive.Fun);
             MotiveDisplay.MotiveValues[6] = SelectedAvatar.GetMotiveData(VMMotive.Social);
             MotiveDisplay.MotiveValues[7] = SelectedAvatar.GetMotiveData(VMMotive.Room);
+        }
+
+        private void UpdateSkills()
+        {
+
+            SkillDisplay.SkillValues[0] = SelectedAvatar.GetPersonData(VMPersonDataVariable.CookingSkill);
+            SkillDisplay.SkillValues[1] = SelectedAvatar.GetPersonData(VMPersonDataVariable.CharismaSkill);
+            SkillDisplay.SkillValues[2] = SelectedAvatar.GetPersonData(VMPersonDataVariable.MechanicalSkill);
+            SkillDisplay.SkillValues[3] = SelectedAvatar.GetPersonData(VMPersonDataVariable.CreativitySkill);
+            SkillDisplay.SkillValues[4] = SelectedAvatar.GetPersonData(VMPersonDataVariable.BodySkill);
+            SkillDisplay.SkillValues[5] = SelectedAvatar.GetPersonData(VMPersonDataVariable.LogicSkill);
+
         }
     }
 }

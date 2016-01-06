@@ -471,8 +471,6 @@ namespace TSOVille.Code.UI.Screens
             }
             this.AddAt(0, LotController);
 
-            vm.Context.Clock.Hours = 10;
-
             
             ucp.SetInLot(true);
             if (m_ZoomLevel > 3) World.Visible = false;

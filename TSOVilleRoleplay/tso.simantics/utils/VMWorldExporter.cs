@@ -12,23 +12,6 @@ namespace TSO.Simantics.utils
 
         public XmlHouseData housedata;
 
-        public int GetDirection(ObjectComponent obj)
-        {
-            switch (obj.Direction)
-            {
-                case tso.world.model.Direction.WEST:
-                    return 6;
-                case tso.world.model.Direction.SOUTH:
-                    return 4;
-                case tso.world.model.Direction.EAST:
-                    return 2;
-                case tso.world.model.Direction.NORTH:
-                    return 0;
-                default:
-                    return 0;
-            }
-
-        }
 
         public void SaveHouse(VM vm, string path, string name)
         {
@@ -48,6 +31,7 @@ namespace TSO.Simantics.utils
             var HouseHeight = vm.Context.Blueprint.Height;
             var Levels = vm.Context.Blueprint.Stories;
             housedata.Size = HouseWidth;
+            housedata.TimeofDay = vm.Context.Clock.Hours;
 
             for (short x = 0; x < HouseWidth; x++)
             {

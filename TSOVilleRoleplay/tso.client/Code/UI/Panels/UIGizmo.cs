@@ -93,6 +93,15 @@ namespace TSOVille.Code.UI.Panels
             CharList = new List<string>();
 
             DirectoryInfo dir = new DirectoryInfo(GlobalSettings.Default.DocumentsPath + "//Characters");
+            DirectoryInfo houses = new DirectoryInfo(GlobalSettings.Default.DocumentsPath + "//Houses");
+
+
+            if (!Directory.Exists(dir.FullName))
+                Directory.CreateDirectory(dir.FullName);
+
+            if (!Directory.Exists(houses.FullName))
+                Directory.CreateDirectory(houses.FullName);
+
             foreach (var file in dir.GetFiles())
                 CharList.Add(Path.GetFileNameWithoutExtension(file.Name));
 

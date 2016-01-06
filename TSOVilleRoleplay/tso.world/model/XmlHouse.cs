@@ -31,6 +31,9 @@ namespace tso.world.model
         [XmlElement("category")]
         public int Category { get; set; }
 
+        [XmlElement("timeofday")]
+        public int TimeofDay { get; set; }
+
         [XmlElement("world")]
         public XmlHouseDataWorld World { get; set; }
 

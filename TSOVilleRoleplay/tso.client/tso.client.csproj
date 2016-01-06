@@ -169,6 +169,7 @@
     <Compile Include="Code\UI\Controls\Catalog\UICatalogFloorResProvider.cs" />
     <Compile Include="Code\UI\Controls\Catalog\UICatalogWallpaperResProvider.cs" />
     <Compile Include="Code\UI\Controls\Catalog\UICatalogWallResProvider.cs" />
+    <Compile Include="Code\UI\Controls\UISkillDisplay.cs" />
     <Compile Include="Code\UI\Controls\UIAlert.cs" />
     <Compile Include="Code\UI\Controls\UIBlocker.cs" />
     <Compile Include="Code\UI\Controls\UIButton.cs" />
