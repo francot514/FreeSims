@@ -215,7 +215,39 @@ namespace TSO.Files.formats.iff.chunks
                 return (InteractionMaskFlags)((Unknown >> 4) & 0xF);
             }
         }
+
+
+        //FLAGS
+        public bool Debug
+        {
+            get { return ((TTABFlags)Flags & TTABFlags.Debug) > 0; }
+            set { Flags &= ~((uint)TTABFlags.Debug); if (value) Flags |= (uint)TTABFlags.Debug; }
+        }
+
+        public bool Leapfrog {
+            get { return ((TTABFlags)Flags & TTABFlags.Leapfrog) > 0; }
+            set { Flags &= ~((uint)TTABFlags.Leapfrog); if (value) Flags |= (uint)TTABFlags.Leapfrog; }
+        }
+        public bool MustRun
+        {
+            get { return ((TTABFlags)Flags & TTABFlags.MustRun) > 0; }
+            set { Flags &= ~((uint)TTABFlags.MustRun); if (value) Flags |= (uint)TTABFlags.MustRun; }
+        }
+        public bool AutoFirst { get; set; }
+        public bool RunImmediately
+        {
+            get { return ((TTABFlags)Flags & TTABFlags.RunImmediately) > 0; }
+            set { Flags &= ~((uint)TTABFlags.RunImmediately); if (value) Flags |= (uint)TTABFlags.RunImmediately; }
+        }
+        public bool AllowConsecutive { get; set; }
+
+
+        public bool Carrying { get; set; }
+        public bool Repair { get; set; }
+        public bool AlwaysCheck { get; set; }
+        public bool WhenDead { get; set; }
     }
+    
 
     /// <summary>
     /// Represents a motive entry in a TTAB chunk.
@@ -229,7 +261,10 @@ namespace TSO.Files.formats.iff.chunks
 
     public enum TTABFlags
     {
-        Debug = 1<<7
+        RunImmediately = 1 << 2,
+        Debug = 1 << 7,
+        Leapfrog = 1 << 9,
+        MustRun = 1 << 10
     }
 
     public enum InteractionMaskFlags

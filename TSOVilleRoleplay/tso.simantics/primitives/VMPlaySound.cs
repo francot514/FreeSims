@@ -14,7 +14,7 @@ namespace TSO.Simantics.primitives
         public override VMPrimitiveExitCode Execute(VMStackFrame context)
         {
             var operand = context.GetCurrentOperand<VMPlaySoundOperand>();
-            FWAV fwav = context.CodeOwner.Get<FWAV>(operand.EventID);
+            FWAV fwav = context.ScopeResource.Get<FWAV>(operand.EventID);
             if (fwav == null) fwav = context.VM.Context.Globals.Resource.Get<FWAV>(operand.EventID);
 
             if (fwav != null)

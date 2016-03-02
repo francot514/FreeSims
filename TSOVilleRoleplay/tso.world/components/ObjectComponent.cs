@@ -20,12 +20,21 @@ using tso.world.utils;
 using TSO.Files.formats.iff.chunks;
 using tso.world.model;
 using Microsoft.Xna.Framework;
+using tso.common.utils;
 
 namespace tso.world.components
 {
     public class ObjectComponent : WorldComponent
     {
+        private static Vector2[] PosCenterOffsets = new Vector2[]{
+            new Vector2(2+16, 79+8),
+            new Vector2(3+32, 158+16),
+            new Vector2(5+64, 316+32)
+        };
+
         public GameObject Obj;
+        public Texture2D Headline;
+
         private DGRP DrawGroup;
         private DGRPRenderer dgrp;
         public WorldObjectRenderInfo renderInfo;
@@ -194,6 +203,27 @@ namespace tso.world.components
                 LastScreenPos = world.WorldSpace.GetScreenFromTile(Position) + world.WorldSpace.GetScreenOffset();
                 LastZoomLevel = (int)world.Zoom;
             }
+
+
+            if (Headline != null)
+            {
+                var headOff = new Vector3(0, 0, 0.66f);
+                var headPx = world.WorldSpace.GetScreenFromTile(headOff);
+
+                var item = new _2DSprite();
+                item.Pixel = Headline;
+                item.Depth = TextureGenerator.GetWallZBuffer(device)[30];
+                item.RenderMode = _2DBatchRenderMode.Z_BUFFER;
+
+                item.SrcRect = new Rectangle(0, 0, Headline.Width, Headline.Height);
+                item.WorldPosition = headOff;
+                var off = PosCenterOffsets[(int)world.Zoom - 1];
+                item.DestRect = new Rectangle(
+                    ((int)headPx.X - Headline.Width / 2) + (int)off.X,
+                    ((int)headPx.Y - Headline.Height / 2) + (int)off.Y, Headline.Width, Headline.Height);
+                world._2D.Draw(item);
+            }
+
             dgrp.Draw(world);
 
             bool forceDynamic = ForceDynamic;

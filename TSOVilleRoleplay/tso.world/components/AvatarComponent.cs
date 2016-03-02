@@ -18,12 +18,20 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using TSO.Vitaboy;
 using tso.world.model;
+using tso.world.utils;
+using tso.common.utils;
 
 namespace tso.world.components
 {
     public class AvatarComponent : WorldComponent
     {
         public Avatar Avatar;
+
+        private static Vector2[] PosCenterOffsets = new Vector2[]{
+            new Vector2(2+16, 79+8),
+            new Vector2(3+32, 158+16),
+            new Vector2(5+64, 316+32)
+        };
 
         public override Vector3 GetSLOTPosition(int slot)
         {
@@ -32,9 +40,11 @@ namespace tso.world.components
         }
 
         public double RadianDirection;
+        public Texture2D Headline;
         public Vector2 LastScreenPos; //todo: move this and slots into an abstract class that contains avatars and objects
         public int LastZoomLevel;
         public ushort ObjectID;
+        public ushort Room;
 
         private Direction _Direction;
         public override Direction Direction
@@ -92,6 +102,11 @@ namespace tso.world.components
 
         public override void Draw(GraphicsDevice device, WorldState world)
         {
+
+            var headpos = Avatar.Skeleton.GetBone("HEAD").AbsolutePosition / 3.0f;
+            var transhead = Vector3.Transform(new Vector3(headpos.X, headpos.Z, headpos.Y), Matrix.CreateRotationZ((float)(RadianDirection + Math.PI))) + this.Position - new Vector3(0.5f, 0.5f, 0f);
+
+
             if (!world.TempDraw)
             {
                 LastScreenPos = world.WorldSpace.GetScreenFromTile(Position) + world.WorldSpace.GetScreenOffset();
@@ -105,6 +120,27 @@ namespace tso.world.components
             if (Avatar != null){
                 world._3D.DrawMesh(Matrix.CreateRotationY((float)(Math.PI-RadianDirection))*this.World, Avatar); //negated so avatars spin clockwise
             }
+
+            if (Headline != null)
+            {
+                var headOff = (transhead - Position) + new Vector3(0, 0, 0.66f);
+                var headPx = world.WorldSpace.GetScreenFromTile(headOff);
+
+                var item = new _2DSprite();
+                item.Pixel = Headline;
+                item.Depth = TextureGenerator.GetWallZBuffer(device)[30];
+                item.RenderMode = _2DBatchRenderMode.Z_BUFFER;
+
+                item.SrcRect = new Rectangle(0, 0, Headline.Width, Headline.Height);
+                item.WorldPosition = headOff;
+                var off = PosCenterOffsets[(int)world.Zoom - 1];
+                item.DestRect = new Rectangle(
+                    ((int)headPx.X - Headline.Width / 2) + (int)off.X,
+                    ((int)headPx.Y - Headline.Height / 2) + (int)off.Y, Headline.Width, Headline.Height);
+                item.Room = Room;
+                world._2D.Draw(item);
+            }
+
         }
     }
 }

@@ -89,12 +89,14 @@ namespace TSO.Simantics.engine.primitives
                     {
                         //calculate the score for this object.
                         int score = 0;
-                        if (ScoreVar[operand.Function] != VMStackObjectVariable.Invalid) {
+                        if (ScoreVar[operand.Function] != VMStackObjectVariable.Invalid)
+                        {
                             score = ent.GetValue(ScoreVar[operand.Function]);
+                            if (ScoreVar[operand.Function] == VMStackObjectVariable.DirtyLevel && score < 800) continue; //only clean "dirty" things.
                         }
 
                         LotTilePos posDiff = ent.Position - context.Caller.Position;
-                        score -= (int)Math.Sqrt(posDiff.x*posDiff.x+posDiff.y*posDiff.y)/3;
+                        score -= (int)Math.Sqrt(posDiff.x * posDiff.x + posDiff.y * posDiff.y + (posDiff.Level * posDiff.Level * 900 * 256)) / 3;
 
                         if (score > bestScore)
                         {

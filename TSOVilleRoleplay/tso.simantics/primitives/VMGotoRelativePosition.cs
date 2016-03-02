@@ -43,43 +43,16 @@ namespace TSO.Simantics.primitives
              * Examples for reference
              * Fridge - Have Snack - In front of, facing
              */
-            if (operand.Location == VMGotoRelativeLocation.OnTopOf)
-            {
-                relative = new LotTilePos(0, 0, obj.Position.Level);
-                result.Position = new LotTilePos(obj.Position);
-                //result.Flags = (SLOTFlags)obj.Direction;
+            if (operand.Location != VMGotoRelativeLocation.OnTopOf)
+            { //default slot is on top of
+                slot.MinProximity = 16;
+                slot.MaxProximity = 24;
+                if (operand.Location == VMGotoRelativeLocation.AnywhereNear) slot.Rsflags |= (SLOTFlags)255;
+                else slot.Rsflags |= (SLOTFlags)(1 << (((int)operand.Location) % 8));
             }
-            else
-            {
-                int dir;
-                if (operand.Location == VMGotoRelativeLocation.AnywhereNear) dir = (int)context.VM.Context.NextRandom(8);
-                else dir = ((int)operand.Location + intDir) % 8;
 
-                relative = Positions[dir];
-
-                var location = obj.Position;
-                location += relative;
-                result.Position = location;
-            }
-            //throw new Exception("Unknown goto relative");
-
-            if (operand.Direction == VMGotoRelativeDirection.Facing)
-            {
-                result.RadianDirection = (float)GetDirectionTo(relative, new LotTilePos(0, 0, relative.Level));
-                result.Flags = RadianToFlags(result.RadianDirection);
-            }
-            else if (operand.Direction == VMGotoRelativeDirection.AnyDirection)
-            {
-                result.RadianDirection = 0;
-                result.Flags = SLOTFlags.NORTH;
-            }
-            else
-            {
-                var dir = ((int)operand.Direction + intDir) % 8;
-                result.RadianDirection = (float)dir * (float)(Math.PI / 4.0);
-                if (result.RadianDirection > Math.PI) result.RadianDirection -= (float)(Math.PI * 2.0);
-                result.Flags = (SLOTFlags)(1 << (int)dir);
-            }
+            if (operand.Direction == VMGotoRelativeDirection.AnyDirection) slot.Facing = SLOTFacing.FaceAnywhere; //TODO: verify. not sure where this came from?
+            else slot.Facing = (SLOTFacing)operand.Direction;
 
             var pathFinder = context.Thread.PushNewRoutingFrame(context, !operand.NoFailureTrees);
             var success = pathFinder.InitRoutes(slot, context.StackObject);
@@ -113,6 +86,19 @@ namespace TSO.Simantics.primitives
             get
             {
                 return (Flags & VMGotoRelativeFlags.NoFailureTrees) > 0;
+            }
+        }
+
+        public bool AllowDiffAlt
+        {
+            get
+            {
+                return (Flags & VMGotoRelativeFlags.AllowDiffAlt) > 0;
+            }
+            set
+            {
+                Flags = (Flags & ~VMGotoRelativeFlags.AllowDiffAlt);
+                if (value) Flags |= VMGotoRelativeFlags.AllowDiffAlt;
             }
         }
 

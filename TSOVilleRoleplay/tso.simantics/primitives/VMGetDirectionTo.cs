@@ -25,7 +25,6 @@ namespace TSO.Simantics.primitives
             //else obj1 = context.VM.GetObjectById(VMMemory.GetVariable(context, (VMVariableScope)operand.ObjectScope, operand.OScopeData));
 
 
-            //var pos1 = obj1.Position;
             var pos1 = obj1.Position;
             var pos2 = obj2.Position;
 
