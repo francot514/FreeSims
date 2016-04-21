@@ -29,6 +29,12 @@ sampler maskSampler = sampler_state {
     MIPFILTER = POINT; MINFILTER = POINT; MAGFILTER = POINT;
 };
 
+sampler ambientSampler = sampler_state {
+	texture = <ambientLight>;
+	AddressU = CLAMP; AddressV = CLAMP; AddressW = CLAMP;
+	MIPFILTER = POINT; MINFILTER = POINT; MAGFILTER = POINT;
+};
+
 
 /**
  * SIMPLE EFFECT
@@ -111,6 +117,7 @@ struct ZVertexOut {
     float objectID: TEXCOORD2; //need to use unused texcoords - or glsl recompilation fails miserably.
     float backDepth: TEXCOORD3;
     float frontDepth: TEXCOORD4;
+	float2 roomVec : TEXCOORD5;
 };
 
 ZVertexOut vsZSprite(ZVertexIn v){
@@ -118,6 +125,7 @@ ZVertexOut vsZSprite(ZVertexIn v){
     result.position = mul(v.position, viewProjection);
     result.texCoords = v.texCoords;
 	result.objectID = v.objectID;
+	result.roomVec = v.room;
     
     float4 backPosition = float4(v.worldCoords.x, v.worldCoords.y, v.worldCoords.z, 1)+offToBack;
     float4 frontPosition = float4(backPosition.x, backPosition.y, backPosition.z, backPosition.w);

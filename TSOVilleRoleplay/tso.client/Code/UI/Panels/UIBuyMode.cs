@@ -5,11 +5,11 @@ using System.Text;
 using TSOVille.Code.UI.Framework;
 using TSOVille.Code.UI.Controls;
 using Microsoft.Xna.Framework.Graphics;
-using TSO.Simantics;
+using TSO.SimsAntics;
 using TSOVille.LUI;
 using TSOVille.Code.UI.Controls.Catalog;
-using tso.world.model;
-using TSO.Simantics.entities;
+using tso.world.Model;
+using TSO.SimsAntics.Entities;
 using TSO.Common.rendering.framework.model;
 using Microsoft.Xna.Framework.Input;
 

@@ -19,9 +19,9 @@ using TSOVille.Code.UI.Panels;
 using TSOVille.Code.UI.Controls;
 using tso.world;
 using TSOVille.LUI;
-using tso.world.model;
-using TSO.Simantics;
-using TSO.Simantics.utils;
+using tso.world.Model;
+using TSO.SimsAntics;
+using TSO.SimsAntics.Utils;
 using Microsoft.Xna.Framework;
 using tso.debug;
 
@@ -32,7 +32,7 @@ namespace TSOVille.Code.UI.Screens
         private UIUCP ucp;
         private World World;
         private UIButton VMDebug;
-        private TSO.Simantics.VM vm;
+        private TSO.SimsAntics.VM vm;
         private UILotControl LotController;
 
         public LotDebugScreen()
@@ -42,7 +42,7 @@ namespace TSOVille.Code.UI.Screens
             World = new World(GameFacade.Game.GraphicsDevice);
             GameFacade.Scenes.Add(World);
 
-            vm = new TSO.Simantics.VM(new VMContext(World));
+            vm = new VM(new VMContext(World), new UIHeadlineRendererProvider());
             vm.Init();
 
             var activator = new VMWorldActivator(vm, World);
@@ -57,7 +57,7 @@ namespace TSOVille.Code.UI.Screens
 
             VMDebug = new UIButton()
             {
-                Caption = "Simantics",
+                Caption = "SimsAntics",
                 Y = 45,
                 Width = 100,
                 X = GlobalSettings.Default.GraphicsWidth - 110
@@ -84,7 +84,7 @@ namespace TSOVille.Code.UI.Screens
         public override void Update(TSO.Common.rendering.framework.model.UpdateState state)
         {
             base.Update(state);
-            vm.Update(state.Time);
+            //vm.Update();
         }
 
         void VMDebug_OnButtonClick(UIElement button)
@@ -93,7 +93,7 @@ namespace TSOVille.Code.UI.Screens
                 (System.Windows.Forms.Form)System.Windows.Forms.Form.FromHandle(GameFacade.Game.Window.Handle);
             //gameWindowForm.Location = new System.Drawing.Point(0, 0);
 
-            var debugTools = new Simantics(vm);
+            var debugTools = new DebugView(vm);
             debugTools.Show();
             debugTools.Location = new System.Drawing.Point(gameWindowForm.Location.X + gameWindowForm.Width, gameWindowForm.Location.Y);
             debugTools.UpdateAQLocation();

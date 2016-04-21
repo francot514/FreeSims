@@ -20,8 +20,8 @@ using TSOVille.LUI;
 using TSOVille.Code.UI.Controls;
 using TSOVille.Code.UI.Screens;
 using TSOVille.Code.Rendering.City;
-using TSO.Simantics;
-using TSO.Simantics.model;
+using TSO.SimsAntics;
+using TSO.SimsAntics.Model;
 using tso.world;
 using TSOVille.Network;
 
@@ -34,6 +34,9 @@ namespace TSOVille.Code.UI.Panels
     {
         private CoreGameScreen Game; //the main screen
         private VMAvatar m_SelectedAvatar;
+        public TSO.SimsAntics.VM vm;
+        private List<VMAvatar> m_Avatars = new List<VMAvatar>();
+        private int GameSpeed;
 
         public VMAvatar SelectedAvatar
         {
@@ -45,6 +48,20 @@ namespace TSOVille.Code.UI.Panels
             get
             {
                 return m_SelectedAvatar;
+            }
+        }
+
+        public List<VMAvatar> Avatars
+        {
+            set
+            {
+                m_Avatars = value;
+                if (CurrentPanel == 1) ((UILiveMode)Panel).Avatars = value;
+
+            }
+            get
+            {
+                return m_Avatars;
             }
         }
 
@@ -217,6 +234,22 @@ namespace TSOVille.Code.UI.Panels
 
         public override void Update(TSO.Common.rendering.framework.model.UpdateState state)
         {
+            if (vm != null)
+                 {
+                     if (!vm.Ready)
+                         GameSpeed = 0;
+
+
+                     if (vm.Speed == 1)
+                         GameSpeed = 3;
+                     else if (vm.Speed == 2)
+                         GameSpeed = 2;
+                     else if (vm.Speed == 3)
+                         GameSpeed = 1;
+                     
+                 }
+                    
+
             int min = NetworkFacade.ServerTime.Minute;
             int hour = NetworkFacade.ServerTime.Hour;
             if (Game.InLot) //if ingame, use time from ingame clock (should be very close to server time anyways, if we set the game pacing up right...)
@@ -229,7 +262,15 @@ namespace TSOVille.Code.UI.Panels
             hour %= 12;
             if (hour == 0) hour = 12;
 
-            TimeText.Caption = hour.ToString() + ":" + ZeroPad(min.ToString(), 2) + " " + suffix;
+            TimeText.Caption = hour.ToString() + ":" + ZeroPad(min.ToString(), 2) + " " + suffix + " " + GameSpeed;
+
+            if (CurrentPanel == 1)
+            {
+                ((UILiveMode)Panel).Avatars.Clear();
+
+                if (Avatars.Count > 0)
+                        ((UILiveMode)Panel).Avatars = m_Avatars;
+            }
 
             base.Update(state);
         }
@@ -345,7 +386,6 @@ namespace TSOVille.Code.UI.Panels
                         Panel.X = 177;
                         Panel.Y = 63;
                         ((UILiveMode)Panel).SelectedAvatar = m_SelectedAvatar;
-                        ((UILiveMode)Panel).vm = Game.vm;
                         
                         this.Add(Panel);
                         LiveModeButton.Selected = true;

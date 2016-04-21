@@ -29,12 +29,13 @@ using TSO.Files.formats.iff.chunks;
 using TSO.HIT;
 
 using tso.world;
-using TSO.Simantics;
-using tso.world.components;
+using TSO.SimsAntics;
+using tso.world.Components;
 using TSOVille.Code.UI.Panels.LotControls;
 using Microsoft.Xna.Framework.Input;
-using tso.world.model;
+using tso.world.Model;
 using TSOVille.Code.UI.Screens;
+using TSO.SimsAntics.Model;
 
 namespace TSOVille.Code.UI.Panels
 {
@@ -48,9 +49,8 @@ namespace TSOVille.Code.UI.Panels
         private UIPieMenu PieMenu;
         private bool ShowTooltip;
         private bool TipIsError;
-        public TSO.Simantics.VM vm;
+        public TSO.SimsAntics.VM vm;
         public World World;
-        public VMEntity ActiveEntity;
         public short ObjectHover;
         public bool InteractionsAvailable;
         public UIImage testimg;
@@ -59,7 +59,6 @@ namespace TSOVille.Code.UI.Panels
         public bool LiveMode = true;
         public UIObjectHolder ObjectHolder;
         public UIQueryPanel QueryPanel;
-
         public UICustomLotControl CustomControl;
 
         public int WallsMode;
@@ -70,8 +69,8 @@ namespace TSOVille.Code.UI.Panels
         private bool RMBScroll;
         private int RMBScrollX;
         private int RMBScrollY;
-        private UILabel Debuginfo;
         private bool TabLastPressed;
+        private bool CtrlLastPressed;
         private List<VMPieMenuInteraction> Menu = new List<VMPieMenuInteraction>();
 
         private static uint GOTO_GUID = 0x000007C4;
@@ -82,16 +81,16 @@ namespace TSOVille.Code.UI.Panels
         /// <summary>
         /// Creates a new UILotControl instance.
         /// </summary>
-        /// <param name="vm">A SimAntics VM instance.</param>
+        /// <param name="vm">A SimsAntics VM instance.</param>
         /// <param name="World">A World instance.</param>
-        public UILotControl(TSO.Simantics.VM vm, World World, CoreGameScreen main)
+        public UILotControl(TSO.SimsAntics.VM vm, World World, CoreGameScreen main)
         {
             this.vm = vm;
             this.World = World;
             Main = main;
 
-            ActiveEntity = vm.Entities.FirstOrDefault(x => x is VMAvatar && x.PersistID == SelectedSimID);
-
+            vm.ActiveEntity = vm.Entities.FirstOrDefault(x => x is VMAvatar && x.PersistID == SelectedSimID);
+            
             
             MouseEvt = this.ListenForMouse(new Microsoft.Xna.Framework.Rectangle(0, 0, 
                 GlobalSettings.Default.GraphicsWidth, GlobalSettings.Default.GraphicsHeight), OnMouse);
@@ -100,7 +99,7 @@ namespace TSOVille.Code.UI.Panels
             testimg.Y = 20;
             this.Add(testimg);
             
-            Queue = new UIInteractionQueue(ActiveEntity);
+            Queue = new UIInteractionQueue(vm.ActiveEntity);
             this.Add(Queue);
 
             ObjectHolder = new UIObjectHolder(vm, World, this);
@@ -110,15 +109,11 @@ namespace TSOVille.Code.UI.Panels
             QueryPanel.Y = GlobalSettings.Default.GraphicsHeight - 228;
             this.Add(QueryPanel);
 
-            Debuginfo = new UILabel();
-            Debuginfo.X = 0;
-            Debuginfo.Y = 20;
-            this.Add(Debuginfo);
 
             vm.OnDialog += vm_OnDialog;
         }
 
-        void vm_OnDialog(TSO.Simantics.model.VMDialogInfo info)
+        void vm_OnDialog(VMDialogInfo info)
         {
             var alert = UIScreen.ShowAlert(new UIAlertOptions { Title = info.Title, Message = info.Message, Width = 325+(int)(info.Message.Length/3.5f), Alignment = TextAlignment.Left, TextSize = 12 }, true);
             var entity = info.Icon;
@@ -134,6 +129,7 @@ namespace TSOVille.Code.UI.Panels
                 alert.SetIcon(thumb, 110, 110);
             }
         }
+
 
         private void OnMouse(UIMouseEventType type, UpdateState state)
         {
@@ -157,12 +153,13 @@ namespace TSOVille.Code.UI.Panels
                     else ObjectHolder.MouseDown(state);
                     return;
                 }
+                else
                 if (PieMenu == null)
                 {
                     VMEntity obj;
                     //get new pie menu, make new pie menu panel for it
                     var tilePos = World.State.WorldSpace.GetTileAtPosWithScroll(new Vector2(state.MouseState.X, state.MouseState.Y));
-
+                    
                     LotTilePos targetPos = LotTilePos.FromBigTile((short)tilePos.X, (short)tilePos.Y, World.State.Level);
                     if (vm.Context.SolidToAvatars(targetPos).Solid) targetPos = LotTilePos.OUT_OF_WORLD;
 
@@ -182,15 +179,15 @@ namespace TSOVille.Code.UI.Panels
                             obj = GotoObject;
                         }
 
-
-                        if (ActiveEntity.Object.GUID == 0x5F0C674C)
-                            Menu = obj.GetPieMenu(vm, ActiveEntity, true);
+                        if (vm.ActiveEntity != null)
+                        if (vm.ActiveEntity.Object.GUID == 0x5F0C674C)
+                            Menu = obj.GetPieMenu(vm, vm.ActiveEntity, true);
 
                         else
-                            Menu = obj.GetPieMenu(vm, ActiveEntity, false);
+                            Menu = obj.GetPieMenu(vm, vm.ActiveEntity, false);
                         if (Menu.Count != 0)
                         {
-                            PieMenu = new UIPieMenu(Menu, obj, ActiveEntity, this);
+                            PieMenu = new UIPieMenu(Menu, obj, vm.ActiveEntity, this);
                             this.Add(PieMenu);
                             PieMenu.X = state.MouseState.X;
                             PieMenu.Y = state.MouseState.Y;
@@ -250,16 +247,20 @@ namespace TSOVille.Code.UI.Panels
 
         public void LiveModeUpdate(UpdateState state, bool scrolled)
         {
-            if (ActiveEntity == null || ActiveEntity.Dead)
+            if (vm.ActiveEntity == null || vm.ActiveEntity.Dead)
+                vm.ActiveEntity = vm.Entities.FirstOrDefault(x => x is VMAvatar && x.PersistID == SelectedSimID); //try and hook onto a sim if we have none selected.
+
+
+
+            if (vm.ActiveEntity != null)
             {
-                
-                ActiveEntity = vm.Entities.FirstOrDefault(x => x is VMAvatar && x.PersistID == SelectedSimID); //try and hook onto a sim if we have none selected.
-                    
-                Queue.QueueOwner = ActiveEntity;
-                    
+                //vm.Context.World.State.CenterTile = new Vector2(vm.ActiveEntity.VisualPosition.X, vm.ActiveEntity.VisualPosition.Y);
+
+                Queue.QueueOwner = vm.ActiveEntity;
+
             }
 
-            if (MouseIsOn && ActiveEntity != null)
+            if (MouseIsOn && vm.ActiveEntity != null)
             {
 
                 if (state.MouseState.X != OldMX || state.MouseState.Y != OldMY)
@@ -267,7 +268,9 @@ namespace TSOVille.Code.UI.Panels
                     OldMX = state.MouseState.X;
                     OldMY = state.MouseState.Y;
                     var newHover = World.GetObjectIDAtScreenPos(state.MouseState.X, state.MouseState.Y, GameFacade.GraphicsDevice);
-                    //if (newHover == 0) newHover = ActiveEntity.ObjectID;
+                    //if (newHover == 0) newHover = vm.ActiveEntity.ObjectID;
+
+
                     if (ObjectHover != newHover)
                     {
                         ObjectHover = newHover;
@@ -275,11 +278,13 @@ namespace TSOVille.Code.UI.Panels
                         {
                             var obj = vm.GetObjectById(ObjectHover);
 
-                            if (ActiveEntity.Object.GUID == 0x5F0C674C)
-                                Menu = obj.GetPieMenu(vm, ActiveEntity, true);
+                            if (obj == null) obj = vm.GetObjectById(newHover);
+
+                            if (vm.ActiveEntity.Object.GUID == 0x5F0C674C)
+                                Menu = obj.GetPieMenu(vm, vm.ActiveEntity, true);
                                 
                             else
-                                Menu = obj.GetPieMenu(vm, ActiveEntity, false);
+                                Menu = obj.GetPieMenu(vm, vm.ActiveEntity, false);
                             InteractionsAvailable = (Menu.Count > 0);
                         }
                     }
@@ -340,11 +345,28 @@ namespace TSOVille.Code.UI.Panels
         {
             base.Update(state);
 
-            if (ActiveEntity != null)
-            Debuginfo.Caption = "Sim guid= " + ActiveEntity.ObjectID + " Sim id = " + ActiveEntity.PersistID;
+            
 
             if (GotoObject == null) 
             GotoObject = vm.Context.CreateObjectInstance(GOTO_GUID, LotTilePos.OUT_OF_WORLD, Direction.NORTH, true).Objects[0];
+
+
+            if (state.KeyboardState.IsKeyDown(Keys.LeftControl))
+            {
+                if (!CtrlLastPressed)
+                {
+                    //switch active Sim
+
+                    vm.ActiveEntity = vm.Entities.FirstOrDefault(x => (x is VMAvatar && x.ObjectID == ObjectHover));
+                    if (vm.ActiveEntity == null) vm.ActiveEntity = vm.Entities.FirstOrDefault(x => (x is VMAvatar));
+                    HITVM.Get().PlaySoundEvent(UISounds.Speed1To2);
+                    Queue.QueueOwner = vm.ActiveEntity;
+                    Main.ucp.SelectedAvatar = (VMAvatar)vm.ActiveEntity;
+                    CtrlLastPressed = true;
+                }
+
+            }
+            else CtrlLastPressed = false;
 
             if (state.KeyboardState.IsKeyDown(Keys.Tab))
             {
@@ -352,15 +374,27 @@ namespace TSOVille.Code.UI.Panels
                 {
                     //switch active Sim
 
-                    ActiveEntity = vm.Entities.FirstOrDefault(x => (x is VMAvatar && x.ObjectID > ActiveEntity.ObjectID));
-                    if (ActiveEntity == null) ActiveEntity = vm.Entities.FirstOrDefault(x => (x is VMAvatar ));
+                    vm.ActiveEntity = vm.Entities.FirstOrDefault(x => (x is VMAvatar && x.ObjectID > vm.ActiveEntity.ObjectID));
+                    if (vm.ActiveEntity == null) vm.ActiveEntity = vm.Entities.FirstOrDefault(x => (x is VMAvatar ));
                     HITVM.Get().PlaySoundEvent(UISounds.Speed1To2);
-                    Queue.QueueOwner = ActiveEntity;
-                    Main.ucp.SelectedAvatar = (VMAvatar)ActiveEntity;
+                    Queue.QueueOwner = vm.ActiveEntity;
+                    Main.ucp.SelectedAvatar = (VMAvatar)vm.ActiveEntity;
                     TabLastPressed = true;
                 }
                 
             } else TabLastPressed = false;
+
+            if (state.KeyboardState.IsKeyDown(Keys.P) || state.KeyboardState.IsKeyDown(Keys.D0))
+                vm.Ready = !vm.Ready;
+
+            if (state.KeyboardState.IsKeyDown(Keys.D1))
+                vm.Speed = 3;
+
+            if (state.KeyboardState.IsKeyDown(Keys.D2))
+                vm.Speed = 2;
+
+            if (state.KeyboardState.IsKeyDown(Keys.D3))
+                vm.Speed = 1;
 
             if (Visible)
             {
@@ -431,7 +465,7 @@ namespace TSOVille.Code.UI.Panels
                     if (cuts.Contains(MouseCutRect)) cuts.Remove(MouseCutRect);
                     MouseCutRect = newCut;
                     cuts.Add(MouseCutRect);
-                    vm.Context.Blueprint.Damage.Add(new tso.world.model.BlueprintDamage(tso.world.model.BlueprintDamageType.WALL_CUT_CHANGED));
+                    vm.Context.Blueprint.Damage.Add(new tso.world.Model.BlueprintDamage(tso.world.Model.BlueprintDamageType.WALL_CUT_CHANGED));
                 }
 
                 }

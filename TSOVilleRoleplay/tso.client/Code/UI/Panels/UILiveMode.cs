@@ -19,8 +19,8 @@ using Microsoft.Xna.Framework.Graphics;
 using TSOVille.LUI;
 using TSOVille.Code.UI.Controls;
 using Microsoft.Xna.Framework;
-using TSO.Simantics;
-using TSO.Simantics.model;
+using TSO.SimsAntics;
+using TSO.SimsAntics.Model;
 
 namespace TSOVille.Code.UI.Panels
 {
@@ -30,8 +30,10 @@ namespace TSOVille.Code.UI.Panels
     public class UILiveMode : UIDestroyablePanel
     {
         public UIImage Thumbnail;
+        public UIImage[] Thumbnails = new UIImage[5];
         public UIImage Background;
         public UIImage Divider;
+        public UIImage Icon;
         public UIMotiveDisplay MotiveDisplay;
         public UISkillDisplay SkillDisplay;
         public Texture2D DividerImg { get; set; }
@@ -45,9 +47,9 @@ namespace TSOVille.Code.UI.Panels
         public UIButton EODContractButton { get; set; }
 
         public UIButton MoodPanelButton;
-
-        public TSO.Simantics.VM vm;
+ 
         public VMAvatar SelectedAvatar;
+        public List<VMAvatar> Avatars = new List<VMAvatar>();
 
 
         public UILiveMode () {
@@ -70,7 +72,25 @@ namespace TSOVille.Code.UI.Panels
             this.Add(Thumbnail);
 
 
+            Thumbnails[0] = new UIImage(GetTexture((ulong)FileIDs.UIFileIDs.thumbtemplate1frame));
+            Thumbnails[0].Size = new Point(33, 33);
+            Thumbnails[0].Position = new Vector2(600, 59);
+            this.Add(Thumbnails[0]);
 
+            Thumbnails[1] = new UIImage(GetTexture((ulong)FileIDs.UIFileIDs.thumbtemplate1frame));
+            Thumbnails[1].Size = new Point(33, 33);
+            Thumbnails[1].Position = new Vector2(640, 59);
+            this.Add(Thumbnails[1]);
+
+            Thumbnails[2] = new UIImage(GetTexture((ulong)FileIDs.UIFileIDs.thumbtemplate1frame));
+            Thumbnails[2].Size = new Point(33, 33);
+            Thumbnails[2].Position = new Vector2(600, 99);
+            this.Add(Thumbnails[2]);
+
+            Thumbnails[3] = new UIImage(GetTexture((ulong)FileIDs.UIFileIDs.thumbtemplate1frame));
+            Thumbnails[3].Size = new Point(33, 33);
+            Thumbnails[3].Position = new Vector2(640, 99);
+            this.Add(Thumbnails[3]);
 
             var PeopleListBg = new UIImage(PeopleListBackgroundImg);
             PeopleListBg.Position = new Microsoft.Xna.Framework.Vector2(375, 38);
@@ -93,6 +113,8 @@ namespace TSOVille.Code.UI.Panels
             EODCloseButton.Visible = false;
             EODExpandButton.Visible = false;
             EODContractButton.Visible = false;
+
+
         }
 
         public override void Destroy()
@@ -107,8 +129,28 @@ namespace TSOVille.Code.UI.Panels
             if (SelectedAvatar != null)
             {
 
-                Thumbnail.Texture = SelectedAvatar.GetIcon(GameFacade.GraphicsDevice);
+                Thumbnail.Texture = SelectedAvatar.GetIcon(GameFacade.GraphicsDevice, 0);
                 Thumbnail.Tooltip = SelectedAvatar.Name;
+
+                
+                if (Avatars.Count > 0 )
+                    {
+
+                Thumbnails[0].Texture = Avatars[0].GetIcon(GameFacade.GraphicsDevice, 0);
+                Thumbnails[0].Tooltip = Avatars[0].Name;
+
+                Thumbnails[1].Texture = Avatars[1].GetIcon(GameFacade.GraphicsDevice, 0);
+                Thumbnails[1].Tooltip = Avatars[1].Name;
+
+
+                Thumbnails[2].Texture = Avatars[2].GetIcon(GameFacade.GraphicsDevice, 0);
+                Thumbnails[2].Tooltip = Avatars[2].Name;
+
+
+                Thumbnails[3].Texture = Avatars[3].GetIcon(GameFacade.GraphicsDevice, 0);
+                Thumbnails[3].Tooltip = Avatars[3].Name;
+                    }
+
                 UpdateMotives();
                 UpdateSkills();
 

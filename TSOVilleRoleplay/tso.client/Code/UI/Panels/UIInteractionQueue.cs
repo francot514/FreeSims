@@ -22,8 +22,8 @@ using TSOVille.Code.UI.Model;
 using TSO.Common.rendering.framework.model;
 using TSO.Common.rendering.framework.io;
 using TSOVille.Code.Utils;
-using TSO.Simantics.engine;
-using TSO.Simantics;
+using TSO.SimsAntics.Engine;
+using TSO.SimsAntics;
 using TSOVille.LUI;
 using TSO.HIT;
 
@@ -87,7 +87,7 @@ namespace TSOVille.Code.UI.Controls
                         }
                         break;
                     }
-                    if (elem.Priority != VMQueuePriority.Idle) position++;
+                    if (elem.Priority != (short)VMQueuePriority.Idle) position++;
                 }
                 if (!found)
                 {
@@ -104,7 +104,7 @@ namespace TSOVille.Code.UI.Controls
                 int position = 0;
                 var elem = queue[i];
 
-                if (elem.Priority != VMQueuePriority.Idle)
+                if (elem.Priority != (short)VMQueuePriority.Idle)
                 {
                     bool found = false; //is this interaction in the queue? if not, add it
                     for (int j = 0; j < QueueItems.Count; j++)
@@ -203,7 +203,7 @@ namespace TSOVille.Code.UI.Controls
 
         public void UpdateInteractionIcon()
         {
-            UI.Icon = IconOwner.GetIcon(GameFacade.GraphicsDevice);
+            UI.Icon = IconOwner.GetIcon(GameFacade.GraphicsDevice, 0);
         }
     }
 }

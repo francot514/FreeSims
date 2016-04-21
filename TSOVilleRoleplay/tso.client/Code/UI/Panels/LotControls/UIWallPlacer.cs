@@ -5,15 +5,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using tso.world;
-using tso.world.components;
-using tso.world.model;
+using tso.world.Model;
 using TSO.Common.rendering.framework.model;
 using TSO.Common.utils;
 using TSO.HIT;
-using TSO.Simantics;
-using TSO.Simantics.entities;
-using TSO.Simantics.model;
+using TSO.SimsAntics;
+using TSO.SimsAntics.Entities;
+using TSO.SimsAntics.Model;
 using TSOVille.Code.UI.Model;
+using tso.world.Components;
 
 namespace TSOVille.Code.UI.Panels.LotControls
 {
@@ -67,7 +67,7 @@ namespace TSOVille.Code.UI.Panels.LotControls
             this.vm = vm;
             World = parent.World;
             Parent = parent;
-            WallCursor = vm.Context.CreateObjectInstance(0x00000439, LotTilePos.OUT_OF_WORLD, tso.world.model.Direction.NORTH);
+            WallCursor = vm.Context.CreateObjectInstance(0x00000439, LotTilePos.OUT_OF_WORLD, tso.world.Model.Direction.NORTH);
 
             ((ObjectComponent)WallCursor.Objects[0].WorldUI).ForceDynamic = true;
         }

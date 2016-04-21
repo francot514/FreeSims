@@ -8,12 +8,12 @@ using Microsoft.Xna.Framework.Graphics;
 using TSOVille.LUI;
 using Microsoft.Xna.Framework;
 using TSO.Common.rendering.framework.model;
-using TSO.Simantics;
+using TSO.SimsAntics;
 using TSO.Files.formats.iff.chunks;
 using TSO.HIT;
 using TSOVille.Code.UI.Model;
 using tso.world;
-using tso.world.components;
+using tso.world.Components;
 
 namespace TSOVille.Code.UI.Panels
 {

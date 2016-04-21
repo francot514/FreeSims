@@ -54,13 +54,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="ContentSrc\Effects\2DWorldBatch.fx" />
-    <Content Include="ContentSrc\Effects\colorpoly2D.fx" />
-    <Content Include="ContentSrc\Effects\HouseBatch.fx" />
-    <Content Include="ContentSrc\Effects\PixShader.fx" />
-    <Content Include="ContentSrc\Effects\TerrainSplat.fx" />
-    <Content Include="ContentSrc\Effects\TerrainSplat2.fx" />
-    <Content Include="ContentSrc\Effects\VerShader.fx" />
-    <Content Include="ContentSrc\Effects\Vitaboy.fx" />
+    <None Include="ContentSrc\Effects\colorpoly2D.fx" />
+    <None Include="ContentSrc\Effects\HouseBatch.fx" />
+    <None Include="ContentSrc\Effects\PixShader.fx" />
+    <None Include="ContentSrc\Effects\TerrainSplat.fx" />
+    <None Include="ContentSrc\Effects\TerrainSplat2.fx" />
+    <None Include="ContentSrc\Effects\VerShader.fx" />
+    <None Include="ContentSrc\Effects\Vitaboy.fx" />
     <Content Include="ContentSrc\login.png" />
     <Content Include="ContentSrc\Textures\gridTexture.png" />
     <Content Include="Content\Blueprints\empty_lot.xml">
@@ -72,30 +72,14 @@
     <Content Include="Content\ComicSansSmall.xnb">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Content\Effects\2DWorldBatch.xnb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Content\Effects\colorpoly2D.xnb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Content\Effects\HouseBatch.xnb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Content\Effects\PixShader.xnb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Content\Effects\TerrainSplat.xnb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Content\Effects\TerrainSplat2.xnb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Content\Effects\VerShader.xnb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Content\Effects\Vitaboy.xnb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <Content Include="Content\Effects\2DWorldBatch.xnb" />
+    <Content Include="Content\Effects\colorpoly2D.xnb" />
+    <Content Include="Content\Effects\HouseBatch.xnb" />
+    <Content Include="Content\Effects\PixShader.xnb" />
+    <Content Include="Content\Effects\TerrainSplat.xnb" />
+    <Content Include="Content\Effects\TerrainSplat2.xnb" />
+    <Content Include="Content\Effects\VerShader.xnb" />
+    <Content Include="Content\Effects\Vitaboy.xnb" />
     <Content Include="Content\Fonts\ProjectDollhouse_10px.xnb">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -125,36 +109,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Compile Include="Cache.cs" />
-    <Compile Include="Code\Debug\TSOClientFindAssetSearch.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Code\Debug\TSOClientFindAssetSearch.Designer.cs">
-      <DependentUpon>TSOClientFindAssetSearch.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Code\Debug\TSOClientTools.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Code\Debug\TSOClientTools.Designer.cs">
-      <DependentUpon>TSOClientTools.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Code\Debug\TSOClientUIInspector.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Code\Debug\TSOClientUIInspector.Designer.cs">
-      <DependentUpon>TSOClientUIInspector.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Code\Debug\TSOEdith.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Code\Debug\TSOEdith.Designer.cs">
-      <DependentUpon>TSOEdith.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Code\Debug\TSOSceneInspector.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Code\Debug\TSOSceneInspector.Designer.cs">
-      <DependentUpon>TSOSceneInspector.cs</DependentUpon>
-    </Compile>
     <Compile Include="Code\GameController.cs" />
     <Compile Include="Code\GameFacade.cs" />
     <Compile Include="Code\Rendering\City\Blend.cs" />
@@ -214,6 +168,7 @@
     <Compile Include="Code\UI\Panels\LotControls\UIWallPlacer.cs" />
     <Compile Include="Code\UI\Panels\UIBuildMode.cs" />
     <Compile Include="Code\UI\Panels\UIDestroyablePanel.cs" />
+    <Compile Include="Code\UI\Panels\UIHeadlineRenderer.cs" />
     <Compile Include="Code\UI\Panels\UIQueryPanel.cs" />
     <Compile Include="Code\UI\Panels\UIBuyMode.cs" />
     <Compile Include="Code\UI\Panels\UICitySelector.cs" />
@@ -399,21 +354,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Code\Debug\TSOClientFindAssetSearch.resx">
-      <DependentUpon>TSOClientFindAssetSearch.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Code\Debug\TSOClientTools.resx">
-      <DependentUpon>TSOClientTools.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Code\Debug\TSOClientUIInspector.resx">
-      <DependentUpon>TSOClientUIInspector.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Code\Debug\TSOEdith.resx">
-      <DependentUpon>TSOEdith.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Code\Debug\TSOSceneInspector.resx">
-      <DependentUpon>TSOSceneInspector.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

@@ -26,7 +26,7 @@ using TSO.Common.rendering.framework.model;
 using TSOVille.Network;
 using TSO.Vitaboy;
 using TSO.Content;
-using tso.world.model;
+using tso.world.Model;
 
 namespace TSOVille.Code.UI.Panels
 {

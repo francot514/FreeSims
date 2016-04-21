@@ -22,7 +22,7 @@ using TSOVille.Code.UI.Model;
 using TSO.Common.rendering.framework.model;
 using TSO.Common.rendering.framework.io;
 using TSOVille.Code.Utils;
-using TSO.Simantics;
+using TSO.SimsAntics;
 using TSOVille.LUI;
 using tso.common.utils;
 

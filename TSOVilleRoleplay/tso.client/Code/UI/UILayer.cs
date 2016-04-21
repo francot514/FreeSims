@@ -231,7 +231,7 @@ namespace TSOVille
 
         void debugButton_OnButtonClick(UIElement button)
         {
-            GameFacade.Controller.StartDebugTools();
+            //GameFacade.Controller.StartDebugTools();
         }
 
         public void AddProcess(IUIProcess Proc)

@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 using TSOVille.LUI;
 using TSOVille.Code.UI.Controls;
 using TSOVille.Code.UI.Framework.Parser;
-using tso.world.model;
+using tso.world.Model;
 
 namespace TSOVille.Code.UI.Screens
 {

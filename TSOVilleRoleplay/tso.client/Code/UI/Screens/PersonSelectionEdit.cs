@@ -28,7 +28,7 @@ using ProtocolAbstractionLibraryD;
 using TSO.Common.utils;
 using TSO.Vitaboy;
 using TSO.Content;
-using tso.world.model;
+using tso.world.Model;
 
 namespace TSOVille.Code.UI.Screens
 {
@@ -284,9 +284,9 @@ namespace TSOVille.Code.UI.Screens
                         };
                     Appearance TmpAppearance = Content.Get().AvatarAppearances.Get(sim.Head.GetAppearance(AppearanceType));
 
-                    if (!Directory.Exists(GlobalSettings.Default.DocumentsPath + "Characters//Thumbnail//"))
-                        Directory.CreateDirectory(GlobalSettings.Default.DocumentsPath + "Characters//Thumbnail//");
-                    GetTexture(TmpAppearance.ThumbnailID).SaveAsPng(File.Create(GlobalSettings.Default.DocumentsPath + "Characters//Thumbnail//" + sim.Name + ".png"), 0, 0);
+                    //if (!Directory.Exists(GlobalSettings.Default.DocumentsPath + "Characters//Thumbnail//"))
+                        //Directory.CreateDirectory(GlobalSettings.Default.DocumentsPath + "Characters//Thumbnail//");
+                    //GetTexture(TmpAppearance.ThumbnailID).SaveAsPng(File.Create(GlobalSettings.Default.DocumentsPath + "Characters//Thumbnail//" + sim.Name + ".png"), 0, 0);
                     XmlCharacter.Save(GlobalSettings.Default.DocumentsPath + "Characters//" + sim.Name + ".xml", XmlCharacter);
                 
             }
@@ -300,8 +300,6 @@ namespace TSOVille.Code.UI.Screens
 
                 return;
             }
-
-            //NetworkFacade.DB.CreateCharacter(sim);
 
         }
 

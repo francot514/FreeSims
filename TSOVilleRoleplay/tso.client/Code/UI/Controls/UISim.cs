@@ -265,17 +265,17 @@ namespace TSOVille.Code.UI.Controls
             Avatar.Scene = Scene;
             Avatar.Scale = new Vector3(0.45f);
             Scene.Add(Avatar);
-            
+
         }
 
         public UISim(string GUID, string id)
         {
             if (GUID != "")
-                {
+            {
                 this.m_GUID = GUID;
                 ID = id;
-            
-                }
+
+            }
 
             UISimInit();
             GameFacade.Scenes.AddExternal(Scene);

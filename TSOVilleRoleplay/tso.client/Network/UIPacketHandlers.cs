@@ -25,7 +25,7 @@ using GonzoNet.Encryption;
 using ProtocolAbstractionLibraryD;
 using TSO.Vitaboy;
 using TSO.Content;
-using TSO.Simantics;
+using TSO.SimsAntics;
 using TSOVille.Code.Rendering.City;
 
 namespace TSOVille.Network

@@ -22,13 +22,13 @@ using TSOVille.LUI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using TSOVille.Code.Utils;
-using TSO.Simantics;
+using TSO.SimsAntics;
 using TSO.HIT;
 using TSO.Vitaboy;
 using TSO.Common.rendering.framework.camera;
 using TSO.Common.rendering.framework;
 using tso.common.utils;
-using tso.world.model;
+using tso.world.Model;
 
 namespace TSOVille.Code.UI.Panels
 {
@@ -105,7 +105,8 @@ namespace TSOVille.Code.UI.Panels
                 {
                     Category = false,
                     Name = depth[depth.Length-1],
-                    ID = pie[i].ID
+                    ID = pie[i].ID,
+                    Param0 = pie[i].Param0
                 };
                 if (!category.Children.ContainsKey(item.Name)) category.Children.Add(item.Name, item);
             }
@@ -348,6 +349,7 @@ namespace TSOVille.Code.UI.Panels
     {
         public bool Category;
         public byte ID;
+        public short Param0;
         public string Name;
         public Dictionary<string, UIPieMenuItem> Children = new Dictionary<string, UIPieMenuItem>();
         public UIPieMenuItem Parent;

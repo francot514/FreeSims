@@ -113,29 +113,6 @@ namespace TSOVille.Code
             //screen.ZoomLevel = 1;
         }
 
-        public void StartDebugTools()
-        {
-            if (GameFacade.DebugWindow != null)
-            {
-                if (GameFacade.DebugWindow.Visible)
-                {
-                    GameFacade.DebugWindow.Hide();
-                }
-                else
-                {
-                    GameFacade.DebugWindow.Show();
-                }
-                return;
-            }
 
-            var debugWindow = new TSOVille.Code.Debug.TSOVilleTools();
-            GameFacade.DebugWindow = debugWindow;
-
-            /** Position the debug window **/
-
-            debugWindow.Show();
-
-            //debugWindow.PositionAroundGame(GameFacade.Game.Window);
-        }
     }
 }

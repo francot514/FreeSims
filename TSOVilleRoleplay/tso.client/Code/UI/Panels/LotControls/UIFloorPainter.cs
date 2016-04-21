@@ -5,14 +5,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using tso.world;
-using tso.world.components;
-using tso.world.model;
+using tso.world.Components;
+using tso.world.Model;
 using TSO.Common.rendering.framework.model;
 using TSO.HIT;
-using TSO.Simantics;
-using TSO.Simantics.entities;
-using TSO.Simantics.model;
-using TSO.Simantics.utils;
+using TSO.SimsAntics;
+using TSO.SimsAntics.Entities;
+using TSO.SimsAntics.Model;
+using TSO.SimsAntics.Utils;
 using TSOVille.Code.UI.Model;
 
 namespace TSOVille.Code.UI.Panels.LotControls

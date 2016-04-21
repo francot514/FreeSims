@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TSOVille.Code.UI.Controls;
-using tso.world.model;
+using tso.world.Model;
 using TSO.Content;
 using TSO.Vitaboy;
 

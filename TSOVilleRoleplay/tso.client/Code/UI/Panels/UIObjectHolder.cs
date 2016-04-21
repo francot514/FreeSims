@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using tso.world;
-using TSO.Simantics;
+using TSO.SimsAntics;
 using TSO.Common.rendering.framework.model;
 using Microsoft.Xna.Framework;
-using tso.world.components;
-using TSO.Simantics.entities;
-using tso.world.model;
+using tso.world.Components;
+using TSO.SimsAntics.Entities;
+using tso.world.Model;
 using TSOVille.Code.UI.Model;
 using TSO.HIT;
-using TSO.Simantics.model;
+using TSO.SimsAntics.Model;
 using Microsoft.Xna.Framework.Input;
 using TSOVille.Code.UI.Framework;
 
@@ -57,7 +57,7 @@ namespace TSOVille.Code.UI.Panels
             {
                 var target = Group.Objects[i];
                 if (target is VMGameObject) ((ObjectComponent)target.WorldUI).ForceDynamic = true;
-                CursorTiles[i] = vm.Context.CreateObjectInstance(0x00000437, new LotTilePos(target.Position), tso.world.model.Direction.NORTH).Objects[0];
+                CursorTiles[i] = vm.Context.CreateObjectInstance(0x00000437, new LotTilePos(target.Position), tso.world.Model.Direction.NORTH).Objects[0];
                 CursorTiles[i].SetPosition(new LotTilePos(0,0,1), Direction.NORTH, vm.Context);
                 ((ObjectComponent)CursorTiles[i].WorldUI).ForceDynamic = true;
             }

@@ -27,13 +27,15 @@ using TSO.Common.rendering.framework.io;
 using TSO.Common.rendering.framework;
 using TSOVille.Network;
 using tso.world;
-using tso.world.model;
-using TSO.Simantics;
-using TSO.Simantics.utils;
+using tso.world.Model;
+using TSO.SimsAntics;
+using TSO.SimsAntics.Utils;
 using tso.debug;
-using TSO.Simantics.primitives;
+using TSO.SimsAntics.Primitives;
 using TSO.HIT;
 using System.IO;
+using TSO.SimsAntics.NetPlay;
+using TSO.SimsAntics.NetPlay.Drivers;
 
 namespace TSOVille.Code.UI.Screens
 {
@@ -53,7 +55,7 @@ namespace TSOVille.Code.UI.Screens
         public XmlHouseData LotInfo;
         public UILotControl LotController; //world, lotcontrol and vm will be null if we aren't in a lot.
         private World World;
-        public TSO.Simantics.VM vm;
+        public TSO.SimsAntics.VM vm;
         public bool InLot
         {
             get
@@ -223,7 +225,7 @@ namespace TSOVille.Code.UI.Screens
 
             VMDebug = new UIButton()
             {
-                Caption = "Simantics",
+                Caption = "SimsAntics",
                 Y = 45,
                 Width = 100,
                 X = GlobalSettings.Default.GraphicsWidth - 110
@@ -358,6 +360,7 @@ namespace TSOVille.Code.UI.Screens
         public void InitTestLot(string path)
         {
 
+
             LotInfo = XmlHouseData.Parse(path);
 
 
@@ -366,7 +369,7 @@ namespace TSOVille.Code.UI.Screens
             World = new World(GameFacade.Game.GraphicsDevice);
             GameFacade.Scenes.Add(World);
 
-            vm = new TSO.Simantics.VM(new VMContext(World));
+            vm = new VM(new VMContext(World), new UIHeadlineRendererProvider());
             vm.Init();
 
             var activator = new VMWorldActivator(vm, World);
@@ -411,11 +414,15 @@ namespace TSOVille.Code.UI.Screens
                 short pos = Convert.ToInt16(56 + i);
 
                 Sim = Avatars[i];
+                
                 Sim.SetAvatarData(gizmo.SelectedCharInfo);
                 Sim.Position = LotTilePos.FromBigTile(pos, 33, 1);
                 ucp.SelectedAvatar = Sim;
 
                  }
+
+            ucp.vm = vm;
+            ucp.Avatars = Avatars;
 
             VMFindLocationFor.FindLocationFor(Sim, mailbox, vm.Context);
 
@@ -441,7 +448,6 @@ namespace TSOVille.Code.UI.Screens
                 short pos = Convert.ToInt16(60 + i);
 
                 Pets[i].SetPetData(PetsInfos[i]);
-                //Pets[i].ExportAvatarData(GlobalSettings.Default.DocumentsPath + "//Pets//Info//" + i + Pets[i].Name + ".txt");
                 Pets[i].Position = LotTilePos.FromBigTile(pos, 40, 1);
                 
                 VMFindLocationFor.FindLocationFor(Pets[i], mailbox, vm.Context);
@@ -489,7 +495,7 @@ namespace TSOVille.Code.UI.Screens
         {
             if (vm == null) return;
 
-            var debugTools = new Simantics(vm);
+            var debugTools = new DebugView(vm);
 
             var window = GameFacade.Game.Window;
             debugTools.Show();

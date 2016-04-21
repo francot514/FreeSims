@@ -15,7 +15,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
-using TSOVille.Code.Debug;
 using TSOVille.Code.UI.Framework;
 using TSOVille.Code.UI.Model;
 using TSOVille.Code.Sound;
@@ -26,6 +25,7 @@ using TSO.Common.rendering.framework.model;
 using TSO.Common.rendering.framework;
 using TSOVille.Code.UI.Panels;
 using TSOVille.Code.Rendering.City;
+using Microsoft.Xna.Framework;
 
 namespace TSOVille.Code
 {
@@ -38,9 +38,9 @@ namespace TSOVille.Code
         public static GameController Controller;
         public static UILayer Screens;
         public static _3DLayer Scenes;
-        public static GraphicsDevice GraphicsDevice;
+        public static GraphicsDevice GraphicsDevice; 
+        public static GraphicsDeviceManager GraphicsDeviceManager;
         public static TSOGame Game;
-        public static TSOVilleTools DebugWindow;
         public static Font MainFont;
         public static SoundManager SoundManager;
         public static UpdateState LastUpdateState;
