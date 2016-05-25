@@ -1,37 +1,44 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using tso.world.model;
-using tso.world.components;
+using tso.world.Model;
+using tso.world.Components;
 
-namespace TSO.Simantics.utils
+namespace TSO.SimsAntics.Utils
 {
     public class VMWorldExporter
     {
 
         public XmlHouseData housedata;
 
-
         public void SaveHouse(VM vm, string path, string name)
         {
 
-            if (vm.Context.Blueprint != null)
+            if (vm.Context.Architecture != null)
             {
                 housedata = new XmlHouseData();
                 housedata.World = new XmlHouseDataWorld();
                 housedata.World.Floors = new List<XmlHouseDataFloor>();
                 housedata.World.Walls = new List<XmlHouseDataWall>();
                 housedata.Objects = new List<XmlHouseDataObject>();
+                
 
             }
 
             housedata.Name = name;
-            var HouseWidth = vm.Context.Blueprint.Width;
-            var HouseHeight = vm.Context.Blueprint.Height;
-            var Levels = vm.Context.Blueprint.Stories;
+            var HouseWidth = vm.Context.Architecture.Width;
+            var HouseHeight = vm.Context.Architecture.Height;
+            var Levels = vm.Context.Architecture.Stories;
             housedata.Size = HouseWidth;
             housedata.TimeofDay = vm.Context.Clock.Hours;
+            housedata.Category = vm.Context.LotCategory;
 
             for (short x = 0; x < HouseWidth; x++)
             {

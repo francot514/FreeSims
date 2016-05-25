@@ -1,19 +1,29 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TSO.Files.utils;
-using TSO.Files.formats.iff.chunks;
-using TSO.Simantics.engine;
-using TSO.HIT;
 
-namespace TSO.Simantics.primitives
+using TSO.Files.formats.iff.chunks;
+using TSO.SimsAntics.Engine;
+using TSO.HIT;
+using System.IO;
+
+namespace TSO.SimsAntics.Primitives
 {
     public class VMPlaySound : VMPrimitiveHandler
     {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMPlaySoundOperand>();
+            if (!VM.UseWorld) return VMPrimitiveExitCode.GOTO_TRUE;
+
+            var operand = (VMPlaySoundOperand)args;
             FWAV fwav = context.ScopeResource.Get<FWAV>(operand.EventID);
             if (fwav == null) fwav = context.VM.Context.Globals.Resource.Get<FWAV>(operand.EventID);
 
@@ -23,21 +33,21 @@ namespace TSO.Simantics.primitives
                 if (thread != null)
                 {
                     var owner = (operand.StackObjAsSource)?context.StackObject:context.Caller;
-
+                    if (owner == null) return VMPrimitiveExitCode.GOTO_TRUE;
                     if (!thread.AlreadyOwns(owner.ObjectID)) thread.AddOwner(owner.ObjectID);
 
-                    if (owner is VMAvatar) ((VMAvatar)owner).SubmitHITVars(thread);
+                    if (owner is VMAvatar && thread is HITThread) ((VMAvatar)owner).SubmitHITVars(thread);
 
                     var entry = new VMSoundEntry()
                     {
-                        Thread = thread,
+                        Sound = thread,
                         Pan = !operand.NoPan,
                         Zoom = !operand.NoZoom,
                         Loop = operand.Loop,
                         Name = fwav.Name
                     };
                     owner.SoundThreads.Add(entry);
-                    owner.TickSounds();
+                    if (owner.Thread != null) owner.TickSounds();
                 }
             }
 
@@ -61,6 +71,16 @@ namespace TSO.Simantics.primitives
                 Pad = io.ReadUInt16();
                 Flags = io.ReadByte();
                 Volume = io.ReadByte();
+            }
+        }
+
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write(EventID);
+                io.Write(Pad);
+                io.Write(Flags);
+                io.Write(Volume);
             }
         }
 

@@ -1,50 +1,40 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Engine;
 using TSO.Files.utils;
 using Microsoft.Xna.Framework;
 using tso.world;
 using TSO.Files.formats.iff.chunks;
-using tso.world.model;
+using tso.world.Model;
+using System.IO;
 
-namespace TSO.Simantics.primitives
+namespace TSO.SimsAntics.Primitives
 {
     public class VMGotoRelativePosition : VMPrimitiveHandler
     {
 
-        private static LotTilePos[] Positions = { 
-            new LotTilePos(0, -16, 0),
-            new LotTilePos(16, -16, 0),
-            new LotTilePos(16, 0, 0),
-            new LotTilePos(16, 16, 0),
-            new LotTilePos(0, 16, 0),
-            new LotTilePos(-16, 16, 0),
-            new LotTilePos(-16, 0, 0),
-            new LotTilePos(-16, -16, 0)
-        };
-
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMGotoRelativePositionOperand>();
+            var operand = (VMGotoRelativePositionOperand)args;
+
+            if (context.Thread.IsCheck) return VMPrimitiveExitCode.GOTO_FALSE;
 
             var obj = context.StackObject;
             var avatar = (VMAvatar)context.Caller;
 
             if (obj.Position == LotTilePos.OUT_OF_WORLD) return VMPrimitiveExitCode.GOTO_FALSE;
 
-            var result = new VMFindLocationResult();
-            LotTilePos relative;
-            int intDir = (int)Math.Round(Math.Log((double)obj.Direction, 2));
-
             var slot = new SLOTItem { Type = 3, Standing = 1 };
-            /** 
-             * Examples for reference
-             * Fridge - Have Snack - In front of, facing
-             */
-            if (operand.Location != VMGotoRelativeLocation.OnTopOf)
-            { //default slot is on top of
+
+            if (operand.Location != VMGotoRelativeLocation.OnTopOf) { //default slot is on top of
                 slot.MinProximity = 16;
                 slot.MaxProximity = 24;
                 if (operand.Location == VMGotoRelativeLocation.AnywhereNear) slot.Rsflags |= (SLOTFlags)255;
@@ -56,36 +46,30 @@ namespace TSO.Simantics.primitives
 
             var pathFinder = context.Thread.PushNewRoutingFrame(context, !operand.NoFailureTrees);
             var success = pathFinder.InitRoutes(slot, context.StackObject);
-            if (pathFinder != null) return VMPrimitiveExitCode.CONTINUE;
-            else return VMPrimitiveExitCode.GOTO_FALSE;
-        }
 
-        private SLOTFlags RadianToFlags(double rad)
-        {
-            int result = (int)(Math.Round((rad / (Math.PI * 2)) * 8) + 80) % 8; //for best results, make sure rad is >-pi and <pi
-            return (SLOTFlags)(1 << result);
-        }
-
-        private double GetDirectionTo(LotTilePos pos1, LotTilePos pos2)
-        {
-            return Math.Atan2(pos2.x - pos1.x, -(pos2.y - pos1.y));
+            return VMPrimitiveExitCode.CONTINUE;
         }
     }
 
     public class VMGotoRelativePositionOperand : VMPrimitiveOperand
     {
         /** How long to meander around objects **/
-        public ushort OldTrapCount;
-        public VMGotoRelativeLocation Location;
-        public VMGotoRelativeDirection Direction;
-        public ushort RouteCount;
-        public VMGotoRelativeFlags Flags;
+        public ushort OldTrapCount { get; set; }
+        public VMGotoRelativeLocation Location { get; set; }
+        public VMGotoRelativeDirection Direction { get; set; }
+        public ushort RouteCount { get; set; }
+        public VMGotoRelativeFlags Flags { get; set; }
 
         public bool NoFailureTrees
         {
             get
             {
                 return (Flags & VMGotoRelativeFlags.NoFailureTrees) > 0;
+            }
+            set
+            {
+                Flags = (Flags & ~VMGotoRelativeFlags.NoFailureTrees);
+                if (value) Flags |= VMGotoRelativeFlags.NoFailureTrees;
             }
         }
 
@@ -103,15 +87,24 @@ namespace TSO.Simantics.primitives
         }
 
         #region VMPrimitiveOperand Members
-        public void Read(byte[] bytes)
-        {
-            using (var io = IoBuffer.FromBytes(bytes, ByteOrder.LITTLE_ENDIAN))
-            {
+        public void Read(byte[] bytes){
+            using (var io = IoBuffer.FromBytes(bytes, ByteOrder.LITTLE_ENDIAN)){
                 OldTrapCount = io.ReadUInt16();
                 Location = (VMGotoRelativeLocation)((sbyte)io.ReadByte());
                 Direction = (VMGotoRelativeDirection)((sbyte)io.ReadByte());
                 RouteCount = io.ReadUInt16();
                 Flags = (VMGotoRelativeFlags)io.ReadByte();
+            }
+        }
+
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write(OldTrapCount);
+                io.Write((byte)Location);
+                io.Write((byte)Direction);
+                io.Write(RouteCount);
+                io.Write((byte)Flags);
             }
         }
         #endregion
@@ -131,8 +124,7 @@ namespace TSO.Simantics.primitives
         FortyFiveDegreesLeftOfSameDirection = 7
     }
 
-    public enum VMGotoRelativeLocation
-    {
+    public enum VMGotoRelativeLocation {
         OnTopOf = -2,
         AnywhereNear = -1,
         InFrontOf = 0,
@@ -146,7 +138,7 @@ namespace TSO.Simantics.primitives
     }
 
     [Flags]
-    public enum VMGotoRelativeFlags
+    public enum VMGotoRelativeFlags : byte
     {
         AllowDiffAlt = 0x1,
         NoFailureTrees = 0x2

@@ -1,19 +1,26 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Engine;
 using TSO.Files.utils;
-using TSO.Simantics.engine.utils;
-using TSO.Simantics.engine.scopes;
+using TSO.SimsAntics.Engine.Utils;
+using TSO.SimsAntics.Engine.Scopes;
+using System.IO;
 
-namespace TSO.Simantics.primitives
+namespace TSO.SimsAntics.Primitives
 {
     public class VMGetDistanceTo : VMPrimitiveHandler
     {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMGetDistanceToOperand>();
+            var operand = (VMGetDistanceToOperand)args;
 
             var obj1 = context.StackObject;
             VMEntity obj2;
@@ -32,10 +39,10 @@ namespace TSO.Simantics.primitives
 
     public class VMGetDistanceToOperand : VMPrimitiveOperand
     { 
-        public ushort TempNum;
-        public byte Flags;
-        public byte ObjectScope;
-        public ushort OScopeData;
+        public ushort TempNum { get; set; }
+        public byte Flags { get; set; }
+        public VMVariableScope ObjectScope { get; set; }
+        public short OScopeData { get; set; }
 
         #region VMPrimitiveOperand Members
         public void Read(byte[] bytes)
@@ -44,8 +51,25 @@ namespace TSO.Simantics.primitives
             {
                 TempNum = io.ReadUInt16();
                 Flags = io.ReadByte();
-                ObjectScope = io.ReadByte();
-                OScopeData = io.ReadUInt16();
+                ObjectScope = (VMVariableScope)io.ReadByte();
+                OScopeData = io.ReadInt16();
+
+                if ((Flags & 1) == 0)
+                {
+                    ObjectScope = VMVariableScope.MyObject;
+                    OScopeData = 11;
+                }
+                Flags |= 1;
+            }
+        }
+
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write(TempNum);
+                io.Write(Flags);
+                io.Write((byte)ObjectScope);
+                io.Write(OScopeData);
             }
         }
         #endregion

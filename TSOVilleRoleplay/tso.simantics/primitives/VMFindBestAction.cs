@@ -1,17 +1,23 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Engine;
 using TSO.Files.utils;
 
-namespace TSO.Simantics.primitives
+namespace TSO.SimsAntics.Primitives
 {
     // Finds a suitable action and queues it onto this sim. Used for pet free will.
 
     public class VMFindBestAction : VMPrimitiveHandler
     {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
             return VMPrimitiveExitCode.GOTO_FALSE; //we couldn't find anything... because we didn't check! TODO!!
         }
@@ -26,6 +32,8 @@ namespace TSO.Simantics.primitives
             {
             }
         }
+
+        public void Write(byte[] bytes) { }
         #endregion
     }
 }

@@ -9,27 +9,28 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework;
-using tso.world.model;
-using TSO.SimAntics.Routing;
+using tso.world.Model;
+using TSO.SimsAntics.Model.Routing;
 
-
-namespace TSO.Simantics.model
+namespace TSO.SimsAntics.Model
 {
     /// <summary>
     /// Generates and manages a room map for a specified level.
     /// </summary>
     public class VMRoomMap
     {
-        public ushort[] Map;
+        public uint[] Map;
         public int Width;
         public int Height;
+
+        private ushort ExpectedTile;
 
         /// <summary>
         /// Generates the room map for the specified walls array.
         /// </summary>
         public void GenerateMap(WallTile[] Walls, FloorTile[] Floors, int width, int height, List<VMRoom> rooms) //for first floor gen, curRoom should be 1. For floors above, it should be the last genmap result
         {
-            Map = new ushort[width*height]; //although 0 is the base of the array, room 1 is known to simantics as room 0.
+            Map = new uint[width*height]; //although 0 is the base of the array, room 1 is known to simantics as room 0.
             //values of 0 indicate the room has not been chosen in that location yet.
 
             bool noFloorBad = (rooms.Count > 1);
@@ -49,6 +50,9 @@ namespace TSO.Simantics.model
                 {
                     if (Map[i] == 0)
                     {
+                        ExpectedTile = Floors[i].Pattern;
+                        //if (ExpectedTile == 0 && noFloorBad) continue;
+                        if (ExpectedTile < 65534) ExpectedTile = 0;
                         remaining = true;
                         Map[i] = (ushort)rooms.Count;
                         spread.Push(new Point(i % width, i / width));
@@ -63,8 +67,10 @@ namespace TSO.Simantics.model
                     int rminY = spread.Peek().Y;
                     int rmaxY = rminY;
                     var wallObs = new List<VMObstacle>();
+                    ushort area = 0;
                     while (spread.Count > 0)
                     {
+                        area++;
                         var item = spread.Pop();
 
                         if (item.X > rmaxX) rmaxX = item.X;
@@ -106,14 +112,19 @@ namespace TSO.Simantics.model
                         if ((mainWalls.Segments & WallSegments.BottomLeft) > 0 && !PYWalls.TopRightDoor) wallObs.Add(new VMObstacle(obsX - 3, obsY + 13, obsX + 19, obsY + 19)); 
                         if ((mainWalls.Segments & WallSegments.BottomRight) > 0 && !PXWalls.TopLeftDoor) wallObs.Add(new VMObstacle(obsX + 13, obsY - 3, obsX + 19, obsY + 19));
 
-                        if (Map[plusX + item.Y * width] == 0 && ((PXWalls.Segments & WallSegments.TopLeft) == 0 || PXWalls.TopLeftStyle != 1)) 
-                            { Map[plusX + item.Y * width] = (ushort)rooms.Count; spread.Push(new Point(plusX, item.Y)); }
-                        if (Map[minX + item.Y * width] == 0 && ((mainWalls.Segments & WallSegments.TopLeft) == 0 || mainWalls.TopLeftStyle != 1)) 
-                            { Map[minX + item.Y * width] = (ushort)rooms.Count; spread.Push(new Point(minX, item.Y)); }
-                        if (Map[item.X + plusY * width] == 0 && ((PYWalls.Segments & WallSegments.TopRight) == 0 || PYWalls.TopRightStyle != 1))
-                            { Map[item.X + plusY * width] = (ushort)rooms.Count; spread.Push(new Point(item.X, plusY)); }
-                        if (Map[item.X + minY * width] == 0 && ((mainWalls.Segments & WallSegments.TopRight) == 0 || mainWalls.TopRightStyle != 1))
-                            { Map[item.X + minY * width] = (ushort)rooms.Count; spread.Push(new Point(item.X, minY)); }
+                        //
+
+                        if (((PXWalls.Segments & WallSegments.TopLeft) == 0 || PXWalls.TopLeftStyle != 1))
+                            SpreadOnto(Walls, Floors, plusX, item.Y, 0, Map, width, height, spread, (ushort)rooms.Count, ExpectedTile, noFloorBad);
+
+                        if (((mainWalls.Segments & WallSegments.TopLeft) == 0 || mainWalls.TopLeftStyle != 1))
+                            SpreadOnto(Walls, Floors, minX, item.Y, 2, Map, width, height, spread, (ushort)rooms.Count, ExpectedTile, noFloorBad);
+
+                        if (((PYWalls.Segments & WallSegments.TopRight) == 0 || PYWalls.TopRightStyle != 1))
+                            SpreadOnto(Walls, Floors, item.X, plusY, 1, Map, width, height, spread, (ushort)rooms.Count, ExpectedTile, noFloorBad);
+
+                        if (((mainWalls.Segments & WallSegments.TopRight) == 0 || mainWalls.TopRightStyle != 1))
+                            SpreadOnto(Walls, Floors, item.X, minY, 3, Map, width, height, spread, (ushort)rooms.Count, ExpectedTile, noFloorBad);
                     }
 
                     var bounds = new Rectangle(rminX, rminY, (rmaxX - rminX) + 1, (rmaxY - rminY) + 1);
@@ -122,14 +133,68 @@ namespace TSO.Simantics.model
                     OptimizeObstacles(roomObs);
                     rooms.Add(new VMRoom
                     {
-                        IsOutside = outside,
+                        IsOutside = outside || ExpectedTile > 65533,
+                        IsPool = ExpectedTile > 65533,
                         Bounds = bounds,
                         WallObs = wallObs,
-                        RoomObs = roomObs
+                        RoomObs = roomObs,
+                        Area = area
                     });
                     outside = false;
                 }
             }
+        }
+
+        private static void SpreadOnto(WallTile[] walls, FloorTile[] floors, int x, int y, int inDir, uint[] map, int width, int height, Stack<Point> spread, ushort room, ushort expectedTile, bool noAir)
+        {
+            var wall = walls[x + y * width];
+            var floor = floors[x + y * width].Pattern;
+
+            if ((expectedTile > 0 && expectedTile != floor) || (expectedTile == 0 && floor > 65533))
+            {
+                return;
+            }
+
+            if ((wall.Segments & WallSegments.HorizontalDiag) > 0)
+            {
+                if (inDir < 2)
+                {
+                    //bottom (bottom right pattern)
+                    if ((map[x + y * width] & (uint)0x0000FFFF)>0) return; //don't spread onto
+                    map[x + y * width] |= room;
+                    
+                }
+                else
+                {
+                    //top (bottom left pattern)
+                    if ((map[x + y * width] & (uint)0xFFFF0000) > 0) return; //don't spread onto
+                    map[x + y * width] |= (uint)room<<16;
+                }
+                //if (!floorMode) walls[x + y * width] = wall;
+            }
+            else if ((wall.Segments & WallSegments.VerticalDiag) > 0)
+            {
+                if (inDir > 0 && inDir < 3)
+                {
+                    //left
+                    if ((map[x + y * width] & (uint)0x0000FFFF) > 0) return; //don't spread onto
+                    map[x + y * width] |= room;
+                }
+                else
+                {
+                    //right
+                    if ((map[x + y * width] & (uint)0xFFFF0000) > 0) return; //don't spread onto
+                    map[x + y * width] |= (uint)room << 16;
+                }
+                //if (!floorMode) walls[x + y * width] = wall;
+            }
+            else
+            {
+                if (map[x + y * width] > 0) return;
+                map[x + y * width] = (uint)(room | (room<<16));
+            }
+
+            spread.Push(new Point(x, y));
         }
 
         public List<VMObstacle> GenerateRoomObs(ushort room, Rectangle bounds)
@@ -145,7 +210,7 @@ namespace TSO.Simantics.model
                 VMObstacle next = null;
                 for (int x = x1; x < x2; x++)
                 {
-                    int tRoom = Map[x + y * Width];
+                    int tRoom = (ushort)Map[x + y * Width];
                     if (tRoom != room)
                     {
                         if (next != null) next.x2 += 16;

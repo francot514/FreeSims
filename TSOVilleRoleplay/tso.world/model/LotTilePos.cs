@@ -1,10 +1,17 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework;
+using System.IO;
 
-namespace tso.world.model
+namespace tso.world.Model
 {
     public struct LotTilePos
     {
@@ -45,6 +52,11 @@ namespace tso.world.model
         public static LotTilePos operator +(LotTilePos c1, LotTilePos c2) //use for offsets ONLY!
         {
             return new LotTilePos((short)(c1.x+c2.x), (short)(c1.y+c2.y), (sbyte)(c1.Level+c2.Level));
+        }
+
+        public static LotTilePos operator *(LotTilePos c1, int c2) //use for offsets ONLY!
+        {
+            return new LotTilePos((short)(c1.x * c2), (short)(c1.y * c2), (sbyte)(c1.Level * c2));
         }
 
         public static LotTilePos operator -(LotTilePos c1, LotTilePos c2) //use for offsets ONLY!
@@ -103,5 +115,19 @@ namespace tso.world.model
         }
 
         public static LotTilePos OUT_OF_WORLD = new LotTilePos(-32768, -32768, 1);
+
+        public void Deserialize(BinaryReader reader)
+        {
+            x = reader.ReadInt16();
+            y = reader.ReadInt16();
+            Level = reader.ReadSByte();
+        }
+
+        public void SerializeInto(BinaryWriter writer)
+        {
+            writer.Write(x);
+            writer.Write(y);
+            writer.Write(Level);
+        }
     }
 }

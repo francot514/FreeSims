@@ -1,11 +1,17 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TSO.Files.formats.iff.chunks;
-using TSO.Simantics.primitives;
+using TSO.SimsAntics.Primitives;
 
-namespace TSO.Simantics.engine
+namespace TSO.SimsAntics.Engine
 {
     public class VMTranslator
     {
@@ -17,6 +23,7 @@ namespace TSO.Simantics.engine
             routine.Arguments = bhav.Args;
             routine.Type = bhav.Type;
             routine.ID = bhav.ChunkID;
+            routine.Chunk = bhav;
             routine.VM = vm;
             routine.Rti = new VMFunctionRTI {
                 Name = bhav.ChunkLabel
@@ -30,9 +37,10 @@ namespace TSO.Simantics.engine
 
                 instruction.Index = (byte)i;
                 instruction.Opcode = bhavInstruction.Opcode;
-                instruction.Operand = bhavInstruction.Operand;
+                instruction.Operand = null;
                 instruction.FalsePointer = bhavInstruction.FalsePointer;
                 instruction.TruePointer = bhavInstruction.TruePointer;
+                instruction.Breakpoint = bhavInstruction.Breakpoint;
                 instruction.Function = routine;
 
                 /** Routine call **/
@@ -44,7 +52,7 @@ namespace TSO.Simantics.engine
                 }
                 else
                 {
-                    var primitive = context.GetPrimitive(instruction.Opcode);
+                    var primitive = context.Primitives[instruction.Opcode];
                     if (primitive != null)
                     {
                         if (primitive.OperandModel != null)

@@ -1,12 +1,20 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TSO.Files.utils;
-using TSO.Simantics.engine.scopes;
-using TSO.Simantics.engine.utils;
+using TSO.SimsAntics.Engine.Scopes;
+using TSO.SimsAntics.Engine.Utils;
+using TSO.SimsAntics.Model;
+using System.IO;
 
-namespace TSO.Simantics.engine.primitives
+namespace TSO.SimsAntics.Engine.Primitives
 {
     public class VMExpression : VMPrimitiveHandler
     {
@@ -57,8 +65,9 @@ namespace TSO.Simantics.engine.primitives
             return "unknown";
         }
 
-        public override VMPrimitiveExitCode Execute(VMStackFrame context){
-            var operand = context.GetCurrentOperand<VMExpressionOperand>();
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
+        {
+            var operand = (VMExpressionOperand)args;
 
             int rhsValue = 0;
             int lhsValue = 0;
@@ -193,7 +202,10 @@ namespace TSO.Simantics.engine.primitives
                             result = lhsValue > rhsValue;
                             break;
                         case VMExpressionOperator.GreaterThanOrEqualTo:
-                            result = lhsValue >= rhsValue;
+                            if (rhsValue == 1024 && operand.LhsData == (int)(VMStackObjectVariable.Room) && operand.LhsOwner == VMVariableScope.MyObject)
+                                //HACK: rooms >= 1024 is "upstairs"... check only used in stairs. Hacked to work with >2 floors
+                                result = context.Caller.Position.Level - (context.Callee.Position.Level - context.Callee.Object.OBJ.LevelOffset) > 0;
+                            else result = lhsValue >= rhsValue;
                             break;
                         case VMExpressionOperator.NotEqualTo:
                             result = lhsValue != rhsValue;
@@ -233,7 +245,7 @@ namespace TSO.Simantics.engine.primitives
                     var rhsList = VMMemory.GetList(context, operand.RhsOwner);
                     if (rhsList.Count == 0) return VMPrimitiveExitCode.GOTO_FALSE;
 
-                    switch (operand.LhsData)
+                    switch (operand.RhsData)
                     {
                         case 0: //front
                             lhsValue = rhsList.First.Value;
@@ -263,23 +275,35 @@ namespace TSO.Simantics.engine.primitives
 
     public class VMExpressionOperand : VMPrimitiveOperand
     {
-        public ushort LhsData;
-        public ushort RhsData;
-        public byte IsSigned;
-        public VMExpressionOperator Operator;
-        public VMVariableScope LhsOwner;
-        public VMVariableScope RhsOwner;
+        public short LhsData {get; set;}
+        public short RhsData { get; set; }
+        public byte IsSigned { get; set; }
+        public VMExpressionOperator Operator { get; set; }
+        public VMVariableScope LhsOwner { get; set; }
+        public VMVariableScope RhsOwner { get; set; }
 
         #region VMPrimitiveOperand Members
         public void Read(byte[] bytes)
         {
             using (var io = IoBuffer.FromBytes(bytes, ByteOrder.LITTLE_ENDIAN)){
-                LhsData = io.ReadUInt16();
-                RhsData = io.ReadUInt16();
+                LhsData = io.ReadInt16();
+                RhsData = io.ReadInt16();
                 IsSigned = io.ReadByte();
                 Operator = (VMExpressionOperator)io.ReadByte();
                 LhsOwner = (VMVariableScope)io.ReadByte();
                 RhsOwner = (VMVariableScope)io.ReadByte();
+            }
+        }
+
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write(LhsData);
+                io.Write(RhsData);
+                io.Write(IsSigned);
+                io.Write((byte)Operator);
+                io.Write((byte)LhsOwner);
+                io.Write((byte)RhsOwner);
             }
         }
         #endregion

@@ -1,34 +1,27 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Engine;
 using TSO.Files.utils;
-using TSO.Simantics.model;
+using TSO.SimsAntics.Model;
 
-namespace TSO.Simantics.primitives
+namespace TSO.SimsAntics.Primitives
 {
     public class VMGrab : VMPrimitiveHandler
     {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMGrabOperand>();
+            var operand = (VMGrabOperand)args;
 
-            if (context.Caller.GetSlot(0) == null)
-            {
-                var prevContain = context.StackObject.Container;
-                if (prevContain != null)
-                {
-                    prevContain.ClearSlot(context.StackObject.ContainerSlot);
-                }
-                context.Caller.PlaceInSlot(context.StackObject, 0, true, context.VM.Context);
-
-                var avatar = (VMAvatar)context.Caller;
-                avatar.CarryAnimation = TSO.Content.Content.Get().AvatarAnimations.Get("a2o-rarm-carry-loop.anim");
-                avatar.CarryAnimationState = new VMAnimationState(avatar.CarryAnimation, false); //set default carry animation
-            }
-            else
-                return VMPrimitiveExitCode.GOTO_FALSE;
+            if (context.Caller.GetSlot(0) == null) context.Caller.PlaceInSlot(context.StackObject, 0, true, context.VM.Context);
+            else return VMPrimitiveExitCode.GOTO_FALSE;
 
             return VMPrimitiveExitCode.GOTO_TRUE;
         }
@@ -43,6 +36,8 @@ namespace TSO.Simantics.primitives
             {
             }
         }
+
+        public void Write(byte[] bytes) { }
         #endregion
     }
 }

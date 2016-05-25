@@ -1,14 +1,8 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
@@ -17,7 +11,7 @@ using System.Text;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 
-namespace tso.world.utils
+namespace tso.world.Utils
 {
     /// <summary>
     /// Represents a 2D sprite in the game.
@@ -30,9 +24,8 @@ namespace tso.world.utils
         public Texture2D Mask;
         public Vector3 TilePosition;
         public Vector3 WorldPosition;
-        public short ObjectID;
-        public ushort Room;
-        //used for mouse hit test render mode
+        public short ObjectID; //used for mouse hit test render mode
+        public ushort Room = 0xFFFF; //room to use for ambient light
 
         public Rectangle SrcRect;
         public Rectangle DestRect;

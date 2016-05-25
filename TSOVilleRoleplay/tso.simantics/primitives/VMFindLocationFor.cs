@@ -1,14 +1,21 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Engine;
 using TSO.Files.utils;
-using TSO.Simantics.model;
-using tso.world.components;
-using tso.world.model;
+using TSO.SimsAntics.Model;
+using tso.world.Components;
+using tso.world.Model;
+using System.IO;
 
-namespace TSO.Simantics.primitives
+namespace TSO.SimsAntics.Primitives
 {
     public class VMFindLocationFor : VMPrimitiveHandler
     {
@@ -23,10 +30,9 @@ namespace TSO.Simantics.primitives
             LotTilePos.FromBigTile(16, -16, 0),
         };
 
-
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMFindLocationForOperand>();
+            var operand = (VMFindLocationForOperand)args;
             var refObj = (operand.UseLocalAsRef) ? context.VM.GetObjectById((short)context.Locals[operand.Local]) : context.Caller;
 
             var obj = context.StackObject;
@@ -61,12 +67,12 @@ namespace TSO.Simantics.primitives
             LotTilePos step = DirectionVectors[dir];
             for (int i = 0; i < 32; i++)
             {
-                if (obj.SetPosition(new LotTilePos(refObj.Position) + step,
+                if (obj.SetPosition(new LotTilePos(refObj.Position) + step * i,
                     (Direction)(1 << (dir)), context).Status == VMPlacementError.Success)
                     return true;
                 if (i != 0)
                 {
-                    if (obj.SetPosition(new LotTilePos(refObj.Position) - step,
+                    if (obj.SetPosition(new LotTilePos(refObj.Position) - step * i,
                         (Direction)(1 << (dir)), context).Status == VMPlacementError.Success)
                         return true;
                 }
@@ -116,9 +122,9 @@ namespace TSO.Simantics.primitives
 
     public class VMFindLocationForOperand : VMPrimitiveOperand
     {
-        public byte Mode;
-        public byte Local;
-        public byte Flags;
+        public byte Mode { get; set; }
+        public byte Local { get; set; }
+        public byte Flags { get; set; }
 
         #region VMPrimitiveOperand Members
         public void Read(byte[] bytes)
@@ -130,6 +136,15 @@ namespace TSO.Simantics.primitives
                 Flags = io.ReadByte();
             }
         }
+
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write(Mode);
+                io.Write(Local);
+                io.Write(Flags);
+            }
+        }
         #endregion
 
         public bool UseLocalAsRef
@@ -137,6 +152,11 @@ namespace TSO.Simantics.primitives
             get
             {
                 return (Flags & 1) == 1;
+            }
+            set
+            {
+                if (value) Flags |= 1;
+                else Flags &= unchecked((byte)~1);
             }
         }
 
@@ -146,6 +166,11 @@ namespace TSO.Simantics.primitives
             {
                 return (Flags & 2) == 2;
             }
+            set
+            {
+                if (value) Flags |= 2;
+                else Flags &= unchecked((byte)~2);
+            }
         }
 
         public bool UserEditableTilesOnly
@@ -153,6 +178,11 @@ namespace TSO.Simantics.primitives
             get
             {
                 return (Flags & 4) == 4;
+            }
+            set
+            {
+                if (value) Flags |= 4;
+                else Flags &= unchecked((byte)~4);
             }
         }
     }

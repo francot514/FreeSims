@@ -3,13 +3,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TSO.Files.formats.iff.chunks;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Engine;
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
 using Microsoft.Xna.Framework;
 using TSO.Content;
 using TSO.Vitaboy;
-using TSO.Simantics.model;
+using TSO.SimsAntics.Model;
+using TSO.SimsAntics.NetPlay;
+using TSO.SimsAntics.NetPlay.Model;
+using GonzoNet;
+using System.Collections.Concurrent;
+using TSO.SimsAntics.Marshals;
+using tso.world.Components;
+using TSO.SimsAntics.Marshals.Threads;
+using TSO.SimsAntics.Entities;
 
-namespace TSO.Simantics
+namespace TSO.SimsAntics
 {
     /// <summary>
     /// Simantics Virtual Machine.
@@ -27,15 +41,18 @@ namespace TSO.Simantics
                 VMEntity.UseWorld = value;
             }
         }
-
-        private const long TickInterval = 33 * TimeSpan.TicksPerMillisecond;
+        public long TickInterval = 33 * TimeSpan.TicksPerMillisecond;
+        public int Speed = 3;
 
         public VMContext Context { get; internal set; }
+
         public List<VMEntity> Entities = new List<VMEntity>();
+        public VMEntity ActiveEntity = null;
         public short[] GlobalState;
+        public string LotName;
+        public VMFreeWill FreeWill;
 
         private object ThreadLock;
-        //This is a hash set to avoid duplicates which would cause threads to get multiple ticks per VM tick **/
         private HashSet<VMThread> ActiveThreads = new HashSet<VMThread>();
         private HashSet<VMThread> IdleThreads = new HashSet<VMThread>();
         private List<VMStateChangeEvent> ThreadEvents = new List<VMStateChangeEvent>();
@@ -43,19 +60,43 @@ namespace TSO.Simantics
         private Dictionary<short, VMEntity> ObjectsById = new Dictionary<short, VMEntity>();
         private short ObjectId = 1;
 
+        private VMNetDriver Driver;
+        public VMHeadlineRendererProvider Headline;
+
+        public bool Ready;
+        public bool BHAVDirty;
+
         public event VMDialogHandler OnDialog;
+        public event VMChatEventHandler OnChatEvent;
+        public event VMRefreshHandler OnFullRefresh;
+        public event VMBreakpointHandler OnBreakpoint;
 
         public delegate void VMDialogHandler(VMDialogInfo info);
+        public delegate void VMChatEventHandler(VMChatEvent evt);
+        public delegate void VMRefreshHandler();
+        public delegate void VMBreakpointHandler(VMEntity entity);
 
         /// <summary>
         /// Constructs a new Virtual Machine instance.
         /// </summary>
         /// <param name="context">The VMContext instance to use.</param>
-        public VM(VMContext context)
+        public VM(VMContext context, VMHeadlineRendererProvider headline)
         {
             context.VM = this;
             ThreadLock = this;
             this.Context = context;
+            Headline = headline;
+            FreeWill = new VMFreeWill(this);
+            OnBHAVChange += VM_OnBHAVChange;
+
+            //Set VM Ready
+            Ready = true;
+           
+        }
+
+        private void VM_OnBHAVChange()
+        {
+            BHAVDirty = true;
         }
 
         /// <summary>
@@ -84,48 +125,15 @@ namespace TSO.Simantics
             GlobalState[17] = 4; //Runtime Code Version, is this in EA-Land.
         }
 
-        /// <summary>
-        /// Idles a thread.
-        /// </summary>
-        /// <param name="thread">The thread to idle.</param>
-        public void ThreadIdle(VMThread thread)
-        {
-            ThreadEvents.Add(new VMStateChangeEvent 
-            {
-                NewState = VMThreadState.Idle,
-                Thread = thread
-            });
-        }
-
-        /// <summary>
-        /// Actives a thread.
-        /// </summary>
-        /// <param name="thread">The thread to active.</param>
-        public void ThreadActive(VMThread thread)
-        {
-            ThreadEvents.Add(new VMStateChangeEvent
-            {
-                NewState = VMThreadState.Active,
-                Thread = thread
-            });
-        }
-
-        /// <summary>
-        /// Removes a thread.
-        /// </summary>
-        /// <param name="thread">The thread to remove.</param>
-        public void ThreadRemove(VMThread thread)
-        {
-            ThreadEvents.Add(new VMStateChangeEvent
-            {
-                NewState = VMThreadState.Removed,
-                Thread = thread
-            });
-        }
+        private bool AlternateTick;
 
         private long LastTick = 0;
         public void Update(GameTime time)
         {
+
+            
+            TickInterval = Speed/3 * 33 * TimeSpan.TicksPerMillisecond;
+            if (Ready)
             if (LastTick == 0 || (time.TotalGameTime.Ticks - LastTick) >= TickInterval)
             {
                 Tick(time);
@@ -138,7 +146,32 @@ namespace TSO.Simantics
                     if (obj is VMAvatar) ((VMAvatar)obj).FractionalAnim(0.5f); 
                 }
             }
+            AlternateTick = !AlternateTick;
         }
+
+        public void SendCommand(VMNetCommandBodyAbstract cmd)
+        {
+            Driver.SendCommand(cmd);
+        }
+
+        public void OnPacket(NetworkClient Client, ProcessedPacket Packet)
+        {
+            Driver.OnPacket(Client, Packet);
+        }
+
+        public void CloseNet()
+        {
+            Driver.CloseNet();
+        }
+
+        public void ReplaceNet(VMNetDriver driver)
+        {
+            lock (Driver)
+            {
+                Driver = driver;
+            }
+        }
+
         private void Tick(GameTime time)
         {
             Context.Clock.Tick();
@@ -148,7 +181,8 @@ namespace TSO.Simantics
             {
                 foreach (var evt in ThreadEvents)
                 {
-                    switch (evt.NewState){
+                    switch (evt.NewState)
+                    {
                         case VMThreadState.Idle:
                             evt.Thread.State = VMThreadState.Idle;
                             IdleThreads.Add(evt.Thread);
@@ -171,7 +205,36 @@ namespace TSO.Simantics
 
                 LastTick = time.TotalGameTime.Ticks;
                 foreach (var thread in ActiveThreads) thread.Tick();
-                foreach (var obj in Entities) obj.Tick(); //run object specific tick behaviors, like lockout count decrement
+
+                var entCpy = new List<VMEntity>(Entities);
+                foreach (var obj in entCpy)
+                {
+                    Context.NextRandom(1);
+                    obj.Tick(); //run object specific tick behaviors, like lockout count decrement
+                } //run object specific tick behaviors, like lockout count decrement
+
+                //Tick for the Free Will control
+                if (!Context.Blueprint.JobLot)
+                FreeWill.Tick();
+
+            }
+        }
+
+        public void InternalTick()
+        {
+            Context.Clock.Tick();
+            GlobalState[6] = (short)Context.Clock.Seconds;
+            GlobalState[5] = (short)Context.Clock.Minutes;
+            GlobalState[0] = (short)Context.Clock.Hours;
+            GlobalState[4] = (short)Context.Clock.TimeOfDay;
+
+            Context.Architecture.Tick();
+
+            var entCpy = new List<VMEntity>(Entities);
+            foreach (var obj in entCpy)
+            {
+                Context.NextRandom(1);
+                obj.Tick(); //run object specific tick behaviors, like lockout count decrement
             }
         }
 
@@ -255,6 +318,7 @@ namespace TSO.Simantics
         }
 
         private static Dictionary<BHAV, VMRoutine> _Assembled = new Dictionary<BHAV, VMRoutine>();
+        private static event VMBHAVChangeDelegate OnBHAVChange;
 
         /// <summary>
         /// Assembles a set of instructions.
@@ -263,6 +327,7 @@ namespace TSO.Simantics
         /// <returns>A VMRoutine instance.</returns>
         public VMRoutine Assemble(BHAV bhav)
         {
+            if (_Assembled.ContainsKey(bhav)) return _Assembled[bhav];
             lock (_Assembled)
             {
                 if (_Assembled.ContainsKey(bhav))
@@ -275,6 +340,16 @@ namespace TSO.Simantics
             }
         }
 
+        public static void BHAVChanged(BHAV bhav)
+        {
+            lock (_Assembled)
+            {
+                bhav.RuntimeVer++;
+                if (_Assembled.ContainsKey(bhav)) _Assembled.Remove(bhav);
+            }
+            if (OnBHAVChange != null) OnBHAVChange();
+        }
+
         /// <summary>
         /// Signals a Dialog to all listeners. (usually a UI)
         /// </summary>
@@ -284,16 +359,169 @@ namespace TSO.Simantics
             if (OnDialog != null) OnDialog(info);
         }
 
+        /// <summary>
+        /// Signals a chat event to all listeners. (usually a UI)
+        /// </summary>
+        /// <param name="info">The chat event to pass along.</param>
+        public void SignalChatEvent(VMChatEvent evt)
+        {
+            if (OnChatEvent != null) OnChatEvent(evt);
+        }
 
-        
+        public VMSandboxRestoreState Sandbox()
+        {
+            var state = new VMSandboxRestoreState { Entities = Entities, ObjectId = ObjectId, ObjectsById = ObjectsById };
+
+            Entities = new List<VMEntity>();
+            ObjectsById = new Dictionary<short, VMEntity>();
+            ObjectId = 1;
+
+            return state;
+        }
+
+        public void SandboxRestore(VMSandboxRestoreState state)
+        {
+            Entities = state.Entities;
+            ObjectsById = state.ObjectsById;
+            ObjectId = state.ObjectId;
+        }
+
+        #region VM Marshalling Functions
+        public VMMarshal Save()
+        {
+            var ents = new VMEntityMarshal[Entities.Count];
+            var threads = new VMThreadMarshal[Entities.Count];
+            var mult = new List<VMMultitileGroupMarshal>();
+
+            int i = 0;
+            foreach (var ent in Entities)
+            {
+                if (ent is VMAvatar)
+                {
+                    ents[i] = ((VMAvatar)ent).Save();
+                }
+                else
+                {
+                    ents[i] = ((VMGameObject)ent).Save();
+                }
+                threads[i++] = ent.Thread.Save();
+                if (ent.MultitileGroup.BaseObject == ent)
+                {
+                    mult.Add(ent.MultitileGroup.Save());
+                }
+            }
+
+            return new VMMarshal
+            {
+                Context = Context.Save(),
+                Entities = ents,
+                Threads = threads,
+                MultitileGroups = mult.ToArray(),
+                GlobalState = GlobalState,
+                ObjectId = ObjectId
+            };
+        }
+
+        public void Load(VMMarshal input)
+        {
+            var oldWorld = Context.World;
+            Context = new VMContext(input.Context, Context);
+            Context.Globals = TSO.Content.Content.Get().WorldObjectGlobals.Get("global");
+            Context.VM = this;
+            Context.Architecture.RegenRoomMap();
+            Context.RegeneratePortalInfo();
+
+            if (Entities != null) //free any object resources here.
+            {
+                foreach (var obj in Entities)
+                {
+                    if (obj.HeadlineRenderer != null) obj.HeadlineRenderer.Dispose();
+                }
+            }
+
+            Entities = new List<VMEntity>();
+            ObjectsById = new Dictionary<short, VMEntity>();
+            foreach (var ent in input.Entities)
+            {
+                VMEntity realEnt;
+                var objDefinition = TSO.Content.Content.Get().WorldObjects.Get(ent.GUID);
+                if (ent is VMAvatarMarshal)
+                {
+                    var avatar = new VMAvatar(objDefinition);
+                    avatar.Load((VMAvatarMarshal)ent);
+                    if (UseWorld) Context.Blueprint.AddAvatar((AvatarComponent)avatar.WorldUI);
+                    realEnt = avatar;
+                }
+                else
+                {
+                    var worldObject = new ObjectComponent(objDefinition);
+                    var obj = new VMGameObject(objDefinition, worldObject);
+                    obj.Load((VMGameObjectMarshal)ent);
+                    Context.Blueprint.AddObject((ObjectComponent)obj.WorldUI);
+                    Context.Blueprint.ChangeObjectLocation((ObjectComponent)obj.WorldUI, obj.Position);
+                    obj.Position = obj.Position;
+                    realEnt = obj;
+                }
+                realEnt.GenerateTreeByName(Context);
+                Entities.Add(realEnt);
+                ObjectsById.Add(ent.ObjectID, realEnt);
+            }
+
+            int i = 0;
+            foreach (var ent in input.Entities)
+            {
+                var threadMarsh = input.Threads[i];
+                var realEnt = Entities[i++];
+
+                realEnt.Thread = new VMThread(threadMarsh, Context, realEnt);
+
+                if (realEnt is VMAvatar)
+                    ((VMAvatar)realEnt).LoadCrossRef((VMAvatarMarshal)ent, Context);
+                else
+                    ((VMGameObject)realEnt).LoadCrossRef((VMGameObjectMarshal)ent, Context);
+            }
+
+            foreach (var multi in input.MultitileGroups)
+            {
+                new VMMultitileGroup(multi, Context); //should self register
+            }
+
+            foreach (var ent in Entities) ent.PositionChange(Context, true);
+
+            GlobalState = input.GlobalState;
+            ObjectId = input.ObjectId;
+
+            //just a few final changes to refresh everything, and avoid signalling objects
+            var clock = Context.Clock;
+            Context.Architecture.SetTimeOfDay(clock.Hours / 24.0 + clock.Minutes / (24.0 * 60) + clock.Seconds / (24.0 * 60 * 60));
+
+            Context.Architecture.RegenRoomMap();
+            Context.RegeneratePortalInfo();
+            Context.Architecture.WallDirtyState(input.Context.Architecture);
+
+            if (OnFullRefresh != null) OnFullRefresh();
+        }
+
+        internal void BreakpointHit(VMEntity entity)
+        {
+            if (OnBreakpoint == null) entity.Thread.ThreadBreak = VMThreadBreakMode.Active; //no handler..
+            else OnBreakpoint(entity);
+        }
+        #endregion
     }
 
-    /// <summary>
-    /// Event thrown on VM state change.
-    /// </summary>
+    public delegate void VMBHAVChangeDelegate();
+
     public class VMStateChangeEvent
     {
         public VMThread Thread;
         public VMThreadState NewState;
+    }
+
+    public class VMSandboxRestoreState
+    {
+        public List<VMEntity> Entities;
+        public Dictionary<short, VMEntity> ObjectsById;
+        public short ObjectId = 1;
     }
 }

@@ -5,7 +5,7 @@ using System.Text;
 using System.Xml.Serialization;
 using System.IO;
 
-namespace tso.world.model
+namespace tso.world.Model
 {
     [XmlRoot("pet")]
     public class XmlPet

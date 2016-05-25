@@ -1,19 +1,26 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Engine;
 using TSO.Files.utils;
-using TSO.Simantics.model;
+using TSO.SimsAntics.Model;
+using System.IO;
 
-namespace TSO.Simantics.primitives
+namespace TSO.SimsAntics.Primitives
 {
 
     public class VMGenericTSOCall : VMPrimitiveHandler
     {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMGenericTSOCallOperand>();
+            var operand = (VMGenericTSOCallOperand)args;
 
             switch (operand.Call)
             {
@@ -25,6 +32,7 @@ namespace TSO.Simantics.primitives
                 case VMGenericTSOCallMode.IsGlobalBroken:
                     return VMPrimitiveExitCode.GOTO_FALSE;
                 case VMGenericTSOCallMode.GetLotOwner:
+                case VMGenericTSOCallMode.StackObjectOwnerID:
                     context.Thread.TempRegisters[0] = context.Caller.ObjectID;
                     return VMPrimitiveExitCode.GOTO_TRUE;
                 case VMGenericTSOCallMode.SetActionIconToStackObject:
@@ -40,9 +48,12 @@ namespace TSO.Simantics.primitives
                         VMEntity temp2 = context.StackObject.GetSlot(i);
                         context.Caller.ClearSlot(i);
                         context.StackObject.ClearSlot(i);
-                        context.Caller.PlaceInSlot(temp2, i, false, context.VM.Context);
+                        context.Caller.PlaceInSlot(temp2, i, false, context.VM.Context); //slot to slot needs no cleanup
                         context.StackObject.PlaceInSlot(temp1, i, false, context.VM.Context);
                     }
+                    return VMPrimitiveExitCode.GOTO_TRUE;
+                case VMGenericTSOCallMode.ReturnLotCategory:
+                    context.Thread.TempRegisters[0] = 6; //skills lot. see #Lot Types in global.iff
                     return VMPrimitiveExitCode.GOTO_TRUE;
                 case VMGenericTSOCallMode.TestStackObject:
                     return (context.StackObject != null) ? VMPrimitiveExitCode.GOTO_TRUE : VMPrimitiveExitCode.GOTO_FALSE;
@@ -62,6 +73,13 @@ namespace TSO.Simantics.primitives
             using (var io = IoBuffer.FromBytes(bytes, ByteOrder.LITTLE_ENDIAN))
             {
                 Call = (VMGenericTSOCallMode)io.ReadByte();
+            }
+        }
+
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write((byte)Call);
             }
         }
         #endregion

@@ -1,41 +1,62 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Engine;
 using TSO.Files.utils;
-using TSO.Simantics.engine.scopes;
-using TSO.Simantics.engine.utils;
+using TSO.SimsAntics.Engine.Scopes;
+using TSO.SimsAntics.Engine.Utils;
 using TSO.Files.formats.iff.chunks;
+using TSO.Vitaboy;
+using System.IO;
 
-namespace TSO.Simantics.primitives
+namespace TSO.SimsAntics.Primitives
 {
     public class VMChangeSuitOrAccessory : VMPrimitiveHandler {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context){
-            var operand = context.GetCurrentOperand<VMChangeSuitOrAccessoryOperand>();
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
+        {
+            var operand = (VMChangeSuitOrAccessoryOperand)args;
 
             var avatar = (VMAvatar)context.Caller;
 
-
-
             if ((operand.Flags & VMChangeSuitOrAccessoryFlags.Update) == VMChangeSuitOrAccessoryFlags.Update)
-            { //update outfit with outfit in stringset 304 with index in temp 0
-                avatar.BodyOutfit = Convert.ToUInt64(context.Callee.Object.Resource.Get<STR>(304).GetString((context.Thread.TempRegisters[0])), 16);
+            { //update default outfit with outfit in stringset 304 with index in temp 0
+                avatar.DefaultSuits.Daywear = Convert.ToUInt64(context.Callee.Object.Resource.Get<STR>(304).GetString((context.Thread.TempRegisters[0])), 16);
+                avatar.BodyOutfit = avatar.DefaultSuits.Daywear;
             } 
             else 
             {
-                var suit = VMMemory.GetSuit(context, operand.SuitScope, operand.SuitData);
-                if(suit == null){
+                var suit = VMSuitProvider.GetSuit(context, operand.SuitScope, operand.SuitData);
+                if (suit == null)
+                {
                     return VMPrimitiveExitCode.GOTO_TRUE;
                 }
 
-                if ((operand.Flags & VMChangeSuitOrAccessoryFlags.Remove) == VMChangeSuitOrAccessoryFlags.Remove)
+                if (suit is string)
                 {
-                    avatar.Avatar.RemoveAccessory(suit);
-                }
-                else
+                    var suitFile = (string)suit;
+                    var apr = TSO.Content.Content.Get().AvatarAppearances.Get(suitFile);
+                    if ((operand.Flags & VMChangeSuitOrAccessoryFlags.Remove) == VMChangeSuitOrAccessoryFlags.Remove)
+                    {
+                        avatar.BoundAppearances.Remove(suitFile);
+                        avatar.Avatar.RemoveAccessory(apr); 
+                    }
+                    else
+                    {
+                        avatar.BoundAppearances.Add(suitFile);
+                        avatar.Avatar.AddAccessory(apr);
+                    }
+                } else if (suit is ulong)
                 {
-                    avatar.Avatar.AddAccessory(suit);
+                    var oft = (ulong)suit;
+                    avatar.SetPersonData(Model.VMPersonDataVariable.CurrentOutfit, operand.SuitData);
+                    avatar.BodyOutfit = oft;
                 }
             }
 
@@ -56,6 +77,15 @@ namespace TSO.Simantics.primitives
                 SuitData = io.ReadByte();
                 SuitScope = (VMSuitScope)io.ReadByte();
                 Flags = (VMChangeSuitOrAccessoryFlags)io.ReadUInt16();
+            }
+        }
+
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write(SuitData);
+                io.Write((byte)SuitScope);
+                io.Write((ushort)Flags);
             }
         }
         #endregion

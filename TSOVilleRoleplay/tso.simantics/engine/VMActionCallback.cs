@@ -1,11 +1,18 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TSO.Files.formats.iff.chunks;
 using TSO.Content;
+using TSO.SimsAntics.Marshals.Threads;
 
-namespace TSO.Simantics.engine
+namespace TSO.SimsAntics.Engine
 {
     public class VMActionCallback
     {
@@ -35,7 +42,7 @@ namespace TSO.Simantics.engine
         public void Run(VMEntity cbOwner) {
             if (type == 1) {
                 BHAV bhav;
-                GameIffResource CodeOwner = null;
+                GameObject CodeOwner = null;
                 var Action = Target.TreeTable.InteractionByIndex[Interaction];
                 ushort ActionID = Action.ActionFunction;
 
@@ -55,13 +62,13 @@ namespace TSO.Simantics.engine
                     //CodeOwner = Target.SemiGlobal.Resource;
                 }
 
-                CodeOwner = Target.Object.Resource;
+                CodeOwner = Target.Object;
                 var routine = vm.Assemble(bhav);
                 var args = new short[4];
                 if (SetParam) args[0] = cbOwner.ObjectID;
 
                 Caller.Thread.EnqueueAction(
-                    new TSO.Simantics.engine.VMQueuedAction
+                    new TSO.SimsAntics.Engine.VMQueuedAction
                     {
                         Callee = Target,
                         CodeOwner = CodeOwner,
@@ -70,10 +77,41 @@ namespace TSO.Simantics.engine
                         StackObject = this.StackObject,
                         Args = args,
                         InteractionNumber = Interaction,
-                        Priority = VMQueuePriority.Maximum //not sure if this is meant to be the case!
+                        Priority = (short)VMQueuePriority.Maximum, //not sure if this is meant to be the case!
+                        Flags = (TTABFlags)Action.Flags
                     }
                 );
             }
         }
+
+        #region VM Marshalling Functions
+        public VMActionCallbackMarshal Save()
+        {
+            return new VMActionCallbackMarshal
+            {
+                Type = type,
+                Target = (Target == null) ? (short)0 : Target.ObjectID,
+                Interaction = Interaction,
+                SetParam = SetParam,
+                StackObject = (StackObject == null) ? (short)0 : StackObject.ObjectID,
+                Caller = (Caller == null) ? (short)0 : Caller.ObjectID,
+            };
+        }
+
+        public void Load(VMActionCallbackMarshal input, VMContext context)
+        {
+            type = input.Type;
+            Target = context.VM.GetObjectById(input.Target);
+            Interaction = input.Interaction;
+            SetParam = input.SetParam;
+            StackObject = context.VM.GetObjectById(input.StackObject);
+            Caller = context.VM.GetObjectById(input.Caller);
+        }
+
+        public VMActionCallback(VMActionCallbackMarshal input, VMContext context)
+        {
+            Load(input, context);
+        }
+        #endregion
     }
 }

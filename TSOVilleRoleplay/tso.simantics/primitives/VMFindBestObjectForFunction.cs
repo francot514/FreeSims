@@ -1,17 +1,24 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Engine;
 using TSO.Files.utils;
-using TSO.Simantics.engine.utils;
-using TSO.Simantics.engine.scopes;
+using TSO.SimsAntics.Engine.Utils;
+using TSO.SimsAntics.Engine.Scopes;
 using TSO.Files.formats.iff.chunks;
-using TSO.Simantics.model;
+using TSO.SimsAntics.Model;
 using TSO.Content;
-using tso.world.model;
+using tso.world.Model;
+using System.IO;
 
-namespace TSO.Simantics.engine.primitives
+namespace TSO.SimsAntics.Engine.Primitives
 {
 
     public class VMFindBestObjectForFunction : VMPrimitiveHandler
@@ -53,9 +60,9 @@ namespace TSO.Simantics.engine.primitives
             VMStackObjectVariable.Invalid
         };
 
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMFindBestObjectForFunctionOperand>();
+            var operand = (VMFindBestObjectForFunctionOperand)args;
 
             var entities = context.VM.Entities;
 
@@ -89,14 +96,13 @@ namespace TSO.Simantics.engine.primitives
                     {
                         //calculate the score for this object.
                         int score = 0;
-                        if (ScoreVar[operand.Function] != VMStackObjectVariable.Invalid)
-                        {
+                        if (ScoreVar[operand.Function] != VMStackObjectVariable.Invalid) {
                             score = ent.GetValue(ScoreVar[operand.Function]);
                             if (ScoreVar[operand.Function] == VMStackObjectVariable.DirtyLevel && score < 800) continue; //only clean "dirty" things.
                         }
 
                         LotTilePos posDiff = ent.Position - context.Caller.Position;
-                        score -= (int)Math.Sqrt(posDiff.x * posDiff.x + posDiff.y * posDiff.y + (posDiff.Level * posDiff.Level * 900 * 256)) / 3;
+                        score -= (int)Math.Sqrt(posDiff.x*posDiff.x+posDiff.y*posDiff.y+(posDiff.Level*posDiff.Level*900*256))/3;
 
                         if (score > bestScore)
                         {
@@ -118,7 +124,7 @@ namespace TSO.Simantics.engine.primitives
 
     public class VMFindBestObjectForFunctionOperand : VMPrimitiveOperand
     {
-        public ushort Function;
+        public ushort Function { get; set; }
 
         #region VMPrimitiveOperand Members
         public void Read(byte[] bytes)
@@ -126,6 +132,13 @@ namespace TSO.Simantics.engine.primitives
             using (var io = IoBuffer.FromBytes(bytes, ByteOrder.LITTLE_ENDIAN))
             {
                 Function = io.ReadUInt16();
+            }
+        }
+
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write(Function);
             }
         }
         #endregion

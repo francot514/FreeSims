@@ -1,24 +1,35 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Engine;
 using TSO.Files.utils;
 using TSO.Files.formats.iff.chunks;
-using TSO.Simantics.net.model;
+using TSO.SimsAntics.NetPlay.Model;
 using System.IO;
 
-namespace TSO.Simantics.primitives
+namespace TSO.SimsAntics.Primitives
 {
     public class VMDialogPrivateStrings : VMPrimitiveHandler
     {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMDialogStringsOperand>();
+            return ExecuteGeneric(context, args, context.ScopeResource.Get<STR>(301));
+        }
+
+        public static VMPrimitiveExitCode ExecuteGeneric(VMStackFrame context, VMPrimitiveOperand args, STR table)
+        {
+            var operand = (VMDialogOperand)args;
             var curDialog = context.Thread.BlockingDialog;
             if (context.Thread.BlockingDialog == null)
             {
-                VMDialogHandler.ShowDialog(context, operand, context.ScopeResource.Get<STR>(301));
+                VMDialogHandler.ShowDialog(context, operand, table);
 
                 if ((operand.Flags & VMDialogFlags.Continue) == 0)
                 {
@@ -70,7 +81,7 @@ namespace TSO.Simantics.primitives
         }
     }
 
-    public class VMDialogStringsOperand : VMPrimitiveOperand
+    public class VMDialogOperand : VMPrimitiveOperand
     {
         //engage and block sim, automatic icon, local reference 0, string not debug
 
@@ -83,24 +94,10 @@ namespace TSO.Simantics.primitives
         public byte TitleStringID;
         public VMDialogFlags Flags; 
 
-        //Flags format:
-
-        //                                             
-        //   0           0           0           0           0           0           0           0
-        //
-        // Icon type:
-        // 0 = auto,
-        // 1 = none,
-        // 2 = neighbour,
-        // 3 = indexed,
-        // 4 = named
-
-
         #region VMPrimitiveOperand Members
         public void Read(byte[] bytes)
         {
-            using (var io = IoBuffer.FromBytes(bytes, ByteOrder.LITTLE_ENDIAN))
-            {
+            using (var io = IoBuffer.FromBytes(bytes, ByteOrder.LITTLE_ENDIAN)){
                 CancelStringID = io.ReadByte();
                 IconNameStringID = io.ReadByte();
                 MessageStringID = io.ReadByte();
@@ -109,6 +106,20 @@ namespace TSO.Simantics.primitives
                 Type = (VMDialogType)io.ReadByte();
                 TitleStringID = io.ReadByte();
                 Flags = (VMDialogFlags)io.ReadByte();
+            }
+        }
+
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write(CancelStringID);
+                io.Write(IconNameStringID);
+                io.Write(MessageStringID);
+                io.Write(YesStringID);
+                io.Write(NoStringID);
+                io.Write((byte)Type);
+                io.Write(TitleStringID);
+                io.Write((byte)Flags);
             }
         }
         #endregion
@@ -163,7 +174,7 @@ namespace TSO.Simantics.primitives
             writer.Write(Timeout);
             writer.Write(Responded);
             writer.Write(ResponseCode);
-            writer.Write((ResponseText == null) ? "" : ResponseText);
+            writer.Write((ResponseText == null)?"":ResponseText);
             writer.Write((byte)Type);
         }
 
@@ -176,5 +187,4 @@ namespace TSO.Simantics.primitives
             Type = (VMDialogType)reader.ReadByte();
         }
     }
-
 }

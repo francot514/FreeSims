@@ -1,23 +1,30 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TSO.Files.utils;
-using TSO.Simantics.engine.scopes;
-using TSO.Simantics.engine.utils;
-using TSO.Simantics;
+using TSO.SimsAntics.Engine.Scopes;
+using TSO.SimsAntics.Engine.Utils;
+using TSO.SimsAntics;
 using TSO.Files.formats.iff.chunks;
-using TSO.Simantics.primitives;
+using TSO.SimsAntics.Primitives;
+using System.IO;
 
-namespace TSO.Simantics.engine.primitives
+namespace TSO.SimsAntics.Engine.Primitives
 {
     //See VMFindBestObjectForFunction for function map table.
 
     public class VMRunFunctionalTree : VMPrimitiveHandler
     {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMRunFunctionalTreeOperand>();
+            var operand = (VMRunFunctionalTreeOperand)args;
 
             var entry = VMFindBestObjectForFunction.FunctionToEntryPoint[operand.Function];
             var ent = context.StackObject;
@@ -73,8 +80,10 @@ namespace TSO.Simantics.engine.primitives
 
     public class VMRunFunctionalTreeOperand : VMPrimitiveOperand
     {
-        public ushort Function;
-        public byte Flags; //only flag is 1: change icon
+        public ushort Function { get; set; }
+        public byte Flags { get; set; } //only flag is 1: change icon
+
+        public bool ChangeIcon { get { return (Flags & 1) > 0; } set { Flags = (byte)((Flags & 0xFE) | (ChangeIcon ? 1 : 0)); } }
 
         #region VMPrimitiveOperand Members
         public void Read(byte[] bytes)
@@ -83,6 +92,14 @@ namespace TSO.Simantics.engine.primitives
             {
                 Function = io.ReadUInt16();
                 Flags = io.ReadByte();
+            }
+        }
+
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write(Function);
+                io.Write(Flags);
             }
         }
         #endregion

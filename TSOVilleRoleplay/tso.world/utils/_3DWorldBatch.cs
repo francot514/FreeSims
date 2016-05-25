@@ -1,14 +1,8 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
@@ -18,7 +12,7 @@ using Microsoft.Xna.Framework.Graphics;
 using TSO.Vitaboy;
 using Microsoft.Xna.Framework;
 
-namespace tso.world.utils
+namespace tso.world.Utils
 {
     /// <summary>
     /// Used for drawing 3D elements in world.
@@ -27,11 +21,12 @@ namespace tso.world.utils
     {
         private WorldState State;
         private GraphicsDevice Device;
-        private short ObjectID = 0;
         public bool OBJIDMode = false;
         //private BasicEffect Effect;
 
         private List<_3DSprite> Sprites = new List<_3DSprite>();
+
+        public Color[] RoomLights { get; internal set; }
 
         public _3DWorldBatch(WorldState state)
         {
@@ -49,18 +44,14 @@ namespace tso.world.utils
             this.Device = device;
         }
 
-        public void SetObjID(short obj)
-        {
-            this.ObjectID = obj;
-        }
-
-        public void DrawMesh(Matrix world, Avatar binding)
+        public void DrawMesh(Matrix world, Avatar binding, short objID, ushort room)
         {
             this.Sprites.Add(new _3DSprite {
                 Effect = _3DSpriteEffect.CHARACTER,
                 Geometry = binding,
                 World = world,
-                ObjectID = ObjectID
+                ObjectID = objID,
+                Room = room
             });
         }
 
@@ -108,6 +99,11 @@ namespace tso.world.utils
                 foreach (var geom in sprites)
                 {
                     if (OBJIDMode) effect.Parameters["ObjectID"].SetValue(geom.ObjectID / 65535f);
+                    if (RoomLights != null)
+                    {
+                        var col = RoomLights[geom.Room];
+                        effect.Parameters["AmbientLight"].SetValue(new Vector4(col.R, col.G, col.B, col.A) / 255f);
+                    }
                     /*if (geom.Geometry is Avatar)
                     {
                         Avatar mG = (Avatar)geom.Geometry;

@@ -1,20 +1,29 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TSO.Files.utils;
-using TSO.Simantics.engine.utils;
-using TSO.Simantics.engine.scopes;
+using TSO.SimsAntics.Engine.Utils;
+using TSO.SimsAntics.Engine.Scopes;
 using Microsoft.Xna.Framework;
-using tso.world.model;
+using tso.world.Model;
+using System.IO;
 
-namespace TSO.Simantics.engine.primitives
+namespace TSO.SimsAntics.Engine.Primitives
 {
     public class VMGotoRoutingSlot : VMPrimitiveHandler {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMGotoRoutingSlotOperand>();
-            
+            var operand = (VMGotoRoutingSlotOperand)args;
+
+            if (context.Thread.IsCheck) return VMPrimitiveExitCode.GOTO_FALSE;
+
             var slot = VMMemory.GetSlot(context, operand.Type, operand.Data);
             var obj = context.StackObject;
             var avatar = context.Caller;
@@ -33,14 +42,20 @@ namespace TSO.Simantics.engine.primitives
 
     public class VMGotoRoutingSlotOperand : VMPrimitiveOperand
     {
-        public ushort Data;
-        public VMSlotScope Type;
-        public byte Flags;
+        public ushort Data { get; set; }
+        public VMSlotScope Type { get; set; }
+        public byte Flags { get; set; }
+
         public bool NoFailureTrees
         {
             get
             {
                 return (Flags & 1) > 0;
+            }
+            set
+            {
+                if (value) Flags |= 1;
+                else Flags &= 254;
             }
         }
 
@@ -50,6 +65,15 @@ namespace TSO.Simantics.engine.primitives
                 Data = io.ReadUInt16();
                 Type = (VMSlotScope)io.ReadUInt16();
                 Flags = io.ReadByte();
+            }
+        }
+
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write(Data);
+                io.Write((ushort)Type);
+                io.Write(Flags);
             }
         }
         #endregion

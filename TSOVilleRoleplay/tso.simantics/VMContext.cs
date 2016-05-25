@@ -1,24 +1,31 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
 using tso.world;
-using TSO.Simantics.engine;
-using TSO.Simantics.engine.primitives;
-using TSO.Simantics.primitives;
+using TSO.SimsAntics.Engine;
+using TSO.SimsAntics.Engine.Primitives;
+using TSO.SimsAntics.Primitives;
 using TSO.Content;
 using TSO.Files.formats.iff;
-using tso.world.model;
-using tso.world.components;
+
+using tso.world.Model;
+using tso.world.Components;
 using TSO.Files.formats.iff.chunks;
 using Microsoft.Xna.Framework;
-using TSO.Simantics.model;
-using TSO.Simantics.entities;
-using FSO.SimAntics.Engine;
-using TSO.SimAntics.Routing;
+using TSO.SimsAntics.Model;
+using TSO.SimsAntics.Entities;
+using TSO.SimsAntics.Model.Routing;
+using TSO.SimsAntics.Marshals;
 
-namespace TSO.Simantics
+namespace TSO.SimsAntics
 {
     public class VMContext
     {
@@ -42,22 +49,31 @@ namespace TSO.Simantics
         }
 
         public World World { get; internal set; }
-        public Dictionary<ushort, VMPrimitiveRegistration> Primitives = new Dictionary<ushort, VMPrimitiveRegistration>();
+        public VMPrimitiveRegistration[] Primitives = new VMPrimitiveRegistration[256];
         public VMAmbientSound Ambience;
-        private ulong RandomSeed;
+        public ulong RandomSeed;
 
         public GameGlobal Globals;
+        public int LotCategory;
         public VMRoomInfo[] RoomInfo;
-        private List<Dictionary<int, List<short>>> ObjectsAt; //used heavily for routing
+        private List<Dictionary<int, List<short>>> ObjectsAt = new List<Dictionary<int, List<short>>>(); //used heavily for routing
         
         public VM VM;
 
-        public VMContext(World world){
+        public VMContext(World world) : this(world, null) { }
+
+        public VMContext(World world, VMContext oldContext){
+            //oldContext is passed in case we need to inherit certain things, like the ambient sound player
             this.World = world;
             this.Clock = new VMClock();
-            this.Ambience = new VMAmbientSound();
 
-            ObjectsAt = new List<Dictionary<int, List<short>>>();
+            if (oldContext == null)
+            {
+                this.Ambience = new VMAmbientSound();
+            } else
+            {
+                this.Ambience = oldContext.Ambience;
+            }
 
             RandomSeed = (ulong)((new Random()).NextDouble() * UInt64.MaxValue); //when resuming state, this should be set.
             Clock.TicksPerMinute = 30; //1 minute per irl second
@@ -283,7 +299,7 @@ namespace TSO.Simantics
             {
                 Opcode = 36,
                 Name = "dialog_private",
-                OperandModel = typeof(VMDialogStringsOperand)
+                OperandModel = typeof(VMDialogOperand)
             });
 
             AddPrimitive(new VMPrimitiveRegistration(new VMTestSimInteractingWith())
@@ -297,14 +313,14 @@ namespace TSO.Simantics
             {
                 Opcode = 38,
                 Name = "dialog_global",
-                OperandModel = typeof(VMDialogStringsOperand)
+                OperandModel = typeof(VMDialogOperand)
             });
 
             AddPrimitive(new VMPrimitiveRegistration(new VMDialogSemiGlobalStrings())
             {
                 Opcode = 39,
                 Name = "dialog_semiglobal",
-                OperandModel = typeof(VMDialogStringsOperand)
+                OperandModel = typeof(VMDialogOperand)
             });
 
             AddPrimitive(new VMPrimitiveRegistration(new VMOnlineJobsCall())
@@ -394,7 +410,12 @@ namespace TSO.Simantics
                 OperandModel = typeof(VMInvokePluginOperand)
             });
 
-            //TODO: Get Terrain Info
+            AddPrimitive(new VMPrimitiveRegistration(new VMGetTerrainInfo())
+            {
+                Opcode = 63,
+                Name = "get_terrain_info",
+                OperandModel = typeof(VMGetTerrainInfoOperand)
+            });
 
             //UNUSED: Leave Lot and Goto
 
@@ -411,6 +432,16 @@ namespace TSO.Simantics
 
         }
 
+
+        public VMPrimitiveRegistration GetPrimitive(ushort opcode)
+        {
+            if (Primitives[opcode] != null)
+            {
+                return Primitives[opcode];
+            }
+            return null;
+        }
+
         /// <summary>
         /// Returns a random number between 0 and less than the specified maximum.
         /// </summary>
@@ -425,12 +456,12 @@ namespace TSO.Simantics
 
         private void WallsChanged(VMArchitecture caller)
         {
-
             RegeneratePortalInfo();
 
+            //TODO: this could get very slow! find a way to make this quicker.
             foreach (var obj in VM.Entities)
             {
-                if (obj is VMAvatar)
+                if (obj is VMAvatar && obj.Thread != null)
                 {
                     foreach (var frame in obj.Thread.Stack)
                     {
@@ -451,6 +482,7 @@ namespace TSO.Simantics
                 RoomInfo[i].Entities = new List<VMEntity>();
                 RoomInfo[i].Portals = new List<VMRoomPortal>();
                 RoomInfo[i].Room = Architecture.RoomData[i];
+                RoomInfo[i].Light = new RoomLighting();
             }
 
             foreach (var obj in VM.Entities)
@@ -461,7 +493,50 @@ namespace TSO.Simantics
                 { //portal object
                     AddRoomPortal(obj, room);
                 }
+                obj.SetRoom(room);
             }
+
+            for (ushort i=0; i<RoomInfo.Length; i++)
+            {
+                RefreshLighting(i, i==(RoomInfo.Length-1));
+            }
+        }
+
+        public void RefreshLighting(ushort room, bool commit)
+        {
+            var info = RoomInfo[room];
+            info.Light.AmbientLight = 0;
+            info.Light.OutsideLight = 0;
+            if (info.Room.IsOutside)
+            {
+                info.Light.OutsideLight = 100;
+            }
+            else
+            {
+                float areaScale = Math.Max(1, info.Room.Area / 100f);
+                foreach (var ent in info.Entities)
+                {
+                    var flags2 = (VMEntityFlags2)ent.GetValue(VMStackObjectVariable.FlagField2);
+                    var cont = ent.GetValue(VMStackObjectVariable.LightingContribution);
+                    if (cont > 0)
+                    {
+                        if ((flags2 & (VMEntityFlags2.ArchitectualWindow | VMEntityFlags2.ArchitectualDoor)) > 0)
+                            info.Light.OutsideLight += (ushort)Math.Min(100, cont / areaScale);
+                        else
+                            info.Light.AmbientLight += (ushort)Math.Min(100, cont / areaScale);
+                    }
+                }
+                if (info.Light.OutsideLight > 100) info.Light.OutsideLight = 100;
+            }
+
+            if (commit && UseWorld) { 
+                Blueprint.Light = new RoomLighting[RoomInfo.Length];
+                for (int i = 0; i < RoomInfo.Length; i++)
+                {
+                    Blueprint.Light[i] = RoomInfo[i].Light;
+                }
+                Blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.LIGHTING_CHANGED));
+            } 
         }
 
         public void AddRoomPortal(VMEntity obj, ushort room)
@@ -506,9 +581,12 @@ namespace TSO.Simantics
             { //portal
                 AddRoomPortal(obj, room);
             }
+            obj.SetRoom(room);
+            if (obj.GetValue(VMStackObjectVariable.LightingContribution) > 0)
+                RefreshLighting(room, true);
 
             while (pos.Level > ObjectsAt.Count) ObjectsAt.Add(new Dictionary<int, List<short>>());
-            if (!ObjectsAt[pos.Level - 1].ContainsKey(pos.TileID)) ObjectsAt[pos.Level - 1][pos.TileID] = new List<short>();
+            if (!ObjectsAt[pos.Level-1].ContainsKey(pos.TileID)) ObjectsAt[pos.Level - 1][pos.TileID] = new List<short>();
             ObjectsAt[pos.Level - 1][pos.TileID].Add(obj.ObjectID);
         }
 
@@ -524,6 +602,8 @@ namespace TSO.Simantics
             { //portal
                 RemoveRoomPortal(obj, room);
             }
+            if (obj.GetValue(VMStackObjectVariable.LightingContribution) > 0)
+                RefreshLighting(room, true);
 
             if (ObjectsAt[pos.Level - 1].ContainsKey(pos.TileID)) ObjectsAt[pos.Level - 1][pos.TileID].Remove(obj.ObjectID);
         }
@@ -554,20 +634,19 @@ namespace TSO.Simantics
 
         public VMSolidResult SolidToAvatars(LotTilePos pos)
         {
-            if (IsOutOfBounds(pos) || (pos.Level < 1 || pos.Level > ObjectsAt.Count) ||
+            if (IsOutOfBounds(pos) || (pos.Level < 1 || pos.Level > ObjectsAt.Count) || 
                 (pos.Level != 1 && Architecture.GetFloor(pos.TileX, pos.TileY, pos.Level).Pattern == 0)) return new VMSolidResult { Solid = true };
             if (!ObjectsAt[pos.Level - 1].ContainsKey(pos.TileID)) return new VMSolidResult();
-            var objs = ObjectsAt[pos.Level - 1][pos.TileID];
+                var objs = ObjectsAt[pos.Level - 1][pos.TileID];
             foreach (var id in objs)
             {
                 var obj = VM.GetObjectById(id);
                 if (obj == null) continue;
                 var flags = (VMEntityFlags)obj.GetValue(VMStackObjectVariable.Flags);
-                if (((flags & VMEntityFlags.DisallowPersonIntersection) > 0) || (flags & (VMEntityFlags.AllowPersonIntersection | VMEntityFlags.HasZeroExtent)) == 0)
-                    return new VMSolidResult
-                    {
+                if (((flags & VMEntityFlags.DisallowPersonIntersection) > 0) || (flags & (VMEntityFlags.AllowPersonIntersection | VMEntityFlags.HasZeroExtent)) == 0) 
+                    return new VMSolidResult { 
                         Solid = true,
-                        Chair = (obj.EntryPoints[26].ActionFunction != 0) ? obj : null
+                        Chair = (obj.EntryPoints[26].ActionFunction != 0)?obj:null
                     }; //solid to people
             }
             return new VMSolidResult();
@@ -575,7 +654,7 @@ namespace TSO.Simantics
 
         public bool IsOutOfBounds(LotTilePos pos)
         {
-            return (pos.x < 0 || pos.y < 0 || pos.TileX >= _Arch.Width || pos.TileY >= _Arch.Height);
+            return (pos.x < 0 || pos.y < 0 || pos.TileX >= _Arch.Width || pos.TileY >= _Arch.Height || pos.Level > _Arch.Stories);
         }
 
         public VMPlacementResult GetAvatarPlace(VMEntity target, LotTilePos pos, Direction dir)
@@ -599,7 +678,10 @@ namespace TSO.Simantics
                 if (obj.MultitileGroup == target.MultitileGroup) continue;
                 var oFoot = obj.Footprint;
 
-                if (oFoot != null && oFoot.Intersects(footprint)) //also ignore allow intersection trees?
+                if (oFoot != null && oFoot.Intersects(footprint)
+                        && (!(target.ExecuteEntryPoint(5, this, true, obj, new short[] { obj.ObjectID, 0, 0, 0 })
+                        || obj.ExecuteEntryPoint(5, this, true, target, new short[] { target.ObjectID, 0, 0, 0 })))
+                    )
                 {
                     var flags = (VMEntityFlags)obj.GetValue(VMStackObjectVariable.Flags);
                     bool allowAvatars = ((flags & VMEntityFlags.DisallowPersonIntersection) == 0) && ((flags & VMEntityFlags.AllowPersonIntersection) > 0);
@@ -620,7 +702,7 @@ namespace TSO.Simantics
             //ok, this might be confusing...
             short allowedHeights = target.GetValue(VMStackObjectVariable.AllowedHeightFlags);
             short weight = target.GetValue(VMStackObjectVariable.Weight);
-            bool noFloor = (allowedHeights & 1) == 0;
+            bool noFloor = (allowedHeights&1)==0;
 
             var flags = (VMEntityFlags)target.GetValue(VMStackObjectVariable.Flags);
             bool allowAvatars = ((flags & VMEntityFlags.DisallowPersonIntersection) == 0) && ((flags & VMEntityFlags.AllowPersonIntersection) > 0);
@@ -628,7 +710,7 @@ namespace TSO.Simantics
             VMObstacle footprint = target.GetObstacle(pos, dir);
             ushort room = GetRoomAt(pos);
 
-            VMPlacementError status = (noFloor) ? VMPlacementError.HeightNotAllowed : VMPlacementError.Success;
+            VMPlacementError status = (noFloor)?VMPlacementError.HeightNotAllowed:VMPlacementError.Success;
             VMEntity statusObj = null;
 
             if (footprint == null || pos.Level < 1)
@@ -641,17 +723,17 @@ namespace TSO.Simantics
             {
                 if (obj.MultitileGroup == target.MultitileGroup || (obj is VMAvatar && allowAvatars)) continue;
                 var oFoot = obj.Footprint;
-                
-                if (oFoot != null && oFoot.Intersects(footprint)
-                    && (!(target.ExecuteEntryPoint(5, this, true)
-                        || obj.ExecuteEntryPoint(5, this, true))
-                    ))
-                {
-                    statusObj = obj;
-                    status = VMPlacementError.CantIntersectOtherObjects;
 
+                if (oFoot != null && oFoot.Intersects(footprint)
+                    && (!(target.ExecuteEntryPoint(5, this, true, obj, new short[] { obj.ObjectID, 0, 0, 0 })
+                        || obj.ExecuteEntryPoint(5, this, true, target, new short[] { target.ObjectID, 0, 0, 0 })))
+                    )
+                {
+                    statusObj = obj; 
+                    status = VMPlacementError.CantIntersectOtherObjects;
+                    
                     //this object is technically solid. Check if we can place on top of it
-                    if (allowedHeights > 1 && obj.TotalSlots() > 0 && (obj.GetSlot(0) == null || obj.GetSlot(0) == target))
+                    if (allowedHeights>1 && obj.TotalSlots() > 0 && (obj.GetSlot(0) == null || obj.GetSlot(0) == target))
                     {
                         //first check if we have a slot 0, which is what we place onto. then check if it's empty, 
                         //then check if the object can support this one's weight.
@@ -687,7 +769,7 @@ namespace TSO.Simantics
         {
             if (obj.Position == LotTilePos.OUT_OF_WORLD) return 0;
             if (obj.Position.Level < 1 || obj.Position.Level > _Arch.Stories) return 0;
-            return Architecture.Rooms[obj.Position.Level - 1].Map[obj.Position.TileX + obj.Position.TileY*_Arch.Width];
+            return (ushort)Architecture.Rooms[obj.Position.Level - 1].Map[obj.Position.TileX + obj.Position.TileY*_Arch.Width];
         }
 
         public ushort GetRoomAt(LotTilePos pos)
@@ -695,7 +777,14 @@ namespace TSO.Simantics
             if (pos.TileX < 0 || pos.TileX >= _Arch.Width) return 0;
             else if (pos.TileY < 0 || pos.TileY >= _Arch.Height) return 0;
             else if (pos.Level < 1 || pos.Level > _Arch.Stories) return 0;
-            else return Architecture.Rooms[pos.Level-1].Map[pos.TileX + pos.TileY * _Arch.Width];
+            else return (ushort)Architecture.Rooms[pos.Level-1].Map[pos.TileX + pos.TileY * _Arch.Width];
+        }
+
+        public VMMultitileGroup GhostCopyGroup(VMMultitileGroup group)
+        {
+            var newGroup = CreateObjectInstance(((group.MultiTile) ? group.BaseObject.MasterDefinition.GUID : group.BaseObject.Object.OBJ.GUID), LotTilePos.OUT_OF_WORLD, group.BaseObject.Direction, true);
+
+            return newGroup;
         }
 
         public VMMultitileGroup CreateObjectInstance(UInt32 GUID, LotTilePos pos, Direction direction, bool ghostImage)
@@ -719,7 +808,7 @@ namespace TSO.Simantics
             }
 
             var master = objDefinition.OBJ.MasterID;
-            if (master != 0)
+            if (master != 0 && objDefinition.OBJ.SubIndex == -1)
             {
                 group.MultiTile = true;
                 var objd = objDefinition.Resource.List<OBJD>();
@@ -733,6 +822,9 @@ namespace TSO.Simantics
                         {
                             var worldObject = new ObjectComponent(subObjDefinition);
                             var vmObject = new VMGameObject(subObjDefinition, worldObject);
+                            vmObject.GhostImage = ghostImage;
+                            if (UseWorld) Blueprint.AddObject(worldObject);
+
                             vmObject.MasterDefinition = objDefinition.OBJ;
                             vmObject.UseTreeTableOf(objDefinition);
 
@@ -743,14 +835,12 @@ namespace TSO.Simantics
                             vmObject.MultitileGroup = group;
                             if (!ghostImage) VM.AddEntity(vmObject);
                             
-                            
                         }
                     }
                 }
 
                 group.Init(this);
                 VMPlacementError couldPlace = group.ChangePosition(pos, direction, this).Status;
-                
                 return group;
             }
             else
@@ -760,10 +850,11 @@ namespace TSO.Simantics
                     var vmObject = new VMAvatar(objDefinition);
                     vmObject.MultitileGroup = group;
                     group.AddObject(vmObject);
-                    
+
+                    vmObject.GhostImage = ghostImage;
                     if (!ghostImage) VM.AddEntity(vmObject);
 
-                    Blueprint.AddAvatar((AvatarComponent)vmObject.WorldUI);
+                    if (UseWorld) Blueprint.AddAvatar((AvatarComponent)vmObject.WorldUI);
 
                     vmObject.MainParam = MainParam;
                     vmObject.MainStackOBJ = MainStackOBJ;
@@ -779,9 +870,12 @@ namespace TSO.Simantics
                     var vmObject = new VMGameObject(objDefinition, worldObject);
 
                     vmObject.MultitileGroup = group;
+
                     group.AddObject(vmObject);
 
+                    vmObject.GhostImage = ghostImage;
                     if (!ghostImage) VM.AddEntity(vmObject);
+                    if (UseWorld) Blueprint.AddObject(worldObject);
 
                     vmObject.MainParam = MainParam;
                     vmObject.MainStackOBJ = MainStackOBJ;
@@ -792,45 +886,60 @@ namespace TSO.Simantics
                     return group;
                 }
             }
-
-            
         }
 
         public void RemoveObjectInstance(VMEntity target)
         {
             target.PrePositionChange(this);
-            VM.RemoveEntity(target);
-            if (target is VMGameObject) Blueprint.RemoveObject((ObjectComponent)target.WorldUI);
-            else Blueprint.RemoveAvatar((AvatarComponent)target.WorldUI);
-        }
-
-        public VMPrimitiveRegistration GetPrimitive(ushort opcode)
-        {
-            if (Primitives.ContainsKey(opcode)){
-                return Primitives[opcode];
+            if (!target.GhostImage) VM.RemoveEntity(target);
+            if (UseWorld)
+            {
+                if (target is VMGameObject) Blueprint.RemoveObject((ObjectComponent)target.WorldUI);
+                else Blueprint.RemoveAvatar((AvatarComponent)target.WorldUI);
             }
-            return null;
         }
 
         public void AddPrimitive(VMPrimitiveRegistration primitive){
-            Primitives.Add(primitive.Opcode, primitive);
+            Primitives[primitive.Opcode] = primitive;
         }
 
-        public void ThreadIdle(VMThread thread){
-            /** Switch thread to idle **/
-            VM.ThreadIdle(thread);
-        }
-
-        public void ThreadActive(VMThread thread){
-            /** Switch thread to active **/
-            VM.ThreadActive(thread);
-        }
-
-        public void ThreadRemove(VMThread thread)
+        #region VM Marshalling Functions
+        public virtual VMContextMarshal Save()
         {
-            /** Stop updating a thread **/
-            VM.ThreadRemove(thread);
+            return new VMContextMarshal
+            {
+                Architecture = Architecture.Save(),
+                Clock = Clock.Save(),
+                Ambience = new VMAmbientSoundMarshal { ActiveSounds = Ambience.ActiveSounds.Keys.ToArray() },
+                RandomSeed = RandomSeed
+            };
         }
+
+        public virtual void Load(VMContextMarshal input)
+        {
+            Blueprint = new Blueprint(input.Architecture.Width, input.Architecture.Height);
+            Architecture = new VMArchitecture(input.Architecture, this, Blueprint);
+            Clock = new VMClock(input.Clock);
+
+            if (VM.UseWorld)
+            {
+                foreach (var active in input.Ambience.ActiveSounds) Ambience.SetAmbience(active, true);
+
+                World.State.WorldSize = input.Architecture.Width;
+                Blueprint.Terrain = new TerrainComponent(new Rectangle(1, 1, input.Architecture.Width - 2, input.Architecture.Height - 2), Blueprint.LotType);
+                Blueprint.Terrain.Initialize(this.World.State.Device, this.World.State);
+
+                World.InitBlueprint(Blueprint);
+            }
+           
+            RandomSeed = input.RandomSeed;
+        }
+
+        public VMContext(VMContextMarshal input, VMContext oldContext) : this(oldContext.World, oldContext)
+        {
+            Load(input);
+        }
+        #endregion
     }
 
     public struct VMSolidResult

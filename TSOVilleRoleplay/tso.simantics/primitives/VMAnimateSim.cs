@@ -1,21 +1,28 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TSO.Files.utils;
-using TSO.Simantics.engine.scopes;
-using TSO.Simantics.engine.utils;
+using TSO.SimsAntics.Engine.Scopes;
+using TSO.SimsAntics.Engine.Utils;
 using TSO.Vitaboy;
-using TSO.Simantics.model;
-using TSO.Simantics.utils;
+using TSO.SimsAntics.Model;
+using TSO.SimsAntics.Utils;
+using System.IO;
 
-namespace TSO.Simantics.engine.primitives
+namespace TSO.SimsAntics.Engine.Primitives
 {
     public class VMAnimateSim : VMPrimitiveHandler
     {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMAnimateSimOperand>();
+            var operand = (VMAnimateSimOperand)args;
             var avatar = (VMAvatar)context.Caller;
 
             Animation animation = null;
@@ -42,8 +49,7 @@ namespace TSO.Simantics.engine.primitives
             }
 
             animation = VMMemory.GetAnimation(context, operand.Source, operand.AnimationID);
-            if (animation == null)
-            {
+            if (animation == null){
                 return VMPrimitiveExitCode.GOTO_TRUE;
             }
 
@@ -99,27 +105,36 @@ namespace TSO.Simantics.engine.primitives
         }
     }
 
-    public class VMAnimateSimOperand : VMPrimitiveOperand
-    {
-        public ushort AnimationID;
+    public class VMAnimateSimOperand : VMPrimitiveOperand {
+        public ushort AnimationID {get; set;}
         public byte LocalEventNumber;
         public byte _pad;
-        public VMAnimationScope Source;
+        public VMAnimationScope Source { get; set; }
         public byte Flags;
         public byte ExpectedEventCount;
 
         #region VMPrimitiveOperand Members
 
-        public void Read(byte[] bytes)
-        {
-            using (var io = IoBuffer.FromBytes(bytes, ByteOrder.LITTLE_ENDIAN))
-            {
+        public void Read(byte[] bytes){
+            using (var io = IoBuffer.FromBytes(bytes, ByteOrder.LITTLE_ENDIAN)){
                 AnimationID = io.ReadUInt16();
                 LocalEventNumber = io.ReadByte();
                 _pad = io.ReadByte();
                 Source = (VMAnimationScope)io.ReadByte();
                 Flags = io.ReadByte();
                 ExpectedEventCount = io.ReadByte();
+            }
+        }
+
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write(AnimationID);
+                io.Write(LocalEventNumber);
+                io.Write((byte)0);
+                io.Write((byte)Source);
+                io.Write(Flags);
+                io.Write(ExpectedEventCount);
             }
         }
 
@@ -131,6 +146,11 @@ namespace TSO.Simantics.engine.primitives
             {
                 return (Flags & 32) == 32;
             }
+            set
+            {
+                if (value) Flags |= 32;
+                else Flags &= unchecked((byte)~32);
+            }
         }
 
         public bool PlayBackwards
@@ -138,6 +158,11 @@ namespace TSO.Simantics.engine.primitives
             get
             {
                 return (Flags & 2) == 2;
+            }
+            set
+            {
+                if (value) Flags |= 2;
+                else Flags &= unchecked((byte)~2);
             }
         }
 
@@ -150,12 +175,11 @@ namespace TSO.Simantics.engine.primitives
 
             get
             {
-                return (byte)((Flags & 1) | ((Flags >> 3) & 2));
+                return (byte)((Flags&1) | ((Flags >> 3) & 2));
             }
         }
 
-        public override string ToString()
-        {
+        public override string ToString(){
             return "Animate Sim (id " + AnimationID + " from " + Source.ToString() + ")";
         }
     }

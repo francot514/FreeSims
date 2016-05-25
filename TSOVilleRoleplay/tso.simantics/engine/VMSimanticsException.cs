@@ -1,10 +1,15 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using FSO.SimAntics.Engine;
 
-namespace TSO.Simantics.engine
+namespace TSO.SimsAntics.Engine
 {
     public class VMSimanticsException : Exception
     {
@@ -31,32 +36,50 @@ namespace TSO.Simantics.engine
             if (context == null) return "No Stack Info.";
             StringBuilder output = new StringBuilder();
             
-            var stack = context.Thread.Stack.GetEnumerator();
-            while (stack.Current != null)
+            var stack = context.Thread.Stack;
+
+            string prevEE = "";
+            string prevER = "";
+
+            for (int i = stack.Count-1; i>=0; i--)
             {
-                var frame = stack.Current;
+                var frame = stack[i];
                 //run in tree:76
 
-                output.Append('(');
-                output.Append(frame.Caller.ToString());
-                output.Append(':');
-                output.Append(frame.Callee.ToString());
-                output.Append(") ");
+                string callerStr = frame.Caller.ToString();
+                string calleeStr = frame.Callee.ToString();
+
+                if (callerStr != prevER || calleeStr != prevEE)
+                {
+                    output.Append('(');
+                    output.Append(callerStr);
+                    output.Append(':');
+                    output.Append(calleeStr);
+                    output.Append(") ");
+                    output.AppendLine();
+                    prevEE = calleeStr;
+                    prevER = callerStr;
+                }
+
+                output.Append(" > ");
 
                 if (frame is VMRoutingFrame)
                 {
-                    output.Append("VMPathFinder to: ");
-                    output.Append(((VMRoutingFrame)frame).Callee.Position.ToString());
+                    output.Append("VMRoutingFrame with state: ");
+                    output.Append(((VMRoutingFrame)frame).State.ToString());
                 }
                 else 
                 {
-                    output.Append(frame.Routine.Rti.Name);
+                    output.Append(frame.Routine.Rti.Name.TrimEnd('\0'));
                     output.Append(':');
                     output.Append(frame.InstructionPointer);
+                    output.Append(" (");
+                    var opcode = frame.GetCurrentInstruction().Opcode;
+                    var primitive = (opcode > 255)?null:context.VM.Context.Primitives[opcode];
+                    output.Append((primitive == null)?opcode.ToString():primitive.Name);
+                    output.Append(")");
                 }
                 output.AppendLine();
-
-                stack.MoveNext();
             }
 
             return output.ToString();

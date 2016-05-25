@@ -1,14 +1,20 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TSO.Content;
 using TSO.Files.formats.iff.chunks;
-using TSO.Simantics.primitives;
-using TSO.Simantics.model;
-using FSO.SimAntics.Engine;
+using TSO.SimsAntics.Primitives;
+using TSO.SimsAntics.Model;
+using TSO.SimsAntics.Marshals.Threads;
 
-namespace TSO.Simantics.engine
+namespace TSO.SimsAntics.Engine
 {
     /// <summary>
     /// Handles instruction execution
@@ -17,25 +23,244 @@ namespace TSO.Simantics.engine
     {
         public VMContext Context;
         private VMEntity Entity;
+        public VMThreadState State;
+        public VMThreadBreakMode ThreadBreak = VMThreadBreakMode.Active;
+        public int BreakFrame; //frame the last breakpoint was performed on
+        public bool RoutineDirty;
+
+        //check tree only vars
+        public bool IsCheck;
+        public List<VMPieMenuInteraction> ActionStrings;
+
         public List<VMStackFrame> Stack;
         private bool ContinueExecution;
         public List<VMQueuedAction> Queue;
         public short[] TempRegisters = new short[20];
         public int[] TempXL = new int[2];
-        public VMThreadState State;
         public VMPrimitiveExitCode LastStackExitCode = VMPrimitiveExitCode.GOTO_FALSE;
-        private int DialogCooldown = 0;
+
+        public VMDialogResult BlockingDialog; 
+        public bool Interrupt;
+
+        private ushort ActionUID;
+        public int DialogCooldown = 0;
 
         public static VMPrimitiveExitCode EvaluateCheck(VMContext context, VMEntity entity, VMQueuedAction action)
         {
+            return EvaluateCheck(context, entity, action, null);
+        }
+        public static VMPrimitiveExitCode EvaluateCheck(VMContext context, VMEntity entity, VMQueuedAction action, List<VMPieMenuInteraction> actionStrings)
+        {
             var temp = new VMThread(context, entity, 5);
+            if (entity.Thread != null)
+            {
+                temp.TempRegisters = entity.Thread.TempRegisters;
+                temp.TempXL = entity.Thread.TempXL;
+            }
+            temp.IsCheck = true;
+            temp.ActionStrings = actionStrings; //generate and place action strings in here
             temp.EnqueueAction(action);
-            while (temp.Queue.Count > 0) //keep going till we're done! idling is for losers!
+            while (temp.Queue.Count > 0 && temp.DialogCooldown == 0) //keep going till we're done! idling is for losers!
             {
                 temp.Tick();
+                temp.ThreadBreak = VMThreadBreakMode.Active; //cannot breakpoint in check trees
             }
-            context.ThreadRemove(temp); //hopefully this thread should be completely dereferenced...
-            return temp.LastStackExitCode;
+            return (temp.DialogCooldown > 0) ? VMPrimitiveExitCode.ERROR:temp.LastStackExitCode;
+        }
+
+        public bool RunInMyStack(BHAV bhav, GameObject CodeOwner, short[] passVars, VMEntity stackObj)
+        {
+            var OldStack = Stack;
+            var OldQueue = Queue;
+            var OldCheck = IsCheck;
+
+            VMStackFrame prevFrame = new VMStackFrame() { Caller = Entity, Callee = Entity };
+            if (Stack.Count > 0)
+            {
+                prevFrame = Stack[Stack.Count - 1];
+                Stack = new List<VMStackFrame>() { prevFrame };
+            } else
+            {
+                Stack = new List<VMStackFrame>();
+            }
+
+            if (Queue.Count > 0)
+            {
+                Queue = new List<VMQueuedAction>() { Queue[0] };
+            } else
+            {
+                Queue = new List<VMQueuedAction>();
+            }
+            IsCheck = true;
+
+            ExecuteSubRoutine(prevFrame, bhav, CodeOwner, new VMSubRoutineOperand(passVars));
+            Stack.RemoveAt(0);
+            if (Stack.Count == 0)
+            {
+                Stack = OldStack;
+                Queue = OldQueue;
+                return false;
+                //bhav was invalid/empty
+            }
+            var frame = Stack[Stack.Count - 1];
+            frame.StackObject = stackObj;
+
+            try {
+                while (Stack.Count > 0)
+                {
+                    NextInstruction();
+                }
+            } catch (Exception)
+            {
+                //we need to catch these so that the parent can be restored.
+            }
+
+            //copy child stack things to parent stack
+            Stack = OldStack;
+            Queue = OldQueue;
+            IsCheck = OldCheck;
+
+            return (LastStackExitCode == VMPrimitiveExitCode.RETURN_TRUE) ? true : false;
+        }
+
+        public VMThread(VMContext context, VMEntity entity, int stackSize){
+            this.Context = context;
+            this.Entity = entity;
+
+            this.Stack = new List<VMStackFrame>(stackSize);
+            this.Queue = new List<VMQueuedAction>();
+        }
+
+        public void Tick(){
+            if (ThreadBreak == VMThreadBreakMode.Pause) return;
+            else if (ThreadBreak == VMThreadBreakMode.Immediate)
+            {
+                Breakpoint(Stack.LastOrDefault()); return;
+            }
+            if (RoutineDirty)
+            {
+                foreach (var frame in Stack)
+                    if (frame.Routine.Chunk.RuntimeVer != frame.Routine.RuntimeVer) frame.Routine = Context.VM.Assemble(frame.Routine.Chunk); 
+                RoutineDirty = false;
+            }
+
+            if (DialogCooldown > 0) DialogCooldown--;
+//#if !DEBUG
+            try {
+                //#endif
+                if (!Entity.Dead)
+                {
+                    EvaluateQueuePriorities();
+                    if (Stack.Count == 0)
+                    {
+                        if (Queue.Count == 0)
+                        {
+                            //todo: should restart main
+                            return;
+                        }
+                        var item = Queue[0];
+                        if (item.Cancelled) Entity.SetFlag(VMEntityFlags.InteractionCanceled, true);
+                        if (IsCheck || (item.Mode != VMQueueMode.ParentIdle || !Entity.GetFlag(VMEntityFlags.InteractionCanceled)))
+                            ExecuteAction(item);
+                        else {
+                            Queue.RemoveAt(0);
+                            return;
+                        }
+                    }
+                    if (!Queue[0].Callee.Dead)
+                    {
+                        if (ThreadBreak == VMThreadBreakMode.ReturnTrue)
+                        {
+                            var bf = Stack[BreakFrame];
+                            HandleResult(bf, bf.GetCurrentInstruction(), VMPrimitiveExitCode.RETURN_TRUE);
+                            Breakpoint(Stack.LastOrDefault());
+                            return;
+                        }
+                        if (ThreadBreak == VMThreadBreakMode.ReturnFalse)
+                        {
+                            var bf = Stack[BreakFrame];
+                            HandleResult(bf, bf.GetCurrentInstruction(), VMPrimitiveExitCode.RETURN_TRUE);
+                            Breakpoint(Stack.LastOrDefault());
+                            return;
+                        }
+                        ContinueExecution = true;
+                        var interaction = Queue[0];
+                        while (ContinueExecution)
+                        {
+                            ContinueExecution = false;
+                            NextInstruction();
+                        }
+
+                        //clear "interaction cancelled" if we're going into the next action.
+                        if (Stack.Count == 0 && interaction.Mode != VMQueueMode.ParentIdle) Entity.SetFlag(VMEntityFlags.InteractionCanceled, false);
+                    }
+                    else //interaction owner is dead, rip
+                    {
+                        Stack.Clear();
+                        if (Queue[0].Callback != null) Queue[0].Callback.Run(Entity);
+                        if (Queue.Count > 0) Queue.RemoveAt(0);
+                    }
+                }
+                else
+                {
+                    Queue.Clear();
+                }
+
+//#if !DEBUG
+            } catch (Exception e) {
+                var context = Stack[Stack.Count - 1];
+                bool Delete = ((Entity is VMGameObject) && (DialogCooldown > 30 * 20 - 10));
+                if (DialogCooldown == 0)
+                {
+                    
+                    var simExcept = new VMSimanticsException(e.Message, context);
+                    string exceptionStr = "A SimAntics Exception has occurred, and has been suppressed: \r\n\r\n" + simExcept.ToString() + "\r\n\r\nThe object will be reset. Please report this!";
+                    VMDialogInfo info = new VMDialogInfo
+                    {
+                        Caller = null,
+                        Icon = context.Callee,
+                        Operand = new VMDialogOperand { },
+                        Message = exceptionStr,
+                        Title = "SimAntics Exception!"
+                    };
+                    Context.VM.SignalDialog(info);
+                    DialogCooldown = 30 * 20;
+                }
+
+                context.Callee.Reset(context.VM.Context);
+                context.Caller.Reset(context.VM.Context);
+
+                if (Delete) Entity.Delete(true, context.VM.Context);
+            }
+//#endif
+            //Interrupt = true;
+        }
+
+        private void EvaluateQueuePriorities() {
+            if (Queue.Count == 0) return;
+            int CurrentPriority = (int)Queue[0].Priority;
+            for (int i = 1; i < Queue.Count; i++)
+            {
+                if ((int)Queue[i].Priority > CurrentPriority)
+                {
+                    Queue[0].Cancelled = true;
+                    Entity.SetFlag(VMEntityFlags.InteractionCanceled, true);
+                    break;
+                }
+            }
+        }
+
+        private void NextInstruction()
+        {
+            if (Stack.Count == 0){
+                return;
+            }
+
+            /** Next instruction **/
+            var currentFrame = Stack.Last();
+
+            if (currentFrame is VMRoutingFrame) HandleResult(currentFrame, null, ((VMRoutingFrame)currentFrame).Tick());
+            else ExecuteInstruction(currentFrame);
         }
 
         public VMRoutingFrame PushNewRoutingFrame(VMStackFrame frame, bool failureTrees)
@@ -55,166 +280,7 @@ namespace TSO.Simantics.engine
             return childFrame;
         }
 
-
-
-        public bool RunInMyStack(BHAV bhav, GameIffResource CodeOwner, short[] passVars, VMEntity stackObj)
-        {
-            var OldStack = Stack;
-            var OldQueue = Queue;
-            VMStackFrame prevFrame = new VMStackFrame() { Caller = Entity, Callee = Entity };
-            if (Stack.Count > 0)
-            {
-                prevFrame = Stack[Stack.Count - 1];
-                Stack = new List<VMStackFrame>() { prevFrame };
-            } else
-            {
-                Stack = new List<VMStackFrame>();
-            }
-
-            if (Queue.Count > 0)
-            {
-                Queue = new List<VMQueuedAction>() { Queue[0] };
-            } else
-            {
-                Queue = new List<VMQueuedAction>();
-            }
-            
-            ExecuteSubRoutine(prevFrame, bhav, CodeOwner, new VMSubRoutineOperand(passVars));
-            Stack.RemoveAt(0);
-            if (Stack.Count == 0)
-            {
-                Stack = OldStack;
-                Queue = OldQueue;
-                return false;
-                //bhav was invalid/empty
-            }
-            var frame = Stack[Stack.Count - 1];
-            frame.StackObject = stackObj;
-
-            while (Stack.Count > 0)
-            {
-                NextInstruction();
-            }
-
-            //copy child stack things to parent stack
-
-            //prevFrame.Args = frame.Args;
-            //prevFrame.StackObject = frame.StackObject;
-            Stack = OldStack;
-            Queue = OldQueue;
-
-            return (LastStackExitCode == VMPrimitiveExitCode.RETURN_TRUE) ? true : false;
-        }
-
-        public VMThread(VMContext context, VMEntity entity, int stackSize){
-            this.Context = context;
-            this.Entity = entity;
-
-            this.Stack = new List<VMStackFrame>(stackSize);
-            this.Queue = new List<VMQueuedAction>();
-
-            Context.ThreadIdle(this);
-        }
-
-        public void Tick(){
-
-            try {
-            if (!Entity.Dead)
-            {
-                EvaluateQueuePriorities();
-                if (Stack.Count == 0)
-                {
-                    if (Queue.Count == 0)
-                    {
-                        /** Idle **/
-                        Context.ThreadIdle(this);
-                        return;
-                    }
-                    var item = Queue[0];
-                    ExecuteAction(item);
-                }
-                if (!Queue[0].Callee.Dead)
-                {
-                    ContinueExecution = true;
-                    while (ContinueExecution)
-                    {
-                        ContinueExecution = false;
-                        NextInstruction();
-                    }
-                }
-                else //interaction owner is dead, rip
-                {
-                    Stack.Clear();
-                    if (Queue[0].Callback != null) Queue[0].Callback.Run(Entity);
-                    if (Queue.Count > 0) Queue.RemoveAt(0);
-                }
-            }
-            else
-            {
-                Queue.Clear();
-                Context.ThreadRemove(this); //thread owner is not alive, kill their thread
-            }
-            }
-            catch (Exception e)
-            {
-                var context = Stack[Stack.Count - 1];
-                bool Delete = ((Entity is VMGameObject) && (DialogCooldown > 30 * 20 - 10));
-                if (DialogCooldown == 0)
-                {
-
-                    var simExcept = new VMSimanticsException(e.Message, context);
-                    string exceptionStr = "A SimAntics Exception has occurred, and has been suppressed: \r\n\r\n" + simExcept.ToString() + "\r\n\r\nThe object will be reset. Please report this!";
-                    VMDialogInfo info = new VMDialogInfo
-                    {
-                        Caller = null,
-                        Icon = context.Callee,
-                        Operand = new VMDialogStringsOperand { },
-                        Message = exceptionStr,
-                        Title = "SimAntics Exception!"
-                    };
-                    Context.VM.SignalDialog(info);
-                    DialogCooldown = 30 * 20;
-                }
-
-                context.Callee.Reset(context.VM.Context);
-                context.Caller.Reset(context.VM.Context);
-
-                if (Delete) Entity.Delete(true, context.VM.Context);
-            }
-
-               
-
-        }
-
-        private void EvaluateQueuePriorities() {
-            if (Queue.Count == 0) return;
-            int CurrentPriority = (int)Queue[0].Priority;
-            for (int i = 1; i < Queue.Count; i++)
-            {
-                if ((int)Queue[i].Priority < CurrentPriority)
-                {
-                    Queue[0].Cancelled = true;
-                    break;
-                }
-            }
-        }
-
-        private void NextInstruction()
-        {
-            if (Stack.Count == 0){
-                return;
-            }
-
-            /** Next instruction **/
-            var currentFrame = Stack.Last();
-
-            if (currentFrame is VMRoutingFrame) HandleResult(currentFrame, null, ((VMRoutingFrame)currentFrame).Tick()); 
-            else ExecuteInstruction(currentFrame);
-        }
-
-
-
-        public void ExecuteSubRoutine(VMStackFrame frame, BHAV bhav, GameIffResource codeOwner, VMSubRoutineOperand args)
+        public void ExecuteSubRoutine(VMStackFrame frame, BHAV bhav, GameObject codeOwner, VMSubRoutineOperand args)
         {
             if (bhav == null){
                 Pop(VMPrimitiveExitCode.ERROR);
@@ -250,35 +316,41 @@ namespace TSO.Simantics.engine
             {
                 BHAV bhav = null;
 
-                GameIffResource CodeOwner;
+                GameObject CodeOwner;
                 if (opcode >= 8192)
                 {
-                    //CodeOwner = frame.Callee.SemiGlobal.Resource;
-                    
-                    bhav = frame.CodeOwner.SemiGlobal.Get<BHAV>(opcode);
+                    // Semi-Global sub-routine call
+                    bhav = frame.ScopeResource.SemiGlobal.Get<BHAV>(opcode);
                 }
                 else if (opcode >= 4096)
                 {
-                    /** Private sub-routine call **/
-                    bhav = frame.CodeOwner.Get<BHAV>(opcode);
+                    // Private sub-routine call
+                    bhav = frame.ScopeResource.Get<BHAV>(opcode);
                 }
                 else
                 {
-                    /** Global sub-routine call **/
+                    // Global sub-routine call
                     //CodeOwner = frame.Global.Resource;
                     bhav = frame.Global.Resource.Get<BHAV>(opcode);
                 }
 
                 CodeOwner = frame.CodeOwner;
 
-                var operand = frame.GetCurrentOperand<VMSubRoutineOperand>();
+                var operand = (VMSubRoutineOperand)instruction.Operand;
                 ExecuteSubRoutine(frame, bhav, CodeOwner, operand);
-                NextInstruction();
+                if (Stack.LastOrDefault().GetCurrentInstruction().Breakpoint || ThreadBreak == VMThreadBreakMode.StepIn)
+                {
+                    Breakpoint(frame);
+                    ContinueExecution = false;
+                } else
+                {
+                    ContinueExecution = true;
+                }
                 return;
             }
             
 
-            var primitive = Context.GetPrimitive(opcode);
+            var primitive = Context.Primitives[opcode];
             if (primitive == null)
             {
                 //throw new Exception("Unknown primitive!");
@@ -289,7 +361,7 @@ namespace TSO.Simantics.engine
             }
 
             VMPrimitiveHandler handler = primitive.GetHandler();
-            var result = handler.Execute(frame);
+            var result = handler.Execute(frame, instruction.Operand);
             HandleResult(frame, instruction, result);
         }
 
@@ -297,7 +369,7 @@ namespace TSO.Simantics.engine
         {
             switch (result)
             {
-                /** Dont advance the instruction pointer, this primitive isnt finished yet **/
+                // Don't advance the instruction pointer, this primitive isnt finished yet
                 case VMPrimitiveExitCode.CONTINUE_NEXT_TICK:
                     ContinueExecution = false;
                     break;
@@ -338,26 +410,38 @@ namespace TSO.Simantics.engine
                 //TODO: Handle returning false into the pathfinder (indicates failure)
                 return;
             }
-            if (instruction == 254){
-                Pop(VMPrimitiveExitCode.RETURN_TRUE);
+
+            switch (instruction) {
+                case 255:
+                    Pop(VMPrimitiveExitCode.RETURN_FALSE);
+                    break;
+                case 254:
+                    Pop(VMPrimitiveExitCode.RETURN_TRUE); break;
+                case 253:
+                    Pop(VMPrimitiveExitCode.ERROR); break;
+                default:
+                    frame.InstructionPointer = instruction;
+                    if (frame.GetCurrentInstruction().Breakpoint || 
+                        (ThreadBreak != VMThreadBreakMode.Active && (
+                            ThreadBreak == VMThreadBreakMode.StepIn || 
+                            (ThreadBreak == VMThreadBreakMode.StepOver && Stack.Count-1 <= BreakFrame) ||
+                            (ThreadBreak == VMThreadBreakMode.StepOut && Stack.Count <= BreakFrame)
+                        )))
+                    {
+                        Breakpoint(frame);
+                    }
+                    break;
             }
-            else if (instruction == 255)
-            {
-                Pop(VMPrimitiveExitCode.RETURN_FALSE);
-            }
-            else if (instruction == 253)
-            {
-                Pop(VMPrimitiveExitCode.ERROR);
-            }
-            else
-            {
-                frame.InstructionPointer = instruction;
-            }
-            ContinueExecution = continueExecution;
-            /*if (continueExecution)
-            {
-                NextInstruction();
-            }*/
+
+            ContinueExecution = (ThreadBreak != VMThreadBreakMode.Pause) && continueExecution;
+        }
+
+        public void Breakpoint(VMStackFrame frame)
+        {
+            if (IsCheck) return; //can't breakpoint in check trees.
+            ThreadBreak = VMThreadBreakMode.Pause;
+            BreakFrame = Stack.IndexOf(frame);
+            Context.VM.BreakpointHit(Entity);
         }
 
         private void ExecuteAction(VMQueuedAction action){
@@ -371,7 +455,6 @@ namespace TSO.Simantics.engine
             if (action.Args == null) frame.Args = new short[4]; //always 4? i got crashes when i used the value provided by the routine, when for that same routine edith displayed 4 in the properties...
             else frame.Args = action.Args; //WARNING - if you use this, the args array MUST have the same number of elements the routine is expecting!
             
-
             Push(frame);
         }
 
@@ -407,7 +490,7 @@ namespace TSO.Simantics.engine
 
             /** Initialize the locals **/
             var numLocals = Math.Max(frame.Routine.Locals, frame.Routine.Arguments);
-            frame.Locals = new ushort[numLocals];
+            frame.Locals = new short[numLocals];
             frame.Thread = this;
 
             frame.InstructionPointer = 0;
@@ -419,25 +502,102 @@ namespace TSO.Simantics.engine
         /// <param name="invocation"></param>
         public void EnqueueAction(VMQueuedAction invocation)
         {
-            if (Queue.Count == 0) //if empty, just queue right at the front (or end, if you're like that!)
+            if (!IsCheck && (invocation.Flags & TTABFlags.RunImmediately) > 0)
             {
-                this.Queue.Add(invocation);
-                Context.ThreadActive(this);
+                EvaluateCheck(Context, Entity, invocation);
+                return;
             }
+
+            invocation.UID = ActionUID++;
+            if (Queue.Count == 0) //if empty, just queue right at the front 
+                this.Queue.Add(invocation);
+            else if ((invocation.Flags & TTABFlags.Leapfrog) > 0)
+                //place right after active interaction, ignoring all priorities.
+                this.Queue.Insert(1, invocation);
             else //we've got an even harder job! find a place for this interaction based on its priority
             {
+                bool hitParentEnd = (invocation.Mode != VMQueueMode.ParentIdle);
                 for (int i = Queue.Count - 1; i > 0; i--)
                 {
-                    if (invocation.Priority >= Queue[i].Priority) //if the next queue element we need to skip over is of the same or a higher priority we'll stay right here, otherwise skip over it!
+                    if (hitParentEnd && (invocation.Priority <= Queue[i].Priority || Queue[i].Mode == VMQueueMode.ParentExit)) //skip until we find a parent exit or something with the same or higher priority.
                     {
                         this.Queue.Insert(i+1, invocation);
+                        EvaluateQueuePriorities();
                         return;
                     }
+                    if (Queue[i].Mode == VMQueueMode.ParentExit) hitParentEnd = true;
                 }
                 this.Queue.Insert(1, invocation); //this is more important than all other queued items that are not running, so stick this to run next.
             }
             EvaluateQueuePriorities();
         }
+
+        #region VM Marshalling Functions
+        public virtual VMThreadMarshal Save()
+        {
+            var stack = new VMStackFrameMarshal[Stack.Count];
+            int i = 0;
+            foreach (var item in Stack) stack[i++] = item.Save();
+
+            var queue = new VMQueuedActionMarshal[Queue.Count];
+            i = 0;
+            foreach (var item in Queue) queue[i++] = item.Save();
+
+            return new VMThreadMarshal
+            {
+                Stack = stack,
+                Queue = queue,
+                TempRegisters = TempRegisters,
+                TempXL = TempXL,
+                LastStackExitCode = LastStackExitCode,
+
+                BlockingDialog = BlockingDialog,
+
+                Interrupt = Interrupt,
+
+                ActionUID = ActionUID,
+                DialogCooldown = DialogCooldown
+            };
+        }
+
+        public virtual void Load(VMThreadMarshal input, VMContext context)
+        {
+            Stack = new List<VMStackFrame>();
+            foreach (var item in input.Stack)
+            {
+                Stack.Add((item is VMRoutingFrameMarshal)? new VMRoutingFrame(item, context, this) : new VMStackFrame(item, context, this));
+            }
+            Queue = new List<VMQueuedAction>();
+            foreach (var item in input.Queue) Queue.Add(new VMQueuedAction(item, context));
+            TempRegisters = input.TempRegisters;
+            TempXL = input.TempXL;
+            LastStackExitCode = input.LastStackExitCode;
+
+            BlockingDialog = input.BlockingDialog;
+            Interrupt = input.Interrupt;
+            ActionUID = input.ActionUID;
+            DialogCooldown = input.DialogCooldown;
+        }
+
+        public VMThread(VMThreadMarshal input, VMContext context, VMEntity entity)
+        {
+            Context = context;
+            Entity = entity;
+            Load(input, context);
+        }
+        #endregion
+    }
+
+    public enum VMThreadBreakMode
+    {
+        Active = 0,
+        Pause = 1,
+        StepIn = 2,
+        StepOut = 3,
+        StepOver = 4,
+        ReturnTrue = 5,
+        ReturnFalse = 6,
+        Immediate = 7
     }
 
     public enum VMThreadState

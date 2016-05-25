@@ -1,60 +1,87 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using tso.world.components;
+using tso.world.Components;
 using TSO.Vitaboy;
 using TSO.Content;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TSO.Simantics.model;
-using tso.world.model;
+using TSO.SimsAntics.Model;
+using tso.world.Model;
 using TSO.Files.formats.iff.chunks;
 using TSO.Common.utils;
+using TSO.SimsAntics.Model.Routing;
+using TSO.HIT;
+using TSO.SimsAntics.NetPlay.Model;
 using System.IO;
-using TSO.SimAntics.Routing;
+using TSO.SimsAntics.Marshals;
+using tso.simantics.Engine;
 
-namespace TSO.Simantics
+namespace TSO.SimsAntics
 {
     public class VMAvatar : VMEntity
     {
         public static uint TEMPLATE_PERSON = 0x7FD96B54;
-        
+        public static uint NPC_MAID = 0xC61931DC;
+        public static uint NPC_GARDENER = 0xD62B91B4;
+        public static uint DOG_TEMPLATE = 0x5F0C674C;
+
         public SimAvatar Avatar;
 
         /** Animation vars **/
+
         public List<VMAnimationState> Animations;
-        public Animation CurrentAnimation;
-        public VMAnimationState CurrentAnimationState
-        {
+
+        public VMAnimationState CurrentAnimationState {
             get
             {
                 return (Animations.Count == 0) ? null : Animations[0];
             }
         }
-        public Animation CarryAnimation;
         public VMAnimationState CarryAnimationState;
 
-        private VMMotiveChange[] MotiveChanges = new VMMotiveChange[16];    
-        private short[] PersonData = new short[100];
-        private short[] MotiveData = new short[16];
-        public Texture2D ThumbIcon;
-
-        public string[] WalkAnimations = new string[50];
-
-        private VMEntity HandObject;
-        private STR BodyStrings;
-        private GameObject Object;
-
-        /** Avatar Information **/
 
         public string Name;
-        private VMAvatarType AvatarType;
-        //private short Gender; //Flag 1 is male/female. 4 is set for dogs, 5 is set for cats.
+        private string m_Message = "";
+        public string Message
+        {
+            get { return m_Message; }
+            set
+            {
+                m_Message = value;
+                SetPersonData(VMPersonDataVariable.ChatBaloonOn, 1);
+                MessageTimeout = 150 + value.Length/2;
+            }
+        }
+
+        public int MessageTimeout;
+        public Vector3 Velocity; //used for 60 fps walking animation
+
+        private VMMotiveChange[] MotiveChanges = new VMMotiveChange[16];
+        private VMMotiveDecay MotiveDecay;
+        private short[] PersonData = new short[100];
+        private short[] MotiveData = new short[16];
+        private VMEntity HandObject;
+        private float _RadianDirection;
+
+        /*
+            APPEARANCE DATA
+        */
+        public VMAvatarDefaultSuits DefaultSuits = new VMAvatarDefaultSuits(false);
+        public HashSet<string> BoundAppearances = new HashSet<string>();
 
         private ulong _BodyOutfit;
-        public ulong BodyOutfit {
-            set {
+        public ulong BodyOutfit
+        {
+            set
+            {
                 _BodyOutfit = value;
                 Avatar.Body = TSO.Content.Content.Get().AvatarOutfits.Get(value);
                 if (AvatarType == VMAvatarType.Adult || AvatarType == VMAvatarType.Child) Avatar.Handgroup = Avatar.Body;
@@ -71,7 +98,7 @@ namespace TSO.Simantics
             set
             {
                 _HeadOutfit = value;
-                Avatar.Head = TSO.Content.Content.Get().AvatarOutfits.Get(value);
+                Avatar.Head = (_HeadOutfit == 0)?null:TSO.Content.Content.Get().AvatarOutfits.Get(value);
             }
             get
             {
@@ -90,21 +117,70 @@ namespace TSO.Simantics
             get { return _SkinTone; }
         }
 
+        public override Vector3 VisualPosition
+        {
+            get { return (UseWorld) ? WorldUI.Position : new Vector3(); }
+            set { if (UseWorld) WorldUI.Position = value; }
+        }
+        public override float RadianDirection
+        {
+            get { return _RadianDirection; }
+            set
+            {
+                _RadianDirection = value;
+                if (UseWorld) ((AvatarComponent)WorldUI).RadianDirection = value;
+            }
+        }
+
+        public override Direction Direction
+        {
+            get
+            {
+                int midPointDir = (int)DirectionUtils.PosMod(Math.Round(_RadianDirection / (Math.PI / 4f)), 8);
+                return (Direction)(1 << (midPointDir));
+            }
+            set { RadianDirection = ((int)Math.Round(Math.Log((double)value, 2))) * (float)(Math.PI / 4.0); }
+        }
+
+        //inferred properties
+        public string[] WalkAnimations = new string[50];
+        public string[] SwimAnimations = new string[50];
+        private STR BodyStrings;
+        private VMAvatarType AvatarType;
+
+        public void SubmitHITVars(HITThread thread)
+        {
+            if (thread.ObjectVar == null) return;
+            thread.ObjectVar[12] = GetPersonData(VMPersonDataVariable.Gender);
+        }
+
+        public bool IsPet
+        {
+            get
+            {
+                var gender = GetPersonData(VMPersonDataVariable.Gender);
+                return (gender & (8 | 16)) > 0; //flags are dog, cat.
+            }
+        }
+
         public VMAvatar(GameObject obj)
             : base(obj)
         {
             Name = "Sim";
-            WorldUI = new AvatarComponent();
-            Object = obj;
-            
-            
+
             BodyStrings = Object.Resource.Get<STR>(Object.OBJ.BodyStringID);
-            SetAvatarType(BodyStrings, Object.GUID);
+
+            SetAvatarType(BodyStrings);
             SkinTone = AppearanceType.Light;
 
-            var avatarc = (AvatarComponent)WorldUI;
-            avatarc.Avatar = Avatar;
+            if (UseWorld)
+            {
+                WorldUI = new AvatarComponent();
+                var avatarc = (AvatarComponent)WorldUI;
+                avatarc.Avatar = Avatar;
+            }
 
+            MotiveDecay = new VMMotiveDecay();
             for (int i = 0; i < 16; i++)
             {
                 MotiveChanges[i] = new VMMotiveChange();
@@ -112,96 +188,10 @@ namespace TSO.Simantics
             }
         }
 
-        public void SetAvatarData(XmlCharacter charInfo)
-        {
-
-            if (charInfo != null)
-                {
-            PersistID = Convert.ToInt16(charInfo.Id);
-            AppearanceType type;
-            Enum.TryParse(charInfo.Appearance, out type);
-                
-            var headPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Head, 16));
-            var bodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Body, 16));
-                
-            Name = charInfo.Name;
-            SkinTone = type;
-            AvatarType = VMAvatarType.Adult;
-
-                var Gender = charInfo.Gender;
-                if (Gender == "Male")
-                    SetPersonData(VMPersonDataVariable.Gender, 0);
-                else if (Gender == "Female")
-                    SetPersonData(VMPersonDataVariable.Gender, 1);
-
-            Avatar.Head = Content.Content.Get().AvatarOutfits.Get(headPurchasable.OutfitID);
-            Avatar.Body = Content.Content.Get().AvatarOutfits.Get(bodyPurchasable.OutfitID);
-            Avatar.Handgroup = Avatar.Body;
-                 }
-            else
-                {
-
-            Avatar.Head = TSO.Content.Content.Get().AvatarOutfits.Get("mah010_baldbeard01.oft"); //default to bob newbie, why not
-            Avatar.Body = TSO.Content.Content.Get().AvatarOutfits.Get("mab002_slob.oft");
-            Avatar.Handgroup = Avatar.Body;
-
-                }
-
-
-        }
-
-        public void SetPetData(XmlPet petInfo)
-        {
-            if (petInfo != null)
-                {
-
-                    var bodyPurchasable = Content.Content.Get().AvatarOutfits.Get(Convert.ToUInt64(petInfo.Body, 16));
-
-                    PersistID = Convert.ToInt16(petInfo.Id);
-                    Name = petInfo.Name;
-                    Avatar.Body = bodyPurchasable;
-                    
-                }
-            else
-
-                {
-                    PersistID = 10;
-                    Name = "Pet";
-                    Avatar.Body = TSO.Content.Content.Get().AvatarOutfits.Get("uaa012dog_scottish.oft");
-                    
-                }
-
-        }
-
-        public void ExportAvatarData(string path)
-        {
-
-
-
-            Outfit ThumbOutfit = (Avatar.Head == null) ? Avatar.Body : Avatar.Head;
-            var AppearanceID = ThumbOutfit.GetAppearance(Avatar.Appearance);
-            var Appearance = TSO.Content.Content.Get().AvatarAppearances.Get(AppearanceID);
-            StreamWriter writer = new StreamWriter(path);
-            writer.Write(Appearance.ThumbnailID.FileID + "," + Appearance.ThumbnailID.TypeID);
-            writer.WriteLine();
-            writer.Write(AppearanceID.FileID  + "," +AppearanceID.TypeID );
-            writer.WriteLine();
-            writer.Write(Appearance.ThumbnailFileID);
-            writer.WriteLine();
-            writer.Write(Appearance.ThumbnailTypeID);
-            writer.Close();
-
-        }
-
-
-
-        public void SetAvatarType(STR data, ulong id)
-        {
+        public void SetAvatarType(STR data) {
             if (data == null)
             {
-            
                 AvatarType = VMAvatarType.Adult;
-                
             }
             else
             {
@@ -212,24 +202,24 @@ namespace TSO.Simantics
                 else if (type == "dog") AvatarType = VMAvatarType.Dog;
             }
 
-            
             switch (AvatarType)
             {
                 case VMAvatarType.Adult:
                     Avatar = new SimAvatar(TSO.Content.Content.Get().AvatarSkeletons.Get("adult.skel"));
+                    Avatar.Head = TSO.Content.Content.Get().AvatarOutfits.Get("mah010_baldbeard01.oft"); //default to bob newbie, why not
+                    Avatar.Body = TSO.Content.Content.Get().AvatarOutfits.Get("mab002_slob.oft");
+                    Avatar.Handgroup = Avatar.Body;
                     break;
                 case VMAvatarType.Cat:
                     var skel = TSO.Content.Content.Get().AvatarSkeletons.Get("cat.skel");
                     Avatar = new SimAvatar(skel);
-                    Avatar.Appearance = AppearanceType.Unknow;
+                    Avatar.Body = TSO.Content.Content.Get().AvatarOutfits.Get("uaa002cat_calico.oft");
                     break;
                 case VMAvatarType.Dog:
                     Avatar = new SimAvatar(TSO.Content.Content.Get().AvatarSkeletons.Get("dog.skel"));
-                    Avatar.Appearance = AppearanceType.Unknow;
+                    Avatar.Body = TSO.Content.Content.Get().AvatarOutfits.Get("uaa012dog_scottish.oft"); //;)
                     break;
             }
-
-
         }
 
         public void SetAvatarBodyStrings(STR data, VMContext context) {
@@ -238,25 +228,27 @@ namespace TSO.Simantics
             try
             {
                 var body = data.GetString(1);
-                var randBody = data.GetString(9);
+                var randBody = data.GetString(10);
 
                 if (randBody != "")
                 {
                     var bodySpl = randBody.Split(';');
-                    BodyOutfit = Convert.ToUInt64(bodySpl[context.NextRandom((ulong)bodySpl.Length)], 16);
+                    DefaultSuits.Daywear = Convert.ToUInt64(bodySpl[context.NextRandom((ulong)bodySpl.Length-1)], 16);
                 }
                 else if (body != "")
                 {
-                    BodyOutfit = Convert.ToUInt64(body, 16);
+                    DefaultSuits.Daywear = Convert.ToUInt64(body, 16);
                 }
 
+                BodyOutfit = DefaultSuits.Daywear;
+
                 var head = data.GetString(2);
-                var randHead = data.GetString(10);
+                var randHead = data.GetString(9);
 
                 if (randHead != "")
                 {
                     var headSpl = randHead.Split(';');
-                    HeadOutfit = Convert.ToUInt64(headSpl[context.NextRandom((ulong)headSpl.Length)], 16);
+                    HeadOutfit = Convert.ToUInt64(headSpl[context.NextRandom((ulong)headSpl.Length-1)], 16);
                 }
                 else if (head != "")
                 {
@@ -293,19 +285,19 @@ namespace TSO.Simantics
             else if (skinTone.Equals("drk", StringComparison.InvariantCultureIgnoreCase)) SkinTone = AppearanceType.Dark;
         }
 
-        public override void Init(VMContext context)
+        public void InitBodyData(VMContext context)
         {
-            ((AvatarComponent)WorldUI).ObjectID = (ushort)ObjectID;
-
-            base.Init(context);
-            Animations = new List<VMAnimationState>();
-            SetAvatarBodyStrings(Object.Resource.Get<STR>(Object.OBJ.BodyStringID), context);
-
             //init walking strings
             var GlobWalk = context.Globals.Resource.Get<STR>(150);
             for (int i = 0; i < GlobWalk.Length; i++)
             {
                 WalkAnimations[i] = GlobWalk.GetString(i);
+            }
+
+            var GlobSwim = context.Globals.Resource.Get<STR>(158);
+            for (int i = 0; i < GlobSwim.Length; i++)
+            {
+                SwimAnimations[i] = GlobSwim.GetString(i);
             }
 
             var SpecialWalk = Object.Resource.Get<STR>(150);
@@ -317,13 +309,89 @@ namespace TSO.Simantics
                     if (str != "") WalkAnimations[i] = str;
                 }
             }
+        }
+
+
+        public void SetAvatarData(XmlCharacter charInfo)
+        {
+
+            if (charInfo != null)
+            {
+                PersistID = Convert.ToUInt16(charInfo.Id);
+                AppearanceType type;
+                Enum.TryParse(charInfo.Appearance, out type);
+
+                var headPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Head, 16));
+                var bodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Body, 16));
+
+                Name = charInfo.Name;
+                SkinTone = type;
+                AvatarType = VMAvatarType.Adult;
+
+                var Gender = charInfo.Gender;
+                if (Gender == "Male")
+                    SetPersonData(VMPersonDataVariable.Gender, 0);
+                else if (Gender == "Female")
+                    SetPersonData(VMPersonDataVariable.Gender, 1);
+
+                Avatar.Head = Content.Content.Get().AvatarOutfits.Get(headPurchasable.OutfitID);
+                Avatar.Body = Content.Content.Get().AvatarOutfits.Get(bodyPurchasable.OutfitID);
+                Avatar.Handgroup = Avatar.Body;
+            }
+            else
+            {
+
+                Avatar.Head = TSO.Content.Content.Get().AvatarOutfits.Get("mah010_baldbeard01.oft"); //default to bob newbie, why not
+                Avatar.Body = TSO.Content.Content.Get().AvatarOutfits.Get("mab002_slob.oft");
+                Avatar.Handgroup = Avatar.Body;
+
+            }
+
+
+        }
+
+        public void SetPetData(XmlPet petInfo)
+        {
+            if (petInfo != null)
+            {
+
+                var bodyPurchasable = Content.Content.Get().AvatarOutfits.Get(Convert.ToUInt64(petInfo.Body, 16));
+
+                PersistID = Convert.ToUInt16(petInfo.Id);
+                Name = petInfo.Name;
+                Avatar.Body = bodyPurchasable;
+
+            }
+            else
+            {
+                PersistID = 10;
+                Name = "Pet";
+                Avatar.Body = TSO.Content.Content.Get().AvatarOutfits.Get("uaa012dog_scottish.oft");
+
+            }
+
+        }
+
+        public override void Init(VMContext context)
+        {
+            if (UseWorld) WorldUI.ObjectID = ObjectID;
+            base.Init(context);
+
+            Animations = new List<VMAnimationState>();
+
+            SetAvatarBodyStrings(Object.Resource.Get<STR>(Object.OBJ.BodyStringID), context);
+            InitBodyData(context);
 
             SetMotiveData(VMMotive.Comfort, 100);
             SetPersonData(VMPersonDataVariable.NeatPersonality, 1000); //for testing wash hands after toilet
             SetPersonData(VMPersonDataVariable.OnlineJobID, 1); //for testing wash hands after toilet
-            SetPersonData(VMPersonDataVariable.IsHousemate, 2); 
-           
-            SetPersonData(VMPersonDataVariable.CreativitySkill, 15);
+            SetPersonData(VMPersonDataVariable.IsHousemate, 2);
+
+            SetPersonData(VMPersonDataVariable.CreativitySkill, 1000);
+            SetPersonData(VMPersonDataVariable.CookingSkill, 1000);
+            SetPersonData(VMPersonDataVariable.CharismaSkill, 1000);
+            SetPersonData(VMPersonDataVariable.LogicSkill, 1000);
+            SetPersonData(VMPersonDataVariable.BodySkill, 1000);
         }
 
         private void HandleTimePropsEvent(TimePropertyListItem tp)
@@ -350,19 +418,19 @@ namespace TSO.Simantics
             }
 
             var soundevt = tp.Properties["sound"];
-            if (soundevt != null)
+            if (UseWorld && soundevt != null)
             {
                 var thread = TSO.HIT.HITVM.Get().PlaySoundEvent(soundevt);
                 if (thread != null)
                 {
                     var owner = this;
-                    SubmitHITVars(thread);
+                    if (thread is HITThread) SubmitHITVars((HITThread)thread);
 
                     if (!thread.AlreadyOwns(owner.ObjectID)) thread.AddOwner(owner.ObjectID);
 
                     var entry = new VMSoundEntry()
                     {
-                        Thread = thread,
+                        Sound = thread,
                         Pan = true,
                         Zoom = true,
                     };
@@ -374,10 +442,30 @@ namespace TSO.Simantics
 
         public override void Tick()
         {
+            Velocity = new Vector3(0, 0, 0);
             base.Tick();
 
+            if (Message != "")
+            {
+                if (MessageTimeout-- > 0)
+                {
+                    if (MessageTimeout == 0)
+                    {
+                        SetPersonData(VMPersonDataVariable.ChatBaloonOn, 0);
+                        m_Message = "";
+                    }
+                }
+            }
+
+            if (Thread != null && Thread.ThreadBreak == Engine.VMThreadBreakMode.Pause) return;
 
             if (PersonData[(int)VMPersonDataVariable.OnlineJobStatusFlags] == 0) PersonData[(int)VMPersonDataVariable.OnlineJobStatusFlags] = 1;
+            if (Thread != null)
+                {
+                MotiveDecay.Tick(this, Thread.Context);
+                SetPersonData(VMPersonDataVariable.OnlineJobGrade, Math.Max((short)0, Thread.Context.VM.GetGlobalValue(11))); //force job grade to what we expect
+                }
+
             //animation update for avatars
             VMAvatar avatar = this;
             if (avatar.Position == LotTilePos.OUT_OF_WORLD) avatar.Position = new LotTilePos(8, 8, 1);
@@ -423,7 +511,7 @@ namespace TSO.Simantics
                         }
                     }
 
-                    var status = Animator.RenderFrame(avatar.Avatar, state.Anim, (int)state.CurrentFrame, state.CurrentFrame % 1f, state.Weight / totalWeight);
+                    var status = Animator.RenderFrame(avatar.Avatar, state.Anim, (int)state.CurrentFrame, state.CurrentFrame%1f, state.Weight/totalWeight);
                     if (status != AnimationStatus.IN_PROGRESS)
                     {
                         if (state.Loop)
@@ -462,10 +550,10 @@ namespace TSO.Simantics
                 if (!state.EndReached)
                 {
                     float visualFrame = state.CurrentFrame;
-                    if (state.PlayingBackwards) visualFrame -= state.Speed / 2;
-                    else visualFrame += state.Speed / 2;
+                    if (state.PlayingBackwards) visualFrame -= state.Speed/2;
+                    else visualFrame += state.Speed/2;
 
-                    Animator.RenderFrame(avatar.Avatar, state.Anim, (int)visualFrame, visualFrame % 1, state.Weight / totalWeight);
+                    Animator.RenderFrame(avatar.Avatar, state.Anim, (int)visualFrame, visualFrame%1, state.Weight/totalWeight);
                 }
             }
             if (avatar.CarryAnimationState != null) Animator.RenderFrame(avatar.Avatar, avatar.CarryAnimationState.Anim, (int)avatar.CarryAnimationState.CurrentFrame, 0.0f, 1f);
@@ -478,6 +566,11 @@ namespace TSO.Simantics
         public virtual short GetPersonData(VMPersonDataVariable variable)
         {
             if ((ushort)variable > 100) throw new Exception("Person Data out of bounds!");
+            switch (variable)
+            {
+                case VMPersonDataVariable.Priority:
+                    return (Thread.Queue.Count == 0) ? (short)0 : Thread.Queue[0].Priority;
+            }
             return PersonData[(ushort)variable];
             
         }
@@ -485,8 +578,12 @@ namespace TSO.Simantics
         public virtual void SetMotiveChange(VMMotive motive, short PerHourChange, short MaxValue)
         {
             var temp = MotiveChanges[(int)motive];
-            temp.PerHourChange = PerHourChange;
-            temp.MaxValue = MaxValue;
+            if (temp.Ticked)
+                {
+                temp.PerHourChange = PerHourChange;
+                temp.MaxValue = MaxValue;
+                temp.Ticked = false;
+                }
         }
 
         public virtual void ClearMotiveChanges()
@@ -500,11 +597,16 @@ namespace TSO.Simantics
         public virtual bool SetPersonData(VMPersonDataVariable variable, short value)
             {
             if ((ushort)variable > 100) throw new Exception("Person Data out of bounds!");
+            switch (variable)
+            {
+                case VMPersonDataVariable.Priority:
+                    if (Thread.Queue.Count != 0) Thread.Queue[0].Priority = value;
+                    return true;
+            }
             PersonData[(ushort)variable] = value;
             return true;
         }
 
-        
         public virtual short GetMotiveData(VMMotive variable) //needs special conditions for ones like Mood.
         {
             switch (variable){
@@ -527,30 +629,6 @@ namespace TSO.Simantics
             return Name;
         }
 
-        public override Vector3 VisualPosition
-        {
-            get { return WorldUI.Position; }
-            set { WorldUI.Position = value; }
-        }
-
-        public override float RadianDirection
-        {
-            get { return (float)((AvatarComponent)WorldUI).RadianDirection; }
-            set { 
-                Direction = (Direction)(1<<(int)(Math.Round(DirectionUtils.PosMod(value, (float)Math.PI*2)/(Math.PI/4))%8));
-                ((AvatarComponent)WorldUI).RadianDirection = value; 
-            }
-        }
-
-        public override Direction Direction
-        {
-            get {
-                int midPointDir = (int)DirectionUtils.PosMod(Math.Round(((AvatarComponent)WorldUI).RadianDirection / (Math.PI / 4f)), 8);
-                return (Direction)(1<<(midPointDir)); 
-            }
-            set { ((AvatarComponent)WorldUI).Direction = value; }
-        }
-
         public override VMObstacle GetObstacle(LotTilePos pos, Direction dir)
         {
             return new VMObstacle(
@@ -560,15 +638,25 @@ namespace TSO.Simantics
                 (pos.y + 3));
         }
 
-        public override void PositionChange(VMContext context)
+        public override void PositionChange(VMContext context, bool noEntryPoint)
         {
             if (GhostImage) return;
+
+            var room = context.GetObjectRoom(this);
+            SetRoom(room);
+
+            if (HandObject != null)
+            {
+                HandObject.Position = Position;
+                HandObject.SetRoom(room);
+            }
+
             if (Container != null) return;
             if (Position == LotTilePos.OUT_OF_WORLD) return;
 
             context.RegisterObjectPos(this);
 
-            base.PositionChange(context);
+            base.PositionChange(context, noEntryPoint);
         }
 
         public override void PrePositionChange(VMContext context)
@@ -618,13 +706,14 @@ namespace TSO.Simantics
             {
                 obj.WorldUI.Container = this.WorldUI;
                 obj.WorldUI.ContainerSlot = slot;
-                obj.Position = Position; //TODO: is physical position the same as the slot offset position?
                 if (obj.WorldUI is ObjectComponent)
                 {
                     var objC = (ObjectComponent)obj.WorldUI;
                     objC.ForceDynamic = true;
                 }
             }
+            obj.Position = Position; //TODO: is physical position the same as the slot offset position?
+            if (cleanOld) obj.PositionChange(context, false);
         }
 
         public override int GetSlotHeight(int slot)
@@ -661,35 +750,98 @@ namespace TSO.Simantics
 
         // End Container SLOTs interface
 
-        public void SubmitHITVars(HIT.HITThread thread)
+        public override void SetRoom(ushort room)
         {
-            if (thread.ObjectVar == null) return;
-            thread.ObjectVar[12] = GetPersonData(VMPersonDataVariable.Gender);
+            base.SetRoom(room);
+            if (VM.UseWorld) WorldUI.Room = (ushort)GetValue(VMStackObjectVariable.Room);
         }
 
-        public Vector3 Velocity; //used for 60 fps walking animation
-
-        /** Avatar Information **/
-
-        public bool IsPet
-        {
-            get
-            {
-                var gender = GetPersonData(VMPersonDataVariable.Gender);
-                return (gender & (8 | 16)) > 0; //flags are dog, cat.
-            }
-        }
-
-        public override Texture2D GetIcon(GraphicsDevice gd)
+        public override Texture2D GetIcon(GraphicsDevice gd, int store)
         {
             Outfit ThumbOutfit = (Avatar.Head == null) ? Avatar.Body : Avatar.Head;
             var AppearanceID = ThumbOutfit.GetAppearance(Avatar.Appearance);
             var Appearance = TSO.Content.Content.Get().AvatarAppearances.Get(AppearanceID);
 
-            ThumbIcon = TSO.Content.Content.Get().AvatarThumbnails.Get(Appearance.ThumbnailTypeID, Appearance.ThumbnailFileID);
-
-            return ThumbIcon;
+            return TSO.Content.Content.Get().AvatarThumbnails.Get(Appearance.ThumbnailTypeID, Appearance.ThumbnailFileID);
         }
+
+        #region VM Marshalling Functions
+        public VMAvatarMarshal Save()
+        {
+            var anims = new VMAnimationStateMarshal[Animations.Count];
+            int i = 0;
+            foreach (var anim in Animations) anims[i++] = anim.Save();
+            var gameObj = new VMAvatarMarshal
+            {
+                Animations = anims,
+                CarryAnimationState = (CarryAnimationState == null) ? null : CarryAnimationState.Save(), //NULLable
+
+                Name = Name,
+                Message = Message,
+
+                MessageTimeout = MessageTimeout,
+
+                MotiveChanges = MotiveChanges,
+                PersonData = PersonData,
+                MotiveData = MotiveData,
+                HandObject = (HandObject == null) ? (short)0 : HandObject.ObjectID,
+                RadianDirection = RadianDirection,
+                DefaultSuits = DefaultSuits,
+
+                BoundAppearances = BoundAppearances.ToArray(),
+                BodyOutfit = BodyOutfit,
+                HeadOutfit = HeadOutfit,
+                SkinTone = SkinTone
+            };
+            SaveEnt(gameObj);
+            return gameObj;
+        }
+
+        public virtual void Load(VMAvatarMarshal input)
+        {
+            base.Load(input);
+
+            Animations = new List<VMAnimationState>();
+            foreach (var anim in input.Animations) Animations.Add(new VMAnimationState(anim));
+            CarryAnimationState = (input.CarryAnimationState == null) ? null : new VMAnimationState(input.CarryAnimationState); 
+
+            Name = input.Name;
+            Message = input.Message;
+
+            MessageTimeout = input.MessageTimeout;
+
+            MotiveChanges = input.MotiveChanges;
+            PersonData = input.PersonData;
+            MotiveData = input.MotiveData;
+            RadianDirection = input.RadianDirection;
+            DefaultSuits = input.DefaultSuits;
+
+            BoundAppearances = new HashSet<string>(input.BoundAppearances);
+
+            foreach (var aprN in BoundAppearances)
+            {
+                var apr = TSO.Content.Content.Get().AvatarAppearances.Get(aprN);
+                Avatar.AddAccessory(apr);
+            }
+
+            SkinTone = input.SkinTone;
+
+            if (UseWorld) WorldUI.ObjectID = ObjectID;
+        }
+
+        public virtual void LoadCrossRef(VMAvatarMarshal input, VMContext context)
+        {
+            base.LoadCrossRef(input, context);
+            HandObject = context.VM.GetObjectById(input.HandObject);
+            if (HandObject != null && HandObject is VMGameObject) ((ObjectComponent)HandObject.WorldUI).ForceDynamic = true;
+            //we need to fix the gender, since InitBodyData resets it.
+            var gender = GetPersonData(VMPersonDataVariable.Gender);
+            InitBodyData(context);
+            SetPersonData(VMPersonDataVariable.Gender, gender);
+            BodyOutfit = input.BodyOutfit;
+            HeadOutfit = input.HeadOutfit;
+        }
+        #endregion
     }
 
     public enum VMAvatarType : byte {
@@ -697,5 +849,38 @@ namespace TSO.Simantics
         Child,
         Cat,
         Dog
+    }
+
+    public class VMAvatarDefaultSuits : VMSerializable
+    {
+        public ulong Daywear;
+        public ulong Swimwear;
+        public ulong Sleepwear;
+
+        public VMAvatarDefaultSuits(bool female)
+        {
+            Daywear = 0x24C0000000D;
+            Swimwear = (ulong)((female) ? 0x620000000D : 0x5470000000D);
+            Sleepwear = (ulong)((female) ? 0x5150000000D : 0x5440000000D);
+        }
+
+        public VMAvatarDefaultSuits(BinaryReader reader)
+        {
+            Deserialize(reader);
+        }
+
+        public void SerializeInto(BinaryWriter writer)
+        {
+            writer.Write(Daywear);
+            writer.Write(Swimwear);
+            writer.Write(Sleepwear);
+        }
+
+        public void Deserialize(BinaryReader reader)
+        {
+            Daywear = reader.ReadUInt64();
+            Swimwear = reader.ReadUInt64();
+            Sleepwear = reader.ReadUInt64();
+        }
     }
 }

@@ -1,17 +1,27 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TSO.Files.formats.iff;
 using TSO.Content;
+using TSO.SimsAntics.Marshals.Threads;
+using TSO.Files.formats.iff.chunks;
 
-namespace TSO.Simantics.engine
+namespace TSO.SimsAntics.Engine
 {
     /// <summary>
     /// Holds information about the execution of a routine
     /// </summary>
     public class VMStackFrame
     {
+        public VMStackFrame() { }
+
         /** Thread executing this routine **/
         public VMThread Thread;
 
@@ -31,12 +41,18 @@ namespace TSO.Simantics.engine
         public VMEntity StackObject;
 
         /** Used to get strings and other resources (for primitives) from the code owner, as it may not be the callee but instead a semiglobal or global. **/
-        public GameIffResource CodeOwner;
+        public GameIffResource ScopeResource {
+            get
+            {
+                return CodeOwner.Resource;
+            }
+        }
 
+        public GameObject CodeOwner;
         /**
          * Routine locals
          */
-        public ushort[] Locals;
+        public short[] Locals;
 
         /**
          * Arguments
@@ -71,7 +87,7 @@ namespace TSO.Simantics.engine
         {
             get
             {
-                return Routine.VM.Context.Globals;
+                return Thread.Context.Globals;
             }
         }
 
@@ -90,5 +106,46 @@ namespace TSO.Simantics.engine
         public T GetCurrentOperand<T>(){
             return (T)GetCurrentInstruction().Operand;
         }
+
+        #region VM Marshalling Functions
+        public virtual VMStackFrameMarshal Save()
+        {
+            return new VMStackFrameMarshal
+            {
+                RoutineID = Routine.ID,
+                InstructionPointer = InstructionPointer,
+                Caller = (Caller == null) ? (short)0 : Caller.ObjectID,
+                Callee = (Callee == null) ? (short)0 : Callee.ObjectID,
+                StackObject = (StackObject == null) ? (short)0 : StackObject.ObjectID,
+                CodeOwnerGUID = CodeOwner.OBJ.GUID,
+                Locals = Locals,
+                Args = Args
+            };
+        }
+
+        public virtual void Load(VMStackFrameMarshal input, VMContext context)
+        {
+            CodeOwner = TSO.Content.Content.Get().WorldObjects.Get(input.CodeOwnerGUID);
+
+            BHAV bhav = null;
+            if (input.RoutineID >= 8192) bhav = ScopeResource.SemiGlobal.Get<BHAV>(input.RoutineID);
+            else if (input.RoutineID >= 4096) bhav = ScopeResource.Get<BHAV>(input.RoutineID);
+            else bhav = Global.Resource.Get<BHAV>(input.RoutineID);
+            Routine = VM.Assemble(bhav);
+
+            InstructionPointer = input.InstructionPointer;
+            Caller = context.VM.GetObjectById(input.Caller);
+            Callee = context.VM.GetObjectById(input.Callee);
+            StackObject = context.VM.GetObjectById(input.StackObject);
+            Locals = input.Locals;
+            Args = input.Args;
+        }
+
+        public VMStackFrame(VMStackFrameMarshal input, VMContext context, VMThread thread)
+        {
+            Thread = thread;
+            Load(input, context);  
+        }
+        #endregion
     }
 }

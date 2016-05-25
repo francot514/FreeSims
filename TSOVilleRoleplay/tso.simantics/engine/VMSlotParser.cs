@@ -9,15 +9,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework;
-using TSO.SimAntics.Routing;
 using TSO.Files.formats.iff.chunks;
+using tso.world.Model;
 using TSO.Common.utils;
-using tso.world.model;
-using Microsoft.Xna.Framework.Graphics;
-using TSO.Simantics.model;
+using TSO.SimsAntics.Model.Routing;
+using TSO.SimsAntics.NetPlay.Model;
+using System.IO;
+using TSO.SimsAntics.Marshals.Threads;
 
-
-namespace TSO.Simantics.engine
+namespace TSO.SimsAntics.Engine
 {
     public class VMSlotParser
     {
@@ -153,7 +153,8 @@ namespace TSO.Simantics.engine
                 }
             }
             /** Sort by how close they are to desired proximity **/
-            if (Results.Count > 1) Results.Sort(new VMProximitySorter());
+            
+            if (Results.Count > 1) Results = Results.OrderBy(x => -x.Score).ToList(); //avoid sort because it acts incredibly unusually
             if (Results.Count > 0) FailCode = VMRouteFailCode.Success;
             return Results;
         }
@@ -165,7 +166,7 @@ namespace TSO.Simantics.engine
 
             if (context.IsOutOfBounds(tpos)) return;
 
-            score -= LotTilePos.Distance(tpos, obj.Position)/3.0;
+            score -= LotTilePos.Distance(tpos, caller.Position)/3.0;
 
             if (Slot.SnapTargetSlot < 0 && context.Architecture.RaycastWall(new Point((int)pos.X, (int)pos.Y), new Point(obj.Position.TileX, obj.Position.TileY), obj.Position.Level))
             {
@@ -198,7 +199,7 @@ namespace TSO.Simantics.engine
             if (Slot.SnapTargetSlot < 0)
             {
                 var solid = caller.PositionValid(tpos, Direction.NORTH, context);
-                if (solid.Status != VMPlacementError.Success)
+                if (solid.Status != Model.VMPlacementError.Success)
                 {
                     if (solid.Object != null && solid.Object is VMGameObject)
                     {
@@ -221,7 +222,6 @@ namespace TSO.Simantics.engine
 
             Results.Add(new VMFindLocationResult
             {
-                Flags = Flags,
                 Position = new LotTilePos((short)Math.Round(pos.X * 16), (short)Math.Round(pos.Y * 16), obj.Position.Level),
                 Score = score * ((chair != null) ? Slot.Sitting : Slot.Standing), //todo: prefer closer?
                 RadianDirection = facingDir,
@@ -285,28 +285,43 @@ namespace TSO.Simantics.engine
 
     public class VMFindLocationResult
     {
-        public SLOTFlags Flags;
         public float RadianDirection;
         public LotTilePos Position;
         public double Score;
         public bool FaceAnywhere = false;
         public VMEntity Chair;
         public SLOTFlags RouteEntryFlags = SLOTFlags.NORTH;
-    }
 
-    public class VMProximitySorter : IComparer<VMFindLocationResult>
-    {
+        public VMFindLocationResult() { }
 
-        #region IComparer<VMFindLocationResult> Members
-
-        public int Compare(VMFindLocationResult x, VMFindLocationResult y)
+        #region VM Marshalling Functions
+        public VMFindLocationResultMarshal Save()
         {
-            if (x == null || y == null) return 0; //this happens occasionally. It's probably microsoft's fault, because the times it's happened nulls have never been in the array.
-            //TODO: WARNING: this bug may cause clients to desync, if it's somehow caused by a race condition
-
-            return (x.Score < y.Score)?1:-1;
+            return new VMFindLocationResultMarshal
+            {
+                RadianDirection = RadianDirection,
+                Position = Position,
+                Score = Score,
+                FaceAnywhere = FaceAnywhere,
+                Chair = (Chair == null) ? (short)0 : Chair.ObjectID,
+                RouteEntryFlags = RouteEntryFlags
+            };
         }
 
+        public void Load(VMFindLocationResultMarshal input, VMContext context)
+        {
+            RadianDirection = input.RadianDirection;
+            Position = input.Position;
+            Score = input.Score;
+            FaceAnywhere = input.FaceAnywhere;
+            Chair = context.VM.GetObjectById(input.Chair);
+            RouteEntryFlags = input.RouteEntryFlags;
+        }
+
+        public VMFindLocationResult(VMFindLocationResultMarshal input, VMContext context)
+        {
+            Load(input, context);
+        }
         #endregion
     }
 }

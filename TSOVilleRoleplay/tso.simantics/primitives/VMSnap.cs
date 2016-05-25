@@ -1,82 +1,60 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Engine;
 using TSO.Files.utils;
-using TSO.Simantics.engine.scopes;
-using TSO.Simantics.engine.utils;
+using TSO.SimsAntics.Engine.Scopes;
+using TSO.SimsAntics.Engine.Utils;
 using Microsoft.Xna.Framework;
-using tso.world.model;
+using tso.world.Model;
 using TSO.Files.formats.iff.chunks;
-using TSO.Simantics.model;
+using TSO.SimsAntics.Model;
 using TSO.Common.utils;
+using System.IO;
 
-namespace TSO.Simantics.primitives
+namespace TSO.SimsAntics.Primitives
 {
     public class VMSnap : VMPrimitiveHandler 
     {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMSnapOperand>();
+            var operand = (VMSnapOperand)args;
             var avatar = context.Caller; //todo, can sometimes be an object?? see roaches object tile movement, snaps to its own routing slot
             var obj = context.StackObject;
 
-            var prevContain = avatar.Container;
-            if (prevContain != null) //if we are contained in an object, drop out of it.
-            {
-                prevContain.ClearSlot(avatar.ContainerSlot);
-            }
-
             SLOTItem slot = null;
-            List<VMFindLocationResult> locations = null;
-            
 
             switch (operand.Mode)
             {
-                case 0:
+                case VMSnapSlotScope.StackVariable:
                     slot = VMMemory.GetSlot(context, VMSlotScope.StackVariable, operand.Index);
-                    
-                    
                     break;
-                case 1: //be contained on stack object
+                case VMSnapSlotScope.BeContained:
                     context.StackObject.PlaceInSlot(context.Caller, 0, true, context.VM.Context);
                 break;
-                case 2:
-                    var pos = obj.Position;
-                    switch (obj.Direction)
-                    {
-                        case tso.world.model.Direction.SOUTH:
-                            pos.y += 16;
-                            break;
-                        case tso.world.model.Direction.WEST:
-                            pos.x -= 16;
-                            break;
-                        case tso.world.model.Direction.EAST:
-                            pos.x += 16;
-                            break;
-                        case tso.world.model.Direction.NORTH:
-                            pos.y -= 16;
-                            break;
-                    }
-
-                    SetPosition(avatar, pos, obj.RadianDirection, context.VM.Context);
-                break;
-                case 3:
-                    slot = VMMemory.GetSlot(context, VMSlotScope.Literal, operand.Index);
-                    
+                case VMSnapSlotScope.InFront:
+                    slot = new SLOTItem { Type = 3, Standing = 1, MinProximity = 16, Rsflags = SLOTFlags.NORTH };
                     break;
-                case 4:
+                case VMSnapSlotScope.Literal:
+                    slot = VMMemory.GetSlot(context, VMSlotScope.Literal, operand.Index);
+                    break;
+                case VMSnapSlotScope.Global:
                     slot = VMMemory.GetSlot(context, VMSlotScope.Global, operand.Index);
-                    
                     break;
             }
 
-            if (operand.Mode != 1 && operand.Mode != 2)
+            if (operand.Mode != VMSnapSlotScope.BeContained)
             {
                 var parser = new VMSlotParser(slot);
-                locations = parser.FindAvaliableLocations(obj, context.VM.Context, avatar);
-                if (slot.SnapTargetSlot != -1)
+                var locations = parser.FindAvaliableLocations(obj, context.VM.Context, avatar);
+                if (slot.SnapTargetSlot > -1)
                 {
                     context.StackObject.PlaceInSlot(context.Caller, slot.SnapTargetSlot, true, context.VM.Context);
                     if (locations.Count > 0) avatar.RadianDirection = ((slot.Rsflags & SLOTFlags.SnapToDirection) > 0) ? locations[0].RadianDirection: avatar.RadianDirection;
@@ -89,6 +67,11 @@ namespace TSO.Simantics.primitives
                             ((slot.Rsflags & SLOTFlags.SnapToDirection) > 0) ? locations[0].RadianDirection : avatar.RadianDirection,
                             context.VM.Context))
                             return VMPrimitiveExitCode.GOTO_FALSE;
+                    }
+                    else
+                    {
+                        avatar.SetValue(VMStackObjectVariable.PrimitiveResultID, (parser.Blocker == null) ? (short)0 : parser.Blocker.ObjectID);
+                        return VMPrimitiveExitCode.GOTO_FALSE;
                     }
                 }
             }
@@ -103,25 +86,22 @@ namespace TSO.Simantics.primitives
 
         private bool SetPosition(VMEntity entity, LotTilePos pos, float radDir, VMContext context)
         {
-            if (entity is VMGameObject)
+            var posChange = entity.SetPosition(pos, (Direction)(1 << (int)(Math.Round(DirectionUtils.PosMod(radDir, (float)Math.PI * 2) / (Math.PI/4)) % 8)), context);
+            if (posChange.Status != VMPlacementError.Success)
             {
-                var posChange = entity.SetPosition(pos, (Direction)(1 << (int)(Math.Round(DirectionUtils.PosMod(radDir, (float)Math.PI * 2) / (Math.PI/4)) % 8)), context);
-                if (posChange.Status != VMPlacementError.Success) return false;
+                entity.SetValue(VMStackObjectVariable.PrimitiveResultID, (posChange.Object == null) ? (short)0 : posChange.Object.ObjectID);
+                return false;
             }
-            else
-            {
-                entity.Position = pos;
-                entity.RadianDirection = radDir;
-            }
+            if (entity is VMAvatar) entity.RadianDirection = radDir;
             return true;
         }
     }
 
     public class VMSnapOperand : VMPrimitiveOperand
     {
-        public ushort Index;
-        public ushort Mode;
-        public byte Flags;
+        public ushort Index { get; set; }
+        public VMSnapSlotScope Mode { get; set; }
+        public byte Flags { get; set; }
 
         #region VMPrimitiveOperand Members
         public void Read(byte[] bytes)
@@ -129,10 +109,28 @@ namespace TSO.Simantics.primitives
             using (var io = IoBuffer.FromBytes(bytes, ByteOrder.LITTLE_ENDIAN))
             {
                 Index = io.ReadUInt16();
-                Mode = io.ReadUInt16();
+                Mode = (VMSnapSlotScope)io.ReadUInt16();
                 Flags = io.ReadByte(); 
             }
         }
+
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write(Index);
+                io.Write((ushort)Mode);
+                io.Write(Flags);
+            }
+        }
         #endregion
+    }
+
+    public enum VMSnapSlotScope
+    {
+        StackVariable = 0,
+        BeContained = 1,
+        InFront = 2,
+        Literal = 3,
+        Global = 4
     }
 }

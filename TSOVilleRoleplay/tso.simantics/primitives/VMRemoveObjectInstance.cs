@@ -1,19 +1,26 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Engine;
 using TSO.Files.utils;
 using TSO.Files.formats.iff.chunks;
 using TSO.Content;
+using System.IO;
 
-namespace TSO.Simantics.engine.primitives
+namespace TSO.SimsAntics.Engine.Primitives
 {
     public class VMRemoveObjectInstance : VMPrimitiveHandler
     {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMRemoveObjectInstanceOperand>();
+            var operand = (VMRemoveObjectInstanceOperand)args;
             VMEntity obj;
             if (operand.Target == 0) obj = context.Caller;
             else obj = context.StackObject;
@@ -28,8 +35,8 @@ namespace TSO.Simantics.engine.primitives
 
     public class VMRemoveObjectInstanceOperand : VMPrimitiveOperand
     {
-        public short Target;
-        public byte Flags;
+        public short Target { get; set; }
+        public byte Flags { get; set; }
 
         #region VMPrimitiveOperand Members
         public void Read(byte[] bytes)
@@ -40,13 +47,39 @@ namespace TSO.Simantics.engine.primitives
                 Flags = io.ReadByte();
             }
         }
+
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write(Target);
+                io.Write(Flags);
+            }
+        }
         #endregion
+
+        public bool ReturnImmediately
+        {
+            get
+            {
+                return ((Flags & 1) == 1);
+            }
+            set
+            {
+                if (value) Flags |= 1;
+                else Flags &= unchecked((byte)~1);
+            }
+        }
 
         public bool CleanupAll
         {
             get
             {
                 return ((Flags & 2) == 2);
+            }
+            set
+            {
+                if (value) Flags |= 2;
+                else Flags &= unchecked((byte)~2);
             }
         }
     }

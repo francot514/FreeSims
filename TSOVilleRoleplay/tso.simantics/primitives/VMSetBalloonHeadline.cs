@@ -1,19 +1,25 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Engine;
 using TSO.Files.utils;
 using System.IO;
-using TSO.Simantics.model;
+using TSO.SimsAntics.Model;
 
-namespace TSO.Simantics.primitives
+namespace TSO.SimsAntics.Primitives
 {
     public class VMSetBalloonHeadline : VMPrimitiveHandler
     {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMSetBalloonHeadlineOperand>();
+            var operand = (VMSetBalloonHeadlineOperand)args;
             var obj = (operand.OfStackOBJ) ? context.StackObject : context.Caller;
 
             if (obj.HeadlineRenderer != null) obj.HeadlineRenderer.Dispose();
@@ -28,7 +34,7 @@ namespace TSO.Simantics.primitives
                 VMEntity icon = null;
                 int index = operand.Index;
                 if (operand.Group == VMSetBalloonHeadlineOperandGroup.Algorithmic)
-                    icon = (index < 2) ? context.StackObject : context.VM.GetObjectById((short)context.Locals[operand.Algorithmic]);
+                    icon = (index < 2) ? context.StackObject : context.VM.GetObjectById(context.Locals[operand.Algorithmic]);
                 else if (operand.Indexed)
                     index += context.Thread.TempRegisters[0];
                 obj.Headline = new VMRuntimeHeadline(operand, obj, icon, (sbyte)index);
@@ -106,8 +112,7 @@ namespace TSO.Simantics.primitives
         #region VMPrimitiveOperand Members
         public void Read(byte[] bytes)
         {
-            using (var io = IoBuffer.FromBytes(bytes, ByteOrder.LITTLE_ENDIAN))
-            {
+            using (var io = IoBuffer.FromBytes(bytes, ByteOrder.LITTLE_ENDIAN)){
                 Flags2 = io.ReadUInt16();
                 Index = (sbyte)io.ReadByte();
                 Group = (VMSetBalloonHeadlineOperandGroup)(sbyte)io.ReadByte();
@@ -117,8 +122,7 @@ namespace TSO.Simantics.primitives
             }
         }
 
-        public void Write(byte[] bytes)
-        {
+        public void Write(byte[] bytes) {
             using (var io = new BinaryWriter(new MemoryStream(bytes)))
             {
                 io.Write(Flags2);

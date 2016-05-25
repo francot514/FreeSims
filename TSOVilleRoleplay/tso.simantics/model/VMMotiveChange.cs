@@ -1,16 +1,25 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using TSO.SimsAntics.NetPlay.Model;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 
-namespace TSO.Simantics.model
+namespace TSO.SimsAntics.Model
 {
-    public class VMMotiveChange
+    public class VMMotiveChange : VMSerializable
     {
         public short PerHourChange;
         public short MaxValue;
         public VMMotive Motive;
         private double fractional;
+        public bool Ticked;
 
         public void Clear()
         {
@@ -20,6 +29,8 @@ namespace TSO.Simantics.model
 
         public void Tick(VMAvatar avatar)
         {
+
+            Ticked = true;
             if (PerHourChange != 0)
             {
                 double rate = (PerHourChange/60.0)/30.0;     //remember to fix when we implement the clock! right now assumes time for an hour is a realtime minute
@@ -34,6 +45,22 @@ namespace TSO.Simantics.model
                     avatar.SetMotiveData(Motive, motive);
                 }
             }
+        }
+
+        public void SerializeInto(BinaryWriter writer)
+        {
+            writer.Write(PerHourChange);
+            writer.Write(MaxValue);
+            writer.Write((byte)Motive);
+            writer.Write(fractional);
+        }
+
+        public void Deserialize(BinaryReader reader)
+        {
+            PerHourChange = reader.ReadInt16();
+            MaxValue = reader.ReadInt16();
+            Motive = (VMMotive)reader.ReadByte();
+            fractional = reader.ReadDouble();
         }
     }
 }

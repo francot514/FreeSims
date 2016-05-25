@@ -1,10 +1,16 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using TSO.SimsAntics.Engine;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
 
-namespace TSO.Simantics
+namespace TSO.SimsAntics
 {
     public class VMInstruction
     {
@@ -15,7 +21,7 @@ namespace TSO.Simantics
         public byte FalsePointer;
         public byte Index;
 
-        public object Operand;
+        public VMPrimitiveOperand Operand;
 
         public bool Breakpoint;
         /** Runtime info **/

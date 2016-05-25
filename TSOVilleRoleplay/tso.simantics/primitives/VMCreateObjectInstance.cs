@@ -1,20 +1,27 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TSO.Files.utils;
-using TSO.Simantics.engine.scopes;
-using TSO.Simantics.engine.utils;
-using tso.world.model;
+using TSO.SimsAntics.Engine.Scopes;
+using TSO.SimsAntics.Engine.Utils;
+using tso.world.Model;
 using Microsoft.Xna.Framework;
+using System.IO;
 
-namespace TSO.Simantics.engine.primitives
+namespace TSO.SimsAntics.Engine.Primitives
 {
     public class VMCreateObjectInstance : VMPrimitiveHandler
     {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMCreateObjectInstanceOperand>();
+            var operand = (VMCreateObjectInstanceOperand)args;
             LotTilePos tpos = new LotTilePos(LotTilePos.OUT_OF_WORLD);
             Direction dir;
 
@@ -48,39 +55,69 @@ namespace TSO.Simantics.engine.primitives
                     tpos = new LotTilePos(objp.Position);
                     switch (objp.Direction)
                     {
-                        case tso.world.model.Direction.SOUTH:
+                        case tso.world.Model.Direction.SOUTH:
                             tpos.y += 16;
                             break;
-                        case tso.world.model.Direction.WEST:
+                        case tso.world.Model.Direction.WEST:
                             tpos.x -= 16;
                             break;
-                        case tso.world.model.Direction.EAST:
+                        case tso.world.Model.Direction.EAST:
                             tpos.x += 16;
                             break;
-                        case tso.world.model.Direction.NORTH:
+                        case tso.world.Model.Direction.NORTH:
                             tpos.y -= 16;
                             break;
                     }
                     dir = objp.Direction;
                     break;
+                case VMCreateObjectPosition.NextToMeInDirectionOfLocal:
+                    tpos = new LotTilePos(context.Caller.Position);
+                    var udir = context.Locals[operand.LocalToUse];
+                    dir = Direction.NORTH;
+                    switch (udir)
+                    {
+                        case 0:
+                            dir = Direction.NORTH;
+                            tpos.y -= 16;
+                            break;
+                        case 2:
+                            dir = Direction.EAST;
+                            tpos.x += 16;
+                            break;
+                        case 4:
+                            dir = Direction.SOUTH;
+                            tpos.y += 16;
+                            break;
+                        case 6:
+                            dir = Direction.WEST;
+                            tpos.x -= 16;
+                            break;
+                    }
+                    break;
                 default:
                     throw new VMSimanticsException("Where do I put this??", context);
             }
-            var obj = context.VM.Context.CreateObjectInstance(operand.GUID, tpos, dir,
+
+            var mobj = context.VM.Context.CreateObjectInstance(operand.GUID, tpos, dir,
                 (operand.PassObjectIds && context.StackObject != null) ? (context.StackObject.ObjectID) : (short)0,
-                (operand.PassTemp0) ? (context.Thread.TempRegisters[0]) : (operand.PassObjectIds ? context.Caller.ObjectID : (short)0), false).Objects[0];
+                (operand.PassTemp0) ? (context.Thread.TempRegisters[0]) : (operand.PassObjectIds ? context.Caller.ObjectID : (short)0) , false);
 
-
+            if (mobj == null) return VMPrimitiveExitCode.GOTO_FALSE;
+            var obj = mobj.Objects[0];
 
             if (operand.Position == VMCreateObjectPosition.InSlot0OfStackObject) context.StackObject.PlaceInSlot(obj, 0, true, context.VM.Context);
             else if (operand.Position == VMCreateObjectPosition.InMyHand) context.Caller.PlaceInSlot(obj, 0, true, context.VM.Context);
-
+            else if (operand.Position != VMCreateObjectPosition.OutOfWorld && obj.Position == LotTilePos.OUT_OF_WORLD)
+            {
+                obj.Delete(true, context.VM.Context);
+                return VMPrimitiveExitCode.GOTO_FALSE;
+            }
             if ((operand.Flags & (1 << 6)) > 0)
             {
                 var interaction = operand.InteractionCallback;
                 if (interaction == 254)
                 {
-                    var temp = context.Caller.Thread.Queue[0].InteractionNumber;
+                    var temp = context.Thread.Queue[0].InteractionNumber;
                     if (temp == -1) throw new VMSimanticsException("Set callback as 'this interaction' when queue item has no interaction number!", context);
                     interaction = (byte)temp;
                 }
@@ -95,11 +132,12 @@ namespace TSO.Simantics.engine.primitives
 
     public class VMCreateObjectInstanceOperand : VMPrimitiveOperand
     {
-        public uint GUID;
-        public VMCreateObjectPosition Position;
+        public uint GUID { get; set; }
+        public VMCreateObjectPosition Position { get; set; }
         public byte Flags;
-        public byte LocalToUse;
-        public byte InteractionCallback;
+        public byte LocalToUse { get; set; }
+        public byte InteractionCallback { get; set; }
+
 
         public void Read(byte[] bytes)
         {
@@ -113,11 +151,27 @@ namespace TSO.Simantics.engine.primitives
             }
         }
 
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write(GUID);
+                io.Write((byte)Position);
+                io.Write(Flags);
+                io.Write(LocalToUse);
+                io.Write(InteractionCallback);
+            }
+        }
+
         public bool PassObjectIds
         {
             get
             {
                 return (Flags & 2) == 2;
+            }
+            set
+            {
+                if (value) Flags |= 2;
+                else Flags &= unchecked((byte)~2);
             }
         }
 
@@ -126,6 +180,11 @@ namespace TSO.Simantics.engine.primitives
             get
             {
                 return (Flags & 16) == 16;
+            }
+            set
+            {
+                if (value) Flags |= 16;
+                else Flags &= unchecked((byte)~16);
             }
         }
     }

@@ -2,21 +2,22 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Engine;
 using TSO.Files.utils;
-using tso.world.model;
+using tso.world.Model;
 using TSO.Files.formats.iff.chunks;
+using System.IO;
 
-namespace TSO.Simantics.primitives
+namespace TSO.SimsAntics.Primitives
 {
     // This primitive allows the sim to look at objects or other people eg. when talking to them. Not important right now
     // but crucial for tv/eating conversations to make sense
 
     public class VMLookTowards : VMPrimitiveHandler
     {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMLookTowardsOperand>();
+            var operand = (VMLookTowardsOperand)args;
             //TODO: primitive fails if object calls it
             VMAvatar sim = (VMAvatar)context.Caller;
 
@@ -31,19 +32,19 @@ namespace TSO.Simantics.primitives
                     return VMPrimitiveExitCode.GOTO_TRUE; //does not work in TSO
                 case VMLookTowardsMode.BodyTowardsStackObj:
                     result.RadianDirection = (float)GetDirectionTo(sim.Position, context.StackObject.Position);
-                    result.Flags = RadianToFlags(result.RadianDirection);
                     break;
                 case VMLookTowardsMode.BodyAwayFromStackObj:
                     result.RadianDirection = (float)GetDirectionTo(sim.Position, context.StackObject.Position);
                     result.RadianDirection = (float)((result.RadianDirection + Math.PI) % (Math.PI*2));
-                    result.Flags = RadianToFlags(result.RadianDirection);
                     break;
 
             }
 
-            var pathFinder = context.Thread.PushNewRoutingFrame(context, false);
-            if (pathFinder != null) return VMPrimitiveExitCode.CONTINUE;
-            else return VMPrimitiveExitCode.GOTO_TRUE;
+            if (context.Thread.IsCheck) return VMPrimitiveExitCode.GOTO_FALSE;
+            var pathFinder = context.Thread.PushNewRoutingFrame(context, false); //use the path finder to do the turn animation.
+            pathFinder.InitRoutes(new List<VMFindLocationResult>() { result });
+
+            return VMPrimitiveExitCode.CONTINUE;
         }
 
         private double GetDirectionTo(LotTilePos pos1, LotTilePos pos2)
@@ -59,7 +60,7 @@ namespace TSO.Simantics.primitives
 
     public class VMLookTowardsOperand : VMPrimitiveOperand
     {
-        public VMLookTowardsMode Mode;
+        public VMLookTowardsMode Mode { get; set; }
 
         #region VMPrimitiveOperand Members
         public void Read(byte[] bytes)
@@ -67,6 +68,13 @@ namespace TSO.Simantics.primitives
             using (var io = IoBuffer.FromBytes(bytes, ByteOrder.LITTLE_ENDIAN))
             {
                 Mode = (VMLookTowardsMode)io.ReadByte();
+            }
+        }
+
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write((byte)Mode);
             }
         }
         #endregion

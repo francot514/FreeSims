@@ -1,11 +1,17 @@
-﻿using Microsoft.Xna.Framework;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using tso.world.model;
+using tso.world.Model;
 
-namespace TSO.Simantics.utils
+namespace TSO.SimsAntics.Utils
 {
     public static class VMArchitectureTools
     {
@@ -163,6 +169,7 @@ namespace TSO.Simantics.utils
             bool diagCheck = (direction % 2 == 1);
             for (int i = 0; i < length; i++)
             {
+                if (pos.X <= 0 || pos.X >= target.Width || pos.Y <= 0 || pos.Y >= target.Height) return false;
                 var wall = target.GetWall((short)pos.X, (short)pos.Y, level);
                 wall.Segments &= ~WLMainSeg[direction];
                 if (!target.Context.CheckWallValid(LotTilePos.FromBigTile((short)pos.X, (short)pos.Y, level), wall)) return false;
@@ -186,6 +193,7 @@ namespace TSO.Simantics.utils
             bool diagCheck = (direction % 2 == 1);
             for (int i = 0; i < length; i++)
             {
+                if (pos.X <= 0 || pos.X >= target.Width || pos.Y <= 0 || pos.Y >= target.Height) return false;
                 var wall = target.GetWall((short)pos.X, (short)pos.Y, level);
                 if ((wall.Segments & AnyDiag) == 0 && (!diagCheck || (wall.Segments == 0)))
                 {
@@ -259,7 +267,7 @@ namespace TSO.Simantics.utils
 
             var wall = target.GetWall((short)pos.X, (short)pos.Y, level);
             //direction starts lefttop, righttop
-            if ((wall.Segments & WallSegments.HorizontalDiag) > 0)
+            if ((wall.Segments & WallSegments.HorizontalDiag) > 0 && wall.TopRightStyle == 1)
             {
                 if (direction < 2)
                 {
@@ -274,7 +282,7 @@ namespace TSO.Simantics.utils
                 target.SetWall((short)pos.X, (short)pos.Y, level, wall);
                 return direction;
             }
-            else if ((wall.Segments & WallSegments.VerticalDiag) > 0)
+            else if ((wall.Segments & WallSegments.VerticalDiag) > 0 && wall.TopRightStyle == 1)
             {
                 if (direction > 0 && direction < 3)
                 {
@@ -345,7 +353,7 @@ namespace TSO.Simantics.utils
                     SpreadOnto(walls, plusX, item.Y, 0, Map, width, height, spread, pattern, false);
                 else
                 {
-                    if (mainWalls.BottomRightPattern != pattern) wallsCovered++;
+                    if (mainWalls.BottomRightPattern != pattern  && PXWalls.TopLeftThick) wallsCovered++;
                     mainWalls.BottomRightPattern = pattern;
                 }
 
@@ -425,7 +433,7 @@ namespace TSO.Simantics.utils
         /// </summary>
         public static int FloorPatternFill(VMArchitecture target, Point pos, ushort pattern, sbyte level) //for first floor gen, curRoom should be 1. For floors above, it should be the last genmap result
         {
-            if (pos.X < 0 || pos.X >= target.Width || pos.Y < 0 || pos.Y >= target.Height) return 0;
+            if (pattern > 65533 || pos.X < 0 || pos.X >= target.Width || pos.Y < 0 || pos.Y >= target.Height) return 0;
 
             pos.X = Math.Max(Math.Min(pos.X, target.Width - 1), 0);
             pos.Y = Math.Max(Math.Min(pos.Y, target.Height - 1), 0);
@@ -512,7 +520,7 @@ namespace TSO.Simantics.utils
                 //dot mode, just fill a tile. can be a diagonal.
                 if (rect.X < 0 || rect.X >= target.Width || rect.Y < 0 || rect.Y >= target.Width) return 0;
                 var wall = target.GetWall((short)rect.X, (short)rect.Y, level);
-                if ((wall.Segments & AnyDiag) > 0)
+                if ((wall.Segments & AnyDiag) > 0 && pattern < 65534)
                 {
                     bool side = ((wall.Segments & WallSegments.HorizontalDiag) > 0) ? (dir < 2) : (dir < 1 || dir > 2);
                     if (side)
@@ -533,7 +541,7 @@ namespace TSO.Simantics.utils
                     }
                     target.SetWall((short)rect.X, (short)rect.Y, level, wall);
                 }
-                else 
+                else if ((wall.Segments & AnyDiag) == 0)
                 {
                     var floor = target.GetFloor((short)rect.X, (short)rect.Y, level);
                     if (floor.Pattern != pattern)
@@ -554,6 +562,7 @@ namespace TSO.Simantics.utils
                     var wall = target.GetWall((short)x, (short)y, level);
                     if ((wall.Segments & AnyDiag) > 0) //diagonal floors are stored in walls
                     {
+                        if (pattern < 65534) continue;
                         if (wall.TopLeftStyle != pattern)
                         {
                             wall.TopLeftStyle = pattern;

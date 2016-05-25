@@ -1,31 +1,38 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TSO.Files.utils;
-using TSO.Simantics.engine.scopes;
-using TSO.Simantics.engine.utils;
+using TSO.SimsAntics.Engine.Scopes;
+using TSO.SimsAntics.Engine.Utils;
 using TSO.Vitaboy;
-using TSO.Simantics.model;
-using TSO.Simantics.utils;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Model;
+using TSO.SimsAntics.Utils;
+using TSO.SimsAntics.Engine;
 using TSO.Files.formats.iff.chunks;
+using System.IO;
 
-namespace TSO.Simantics.primitives
+namespace TSO.SimsAntics.Primitives
 {
     public class VMReach : VMPrimitiveHandler
     {
         public bool failed = false;
 
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMReachOperand>();
+            var operand = (VMReachOperand)args;
 
             int height;
 
             if (operand.Mode == 0)
             { //reach to stack object
-                height = (int)Math.Round(context.StackObject.WorldUI.Position.Z*4); //todo, factor in second floor by making height differential to sim height
+                height = 4; //todo: get slot height
             }
             else if (operand.Mode == 1)
             {
@@ -74,7 +81,7 @@ namespace TSO.Simantics.primitives
                 {
                     avatar.Animations.Clear();
                     return VMPrimitiveExitCode.GOTO_TRUE;
-                }
+                } 
                 else if (avatar.CurrentAnimationState.EventFired)
                 {
 
@@ -143,6 +150,15 @@ namespace TSO.Simantics.primitives
                 Mode = io.ReadUInt16();
                 GrabOrDrop = io.ReadUInt16();
                 SlotParam = io.ReadUInt16();
+            }
+        }
+
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write(Mode);
+                io.Write(GrabOrDrop);
+                io.Write(SlotParam);
             }
         }
         #endregion

@@ -1,14 +1,8 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
@@ -17,7 +11,7 @@ using System.Text;
 using System.Xml.Serialization;
 using System.IO;
 
-namespace tso.world.model
+namespace tso.world.Model
 {
     [XmlRoot("house")]
     public class XmlHouseData
@@ -47,12 +41,16 @@ namespace tso.world.model
 
         public static XmlHouseData Parse(string xmlFilePath)
         {
-            XmlSerializer serialize = new XmlSerializer(typeof(XmlHouseData));
-
             using (var reader = File.OpenRead(xmlFilePath))
             {
-                return (XmlHouseData)serialize.Deserialize(reader);
+                return Parse(reader);
             }
+        }
+
+        public static XmlHouseData Parse(Stream reader)
+        {
+            XmlSerializer serialize = new XmlSerializer(typeof(XmlHouseData));
+            return (XmlHouseData)serialize.Deserialize(reader);
         }
 
         public static void Save(string xmlFilePath, XmlHouseData data)
@@ -132,6 +130,10 @@ namespace tso.world.model
         [XmlArray("walls")]
         [XmlArrayItem("wall")]
         public List<XmlHouseDataWall> Walls;
+
+        [XmlArray("pools")]
+        [XmlArrayItem("pool")]
+        public List<XmlHouseDataPool> Pools;
     }
 
     public class XmlHouseDataFloor
@@ -149,6 +151,17 @@ namespace tso.world.model
         public int Value { get; set; }
     }
 
+    public class XmlHouseDataPool
+    {
+        [XmlAttribute("x")]
+        public short X { get; set; }
+
+        [XmlAttribute("y")]
+        public short Y { get; set; }
+
+        [XmlAttribute("value")]
+        public int Value { get; set; }
+    }
 
     public class XmlHouseDataWall
     {

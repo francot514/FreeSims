@@ -1,21 +1,28 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Engine;
 using TSO.Files.utils;
-using TSO.Simantics.engine.scopes;
-using TSO.Simantics.engine.utils;
+using TSO.SimsAntics.Engine.Scopes;
+using TSO.SimsAntics.Engine.Utils;
 using Microsoft.Xna.Framework;
+using System.IO;
 
-namespace TSO.Simantics.primitives
+namespace TSO.SimsAntics.Primitives
 {
     public class VMSetToNext : VMPrimitiveHandler
     {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMSetToNextOperand>();
-            var targetValue = VMMemory.GetVariable(context, operand.GetTargetOwner(), operand.GetTargetData());
+            var operand = (VMSetToNextOperand)args;
+            var targetValue = VMMemory.GetVariable(context, operand.TargetOwner, operand.TargetData);
             var entities = context.VM.Entities;
 
             VMEntity Pointer = context.VM.GetObjectById(targetValue);
@@ -50,18 +57,60 @@ namespace TSO.Simantics.primitives
                     }
                     if (found)
                     {
-                        VMMemory.SetVariable(context, operand.GetTargetOwner(), operand.GetTargetData(), bestID);
+                        VMMemory.SetVariable(context, operand.TargetOwner, operand.TargetData, bestID);
                         return VMPrimitiveExitCode.GOTO_TRUE;
                     }
                     else
                     {
-                        VMMemory.SetVariable(context, operand.GetTargetOwner(), operand.GetTargetData(), smallestID);
+                        VMMemory.SetVariable(context, operand.TargetOwner, operand.TargetData, smallestID);
                         return VMPrimitiveExitCode.GOTO_TRUE;
                     }
                 }
+            }
+            else if (operand.SearchType == VMSetToNextSearchType.ObjectAdjacentToObjectInLocal)
+            {
+                VMEntity[] adjOpt = null;
+                VMEntity anchor = context.VM.GetObjectById((short)context.Locals[operand.Local]);
+                int ptrDir = -1;
+
+                targetValue = 0;
+                if (Pointer != null)
+                {
+                    ptrDir = getAdjDir(anchor, Pointer);
+                    if (ptrDir == 3) return VMPrimitiveExitCode.GOTO_FALSE; //reached end
+                }
+                adjOpt = new VMEntity[3 - ptrDir];
+
+                for (int i = 0; i < entities.Count; i++) //generic search through all objects
+                {
+                    var temp = entities[i];
+
+                    int xDist = Math.Abs(temp.Position.TileX - anchor.Position.TileX);
+                    int yDist = Math.Abs(temp.Position.TileY - anchor.Position.TileY);
+                    int dir = getAdjDir(anchor, temp);
+
+                    if ((dir > ptrDir) && adjOpt[(dir - ptrDir) - 1]==null && (temp.Position.Level == anchor.Position.Level) && 
+                        (xDist < 2 && yDist < 2) && ((xDist == 1) ^ (yDist == 1)))
+                    {
+                        adjOpt[(dir - ptrDir) - 1] = temp;
+                        if ((dir - ptrDir) == 1) break; //exit early
+                    }
+                }
+
+                for (int i=0; i<adjOpt.Length; i++)
+                {
+                    if (adjOpt[i] != null)
+                    {
+                        VMMemory.SetVariable(context, operand.TargetOwner, operand.TargetData, adjOpt[i].ObjectID);
+                        return VMPrimitiveExitCode.GOTO_TRUE;
+                    }
+                }
+                return VMPrimitiveExitCode.GOTO_FALSE;
+
             } else {
                 bool loop = (operand.SearchType == VMSetToNextSearchType.ObjectOnSameTile);
                 VMEntity first = null;
+
                 for (int i=0; i<entities.Count; i++) //generic search through all objects
                 {
                     var temp = entities[i];
@@ -85,22 +134,15 @@ namespace TSO.Simantics.primitives
                                 found = (temp.Object.OBJ.GUID == operand.GUID);
                                 break;
                             case VMSetToNextSearchType.NeighborId:
-                                //throw new VMSimanticsException("Not implemented!", context);
+                                throw new VMSimanticsException("Not implemented!", context);
                             case VMSetToNextSearchType.ObjectWithCategoryEqualToSP0:
                                 found = (temp.Object.OBJ.FunctionFlags == context.Args[0]); //I'm assuming that means "Stack parameter 0", that category means function and that it needs to be exactly the same (no subsets)
                                 break;
                             case VMSetToNextSearchType.NeighborOfType:
                                 throw new VMSimanticsException("Not implemented!", context);
                             case VMSetToNextSearchType.ObjectOnSameTile:
-                                temp2 = Pointer; //.VM.GetObjectById((short)context.Locals[operand.Local]); //sure, it doesn't have this in the name, but it seems like the object is chosen from a local.
-                                found = (temp.Position.TileX == temp2.Position.TileX) && (temp.Position.TileY == temp2.Position.TileY);
-                                break;
-                            case VMSetToNextSearchType.ObjectAdjacentToObjectInLocal:
-                                temp2 = context.VM.GetObjectById((short)context.Locals[operand.Local]);
-                                
-                                int xDist = Math.Abs(temp.Position.TileX - temp2.Position.TileX);
-                                int yDist = Math.Abs(temp.Position.TileY - temp2.Position.TileY);
-                                found = (xDist<2 && yDist<2) && ((xDist==1)^(yDist==1));
+                                temp2 = Pointer; 
+                                found = (temp.Position.Level == temp2.Position.Level) && (temp.Position.TileX == temp2.Position.TileX) && (temp.Position.TileY == temp2.Position.TileY);
                                 break;
                             case VMSetToNextSearchType.Career:
                                 throw new VMSimanticsException("Not implemented!", context);
@@ -116,7 +158,7 @@ namespace TSO.Simantics.primitives
                     }
                     if (found)
                     {
-                        VMMemory.SetVariable(context, operand.GetTargetOwner(), operand.GetTargetData(), temp.ObjectID);
+                        VMMemory.SetVariable(context, operand.TargetOwner, operand.TargetData, temp.ObjectID);
                         return VMPrimitiveExitCode.GOTO_TRUE;
                     }
                 }
@@ -126,7 +168,7 @@ namespace TSO.Simantics.primitives
                     if (first == null) return VMPrimitiveExitCode.GOTO_FALSE; //no elements of this kind at all.
                     else
                     {
-                        VMMemory.SetVariable(context, operand.GetTargetOwner(), operand.GetTargetData(), first.ObjectID); //set to loop, so go back to lowest obj id.
+                        VMMemory.SetVariable(context, operand.TargetOwner, operand.TargetData, first.ObjectID); //set to loop, so go back to lowest obj id.
                         return VMPrimitiveExitCode.GOTO_TRUE;
                     }
                     //loop around
@@ -136,31 +178,36 @@ namespace TSO.Simantics.primitives
             return VMPrimitiveExitCode.GOTO_FALSE; //ran out of objects to test
         }
 
+        private int getAdjDir(VMEntity src, VMEntity dest)
+        {
+            int diffX = dest.Position.TileX - src.Position.TileX;
+            int diffY = dest.Position.TileY - src.Position.TileY;
+
+            return getAdjDir(diffX, diffY);
+        }
+
+        private int getAdjDir(int diffX, int diffY)
+        {
+
+            //negative y is anchor
+            //positive x is 90 degrees
+
+            return (diffX == 0) ?
+                ((diffY < 0) ? 0 : 2) :
+                ((diffX < 0) ? 3 : 1);
+        }
 
     }
 
     public class VMSetToNextOperand : VMPrimitiveOperand
     {
-        public uint GUID;
-        public byte Flags;
-        public VMVariableScope TargetOwner;
-        public byte Local;
-        public ushort TargetData;
-        public VMSetToNextSearchType SearchType;
-
-        public VMVariableScope GetTargetOwner(){
-            if ((Flags & 0x80) == 0x80){
-                return TargetOwner;
-            }
-            return VMVariableScope.StackObjectID;
-        }
-
-        public ushort GetTargetData(){
-            if ((Flags & 0x80) == 0x80){
-                return TargetData;
-            }
-            return 0;
-        }
+        public uint GUID { get; set; }
+        public byte Flags { get; set; }
+        public VMVariableScope TargetOwner { get; set; }
+        public byte Local { get; set; }
+        public byte TargetData { get; set; }
+        public VMSetToNextSearchType SearchType {
+            get { return (VMSetToNextSearchType)(Flags & 0x7F); } set { Flags = (byte)(0x80 | ((byte)value & 0x7F)); } }
 
         #region VMPrimitiveOperand Members
         public void Read(byte[] bytes){
@@ -173,8 +220,24 @@ namespace TSO.Simantics.primitives
                 this.Local = io.ReadByte();
                 this.TargetData = io.ReadByte();
 
-                this.SearchType = (VMSetToNextSearchType)(this.Flags & 0x7F);
+                if ((Flags & 0x80) == 0)
+                {
+                    //clobber this, we should always set flag for saving.
+                    Flags |= 0x80;
+                    TargetOwner = VMVariableScope.StackObjectID;
+                    TargetData = 0;
+                }
+            }
+        }
 
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write(GUID);
+                io.Write(Flags);
+                io.Write((byte)TargetOwner);
+                io.Write(Local);
+                io.Write(TargetData);
             }
         }
         #endregion

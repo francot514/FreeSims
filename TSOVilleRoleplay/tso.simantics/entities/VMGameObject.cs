@@ -1,37 +1,36 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TSO.Content;
-using tso.world.components;
-using tso.world.model;
+using tso.world.Components;
+using tso.world.Model;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using TSO.Files.formats.iff.chunks;
-using TSO.Simantics.model;
+using TSO.SimsAntics.Model;
 using TSO.Common.utils;
-using TSO.Content.model;
-using TSO.SimAntics.Routing;
 
-namespace TSO.Simantics
+using TSO.Content.model;
+using TSO.SimsAntics.Model.Routing;
+using TSO.SimsAntics.Marshals;
+
+namespace TSO.SimsAntics
 {
     public class VMGameObject : VMEntity
     {
-
-        private VMEntity[] SlotContainees;
 
         /** Definition **/
 
         public VMGameObject(GameObject def, ObjectComponent worldUI) : base(def)
         {
             this.WorldUI = worldUI;
-
-            /*var mainFunction = def.Master.MainFuncID;
-            if (mainFunction > 0)
-            {
-                var bhav = def.Iff.BHAVs.First(x => x.ID == mainFunction);
-                int y = 22;
-            }*/
         }
 
         public override void SetDynamicSpriteFlag(ushort index, bool set)
@@ -54,6 +53,7 @@ namespace TSO.Simantics
 
         public bool RefreshGraphic()
         {
+            if (!UseWorld) return true;
             var newGraphic = Object.OBJ.BaseGraphicID + ObjectData[(int)VMStackObjectVariable.Graphic];
             var dgrp = Object.Resource.Get<DGRP>((ushort)newGraphic);
             if (dgrp != null)
@@ -65,12 +65,34 @@ namespace TSO.Simantics
         }
 
 
-        public override void Init(TSO.Simantics.VMContext context){
-            ((ObjectComponent)WorldUI).ObjectID = ObjectID;
+        public override void SetRoom(ushort room)
+        {
+            base.SetRoom(room);
+            
+            // NOTE: if something computationally intensive happens here, take into account
+            // that the previous value of room may equal the new value if the client resyncs
+            // so checking for a difference and only acting when there is is likely a bad idea.
+            RefreshLight();
+        }
+
+        public void RefreshLight()
+        {
+            if (UseWorld)
+            {
+                var flags = (VMEntityFlags2)GetValue(VMStackObjectVariable.FlagField2);
+                WorldUI.Room = ((flags & VMEntityFlags2.GeneratesLight) > 0 && 
+                    GetValue(VMStackObjectVariable.LightingContribution)>0 && 
+                    (flags & (VMEntityFlags2.ArchitectualWindow | VMEntityFlags2.ArchitectualDoor)) == 0) 
+                    ? (ushort)65535 : (ushort)GetValue(VMStackObjectVariable.Room);
+            }
+        }
+
+        public override void Init(TSO.SimsAntics.VMContext context){
+            if (UseWorld) WorldUI.ObjectID = ObjectID;
             if (Slots != null && Slots.Slots.ContainsKey(0))
             {
-                SlotContainees = new VMEntity[Slots.Slots[0].Count];
-                ((ObjectComponent)WorldUI).ContainerSlots = Slots.Slots[0];
+                Contained = new VMEntity[Slots.Slots[0].Count];
+                if (UseWorld) ((ObjectComponent)WorldUI).ContainerSlots = Slots.Slots[0];
             }
 
             base.Init(context);
@@ -90,15 +112,19 @@ namespace TSO.Simantics
             }
         }
 
+        private Direction _Direction;
         public override Direction Direction { 
-            get { return ((ObjectComponent)WorldUI).Direction; }
-            set { ((ObjectComponent)WorldUI).Direction = value; }
+            get { return _Direction; }
+            set {
+                _Direction = value;
+                if (UseWorld) WorldUI.Direction = value;
+            }
         }
 
         public override Vector3 VisualPosition
         {
-            get { return WorldUI.Position + new Vector3(0.5f, 0.5f, 0f); }
-            set { WorldUI.Position = value-new Vector3(0.5f, 0.5f, 0f); }
+            get { return (UseWorld)?(WorldUI.Position + new Vector3(0.5f, 0.5f, 0f)):new Vector3(); }
+            set { if (UseWorld) WorldUI.Position = value-new Vector3(0.5f, 0.5f, 0f); }
         }
 
         public override string ToString()
@@ -109,7 +135,7 @@ namespace TSO.Simantics
             }
             var label = Object.OBJ.ChunkLabel;
             if (label != null && label.Length > 0){
-                return label.TrimEnd('\0');
+                return label;
             }
             return Object.OBJ.GUID.ToString("X");
         }
@@ -118,21 +144,21 @@ namespace TSO.Simantics
 
         public override int TotalSlots()
         {
-            if (SlotContainees == null) return 0;
-            return SlotContainees.Length;
+            if (Contained == null) return 0;
+            return Contained.Length;
         }
 
         public override void PlaceInSlot(VMEntity obj, int slot, bool cleanOld, VMContext context)
         {
             if (cleanOld) obj.PrePositionChange(context);
 
-            if (SlotContainees != null)
+            if (Contained != null)
             {
-                if (slot > -1 && slot < SlotContainees.Length)
+                if (slot > -1 && slot < Contained.Length)
                 {
                     if (!obj.GhostImage)
                     {
-                        SlotContainees[slot] = obj;
+                        Contained[slot] = obj;
                         obj.Container = this;
                         obj.ContainerSlot = (short)slot;
                     }
@@ -143,18 +169,18 @@ namespace TSO.Simantics
                         obj.WorldUI.ContainerSlot = slot;
                     }
                     obj.Position = Position; //TODO: is physical position the same as the slot offset position?
-                    if (cleanOld) obj.PositionChange(context);
+                    if (cleanOld) obj.PositionChange(context, false);
                 }
             }
         }
 
         public override VMEntity GetSlot(int slot)
         {
-            if (SlotContainees != null)
+            if (Contained != null)
             {
-                if (slot > -1 && slot < SlotContainees.Length)
+                if (slot > -1 && slot < Contained.Length)
                 {
-                    return SlotContainees[slot];
+                    return Contained[slot];
                 }
                 else
                 {
@@ -175,28 +201,31 @@ namespace TSO.Simantics
 
         public override void ClearSlot(int slot)
         {
-            if (SlotContainees != null)
+            if (Contained != null)
             {
-                if (slot > -1 && slot < SlotContainees.Length)
+                if (slot > -1 && slot < Contained.Length)
                 {
-                    SlotContainees[slot].Container = null;
-                    SlotContainees[slot].ContainerSlot = -1;
-                    SlotContainees[slot].WorldUI.Container = null;
-                    SlotContainees[slot].WorldUI.ContainerSlot = -1;
-                    SlotContainees[slot] = null;
+                    if (Contained[slot] == null) return; //what..
+                    Contained[slot].Container = null;
+                    Contained[slot].ContainerSlot = -1;
+                    if (UseWorld)
+                    {
+                        Contained[slot].WorldUI.Container = null;
+                        Contained[slot].WorldUI.ContainerSlot = -1;
+                    }
+                    Contained[slot] = null;
                 }
             }
         }
 
         // End Container SLOTs interface
 
-        public override Texture2D GetIcon(GraphicsDevice gd)
+        public override Texture2D GetIcon(GraphicsDevice gd, int store)
         {
-            var bmp = Object.Resource.Get<BMP>(Object.OBJ.CatalogStringsID);
+            var bmp = Object.Resource.Get<BMP>((ushort)(Object.OBJ.CatalogStringsID + store * 2000));
             if (bmp != null) return bmp.GetTexture(gd);
             else return null;
         }
-
 
         public override void PrePositionChange(VMContext context)
         {
@@ -208,7 +237,7 @@ namespace TSO.Simantics
                     WorldUI.Container = null;
                     WorldUI.ContainerSlot = 0;
                 }
-                return;
+                return; 
             }
             if (Container != null)
             {
@@ -238,7 +267,7 @@ namespace TSO.Simantics
         {
             if (GetFlag(VMEntityFlags.HasZeroExtent)) return null;
 
-            var idir = (DirectionToWallOff(dir) * 4);
+            var idir = (DirectionToWallOff(dir)*4);
 
             uint rotatedFPM = (uint)(Object.OBJ.FootprintMask << idir);
             rotatedFPM = (rotatedFPM >> 16) | (rotatedFPM & 0xFFFF);
@@ -251,12 +280,24 @@ namespace TSO.Simantics
                 (pos.y + tileWidth) - ((int)(rotatedFPM >> 8) & 0xF),
                 (pos.x - tileWidth) + ((int)(rotatedFPM >> 12) & 0xF),
                 (pos.y - tileWidth) + ((int)rotatedFPM & 0xF));
-
+                
         }
 
-        public override void PositionChange(VMContext context)
+        public override void PositionChange(VMContext context, bool noEntryPoint)
         {
             if (GhostImage) return;
+
+            var room = context.GetObjectRoom(this);
+            SetRoom(room);
+            for (int i=0; i<Contained.Length; i++)
+            {
+                if (Contained[i] != null)
+                {
+                    Contained[i].Position = Position;
+                    Contained[i].SetRoom(room);
+                }
+            }
+
             if (Container != null) return;
             if (Position == LotTilePos.OUT_OF_WORLD) return;
 
@@ -291,11 +332,33 @@ namespace TSO.Simantics
 
             context.RegisterObjectPos(this);
 
-            
+            if (EntryPoints[8].ActionFunction != 0) UpdateDynamicMultitile(context);
 
-            base.PositionChange(context);
+            base.PositionChange(context, noEntryPoint);
         }
 
 
+        #region VM Marshalling Functions
+        public VMGameObjectMarshal Save()
+        {
+            var gameObj = new VMGameObjectMarshal { Direction = Direction };
+            SaveEnt(gameObj);
+            return gameObj;
+        }
+
+        public void Load(VMGameObjectMarshal input)
+        {
+            base.Load(input);
+            Position = Position;
+            Direction = input.Direction;
+            if (UseWorld)
+            {
+                ((ObjectComponent)this.WorldUI).DynamicSpriteFlags = this.DynamicSpriteFlags;
+                WorldUI.ObjectID = ObjectID;
+                if (Slots != null && Slots.Slots.ContainsKey(0)) ((ObjectComponent)WorldUI).ContainerSlots = Slots.Slots[0];
+                RefreshGraphic();
+            }
+        }
+        #endregion
     }
 }

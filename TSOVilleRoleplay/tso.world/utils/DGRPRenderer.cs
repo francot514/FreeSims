@@ -1,14 +1,8 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
@@ -16,9 +10,9 @@ using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework;
 using TSO.Files.formats.iff.chunks;
-using tso.world.model;
+using tso.world.Model;
 
-namespace tso.world.utils
+namespace tso.world.Utils
 {
     public class DGRPRendererItem 
     {
@@ -32,10 +26,13 @@ namespace tso.world.utils
     public class DGRPRenderer
     {
         private DGRP DrawGroup;
+        public Rectangle Bounding;
         private List<DGRPRendererItem> Items = new List<DGRPRendererItem>();
         public uint DynamicSpriteFlags = 0x00000000;
         public ushort DynamicSpriteBaseID;
         public ushort NumDynamicSprites;
+
+        public ushort Room;
 
         public DGRPRenderer(DGRP group)
         {
@@ -113,11 +110,12 @@ namespace tso.world.utils
 
         public void InvalidateScroll()
         {
-            _Dirty = true;
+            //_Dirty = true;
         }
 
-        public void Draw(WorldState world)
+        public void ValidateSprite(WorldState world)
         {
+            if (DrawGroup == null) return;
             if (_Dirty)
             {
                 if (_TextureDirty)
@@ -131,25 +129,31 @@ namespace tso.world.utils
                     {
                         foreach (var sprite in image.Sprites)
                         {
+                            if (sprite == null) continue;
                             var texture = world._2D.GetWorldTexture(sprite);
                             if (texture == null || texture.ZBuffer == null) { continue; }
 
                             var isDynamic = sprite.SpriteID >= DynamicSpriteBaseID && sprite.SpriteID < (DynamicSpriteBaseID + NumDynamicSprites);
-                            if (isDynamic){
+                            if (isDynamic)
+                            {
                                 var dynamicIndex = (ushort)(sprite.SpriteID - DynamicSpriteBaseID);
 
                                 var isVisible = (DynamicSpriteFlags & (0x1 << dynamicIndex)) > 0;
-                                if (!isVisible){
+                                if (!isVisible)
+                                {
                                     continue;
                                 }
                             }
                             var item = new _2DSprite();
                             item.Pixel = texture.Pixel;
                             item.Depth = texture.ZBuffer;
-                            if (texture.ZBuffer != null){
+                            if (texture.ZBuffer != null)
+                            {
                                 item.RenderMode = _2DBatchRenderMode.Z_BUFFER;
                                 item.WorldPosition = sprite.ObjectOffset;
-                            }else{
+                            }
+                            else
+                            {
                                 item.RenderMode = _2DBatchRenderMode.NO_DEPTH;
                             }
 
@@ -164,27 +168,42 @@ namespace tso.world.utils
                     _TextureDirty = false;
                 }
 
+
+                int maxX = int.MinValue, maxY = int.MinValue;
+                int minX = int.MaxValue, minY = int.MaxValue;
                 foreach (var item in Items)
                 {
                     var sprite = item.Sprite;
                     var dgrpSprite = item.DGRPSprite;
-                    
+
                     var pxX = (world.WorldSpace.CadgeWidth / 2.0f) + dgrpSprite.SpriteOffset.X;
                     var pxY = (world.WorldSpace.CadgeBaseLine - sprite.Pixel.Height) + dgrpSprite.SpriteOffset.Y;
 
-                    var centerRelative = dgrpSprite.ObjectOffset * new Vector3(1f/16f, 1f/16f, 1f/5f);
+                    var centerRelative = dgrpSprite.ObjectOffset * new Vector3(1f / 16f, 1f / 16f, 1f / 5f);
                     centerRelative = Vector3.Transform(centerRelative, Matrix.CreateRotationZ(RadianDirection));
 
                     var pxOff = world.WorldSpace.GetScreenFromTile(centerRelative);
 
-                    sprite.DestRect.X = (int)(pxX+pxOff.X);
-                    sprite.DestRect.Y = (int)(pxY+pxOff.Y);
+                    sprite.DestRect.X = (int)(pxX + pxOff.X);
+                    sprite.DestRect.Y = (int)(pxY + pxOff.Y);
+
+                    if (sprite.DestRect.X < minX) minX = sprite.DestRect.X;
+                    if (sprite.DestRect.Y < minY) minY = sprite.DestRect.Y;
+                    if (sprite.DestRect.X + sprite.Pixel.Width > maxX) maxX = sprite.DestRect.X + sprite.Pixel.Width;
+                    if (sprite.DestRect.Y + sprite.Pixel.Height > maxY) maxY = sprite.DestRect.Y + sprite.Pixel.Height;
 
                     sprite.WorldPosition = centerRelative * 3f;
+                    sprite.Room = Room;
                 }
+                Bounding = new Rectangle(minX, minY, maxX - minX, maxY - minY);
 
                 _Dirty = false;
             }
+        }
+
+        public void Draw(WorldState world)
+        {
+            ValidateSprite(world);
 
             foreach (var item in Items)
             {

@@ -1,26 +1,21 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+
 using TSO.Common.rendering.framework;
 using TSO.Common.rendering.framework.camera;
 using Microsoft.Xna.Framework;
-using tso.world.model;
+using tso.world.Model;
 using Microsoft.Xna.Framework.Graphics;
 using TSO.Common.rendering.framework.model;
-using tso.world.components;
+using tso.world.Components;
 
 namespace tso.world
 {
@@ -40,11 +35,12 @@ namespace tso.world
 
         /** How many pixels from each edge of the screen before we start scrolling the view **/
         public int ScrollBounds = 20;
+        public static bool DirectX = false;
 
         public WorldState State;
-        private bool HasInitGPU;
-        private bool HasInitBlueprint;
-        private bool HasInit;
+        protected bool HasInitGPU;
+        protected bool HasInitBlueprint;
+        protected bool HasInit;
 
         private World2D _2DWorld = new World2D();
         private World3D _3DWorld = new World3D();
@@ -72,14 +68,15 @@ namespace tso.world
              * state settings for the world and helper functions
              */
             State = new WorldState(layer.Device, layer.Device.Viewport.Width, layer.Device.Viewport.Height, this);
-            State._3D = new tso.world.utils._3DWorldBatch(State);
-            State._2D = new tso.world.utils._2DWorldBatch(layer.Device, World2D.NUM_2D_BUFFERS, World2D.BUFFER_SURFACE_FORMATS);
-            base.Camera = State.Camera;
+            State.AmbientLight = new Texture2D(layer.Device, 256, 256);
+            State._3D = new tso.world.Utils._3DWorldBatch(State);
+            State._2D = new tso.world.Utils._2DWorldBatch(layer.Device, World2D.NUM_2D_BUFFERS, World2D.BUFFER_SURFACE_FORMATS, World2D.SCROLL_BUFFER);
+            State._2D.AmbientLight = State.AmbientLight;
+
+            base.Camera = (ICamera)State.Camera;
 
             HasInitGPU = true;
             HasInit = HasInitGPU & HasInitBlueprint;
-
-            _2DWorld.Initialize(layer);
         }
 
         public void InitBlueprint(Blueprint blueprint)
@@ -96,7 +93,7 @@ namespace tso.world
         {
             if (Blueprint == null) { return; }
 
-            foreach (var item in Blueprint.All){
+            foreach (var item in Blueprint.Objects){
                 item.OnZoomChanged(State);
             }
             Blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.ZOOM));
@@ -106,7 +103,7 @@ namespace tso.world
         {
             if (Blueprint == null) { return; }
 
-            foreach (var item in Blueprint.All)
+            foreach (var item in Blueprint.Objects)
             {
                 item.OnRotationChanged(State);
             }
@@ -117,7 +114,7 @@ namespace tso.world
         {
             if (Blueprint == null) { return; }
 
-            foreach (var item in Blueprint.All){
+            foreach (var item in Blueprint.Objects){
                 item.OnScrollChanged(State);
             }
             Blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.SCROLL));
@@ -317,10 +314,17 @@ namespace tso.world
 
             State._3D.Begin(device);
             State._2D.Begin(this.State.Camera);
+
+            var pxOffset = -State.WorldSpace.GetScreenOffset();
+            State._2D.ResetMatrices(device.Viewport.Width, device.Viewport.Height);
             _3DWorld.DrawBefore2D(device, State);
+            
             _2DWorld.Draw(device, State);
-            State._2D.End();
+            State._2D.Pause();
+            State._2D.Resume();
             _3DWorld.DrawAfter2D(device, State);
+            State._2D.SetScroll(pxOffset);
+            State._2D.End();
             State._3D.End();
         }
 

@@ -1,16 +1,22 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using tso.world;
-using tso.world.model;
-using tso.world.components;
+using tso.world.Model;
+using tso.world.Components;
 using TSO.Content;
 using Microsoft.Xna.Framework;
 using TSO.Files.formats.iff.chunks;
-using TSO.Simantics.model;
+using TSO.SimsAntics.Model;
 
-namespace TSO.Simantics.utils
+namespace TSO.SimsAntics.Utils
 {
     /// <summary>
     /// Handles object creation and destruction
@@ -36,10 +42,29 @@ namespace TSO.Simantics.utils
             VM.Context.Architecture = new VMArchitecture(model.Size, model.Size, Blueprint, VM.Context);
             VM.Context.Clock.Hours = model.TimeofDay;
 
+            int category = model.Category;
+            VM.Context.LotCategory = category;
+
+            VM.Context.Blueprint.JobLot = (category >= 100) ? true : false;
+
+            if (category == 10)
+                VM.Context.Blueprint.LotType = LotTypes.Rock;
+            else if (category == 40)
+                VM.Context.Blueprint.LotType = LotTypes.Snow;
+            else if (category == 80)
+                VM.Context.Blueprint.LotType = LotTypes.Sand;
+            else if (category >= 100)
+                VM.Context.Blueprint.LotType = LotTypes.Grass;
+
             var arch = VM.Context.Architecture;
 
             foreach (var floor in model.World.Floors){
                 arch.SetFloor(floor.X, floor.Y, (sbyte)(floor.Level+1), new FloorTile { Pattern = (ushort)floor.Value }, true);
+            }
+
+            foreach (var pool in model.World.Pools)
+            {
+                arch.SetFloor(pool.X, pool.Y, 1, new FloorTile { Pattern = 65535 }, true);
             }
 
             foreach (var wall in model.World.Walls)
@@ -66,9 +91,19 @@ namespace TSO.Simantics.utils
                 CreateObject(obj);
             }
 
-            foreach (var obj in model.Sounds) {
-                VM.Context.Ambience.SetAmbience(VM.Context.Ambience.GetAmbienceFromGUID(obj.ID), (obj.On == 1));
+            if (VM.UseWorld)
+            {
+                foreach (var obj in model.Sounds)
+                {
+                    VM.Context.Ambience.SetAmbience(VM.Context.Ambience.GetAmbienceFromGUID(obj.ID), (obj.On == 1));
+                    World.State.WorldSize = model.Size;
+                    
+                }
+                Blueprint.Terrain = CreateTerrain(model);
             }
+
+
+           
 
             var testObject = new XmlHouseDataObject(); //test npc controller, not normally present on a job lot.
             testObject.GUID = "0x70F69082";
@@ -78,16 +113,13 @@ namespace TSO.Simantics.utils
             testObject.Dir = 0;
             CreateObject(testObject);
 
-            Blueprint.Terrain = CreateTerrain(model);
-            World.State.WorldSize = model.Size;
-
             arch.Tick();
             return this.Blueprint;
         }
 
         private TerrainComponent CreateTerrain(XmlHouseData model)
         {
-            var terrain = new TerrainComponent(new Rectangle(1, 1, model.Size - 2, model.Size - 2));
+            var terrain = new TerrainComponent(new Rectangle(1, 1, model.Size - 2, model.Size - 2), VM.Context.Blueprint.LotType);
             this.InitWorldComponent(terrain);
             return terrain;
         }

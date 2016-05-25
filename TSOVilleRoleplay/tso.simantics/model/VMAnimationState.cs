@@ -1,11 +1,18 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TSO.Vitaboy;
-using TSO.Simantics.utils;
+using TSO.SimsAntics.Utils;
+using TSO.SimsAntics.Marshals;
 
-namespace TSO.Simantics.model
+namespace TSO.SimsAntics.Model
 {
     public class VMAnimationState {
         public Animation Anim;
@@ -41,9 +48,45 @@ namespace TSO.Simantics.model
                     }
                 }
             }
-           
+
             /** Sort time property lists by time **/
             TimePropertyLists.Sort(new TimePropertyListItemSorter());
         }
+
+        #region VM Marshalling Functions
+        public VMAnimationStateMarshal Save()
+        {
+            return new VMAnimationStateMarshal
+            {
+                Anim = Anim.Name,
+                CurrentFrame = CurrentFrame,
+                EventCode = EventCode,
+                EventFired = EventFired,
+                EndReached = EndReached,
+                PlayingBackwards = PlayingBackwards,
+                Speed = Speed,
+                Weight = Weight,
+                Loop = Loop
+            };
+        }
+
+        public virtual void Load(VMAnimationStateMarshal input)
+        {
+            Anim = TSO.Content.Content.Get().AvatarAnimations.Get(input.Anim + ".anim");
+            CurrentFrame = input.CurrentFrame;
+            EventCode = input.EventCode;
+            EventFired = input.EventFired;
+            EndReached = input.EndReached;
+            PlayingBackwards = input.PlayingBackwards;
+            Speed = input.Speed;
+            Weight = input.Weight;
+            Loop = input.Loop;
+        }
+
+        public VMAnimationState(VMAnimationStateMarshal input)
+        {
+            Load(input);
+        }
+        #endregion
     }
 }

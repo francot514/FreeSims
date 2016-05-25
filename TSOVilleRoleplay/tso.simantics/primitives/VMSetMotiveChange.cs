@@ -1,31 +1,47 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Engine;
 using TSO.Files.utils;
-using TSO.Simantics.engine.scopes;
-using TSO.Simantics.model;
-using TSO.Simantics.engine.utils;
+using TSO.SimsAntics.Engine.Scopes;
+using TSO.SimsAntics.Model;
+using TSO.SimsAntics.Engine.Utils;
+using System.IO;
 
-namespace TSO.Simantics.primitives
+namespace TSO.SimsAntics.Primitives
 {
     public class VMSetMotiveChange : VMPrimitiveHandler
     {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMSetMotiveChangeOperand>();
+            var operand = (VMSetMotiveChangeOperand)args;
             var avatar = ((VMAvatar)context.Caller);
 
-            if ((operand.Flags & VMSetMotiveChangeFlags.ClearAll) > 0)
+            if (operand.Once) { }
+
+            if (operand.ClearAll)
             {
                 avatar.ClearMotiveChanges();
             }
             else
             {
-                var PerHourChange = VMMemory.GetVariable(context, (VMVariableScope)operand.DeltaOwner, (ushort)operand.DeltaData);
-                var MaxValue = VMMemory.GetVariable(context, (VMVariableScope)operand.MaxOwner, (ushort)operand.MaxData);
-                avatar.SetMotiveChange(operand.Motive, PerHourChange, MaxValue);
+                var rate = VMMemory.GetVariable(context, (VMVariableScope)operand.DeltaOwner, operand.DeltaData);
+                var MaxValue = VMMemory.GetVariable(context, (VMVariableScope)operand.MaxOwner, operand.MaxData);
+                if (operand.Once) {
+                    var motive = avatar.GetMotiveData(operand.Motive);
+                   motive += rate;
+                   if (((rate > 0) && (motive > MaxValue)) || ((rate < 0) && (motive < MaxValue))) { motive = MaxValue; }
+                   avatar.SetMotiveData(operand.Motive, motive);
+                   }
+                else avatar.SetMotiveChange(operand.Motive, rate, MaxValue);
+
             }
 
             return VMPrimitiveExitCode.GOTO_TRUE;
@@ -34,14 +50,40 @@ namespace TSO.Simantics.primitives
 
     public class VMSetMotiveChangeOperand : VMPrimitiveOperand {
 
-        public VMVariableScope DeltaOwner;
-        public ushort DeltaData;
+        public VMVariableScope DeltaOwner { get; set; }
+        public short DeltaData { get; set; }
 
-        public VMVariableScope MaxOwner;
-        public ushort MaxData;
+        public VMVariableScope MaxOwner { get; set; }
+        public short MaxData { get; set; }
 
         public VMSetMotiveChangeFlags Flags;
-        public VMMotive Motive;
+        public VMMotive Motive { get; set; }
+
+        public bool ClearAll
+        {
+            get
+            {
+                return (Flags & VMSetMotiveChangeFlags.ClearAll) > 0;
+            }
+            set
+            {
+                if (value) Flags |= VMSetMotiveChangeFlags.ClearAll;
+                else Flags &= ~VMSetMotiveChangeFlags.ClearAll;
+            }
+        }
+
+        public bool Once
+        {
+            get
+            {
+                return (Flags & VMSetMotiveChangeFlags.Once) > 0;
+            }
+            set
+            {
+                if (value) Flags |= VMSetMotiveChangeFlags.Once;
+                else Flags &= ~VMSetMotiveChangeFlags.Once;
+            }
+        }
 
         #region VMPrimitiveOperand Members
         public void Read(byte[] bytes){
@@ -52,8 +94,20 @@ namespace TSO.Simantics.primitives
                 Motive = (VMMotive)io.ReadByte();
                 Flags = (VMSetMotiveChangeFlags)io.ReadByte();
 
-                DeltaData = io.ReadUInt16();
-                MaxData = io.ReadUInt16();
+                DeltaData = io.ReadInt16();
+                MaxData = io.ReadInt16();
+            }
+        }
+
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write((byte)DeltaOwner);
+                io.Write((byte)MaxOwner);
+                io.Write((byte)Motive);
+                io.Write((byte)Flags);
+                io.Write(DeltaData);
+                io.Write(MaxData);
             }
         }
         #endregion
@@ -61,6 +115,7 @@ namespace TSO.Simantics.primitives
 
     [Flags]
     public enum VMSetMotiveChangeFlags {
-        ClearAll = 1
+        ClearAll = 1,
+        Once = 2,
     }
 }

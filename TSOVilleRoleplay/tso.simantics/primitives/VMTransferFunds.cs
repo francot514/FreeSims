@@ -1,19 +1,26 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Engine;
 using TSO.Files.utils;
-using TSO.Simantics.engine.scopes;
-using TSO.Simantics.engine.utils;
+using TSO.SimsAntics.Engine.Scopes;
+using TSO.SimsAntics.Engine.Utils;
+using System.IO;
 
-namespace TSO.Simantics.primitives
+namespace TSO.SimsAntics.Primitives
 {
     public class VMTransferFunds : VMPrimitiveHandler
     {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMTransferFundsOperand>();
+            var operand = (VMTransferFundsOperand)args;
             return VMPrimitiveExitCode.GOTO_TRUE;
             //disable for now.
             /** Bit of a legacy thing going on here so there is a helper to translate old owner values into the new scope handler **/
@@ -43,6 +50,16 @@ namespace TSO.Simantics.primitives
                 Flags = (VMTransferFundsFlags)io.ReadUInt32();
                 ExpenseType = (VMTransferFundsExpenseType)io.ReadByte();
                 TransferType = (VMTransferFundsType)io.ReadByte();
+            }
+        }
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write((byte)OldAmmountOwner);
+                io.Write((byte)AmmountOwner);
+                io.Write((uint)Flags);
+                io.Write((byte)ExpenseType);
+                io.Write((byte)TransferType);
             }
         }
         #endregion

@@ -38,38 +38,37 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="components\AvatarComponent.cs" />
-    <Compile Include="components\DebugCube.cs" />
-    <Compile Include="components\DebugSprite.cs" />
-    <Compile Include="components\FloorComponent.cs" />
-    <Compile Include="components\NewFloorComponent.cs" />
-    <Compile Include="components\ObjectComponent.cs" />
-    <Compile Include="components\TerrainComponent.cs" />
-    <Compile Include="components\WallComponent.cs" />
-    <Compile Include="Game1.cs" />
-    <Compile Include="model\Blueprint.cs" />
-    <Compile Include="model\XmlPet.cs" />
-    <Compile Include="model\Direction.cs" />
-    <Compile Include="model\FloorTile.cs" />
-    <Compile Include="model\LotTilePos.cs" />
-    <Compile Include="model\RoomMap.cs" />
-    <Compile Include="model\WallTile.cs" />
-    <Compile Include="model\WorldRotation.cs" />
-    <Compile Include="model\WorldZoom.cs" />
-    <Compile Include="model\XmlCharacter.cs" />
-    <Compile Include="model\XmlHouse.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Components\AvatarComponent.cs" />
+    <Compile Include="Components\EntityComponent.cs" />
+    <Compile Include="Components\FloorComponent.cs" />
+    <Compile Include="Components\ObjectComponent.cs" />
+    <Compile Include="Components\TerrainComponent.cs" />
+    <Compile Include="Components\WallComponent.cs" />
+    <Compile Include="Model\Blueprint.cs" />
+    <Compile Include="Model\Direction.cs" />
+    <Compile Include="Model\FloorTile.cs" />
+    <Compile Include="Model\LotTilePos.cs" />
+    <Compile Include="Model\LotTypes.cs" />
+    <Compile Include="Model\RoomLighting.cs" />
+    <Compile Include="Model\ScrollBuffer.cs" />
+    <Compile Include="Model\WallTile.cs" />
+    <Compile Include="Model\WorldRotation.cs" />
+    <Compile Include="Model\WorldZoom.cs" />
+    <Compile Include="Model\XmlCharacter.cs" />
+    <Compile Include="Model\XmlHouse.cs" />
+    <Compile Include="Model\XmlPet.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="utils\DGRPRenderer.cs" />
-    <Compile Include="utils\IsometricTileIterator.cs" />
-    <Compile Include="utils\ISpriteTextureProvider.cs" />
-    <Compile Include="utils\WorldCamera.cs" />
-    <Compile Include="utils\_2DSprite.cs" />
-    <Compile Include="utils\_2DSpriteSorter.cs" />
-    <Compile Include="utils\_2DSpriteVertex.cs" />
-    <Compile Include="utils\_2DWorldBatch.cs" />
-    <Compile Include="utils\_3DSprite.cs" />
-    <Compile Include="utils\_3DWorldBatch.cs" />
+    <Compile Include="Utils\DGRPRenderer.cs" />
+    <Compile Include="Utils\IsometricTileIterator.cs" />
+    <Compile Include="Utils\TerrainVertex.cs" />
+    <Compile Include="Utils\WorldCamera.cs" />
+    <Compile Include="Utils\_2DDrawGroup.cs" />
+    <Compile Include="Utils\_2DSprite.cs" />
+    <Compile Include="Utils\_2DSpriteSorter.cs" />
+    <Compile Include="Utils\_2DSpriteVertex.cs" />
+    <Compile Include="Utils\_2DWorldBatch.cs" />
+    <Compile Include="Utils\_3DSprite.cs" />
+    <Compile Include="Utils\_3DWorldBatch.cs" />
     <Compile Include="World.cs" />
     <Compile Include="World2D.cs" />
     <Compile Include="World3D.cs" />
@@ -81,7 +80,10 @@
     <Reference Include="Lidgren.Network">
       <HintPath>$(MSBuildExtensionsPath)\..\MonoGame\v3.0\Assemblies\WindowsGL\Lidgren.Network.dll</HintPath>
     </Reference>
-    <Reference Include="MonoGame.Framework, Version=3.1.2.0, Culture=neutral, processorArchitecture=MSIL" />
+    <Reference Include="MonoGame.Framework, Version=3.1.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\WindowsGL\Debug\MonoGame.Framework.dll</HintPath>
+    </Reference>
     <Reference Include="OpenTK, Version=1.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <HintPath>..\packages\MonoGame.Framework.WindowsGL.3.4.0.459\lib\net40\OpenTK.dll</HintPath>
       <Private>True</Private>
@@ -95,29 +97,27 @@
   <ItemGroup>
     <Content Include="Icon.ico" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Content\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\tso.common\tso.common.csproj">
       <Project>{C42962A1-8796-4F47-9DCD-79ED5904D8CA}</Project>
-      <Name>tso.common</Name>
+      <Name>FSO.Common</Name>
     </ProjectReference>
     <ProjectReference Include="..\tso.content\tso.content.csproj">
       <Project>{C0068DF7-F2E8-4399-846D-556BF9A35C00}</Project>
-      <Name>tso.content</Name>
+      <Name>FSO.Content</Name>
     </ProjectReference>
     <ProjectReference Include="..\tso.files\tso.files.csproj">
       <Project>{18583453-A970-4AC5-83B1-2D6BFDF94C24}</Project>
-      <Name>tso.files</Name>
+      <Name>FSO.Files</Name>
     </ProjectReference>
     <ProjectReference Include="..\tso.vitaboy.engine\tso.vitaboy.engine.csproj">
       <Project>{FD7957F7-A1E0-4D00-8F6C-3FA555EAA163}</Project>
-      <Name>tso.vitaboy.engine</Name>
+      <Name>FSO.Vitaboy.Engine</Name>
     </ProjectReference>
     <ProjectReference Include="..\tso.vitaboy.model\tso.vitaboy.model.csproj">
       <Project>{9D9558A9-755E-43F9-8BB6-B26F365F5042}</Project>
-      <Name>tso.vitaboy.model</Name>
+      <Name>FSO.Vitaboy</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

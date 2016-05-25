@@ -1,13 +1,19 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
+using TSO.SimsAntics.Engine;
 using TSO.Files.utils;
-using tso.world.model;
-using TSO.Simantics.model;
+using tso.world.Model;
+using TSO.SimsAntics.Model;
 
-namespace TSO.Simantics.primitives
+namespace TSO.SimsAntics.Primitives
 {
 
     public class VMDrop : VMPrimitiveHandler
@@ -22,7 +28,7 @@ namespace TSO.Simantics.primitives
             new LotTilePos(-16, 0, 0), //EAST
             new LotTilePos(-16, -16, 0) //NORTHEAST
         };
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
             var obj = context.Caller;
             if (context.Caller.TotalSlots() == 0) return VMPrimitiveExitCode.GOTO_FALSE;
@@ -39,7 +45,6 @@ namespace TSO.Simantics.primitives
                 var posChange = drop.MultitileGroup.ChangePosition(basePos + Positions[(j + intDir) % 8], obj.Direction, context.VM.Context);
                 if (posChange.Status == VMPlacementError.Success)
                 {
-                    if (context.Caller is VMAvatar) ((VMAvatar)context.Caller).CarryAnimation = null;
                     return VMPrimitiveExitCode.GOTO_TRUE;
                 }
             }
@@ -57,6 +62,8 @@ namespace TSO.Simantics.primitives
             {
             }
         }
+
+        public void Write(byte[] bytes) { }
         #endregion
     }
 }

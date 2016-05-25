@@ -1,13 +1,20 @@
-﻿using Microsoft.Xna.Framework;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using tso.world.model;
-using TSO.Simantics.model;
-using TSO.Simantics.utils;
+using tso.world.Model;
+using TSO.SimsAntics.Model;
+using TSO.SimsAntics.Utils;
+using TSO.SimsAntics.Marshals;
 
-namespace TSO.Simantics
+namespace TSO.SimsAntics
 {
     public class VMArchitecture
     {
@@ -46,6 +53,22 @@ namespace TSO.Simantics
 
         private bool Redraw;
 
+        private Color[] m_TimeColors = new Color[]
+        {
+            new Color(50, 70, 122)*1.5f,
+            new Color(50, 70, 122)*1.5f,
+            new Color(60, 80, 132)*1.5f,
+            new Color(60, 80, 132)*1.5f,
+            new Color(217, 109, 0),
+            new Color(255, 255, 255),
+            new Color(255, 255, 255),
+            new Color(255, 255, 255),
+            new Color(255, 255, 255),
+            new Color(217, 109, 0),
+            new Color(60, 80, 80)*1.5f,
+            new Color(60, 80, 132)*1.5f,     
+        };
+
         public VMArchitecture(int width, int height, Blueprint blueprint, VMContext context)
         {
             this.Context = context;
@@ -62,7 +85,7 @@ namespace TSO.Simantics
 
             this.ObjectSupport = new bool[Stories][]; //true if there's an object support in the specified position
             this.Supported = new bool[Stories-1][]; //no supported array for bottom floor. true if this tile is supported.
-            blueprint.Supported = Supported;
+            if (blueprint != null) blueprint.Supported = Supported;
 
             this.Rooms = new VMRoomMap[Stories];
 
@@ -81,6 +104,7 @@ namespace TSO.Simantics
                 this.Rooms[i] = new VMRoomMap();
             }
 
+            
             this.RoomData = new List<VMRoom>();
             this.WorldUI = blueprint;
 
@@ -91,6 +115,15 @@ namespace TSO.Simantics
             FloorsDirty = true;
             RealMode = true;
             Redraw = true;
+        }
+
+        public void SetTimeOfDay(double time)
+        {
+            Color col1 = m_TimeColors[(int)Math.Floor(time * (m_TimeColors.Length - 1))]; //first colour
+            Color col2 = m_TimeColors[(int)Math.Floor(time * (m_TimeColors.Length - 1)) + 1]; //second colour
+            double Progress = (time * (m_TimeColors.Length - 1)) % 1; //interpolation progress (mod 1)
+
+            WorldUI.OutsideColor = Color.Lerp(col1, col2, (float)Progress); //linearly interpolate between the two colours for this specific time.
         }
 
         public void SetObjectSupported(short x, short y, sbyte level, bool support)
@@ -121,7 +154,7 @@ namespace TSO.Simantics
                 for (int x=0; x<Width; x++)
                 {
                     //if we are an object support or are above a room that is not outside, we're supported.
-                    if (objSup[offset] || !RoomData[rooms.Map[offset]].IsOutside) sup[offset] = true;
+                    if (objSup[offset] || !RoomData[(ushort)(rooms.Map[offset])].IsOutside) sup[offset] = true;
                     else
                     {
                         //if we are a floor tile or are next to the floor tile, do the full 5x5 check.
@@ -150,7 +183,7 @@ namespace TSO.Simantics
                                     int newY = y + y2;
                                     if (newX < 0 || newX >= Width || newY < 0 || newY >= Height) continue;
                                     int newOff = newY * Width + newX;
-                                    if (!RoomData[rooms.Map[newOff]].IsOutside || (objSup[newOff] && (Math.Abs(x2)<2 && Math.Abs(y2)<2)))
+                                    if (!RoomData[(ushort)rooms.Map[newOff]].IsOutside || (objSup[newOff] && (Math.Abs(x2)<2 && Math.Abs(y2)<2)))
                                     {
                                         step2 = true;
                                         break;
@@ -179,18 +212,14 @@ namespace TSO.Simantics
             for (int i=0; i<Stories; i++)
             {
                 Rooms[i].GenerateMap(Walls[i], Floors[i], Width, Height, RoomData);
+                if (VM.UseWorld) WorldUI.RoomMap[i] = Rooms[i].Map;
                 RegenerateSupported(i + 1);
             }
-
-            
-            
-
         }
 
         public void Tick()
         { 
-
-            if (WallsDirty)
+            if (WallsDirty || FloorsDirty)
             {
                 RegenRoomMap();
                 if (WallsChanged != null) WallsChanged(this);
@@ -201,7 +230,7 @@ namespace TSO.Simantics
                 for (int i = 1; i < Stories; i++)
                     RegenerateSupported(i + 1);
             }
-            if (Redraw)
+            if (VM.UseWorld && Redraw)
             {
                 //reupload walls to blueprint. 
                 if (Commands.Count == 0) 
@@ -242,6 +271,9 @@ namespace TSO.Simantics
                 WorldUI.SignalFloorChange();
             }
 
+            var clock = Context.Clock;
+            SetTimeOfDay(clock.Hours/24.0 + clock.Minutes/(24.0*60) + clock.Seconds/(24.0*60*60));
+
             FloorsDirty = false;
             Redraw = false;
             WallsDirty = false;
@@ -281,24 +313,6 @@ namespace TSO.Simantics
                         break;
                 }
             }
-        }
-
-        public void SetWall(short tileX, short tileY, sbyte level, WallTile wall)
-        {
-            var off = GetOffset(tileX, tileY);
-
-            WallsAt[level-1].Remove(off);
-            if (wall.Segments > 0) {
-                Walls[level - 1][off] = wall;
-                WallsAt[level - 1].Add(off);
-            }
-            else
-            {
-                Walls[level - 1][off] = new WallTile();
-            }
-
-            if (RealMode) WallsDirty = true;
-            Redraw = true;
         }
 
         /// <summary>
@@ -359,7 +373,7 @@ namespace TSO.Simantics
                         if (error + errorprev < ddx)
                         {
                             //moved into x before y
-                            if (GetWall((short)(oldx + xAOff), (short)(oldy), level).TopLeftSolid) return true;
+                            if (GetWall((short)(oldx+xAOff), (short)(oldy), level).TopLeftSolid) return true;
                             if (GetWall((short)(x), (short)(oldy + yAOff), level).TopRightSolid) return true;
                         }
                         else
@@ -372,7 +386,7 @@ namespace TSO.Simantics
                     else
                     {
                         //only move into x
-                        if (GetWall((short)(oldx + xAOff), (short)(oldy), level).TopLeftSolid) return true;
+                        if (GetWall((short)(oldx+xAOff), (short)(oldy), level).TopLeftSolid) return true;
                     }
                     errorprev = error;
                 }
@@ -396,25 +410,43 @@ namespace TSO.Simantics
                         {
                             //moved into y before x
                             if (GetWall((short)(oldx), (short)(oldy + yAOff), level).TopRightSolid) return true;
-                            if (GetWall((short)(oldx + xAOff), (short)(y), level).TopLeftSolid) return true;
+                            if (GetWall((short)(oldx+xAOff), (short)(y), level).TopLeftSolid) return true;
                         }
                         else
                         {
                             //moved into x before y
-                            if (GetWall((short)(oldx + xAOff), (short)(oldy), level).TopLeftSolid) return true;
+                            if (GetWall((short)(oldx+xAOff), (short)(oldy), level).TopLeftSolid) return true;
                             if (GetWall((short)(x), (short)(oldy + yAOff), level).TopRightSolid) return true;
                         }
                     }
                     else
                     {
                         //only move into y
-                        if (GetWall((short)(oldx), (short)(oldy + yAOff), level).TopRightSolid) return true;
+                        if (GetWall((short)(oldx), (short)(oldy+yAOff), level).TopRightSolid) return true;
                     }
-
+                    
                     errorprev = error;
                 }
             }
             return false;
+        }
+
+        public void SetWall(short tileX, short tileY, sbyte level, WallTile wall)
+        {
+            var off = GetOffset(tileX, tileY);
+
+            WallsAt[level-1].Remove(off);
+            if (wall.Segments > 0) {
+                Walls[level - 1][off] = wall;
+                WallsAt[level - 1].Add(off);
+            }
+            else
+            {
+                Walls[level - 1][off] = new WallTile();
+            }
+
+            if (RealMode) WallsDirty = true;
+            Redraw = true;
         }
 
         public WallTile GetWall(short tileX, short tileY, sbyte level)
@@ -436,6 +468,7 @@ namespace TSO.Simantics
             if (!force)
             {
                 //first check if we're supported
+                if (floor.Pattern > 65533 && level > 1 && RoomData[(int)Rooms[level - 2].Map[offset]&0xFFFF].IsOutside) return false;
                 if (level > 1 && !Supported[level - 2][offset]) return false;
                 //check if objects need/don't need floors
                 if (!Context.CheckFloorValid(LotTilePos.FromBigTile((short)tileX, (short)tileY, level), floor)) return false;
@@ -453,5 +486,63 @@ namespace TSO.Simantics
             return (ushort)((tileY * Width) + tileX);
         }
 
+
+        #region VM Marshalling Functions
+        public virtual VMArchitectureMarshal Save()
+        {
+            return new VMArchitectureMarshal
+            {
+                Width = Width,
+                Height = Height,
+                Stories = Stories,
+        
+                Walls = Walls,
+                Floors = Floors,
+
+                WallsDirty = WallsDirty,
+                FloorsDirty = FloorsDirty
+            };
+        }
+
+        public virtual void Load(VMArchitectureMarshal input)
+        {
+            Width = input.Width;
+            Height = input.Height;
+            Stories = input.Stories;
+
+            Walls = input.Walls;
+            Floors = input.Floors;
+
+            RegenWallsAt();
+        }
+
+        public void WallDirtyState(VMArchitectureMarshal input)
+        {
+            WallsDirty = input.WallsDirty;
+            FloorsDirty = input.FloorsDirty;
+            Redraw = true;
+        }
+
+        public void RegenWallsAt()
+        {
+            WallsAt = new List<int>[Stories];
+            for (int i=0; i<Stories; i++)
+            {
+                var list = new List<int>();
+
+                var wIt = Walls[i];
+                for (int j=0; j<wIt.Length; j++)
+                {
+                    if (wIt[j].Segments > 0) list.Add(j);
+                }
+                WallsAt[i] = list;
+            }
+        }
+
+        public VMArchitecture(VMArchitectureMarshal input, VMContext context, Blueprint blueprint) : this(input.Width, input.Height, blueprint, context)
+        {
+            Load(input);
+        }
+        #endregion
     }
 }

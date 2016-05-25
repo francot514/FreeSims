@@ -1,14 +1,8 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
@@ -16,7 +10,7 @@ using System.Linq;
 using System.Text;
 using TSO.Common.rendering.framework.camera;
 using Microsoft.Xna.Framework;
-using tso.world.utils;
+using tso.world.Utils;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace tso.world
@@ -41,11 +35,18 @@ namespace tso.world
             this.Device = device;
             this.World = world;
             this.WorldCamera = new WorldCamera(device);
+            WorldCamera.ViewDimensions = new Vector2(worldPxWidth, worldPxHeight);
 
             WorldSpace = new WorldSpace(worldPxWidth, worldPxHeight, this);
             Zoom = WorldZoom.Near;
             Rotation = WorldRotation.TopLeft;
             Level = 1;
+        }
+
+        public void SetDimensions(Vector2 dim)
+        {
+            WorldCamera.ViewDimensions = dim;
+            WorldSpace.SetDimensions(dim);
         }
 
         protected WorldCamera WorldCamera;
@@ -62,6 +63,8 @@ namespace tso.world
         public WorldSpace WorldSpace;
         public _2DWorldBatch _2D;
         public _3DWorldBatch _3D;
+        public Texture2D AmbientLight;
+        public Color OutsideColor; //temporary to give this to terrain component. in future it will use ambient light texture
 
         private int _WorldSize;
 
@@ -178,7 +181,7 @@ namespace tso.world
             Camera.Target = new Vector3(radius, 0.0f, radius);
 
             //Center point of the center most tile
-            CenterTile = new Vector2((_WorldSize / 2.0f), (_WorldSize / 2.0f));
+            //CenterTile = new Vector2((_WorldSize / 2.0f), (_WorldSize / 2.0f));
             InvalidateCamera();
         }
 
@@ -235,6 +238,12 @@ namespace tso.world
             this.WorldPxHeight = worldPxHeight;
         }
 
+        public void SetDimensions(Vector2 dim)
+        {
+            WorldPxWidth = dim.X;
+            WorldPxHeight = dim.Y;
+        }
+
         /// <summary>
         /// Gets the offset for the screen based on the scroll position
         /// </summary>
@@ -269,6 +278,8 @@ namespace tso.world
 
             return result;
         }
+
+
 
         /// <summary>
         /// Gets indices of a tile given a position with a scroll offset.

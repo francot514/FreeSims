@@ -1,14 +1,8 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
@@ -16,15 +10,17 @@ using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
 using TSO.Content;
-using tso.world.utils;
 using TSO.Files.formats.iff.chunks;
-using tso.world.model;
+using tso.world.Utils;
+using tso.world.Model;
 using Microsoft.Xna.Framework;
+using TSO.Common.utils;
 using tso.common.utils;
 
-namespace tso.world.components
+
+namespace tso.world.Components
 {
-    public class ObjectComponent : WorldComponent
+    public class ObjectComponent : EntityComponent
     {
         private static Vector2[] PosCenterOffsets = new Vector2[]{
             new Vector2(2+16, 79+8),
@@ -33,7 +29,6 @@ namespace tso.world.components
         };
 
         public GameObject Obj;
-        public Texture2D Headline;
 
         private DGRP DrawGroup;
         private DGRPRenderer dgrp;
@@ -41,17 +36,37 @@ namespace tso.world.components
         public Blueprint blueprint;
         private int DynamicCounter; //how long this sprite has been dynamic without changing sprite
         public List<SLOTItem> ContainerSlots;
-        public short ObjectID; //set this any time it changes so that hit test works.
+        public new bool Visible {
+            get { return _Visible; }
+            set {
+                if (_Visible != value)
+                {
+                    _Visible = value;
+                    if (blueprint != null) blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.OBJECT_GRAPHIC_CHANGE, TileX, TileY, Level, this));
+                }
+            }
+        }
 
-        public Vector2 LastScreenPos; //used by vm to set sound volume and pa
-        public int LastZoomLevel;
+        public Rectangle Bounding { get { return dgrp.Bounding; } }
+
+        public override ushort Room
+        {
+            get
+            {
+                return dgrp.Room;
+            }
+            set
+            {
+                dgrp.Room = value;
+            }
+        }
 
         public override Vector3 GetSLOTPosition(int slot)
         {
-            var item = ContainerSlots[slot];
-            var off = item.Offset;
+            var item = (ContainerSlots.Count > slot)?ContainerSlots[slot]:null;
             if (item != null)
             {
+                var off = item.Offset;
                 var centerRelative = new Vector3(off.X * (1 / 16.0f), off.Y * (1 / 16.0f), ((item.Height != 5) ? SLOT.HeightOffsets[item.Height-1] : off.Z) * (1 / 5.0f));
                 centerRelative = Vector3.Transform(centerRelative, Matrix.CreateRotationZ(RadianDirection));
 
@@ -65,11 +80,11 @@ namespace tso.world.components
             if (obj.OBJ.BaseGraphicID > 0)
             {
                 var gid = obj.OBJ.BaseGraphicID;
-                this.DrawGroup = obj.Resource.Get<DGRP>(gid);
-                dgrp = new DGRPRenderer(this.DrawGroup);
-                dgrp.DynamicSpriteBaseID = obj.OBJ.DynamicSpriteBaseId;
-                dgrp.NumDynamicSprites = obj.OBJ.NumDynamicSprites;
+                this.DrawGroup = obj.Resource.Get<DGRP>(gid);  
             }
+            dgrp = new DGRPRenderer(this.DrawGroup);
+            dgrp.DynamicSpriteBaseID = obj.OBJ.DynamicSpriteBaseId;
+            dgrp.NumDynamicSprites = obj.OBJ.NumDynamicSprites;
         }
 
         public DGRP DGRP
@@ -188,22 +203,20 @@ namespace tso.world.components
             }
         }
 
-        //public override void OnPositionChanged(){
-        //    base.OnPositionChanged();
-        //    if (dgrp != null){
-        //        dgrp.Position = this.Position;
-        //    }
-        //}
+        public void ValidateSprite(WorldState world)
+        {
+            dgrp.ValidateSprite(world);
+        }
 
         public override void Draw(GraphicsDevice device, WorldState world){
             if (this.DrawGroup == null) { return; }
-            //world._2D.Draw(this.DrawGroup);
             if (!world.TempDraw)
             {
-                LastScreenPos = world.WorldSpace.GetScreenFromTile(Position) + world.WorldSpace.GetScreenOffset();
+                LastScreenPos = world.WorldSpace.GetScreenFromTile(Position) + world.WorldSpace.GetScreenOffset() + PosCenterOffsets[(int)world.Zoom-1];
                 LastZoomLevel = (int)world.Zoom;
             }
-
+            if (!Visible) return;
+            dgrp.Draw(world);
 
             if (Headline != null)
             {
@@ -219,12 +232,10 @@ namespace tso.world.components
                 item.WorldPosition = headOff;
                 var off = PosCenterOffsets[(int)world.Zoom - 1];
                 item.DestRect = new Rectangle(
-                    ((int)headPx.X - Headline.Width / 2) + (int)off.X,
-                    ((int)headPx.Y - Headline.Height / 2) + (int)off.Y, Headline.Width, Headline.Height);
+                    ((int)headPx.X-Headline.Width/2) + (int)off.X, 
+                    ((int)headPx.Y-Headline.Height/2)+ (int)off.Y, Headline.Width, Headline.Height);
                 world._2D.Draw(item);
             }
-
-            dgrp.Draw(world);
 
             bool forceDynamic = ForceDynamic;
             if (Container != null && Container is ObjectComponent) {

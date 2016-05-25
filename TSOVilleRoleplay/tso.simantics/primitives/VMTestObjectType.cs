@@ -1,19 +1,26 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Simantics.engine;
-using TSO.Simantics.engine.scopes;
+using TSO.SimsAntics.Engine;
+using TSO.SimsAntics.Engine.Scopes;
 using TSO.Files.utils;
-using TSO.Simantics.engine.utils;
+using TSO.SimsAntics.Engine.Utils;
+using System.IO;
 
-namespace TSO.Simantics.primitives
+namespace TSO.SimsAntics.Primitives
 {
     public class VMTestObjectType : VMPrimitiveHandler
     {
-        public override VMPrimitiveExitCode Execute(VMStackFrame context)
+        public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            var operand = context.GetCurrentOperand<VMTestObjectTypeOperand>();
+            var operand = (VMTestObjectTypeOperand)args;
             var objectID = VMMemory.GetVariable(context, operand.IdOwner, operand.IdData);
 
             var obj = context.VM.GetObjectById(objectID);
@@ -30,16 +37,25 @@ namespace TSO.Simantics.primitives
 
     public class VMTestObjectTypeOperand : VMPrimitiveOperand
     {
-        public uint GUID;
-        public ushort IdData;
-        public VMVariableScope IdOwner;
+        public uint GUID { get; set; }
+        public short IdData { get; set; }
+        public VMVariableScope IdOwner { get; set; }
 
         #region VMPrimitiveOperand Members
         public void Read(byte[] bytes){
             using (var io = IoBuffer.FromBytes(bytes, ByteOrder.LITTLE_ENDIAN)){
                 GUID = io.ReadUInt32();
-                IdData = io.ReadUInt16();
+                IdData = io.ReadInt16();
                 IdOwner = (VMVariableScope)io.ReadByte();
+            }
+        }
+
+        public void Write(byte[] bytes) {
+            using (var io = new BinaryWriter(new MemoryStream(bytes)))
+            {
+                io.Write(GUID);
+                io.Write(IdData);
+                io.Write((byte)IdOwner);
             }
         }
         #endregion
