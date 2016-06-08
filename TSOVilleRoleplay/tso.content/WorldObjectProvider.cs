@@ -69,17 +69,30 @@ namespace TSO.Content
                 Directory.CreateDirectory(path);
 
             DirectoryInfo dir = new DirectoryInfo(path);
+            
+             var ToRemove = new List<ulong>();
+
             foreach(FileInfo file in dir.GetFiles())
                 if (file.Extension == ".iff")
                 {
                     var iff = new Iff(file.FullName);
                     ulong FileID = iff.List<OBJD>()[0].GUID;
-                Entries.Add(FileID, new GameObjectReference(this)
-                {
-                    ID = FileID,
-                    FileName = Path.GetFileNameWithoutExtension(file.Name)
-                });
-                }
+
+                    foreach (var obj in Entries)
+                        if (obj.Key == FileID)
+                            ToRemove.Add(obj.Key);
+
+                    foreach (var guid in ToRemove)
+                        if (guid == FileID)
+                            Entries.Remove(FileID);
+                            Entries.Add(FileID, new GameObjectReference(this)
+                            {
+                                ID = FileID,
+                                FileName = Path.GetFileNameWithoutExtension(file.Name)
+                            });
+
+                        
+                     }
 
 
         }
