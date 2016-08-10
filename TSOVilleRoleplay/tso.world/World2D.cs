@@ -235,6 +235,74 @@ namespace tso.world
             return TextureUtils.Clip(gd, tex, bounds);
         }
 
+         public Texture2D GetLotThumb(GraphicsDevice gd, WorldState state)
+        {
+            var oldZoom = state.Zoom;
+            var oldRotation = state.Rotation;
+            var oldLevel = state.Level;
+
+            //full invalidation because we must recalculate all object sprites. slow but necessary!
+            state.Zoom = WorldZoom.Far;
+            state.Rotation = WorldRotation.TopLeft;
+            state.Level = Blueprint.Stories;
+            state.WorldSpace.Invalidate();
+            state.InvalidateCamera();
+
+            var oldCenter = state.CenterTile;
+            state.CenterTile = new Vector2(Blueprint.Width / 2, Blueprint.Height / 2);
+            var pxOffset = -state.WorldSpace.GetScreenOffset();
+            pxOffset -= new Vector2(2304 - state.WorldSpace.WorldPxWidth, 2304 - state.WorldSpace.WorldPxHeight) / 2;
+            state.TempDraw = true;
+
+            var _2d = state._2D;
+            _2d.AmbientLight = TextureGenerator.GetPxWhite(gd);
+            Promise<Texture2D> bufferTexture = null;
+            state._2D.OBJIDMode = false;
+            using (var buffer = state._2D.WithBuffer(BUFFER_LOTTHUMB, ref bufferTexture))
+            {
+                _2d.SetScroll(pxOffset);
+                while (buffer.NextPass())
+                {
+                    _2d.Pause();
+                    _2d.Resume();
+                    Blueprint.Terrain.Draw(gd, state);
+					//Blueprint.FloorComp.DrawBound = new Rectangle(6, 6, Blueprint.Width - 13, Blueprint.Height - 13);
+                    Blueprint.FloorComp.Draw(gd, state);
+                    Blueprint.FloorComp.DrawBound = null;
+                    Blueprint.WallComp.Draw(gd, state);
+                    _2d.Pause();
+
+                    _2d.Resume();
+                    foreach (var obj in Blueprint.Objects)
+                    {
+                        var renderInfo = GetRenderInfo(obj);
+                        var tilePosition = obj.Position;
+                        _2d.OffsetPixel(state.WorldSpace.GetScreenFromTile(tilePosition));
+                        _2d.OffsetTile(tilePosition);
+                        obj.Draw(gd, state);
+                    }
+                }
+            }
+
+            //return things to normal
+            _2d.AmbientLight = state.AmbientLight;
+            state.WorldSpace.Invalidate();
+            state.InvalidateCamera();
+            state.TempDraw = false;
+            state.CenterTile = oldCenter;
+
+            state.Zoom = oldZoom;
+            state.Rotation = oldRotation;
+            state.Level = oldLevel;
+
+            var tex = bufferTexture.Get();
+
+            return TextureUtils.Decimate(tex, gd, 4);
+            //return tex;
+             //TextureUtils.Clip(gd, tex, bounds);
+        }
+        
+        
         /// <summary>
         /// Prep work before screen is painted
         /// </summary>
