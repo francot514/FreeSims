@@ -26,7 +26,7 @@ namespace TSO.Content
         //private FAR1Provider<OTF> TuningTables;
         private Content ContentManager;
         public List<GameObjectResource> Resources;
-        public string[] FarFiles;
+        public List<string> FarFiles;
 
         private Dictionary<ulong, GameObjectReference> Entries;
 
@@ -41,106 +41,124 @@ namespace TSO.Content
         public void Init()
         {
 
-            string path = "Downloads";
-
-            FarFiles =  new string[]
-            {
-                "GameData\\Objects\\Objects.far",
-                "ExpansionPack\\ExpansionPack.far",
-                "ExpansionPack2\\ExpansionPack2.far",
-                "ExpansionPack3\\ExpansionPack3.far",
-                "ExpansionPack4\\ExpansionPack4.far"
-            }; 
-
-            Iffs = new FAR1Provider<Iff>(ContentManager, new IffCodec(), FarFiles);
-            Sprites = new FAR1Provider<Iff>(ContentManager, new IffCodec(), FarFiles);
-
-            
-            //TuningTables = new FAR1Provider<OTF>(ContentManager, new OTFCodec(), new Regex(".*\\\\objotf.*\\.far"));
-            Resources = new List<GameObjectResource>();
-
-            Iffs.Init(0);
-            //TuningTables.Init();
-            Sprites.Init(0);
+            string dpath = "Downloads";
+            FarFiles = new List<string>();
 
             /** Load packingslip **/
             Entries = new Dictionary<ulong, GameObjectReference>();
             Cache = new Dictionary<ulong, GameObject>();
 
-            var objects = new XmlDocument();
-            objects.Load(ContentManager.GetPath("Content\\objects.xml"));
-            var objectInfos = objects.GetElementsByTagName("P");
-
-            foreach (XmlNode objectInfo in objectInfos)
+            if (Directory.Exists("GameData"))
             {
-                ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
-                Entries.Add(FileID, new GameObjectReference(this)
+                FarFiles.Add("GameData\\Objects\\Objects.far");
+
+                var objects = new XmlDocument();
+                objects.Load(ContentManager.GetPath("Content\\objects.xml"));
+                var objectInfos = objects.GetElementsByTagName("P");
+
+                foreach (XmlNode objectInfo in objectInfos)
                 {
-                    ID = FileID,
-                    FileName = objectInfo.Attributes["n"].Value
-                });
+                    ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
+                    Entries.Add(FileID, new GameObjectReference(this)
+                    {
+                        ID = FileID,
+                        FileName = objectInfo.Attributes["n"].Value
+                    });
+                }
+
+
             }
 
-            var ep1objects = new XmlDocument();
-            ep1objects.Load(ContentManager.GetPath("Content\\ep1.xml"));
-            var ep1objectsInfos = ep1objects.GetElementsByTagName("P");
-
-            foreach (XmlNode objectInfo in ep1objectsInfos)
+            if (Directory.Exists("ExpansionPack"))
             {
-                ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
-                Entries.Add(FileID, new GameObjectReference(this)
+
+                FarFiles.Add("ExpansionPack\\ExpansionPack.far");
+
+                var ep1objects = new XmlDocument();
+                ep1objects.Load(ContentManager.GetPath("Content\\ep1.xml"));
+                var ep1objectsInfos = ep1objects.GetElementsByTagName("P");
+
+                foreach (XmlNode objectInfo in ep1objectsInfos)
                 {
-                    ID = FileID,
-                    FileName = objectInfo.Attributes["n"].Value
-                });
+                    ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
+                    Entries.Add(FileID, new GameObjectReference(this)
+                    {
+                        ID = FileID,
+                        FileName = objectInfo.Attributes["n"].Value
+                    });
+                }
+
             }
 
-            var ep2objects = new XmlDocument();
-            ep2objects.Load(ContentManager.GetPath("Content\\ep2.xml"));
-            var ep2objectsInfos = ep2objects.GetElementsByTagName("P");
-
-            foreach (XmlNode objectInfo in ep2objectsInfos)
+            if (Directory.Exists("ExpansionPack2"))
             {
-                ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
-                Entries.Add(FileID, new GameObjectReference(this)
+                FarFiles.Add("ExpansionPack\\ExpansionPack2.far");
+
+                var ep2objects = new XmlDocument();
+                ep2objects.Load(ContentManager.GetPath("Content\\ep2.xml"));
+                var ep2objectsInfos = ep2objects.GetElementsByTagName("P");
+
+                foreach (XmlNode objectInfo in ep2objectsInfos)
                 {
-                    ID = FileID,
-                    FileName = objectInfo.Attributes["n"].Value
-                });
+                    ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
+                    Entries.Add(FileID, new GameObjectReference(this)
+                    {
+                        ID = FileID,
+                        FileName = objectInfo.Attributes["n"].Value
+                    });
+                }
+
+
+             }
+
+            if (Directory.Exists("ExpansionPack3"))
+            {
+                FarFiles.Add("ExpansionPack\\ExpansionPack3.far");
+
+                var ep3objects = new XmlDocument();
+                ep3objects.Load(ContentManager.GetPath("Content\\ep3.xml"));
+                var ep3objectsInfos = ep3objects.GetElementsByTagName("P");
+
+                foreach (XmlNode objectInfo in ep3objectsInfos)
+                {
+                    ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
+                    Entries.Add(FileID, new GameObjectReference(this)
+                    {
+                        ID = FileID,
+                        FileName = objectInfo.Attributes["n"].Value
+                    });
+                }
+
+
             }
 
-            var ep3objects = new XmlDocument();
-            ep3objects.Load(ContentManager.GetPath("Content\\ep3.xml"));
-            var ep3objectsInfos = ep3objects.GetElementsByTagName("P");
 
-            foreach (XmlNode objectInfo in ep3objectsInfos)
+            if (Directory.Exists("ExpansionPack4"))
             {
-                ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
-                Entries.Add(FileID, new GameObjectReference(this)
+                FarFiles.Add("ExpansionPack\\ExpansionPack4.far");
+
+                var ep4objects = new XmlDocument();
+                ep4objects.Load(ContentManager.GetPath("Content\\ep4.xml"));
+                var ep4objectsInfos = ep4objects.GetElementsByTagName("P");
+
+                foreach (XmlNode objectInfo in ep4objectsInfos)
                 {
-                    ID = FileID,
-                    FileName = objectInfo.Attributes["n"].Value
-                });
+                    ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
+                    Entries.Add(FileID, new GameObjectReference(this)
+                    {
+                        ID = FileID,
+                        FileName = objectInfo.Attributes["n"].Value
+                    });
+                }
+
             }
 
-            var ep4objects = new XmlDocument();
-            ep4objects.Load(ContentManager.GetPath("Content\\ep4.xml"));
-            var ep4objectsInfos = ep4objects.GetElementsByTagName("P");
 
-            foreach (XmlNode objectInfo in ep4objectsInfos)
-            {
-                ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
-                Entries.Add(FileID, new GameObjectReference(this)
-                {
-                    ID = FileID,
-                    FileName = objectInfo.Attributes["n"].Value
-                });
-            }
 
-            if (!Directory.Exists(path))
-                Directory.CreateDirectory(path);
+            if (!Directory.Exists(dpath))
+                Directory.CreateDirectory(dpath);
 
-            DirectoryInfo dir = new DirectoryInfo(path);
+            DirectoryInfo dir = new DirectoryInfo(dpath);
 
             var ToRemove = new List<ulong>();
 
@@ -165,6 +183,20 @@ namespace TSO.Content
 
 
                 }
+
+
+            
+
+            Iffs = new FAR1Provider<Iff>(ContentManager, new IffCodec(), FarFiles.ToArray());
+            Sprites = new FAR1Provider<Iff>(ContentManager, new IffCodec(), FarFiles.ToArray());
+            //TuningTables = new FAR1Provider<OTF>(ContentManager, new OTFCodec(), new Regex(".*\\\\objotf.*\\.far"));
+            Resources = new List<GameObjectResource>();
+
+            Iffs.Init(0);
+            //TuningTables.Init();
+            Sprites.Init(0);
+
+
                 
          }
 

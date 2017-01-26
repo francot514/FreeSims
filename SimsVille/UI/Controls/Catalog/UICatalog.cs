@@ -32,95 +32,119 @@ namespace TSOVille.Code.UI.Controls.Catalog
                     _Catalog = new List<UICatalogElement>[30];
                     for (int i = 0; i < 30; i++) _Catalog[i] = new List<UICatalogElement>();
 
-                    var packingslip = new XmlDocument();
-
-                    packingslip.Load("Content\\objects.xml");
-                    var objectInfos = packingslip.GetElementsByTagName("P");
-
-                    foreach (XmlNode objectInfo in objectInfos)
+                    if (Directory.Exists("GameData"))
                     {
-                        sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
-                        if (Category < 0) continue;
-                        _Catalog[Category].Add(new UICatalogElement()
+                        var packingslip = new XmlDocument();
+
+                        packingslip.Load("Content\\objects.xml");
+                        var objectInfos = packingslip.GetElementsByTagName("P");
+
+                        foreach (XmlNode objectInfo in objectInfos)
                         {
-                            GUID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16),
-                            Category = Category,
-                            Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
-                            Name = objectInfo.Attributes["n"].Value
-                        });
-                    }
+                            sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
+                            if (Category < 0) continue;
+                            _Catalog[Category].Add(new UICatalogElement()
+                            {
+                                GUID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16),
+                                Category = Category,
+                                Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
+                                Name = objectInfo.Attributes["n"].Value
+                            });
+                        }
 
-                    var ep1packingslip = new XmlDocument();
-
-                    ep1packingslip.Load("Content\\ep1.xml");
-                    var ep1objectInfos = ep1packingslip.GetElementsByTagName("P");
-
-                    foreach (XmlNode objectInfo in ep1objectInfos)
-                    {
-                        sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
-                        if (Category < 0) continue;
-                        _Catalog[Category].Add(new UICatalogElement()
-                        {
-                            GUID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16),
-                            Category = Category,
-                            Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
-                            Name = objectInfo.Attributes["n"].Value
-                        });
-                    }
-
-                    var ep2packingslip = new XmlDocument();
-
-                    ep2packingslip.Load("Content\\ep2.xml");
-                    var ep2objectInfos = ep2packingslip.GetElementsByTagName("P");
-
-                    foreach (XmlNode objectInfo in ep2objectInfos)
-                    {
-                        sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
-                        if (Category < 0) continue;
-                        _Catalog[Category].Add(new UICatalogElement()
-                        {
-                            GUID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16),
-                            Category = Category,
-                            Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
-                            Name = objectInfo.Attributes["n"].Value
-                        });
                     }
 
 
-                    var ep3packingslip = new XmlDocument();
-
-                    ep3packingslip.Load("Content\\ep3.xml");
-                    var ep3objectInfos = ep3packingslip.GetElementsByTagName("P");
-
-                    foreach (XmlNode objectInfo in ep3objectInfos)
+                    if (Directory.Exists("ExpansionPack"))
                     {
-                        sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
-                        if (Category < 0) continue;
-                        _Catalog[Category].Add(new UICatalogElement()
+
+                        var ep1packingslip = new XmlDocument();
+
+                        ep1packingslip.Load("Content\\ep1.xml");
+                        var ep1objectInfos = ep1packingslip.GetElementsByTagName("P");
+
+                        foreach (XmlNode objectInfo in ep1objectInfos)
                         {
-                            GUID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16),
-                            Category = Category,
-                            Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
-                            Name = objectInfo.Attributes["n"].Value
-                        });
+                            sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
+                            if (Category < 0) continue;
+                            _Catalog[Category].Add(new UICatalogElement()
+                            {
+                                GUID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16),
+                                Category = Category,
+                                Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
+                                Name = objectInfo.Attributes["n"].Value
+                            });
+                        }
+
                     }
 
-                    var ep4packingslip = new XmlDocument();
-
-                    ep4packingslip.Load("Content\\ep4.xml");
-                    var ep4objectInfos = ep4packingslip.GetElementsByTagName("P");
-
-                    foreach (XmlNode objectInfo in ep4objectInfos)
+                    if (Directory.Exists("ExpansionPack2"))
                     {
-                        sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
-                        if (Category < 0) continue;
-                        _Catalog[Category].Add(new UICatalogElement()
+
+                        var ep2packingslip = new XmlDocument();
+
+                        ep2packingslip.Load("Content\\ep2.xml");
+                        var ep2objectInfos = ep2packingslip.GetElementsByTagName("P");
+
+                        foreach (XmlNode objectInfo in ep2objectInfos)
                         {
-                            GUID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16),
-                            Category = Category,
-                            Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
-                            Name = objectInfo.Attributes["n"].Value
-                        });
+                            sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
+                            if (Category < 0) continue;
+                            _Catalog[Category].Add(new UICatalogElement()
+                            {
+                                GUID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16),
+                                Category = Category,
+                                Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
+                                Name = objectInfo.Attributes["n"].Value
+                            });
+                        }
+
+                    }
+
+                    if (Directory.Exists("ExpansionPack3"))
+                    {
+
+                        var ep3packingslip = new XmlDocument();
+
+                        ep3packingslip.Load("Content\\ep3.xml");
+                        var ep3objectInfos = ep3packingslip.GetElementsByTagName("P");
+
+                        foreach (XmlNode objectInfo in ep3objectInfos)
+                        {
+                            sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
+                            if (Category < 0) continue;
+                            _Catalog[Category].Add(new UICatalogElement()
+                            {
+                                GUID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16),
+                                Category = Category,
+                                Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
+                                Name = objectInfo.Attributes["n"].Value
+                            });
+                        }
+
+                    }
+
+                    if (Directory.Exists("ExpansionPack4"))
+                    {
+
+                        var ep4packingslip = new XmlDocument();
+
+                        ep4packingslip.Load("Content\\ep4.xml");
+                        var ep4objectInfos = ep4packingslip.GetElementsByTagName("P");
+
+                        foreach (XmlNode objectInfo in ep4objectInfos)
+                        {
+                            sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
+                            if (Category < 0) continue;
+                            _Catalog[Category].Add(new UICatalogElement()
+                            {
+                                GUID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16),
+                                Category = Category,
+                                Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
+                                Name = objectInfo.Attributes["n"].Value
+                            });
+                        }
+
                     }
 
                     DirectoryInfo dir = new DirectoryInfo("Downloads");
