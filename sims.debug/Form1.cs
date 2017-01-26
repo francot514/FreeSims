@@ -31,6 +31,48 @@ namespace sims.debug
                 listBox2.Items.Add(dir.FullName);
 
         }
+        
+                private void LoadHouses(string path)
+        {
+            Housedir = path + "/Houses";
+
+            DirectoryInfo housedirinfo = new DirectoryInfo(Housedir);
+            label5.Text = housedirinfo.Name;
+
+
+            foreach (FileInfo file in housedirinfo.GetFiles())
+                if (file.Extension == ".iff" && file.Name.Contains("House") && !file.Name.Contains("House00") && !file.Name.Contains("House11"))
+                {
+
+
+                    string house = file.Name.Split('_')[0];
+
+                    listBox3.Items.Add(file.Name);
+
+
+
+                }
+        }
+
+        private void LoadFamilies(string path)
+        {
+            Famdir = path + "/Export";
+
+            DirectoryInfo dir = new DirectoryInfo(path + "/Export");
+
+            foreach (FileInfo file in dir.GetFiles())
+            {
+
+                if (file.Extension == ".FAM")
+                {
+                    string famid = file.Name.Split('_')[1].Split('.')[0];
+
+                    listBox3.Items.Add(file.Name);
+
+
+                }
+            }
+        }
 
         private sbyte GetCategoryName(string name)
         {
@@ -284,27 +326,6 @@ namespace sims.debug
 
         }
 
-        private void LoadHouses(string path)
-        {
-            Housedir = path + "/Houses";
-
-            DirectoryInfo housedirinfo = new DirectoryInfo(Housedir);
-            label5.Text = housedirinfo.Name;
-
-
-            foreach (FileInfo file in housedirinfo.GetFiles())
-                if (file.Extension == ".iff" && file.Name.Contains("House") && !file.Name.Contains("House00") && !file.Name.Contains("House11"))
-                {
-
-
-                    string house = file.Name.Split('_')[0];
-
-                    listBox3.Items.Add(file.Name);
-
-
-
-                }
-        }
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
