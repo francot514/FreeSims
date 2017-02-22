@@ -284,11 +284,9 @@ namespace sims.debug
 
              foreach (var entry in Resource)
                  {
+                     if (entry.Filename.Contains(".bmp"))
+                     listBox1.Items.Add(entry.Filename + "" + entry.DataLength);
 
-                     listBox1.Items.Add(entry.Filename);
-
-                 if (entry.Filename.Contains("setup.bmp"))
-                     MessageBox.Show(entry.Filename);
 
                  }
         }
