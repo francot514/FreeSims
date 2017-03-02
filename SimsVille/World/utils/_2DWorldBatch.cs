@@ -105,7 +105,7 @@ namespace tso.world.Utils
                         break;
                 }
                 Buffers.Add(
-                    RenderUtils.CreateRenderTarget(device, 1, 0, surfaceFormats[i], width, height)
+                    RenderUtils.CreateRenderTarget(device, 1, 0, surfaceFormats[i], width, height, DepthFormat.Depth24Stencil8)
                 );
             }
         }
@@ -235,6 +235,9 @@ namespace tso.world.Utils
 
                 var walls = Sprites[_2DBatchRenderMode.WALL];
                 RenderSpriteList(walls, effect, effect.Techniques["drawZWallDepthChannel"], cache);
+
+                var spritesWithRestoreDepth = Sprites[_2DBatchRenderMode.RESTORE_DEPTH];
+                this.RenderSpriteList(spritesWithRestoreDepth, effect, effect.Techniques["drawSimpleRestoreDepth"], cache);
             }
             else
             {

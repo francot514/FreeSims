@@ -286,6 +286,8 @@ namespace tso.world
                         _2d.OffsetTile(tilePosition);
                         obj.Draw(gd, state);
                     }
+                    Blueprint.RoofComp.Draw(gd, state);
+
                 }
             }
 

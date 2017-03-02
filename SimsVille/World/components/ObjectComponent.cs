@@ -36,6 +36,9 @@ namespace tso.world.Components
         public Blueprint blueprint;
         private int DynamicCounter; //how long this sprite has been dynamic without changing sprite
         public List<SLOTItem> ContainerSlots;
+        public bool HideForCutaway;
+        public WallSegments AdjacentWall;
+
         public new bool Visible {
             get { return _Visible; }
             set {
@@ -46,6 +49,14 @@ namespace tso.world.Components
                 }
             }
         }
+
+        public static Dictionary<WallSegments, Point> CutawayTests = new Dictionary<WallSegments, Point>
+        {
+            { WallSegments.BottomLeft, new Point(0,1) },
+            { WallSegments.TopLeft, new Point(-1,0) },
+            { WallSegments.TopRight, new Point(0,-1)},
+            { WallSegments.BottomRight, new Point(1,0) }
+        };
 
         public Rectangle Bounding { get { return dgrp.Bounding; } }
 
@@ -142,6 +153,26 @@ namespace tso.world.Components
             }
         }
 
+        private bool _CutawayHidden;
+
+        public bool CutawayHidden
+        {
+            get
+            {
+                return _CutawayHidden;
+            }
+            set
+            {
+                if (blueprint != null && _CutawayHidden != value && renderInfo.Layer == WorldObjectRenderLayer.STATIC)
+                {
+                    blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.OBJECT_GRAPHIC_CHANGE, TileX, TileY, Level, this));
+                    DynamicCounter = 0;
+                }
+                _CutawayHidden = value;
+            }
+
+        }
+
         private float RadianDirection
         {
             get
@@ -209,10 +240,56 @@ namespace tso.world.Components
         }
 
         public override void Draw(GraphicsDevice device, WorldState world){
+            
+
+            if (HideForCutaway && Level > 0)
+            {
+                if (!world.BuildMode && world.DynamicCutaway && Level == world.Level)
+                {
+                    if (blueprint != null && renderInfo.Layer == WorldObjectRenderLayer.STATIC) blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.OBJECT_GRAPHIC_CHANGE, TileX, TileY, Level, this));
+                    DynamicCounter = 0; //keep windows and doors on the top floor on the dynamic layer.
+                }
+
+                if (Level != world.Level || world.BuildMode) CutawayHidden = false;
+                else
+                {
+                    var tilePos = new Point((int)Math.Round(Position.X), (int)Math.Round(Position.Y));
+
+                    if (tilePos.X >= 0 && tilePos.X < blueprint.Width && tilePos.Y >= 0 && tilePos.Y < blueprint.Height)
+                    {
+                        var wall = blueprint.Walls[Level - 1][tilePos.Y * blueprint.Width + tilePos.X];
+                        var cutTest = new Point();
+                        if (!CutawayTests.TryGetValue(AdjacentWall & wall.Segments, out cutTest))
+                        {
+                            CutawayTests.TryGetValue(wall.OccupiedWalls & wall.Segments, out cutTest);
+                        }
+                        var positions = new Point[] { tilePos, tilePos + cutTest };
+
+                        var canContinue = true;
+
+                        foreach (var pos in positions)
+                        {
+                            canContinue = canContinue && (pos.X >= 0 && pos.X < blueprint.Width && pos.Y >= 0 && pos.Y < blueprint.Height
+                                && !blueprint.Cutaway[pos.Y * blueprint.Width + pos.X].IsEmpty);
+                            if (!canContinue) break;
+                        }
+                        CutawayHidden = canContinue;
+                    }
+                }
+            }
+
+            bool forceDynamic = ForceDynamic;
+            if (Container != null && Container is ObjectComponent) {
+                forceDynamic = ((ObjectComponent)Container).ForceDynamic;
+                if (forceDynamic && renderInfo.Layer == WorldObjectRenderLayer.STATIC) blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.OBJECT_GRAPHIC_CHANGE, TileX, TileY, Level, this));
+            }
+            if (renderInfo.Layer == WorldObjectRenderLayer.DYNAMIC && !forceDynamic && DynamicCounter++ > 120 && blueprint != null) blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.OBJECT_RETURN_TO_STATIC, TileX, TileY, Level, this));
+
+
             if (this.DrawGroup == null) { return; }
             if (!world.TempDraw)
             {
-                LastScreenPos = world.WorldSpace.GetScreenFromTile(Position) + world.WorldSpace.GetScreenOffset() + PosCenterOffsets[(int)world.Zoom-1];
+                LastScreenPos = world.WorldSpace.GetScreenFromTile(Position) + world.WorldSpace.GetScreenOffset() + PosCenterOffsets[(int)world.Zoom - 1];
                 LastZoomLevel = (int)world.Zoom;
             }
             if (!Visible) return;
@@ -232,17 +309,12 @@ namespace tso.world.Components
                 item.WorldPosition = headOff;
                 var off = PosCenterOffsets[(int)world.Zoom - 1];
                 item.DestRect = new Rectangle(
-                    ((int)headPx.X-Headline.Width/2) + (int)off.X, 
-                    ((int)headPx.Y-Headline.Height/2)+ (int)off.Y, Headline.Width, Headline.Height);
+                    ((int)headPx.X - Headline.Width / 2) + (int)off.X,
+                    ((int)headPx.Y - Headline.Height / 2) + (int)off.Y, Headline.Width, Headline.Height);
                 world._2D.Draw(item);
             }
 
-            bool forceDynamic = ForceDynamic;
-            if (Container != null && Container is ObjectComponent) {
-                forceDynamic = ((ObjectComponent)Container).ForceDynamic;
-                if (forceDynamic && renderInfo.Layer == WorldObjectRenderLayer.STATIC) blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.OBJECT_GRAPHIC_CHANGE, TileX, TileY, Level, this));
-            }
-            if (renderInfo.Layer == WorldObjectRenderLayer.DYNAMIC && !forceDynamic && DynamicCounter++ > 120 && blueprint != null) blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.OBJECT_RETURN_TO_STATIC, TileX, TileY, Level, this));
+
         }
     }
 }

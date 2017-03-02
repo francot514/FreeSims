@@ -36,6 +36,11 @@ namespace tso.world
         public void DrawAfter2D(GraphicsDevice gd, WorldState state){
             var pxOffset = state.WorldSpace.GetScreenOffset();
             var _2d = state._2D;
+
+            if (state.DrawRoofs)
+            {
+                this.Blueprint.RoofComp.Draw(gd, state);
+            }
             
         }
     }

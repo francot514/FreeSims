@@ -13,6 +13,8 @@ using tso.world.Utils;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 
+
+
 namespace tso.world.Model
 {
     /// <summary>
@@ -37,6 +39,10 @@ namespace tso.world.Model
         
         public FloorTile[][] Floors;
         public FloorComponent FloorComp;
+        public RoofComponent RoofComp;
+
+        public List<Room> Rooms;
+
 
         public bool[][] Supported; //directly the VM's copy at all times. DO NOT MODIFY.
 
@@ -60,13 +66,14 @@ namespace tso.world.Model
             this.Width = width;
             this.Height = height;
             JobLot = false;
+            Rooms = new List<Room>();
             
             var numTiles = width * height;
             this.WallComp = new WallComponent();
             WallComp.blueprint = this;
             this.FloorComp = new FloorComponent();
             FloorComp.blueprint = this;
-
+            RoofComp = new RoofComponent(this);
             RoomColors = new Color[65536];
             this.WallsAt = new List<int>[Stories];
             this.Walls = new WallTile[Stories][];
@@ -212,7 +219,9 @@ namespace tso.world.Model
         ZOOM,
         WALL_CUT_CHANGED,
         LEVEL_CHANGED,
-        LIGHTING_CHANGED
+        LIGHTING_CHANGED,
+        ROOM_CHANGED,
+        ROOF_STYLE_CHANGED
     }
 
     public class BlueprintObjectList {

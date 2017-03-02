@@ -60,11 +60,13 @@ namespace tso.world
         }
 
         public bool TempDraw; //set for OBJID mode and thumbs
+        public bool DrawRoofs;
         public WorldSpace WorldSpace;
         public _2DWorldBatch _2D;
         public _3DWorldBatch _3D;
         public Texture2D AmbientLight;
         public Color OutsideColor; //temporary to give this to terrain component. in future it will use ambient light texture
+        public bool DynamicCutaway;
 
         private int _WorldSize;
 
@@ -222,6 +224,8 @@ namespace tso.world
         public float WorldPxWidth;
         public float WorldPxHeight;
         public float OneUnitDistance;
+
+        
 
         private WorldState State;
 
