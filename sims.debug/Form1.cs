@@ -31,8 +31,8 @@ namespace sims.debug
                 listBox2.Items.Add(dir.FullName);
 
         }
-        
-                private void LoadHouses(string path)
+
+        private void LoadHouses(string path)
         {
             Housedir = path + "/Houses";
 
@@ -284,6 +284,7 @@ namespace sims.debug
 
              foreach (var entry in Resource)
                  {
+
                      if (entry.Filename.Contains(".bmp"))
                      listBox1.Items.Add(entry.Filename + "" + entry.DataLength);
 
@@ -325,6 +326,7 @@ namespace sims.debug
         }
 
 
+
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
             int current = comboBox1.SelectedIndex;
@@ -349,6 +351,8 @@ namespace sims.debug
         {
 
         }
+
+
 
 
 

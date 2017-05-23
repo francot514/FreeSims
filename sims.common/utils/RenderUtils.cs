@@ -14,14 +14,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework;
 
 namespace TSO.Common.utils
 {
     public class RenderUtils
     {
-        
+
         private static GraphicsDevice GD;
         private static RenderTarget2D BackbufferDepth;
         private static RenderTarget2D Backbuffer;
@@ -32,6 +32,7 @@ namespace TSO.Common.utils
             GD = gd;
             SB = new SpriteBatch(gd);
         }
+
         public static void InitScreenTargets(GraphicsDevice gd)
         {
             if (BackbufferDepth != null) BackbufferDepth.Dispose();
@@ -143,9 +144,10 @@ namespace TSO.Common.utils
                 SpriteEffects.None, 0);
             SB.End();
         }
-        
-        public static RenderTarget2D CreateRenderTarget(GraphicsDevice device, int numberLevels, int multisample, SurfaceFormat surface, int width, int height,  DepthFormat dformat)
+
+        public static RenderTarget2D CreateRenderTarget(GraphicsDevice device, int numberLevels, int multisample, SurfaceFormat surface, int width, int height, DepthFormat dformat)
         {
+
             // Create our render target
             return new RenderTarget2D(device,
                 width, height, (numberLevels>1), surface,

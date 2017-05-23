@@ -27,11 +27,8 @@ namespace TSO.Files.formats.iff
         public ushort ChunkFlags;
         public string ChunkLabel;
         public bool ChunkProcessed;
-        public uint Length;
-        public int PadByte;
         public byte[] ChunkData;
         public Iff ChunkParent;
-        
 
         /// <summary>
         /// Reads this chunk from an IFF.

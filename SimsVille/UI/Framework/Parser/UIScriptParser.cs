@@ -303,6 +303,5 @@ namespace TSOVille.Code.UI.Framework.Parser
             return input;
         }
 
-    };
-    
-   }
+    }; //MyParser
+}

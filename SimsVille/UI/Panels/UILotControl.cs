@@ -327,6 +327,8 @@ namespace TSOVille.Code.UI.Panels
                 if (vm.Context.Blueprint != null)
                 {
 
+                World.State.DynamicCutaway = (WallsMode == 1);
+
                 var cuts = vm.Context.Blueprint.Cutaway;
                 Rectangle newCut;
                 if (WallsMode == 0){

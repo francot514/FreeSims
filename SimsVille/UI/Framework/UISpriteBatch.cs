@@ -39,7 +39,7 @@ namespace TSOVille.Code.UI.Framework
             for (var i = 0; i < numBuffers; i++)
             {
                 Buffers.Add(
-                    RenderUtils.CreateRenderTarget(gd, 1, 0, SurfaceFormat.Color, gd.Viewport.Width, gd.Viewport.Height)
+                    RenderUtils.CreateRenderTarget(gd, 1, 0, SurfaceFormat.Color, gd.Viewport.Width, gd.Viewport.Height, DepthFormat.Depth24Stencil8)
                 );
             }
 
@@ -57,7 +57,7 @@ namespace TSOVille.Code.UI.Framework
             {
                 Buffers.Add(
                     RenderUtils.CreateRenderTarget(base.GraphicsDevice, 1, 0, SurfaceFormat.Color,
-                    base.GraphicsDevice.Viewport.Width, base.GraphicsDevice.Viewport.Height)
+                    base.GraphicsDevice.Viewport.Width, base.GraphicsDevice.Viewport.Height, DepthFormat.Depth24)
                 );
             }
 

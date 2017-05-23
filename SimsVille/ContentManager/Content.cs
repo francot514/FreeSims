@@ -43,7 +43,7 @@ namespace TSO.Content
             this.Device = device;
 
             UIGraphics = new UIGraphicsProvider(this, Device);
-
+            Audio = new Audio(this);
  
             WorldObjects = new WorldObjectProvider(this);
             WorldFloors = new WorldFloorProvider(this);
@@ -148,6 +148,9 @@ namespace TSO.Content
         public WorldWallProvider WorldWalls;
         public WorldRoofProvider WorldRoofs;
         public UIGraphicsProvider UIGraphics;
+        public Audio Audio;
+
+ 
         
     }
 }

@@ -152,7 +152,7 @@ namespace TSOVille.Code.UI.Framework
         /// <param name="uiScript"></param>
         public UIScript RenderScript(string uiScript)
         {
-            var path = Path.Combine(GlobalSettings.StartupPath, @"gamedata\uiscripts\" + uiScript);
+            var path = Path.Combine(GlobalSettings.StartupPath, @"GameData\uiscripts\" + uiScript);
             var script = new UIScript(GameFacade.GraphicsDevice, this);
             script.Parse(path);
             return script;

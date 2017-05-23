@@ -32,7 +32,7 @@ namespace TSO.Files.formats.iff.chunks
         /// <summary>
         /// How many strings are in this chunk?
         /// </summary>
-        public int Length
+        public int Lengths
         {
             get
             {

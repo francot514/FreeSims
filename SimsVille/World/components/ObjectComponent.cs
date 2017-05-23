@@ -240,7 +240,7 @@ namespace tso.world.Components
         }
 
         public override void Draw(GraphicsDevice device, WorldState world){
-            
+
 
             if (HideForCutaway && Level > 0)
             {
@@ -279,7 +279,8 @@ namespace tso.world.Components
             }
 
             bool forceDynamic = ForceDynamic;
-            if (Container != null && Container is ObjectComponent) {
+            if (Container != null && Container is ObjectComponent)
+            {
                 forceDynamic = ((ObjectComponent)Container).ForceDynamic;
                 if (forceDynamic && renderInfo.Layer == WorldObjectRenderLayer.STATIC) blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.OBJECT_GRAPHIC_CHANGE, TileX, TileY, Level, this));
             }
@@ -313,7 +314,6 @@ namespace tso.world.Components
                     ((int)headPx.Y - Headline.Height / 2) + (int)off.Y, Headline.Width, Headline.Height);
                 world._2D.Draw(item);
             }
-
 
         }
     }

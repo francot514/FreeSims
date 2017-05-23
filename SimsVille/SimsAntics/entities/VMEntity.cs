@@ -1057,5 +1057,7 @@ namespace TSO.SimsAntics
         public bool Zoom;
         public bool Loop;
         public string Name;
+        public HIT.HITThread Sound;
+
     }
 }

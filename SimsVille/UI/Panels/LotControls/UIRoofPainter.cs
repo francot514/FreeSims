@@ -78,7 +78,7 @@ namespace TSOVille.Code.UI.Panels.LotControls
             }
             if (state.KeyboardState.IsKeyDown(Keys.LeftShift))
             {
-                if (Commands.Count == 0 || Commands[0].Type != VMArchitectureCommandType.ROOF_RECT)
+                if (Commands.Count == 0)
                 {
                     Commands.Clear();
                     vm.Context.Architecture.SignalRedraw();
@@ -95,7 +95,7 @@ namespace TSOVille.Code.UI.Panels.LotControls
                 });
             } else
             {
-                if (Commands.Count > 0 && Commands[0].Type == VMArchitectureCommandType.ROOF_FILL)
+                if (Commands.Count > 0)
                 {
                     Commands.Clear();
                     vm.Context.Architecture.SignalRedraw();
@@ -124,7 +124,7 @@ namespace TSOVille.Code.UI.Panels.LotControls
 
                 var cmd = new VMArchitectureCommand
                 {
-                    Type = VMArchitectureCommandType.ROOF_RECT,
+                    Type = VMArchitectureCommandType.FLOOR_RECT,
                     level = World.State.Level,
                     pattern = pattern,
                     style = (ushort)dir,
