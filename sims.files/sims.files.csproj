@@ -55,11 +55,11 @@
   <ItemGroup>
     <Reference Include="MonoGame.Framework, Version=3.1.2.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\Debug\MonoGame.Framework.dll</HintPath>
+      <HintPath>..\SimsVille\Dependencies\MonoGame.Framework.dll</HintPath>
     </Reference>
-    <Reference Include="OpenTK">
-      <HintPath>..\packages\MonoGame.Framework.WindowsGL.3.4.0.459\lib\net40\OpenTK.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="OpenTK, Version=1.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\SimsVille\Dependencies\OpenTK.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
@@ -71,14 +71,14 @@
     <Reference Include="System.Xml" />
     <Reference Include="TargaImage, Version=1.0.0.1, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\tso.client\Dependencies\TargaImage.dll</HintPath>
+      <HintPath>..\SimsVille\Dependencies\TargaImage.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="formats\dbpf\DBPF.cs" />
+    <Compile Include="formats\dbpf\DBPFEntry.cs" />
     <Compile Include="ImageLoader.cs" />
     <Compile Include="FAR1\FAR1Archive.cs" />
-    <Compile Include="formats\dbpf\DBPFEntry.cs" />
-    <Compile Include="formats\dbpf\DBPF.cs" />
     <Compile Include="formats\iff\AbstractIffChunk.cs" />
     <Compile Include="formats\iff\chunks\BCON.cs" />
     <Compile Include="formats\iff\chunks\BHAV.cs" />
@@ -150,6 +150,7 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

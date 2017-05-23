@@ -38,6 +38,7 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ContentManager\Audio.cs" />
     <Compile Include="ContentManager\codecs\IffCodec.cs" />
     <Compile Include="ContentManager\Content.cs" />
     <Compile Include="ContentManager\ContentManager.cs" />
@@ -64,6 +65,14 @@
     <Compile Include="ContentManager\WorldWallProvider.cs" />
     <Compile Include="Game1.cs" />
     <Compile Include="GlobalSettings.cs" />
+    <Compile Include="HIT\AmbiencePlayer.cs" />
+    <Compile Include="HIT\FSCPlayer.cs" />
+    <Compile Include="HIT\HITEventRegistration.cs" />
+    <Compile Include="HIT\HITInterpreter.cs" />
+    <Compile Include="HIT\HITResourceGroup.cs" />
+    <Compile Include="HIT\HITSound.cs" />
+    <Compile Include="HIT\HITThread.cs" />
+    <Compile Include="HIT\HITVM.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimsAntics\engine\Routing\VMRectRouter.cs" />
@@ -84,6 +93,7 @@
     <Compile Include="SimsAntics\engine\VMPrimitiveRegistration.cs" />
     <Compile Include="SimsAntics\engine\VMQueuedAction.cs" />
     <Compile Include="SimsAntics\engine\VMRouteFinder.cs" />
+    <Compile Include="SimsAntics\engine\VMRoutingFrame.cs" />
     <Compile Include="SimsAntics\engine\VMSimanticsException.cs" />
     <Compile Include="SimsAntics\engine\VMSlotParser.cs" />
     <Compile Include="SimsAntics\engine\VMStackFrame.cs" />
@@ -109,6 +119,9 @@
     <Compile Include="SimsAntics\model\VMSerializable.cs" />
     <Compile Include="SimsAntics\model\VMStackObjectDefinitionVariable.cs" />
     <Compile Include="SimsAntics\model\VMStackObjectVariable.cs" />
+    <Compile Include="SimsAntics\primitives\VMSnap.cs" />
+    <Compile Include="SimsAntics\primitives\VMSetNext.cs" />
+    <Compile Include="SimsAntics\primitives\VMPlaySound.cs" />
     <Compile Include="SimsAntics\primitives\VMBreakPoint.cs" />
     <Compile Include="SimsAntics\primitives\VMCreateObjectInstance.cs" />
     <Compile Include="SimsAntics\primitives\VMDialogGlobalStrings.cs" />
@@ -236,6 +249,7 @@
     <Compile Include="World\components\EntityComponent.cs" />
     <Compile Include="World\components\FloorComponent.cs" />
     <Compile Include="World\components\ObjectComponent.cs" />
+    <Compile Include="World\components\RoofComponent.cs" />
     <Compile Include="World\components\TerrainComponent.cs" />
     <Compile Include="World\components\WallComponent.cs" />
     <Compile Include="World\model\Blueprint.cs" />
@@ -244,6 +258,7 @@
     <Compile Include="World\model\FloorTile.cs" />
     <Compile Include="World\model\LotTilePos.cs" />
     <Compile Include="World\model\LotTypes.cs" />
+    <Compile Include="World\model\Room.cs" />
     <Compile Include="World\model\RoomLighting.cs" />
     <Compile Include="World\model\ScrollBuffer.cs" />
     <Compile Include="World\model\WallTile.cs" />
@@ -271,21 +286,22 @@
   <ItemGroup>
     <Reference Include="GOLD Engine, Version=5.0.4337.25397, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\Debug\GOLD Engine.dll</HintPath>
+      <HintPath>Dependencies\GOLD Engine.dll</HintPath>
     </Reference>
     <Reference Include="MonoGame.Framework, Version=3.1.2.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\Debug\MonoGame.Framework.dll</HintPath>
+      <HintPath>Dependencies\MonoGame.Framework.dll</HintPath>
     </Reference>
     <Reference Include="OpenTK, Version=1.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\Debug\OpenTK.dll</HintPath>
-    </Reference>
-    <Reference Include="Tao.Sdl">
-      <HintPath>$(MSBuildProgramFiles32)\MonoGame\v3.0\Assemblies\Linux\Tao.Sdl.dll</HintPath>
+      <HintPath>Dependencies\OpenTK.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Xml" />
+    <Reference Include="Tao.Sdl, Version=1.2.13.0, Culture=neutral, PublicKeyToken=9c7a200e36c0094e, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Dependencies\Tao.Sdl.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Icon.ico" />
