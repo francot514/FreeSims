@@ -32,7 +32,7 @@ namespace TSO.Files.formats.iff.chunks
         /// <summary>
         /// How many strings are in this chunk?
         /// </summary>
-        public int Lengths
+        public int Length
         {
             get
             {
@@ -151,11 +151,6 @@ namespace TSO.Files.formats.iff.chunks
                         };
                     }
                 }
-                //This format is only used in The Sims Online. The format is essentially a performance improvement: 
-                //it counteracts both the short string limit of 255 characters found in 00 00 and the inherent slowness 
-                //of null-terminated strings in the other formats (which requires two passes over each string), and it 
-                //also provides a string pair count for each language set which eliminates the need for two passes over 
-                //each language set.
                 else if (formatCode == -4)
                 {
                     var numLanguageSets = io.ReadByte();
