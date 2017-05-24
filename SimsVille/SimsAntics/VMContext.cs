@@ -193,6 +193,13 @@ namespace TSO.SimsAntics
 
             //Show string: may be used but no functional result.
 
+            AddPrimitive(new VMPrimitiveRegistration(new VMPlaySound())
+            {
+                Opcode = 23,
+                Name = "play_sound",
+                OperandModel = typeof(VMPlaySoundOperand)
+            });
+
             AddPrimitive(new VMPrimitiveRegistration(new VMRelationship())
             {
                 Opcode = 24,
@@ -214,7 +221,12 @@ namespace TSO.SimsAntics
                 OperandModel = typeof(VMRelationshipOperand)
             });
 
-
+            //AddPrimitive(new VMPrimitiveRegistration(new VMGotoRelativePosition())
+            //{
+               // Opcode = 27,
+               // Name = "goto_relative",
+               // OperandModel = typeof(VMGotoRelativePositionOperand)
+            //});
 
 
             AddPrimitive(new VMPrimitiveRegistration(new VMRunTreeByName())
@@ -224,6 +236,12 @@ namespace TSO.SimsAntics
                 OperandModel = typeof(VMRunTreeByNameOperand)
             });
 
+            //AddPrimitive(new VMPrimitiveRegistration(new VMSetMotiveChange())
+            //{
+               // Opcode = 29,
+                //Name = "set_motive_deltas",
+               // OperandModel = typeof(VMSetMotiveChangeOperand)
+            //});
 
             AddPrimitive(new VMPrimitiveRegistration(new VMSysLog())
             {
@@ -232,6 +250,12 @@ namespace TSO.SimsAntics
                 OperandModel = typeof(VMSysLogOperand)
             });
 
+            AddPrimitive(new VMPrimitiveRegistration(new VMSetToNext())
+            {
+                Opcode = 31,
+                Name = "set_to_next",
+                OperandModel = typeof(VMSetToNextOperand)
+            });
 
             AddPrimitive(new VMPrimitiveRegistration(new VMTestObjectType())
             {
@@ -307,7 +331,33 @@ namespace TSO.SimsAntics
                 OperandModel = typeof(VMDropOntoOperand)
             });
 
+            //AddPrimitive(new VMPrimitiveRegistration(new VMAnimateSim())
+            //{
+                //Opcode = 44,
+                //Name = "animate",
+                //OperandModel = typeof(VMAnimateSimOperand)
+            //});
 
+           // AddPrimitive(new VMPrimitiveRegistration(new VMGotoRoutingSlot())
+            //{
+                //Opcode = 45,
+               // Name = "goto_routing_slot",
+                //OperandModel = typeof(VMGotoRoutingSlotOperand)
+            //});
+
+            //AddPrimitive(new VMPrimitiveRegistration(new VMSnap()) //not functional right now
+            //{
+                //Opcode = 46,
+                //Name = "snap",
+               // OperandModel = typeof(VMSnapOperand)
+            //});
+
+            //AddPrimitive(new VMPrimitiveRegistration(new VMReach())
+            //{
+                //Opcode = 47,
+                //Name = "reach",
+                //OperandModel = typeof(VMReachOperand)
+            //});
 
 
             AddPrimitive(new VMPrimitiveRegistration(new VMStopAllSounds())
@@ -317,6 +367,12 @@ namespace TSO.SimsAntics
                 OperandModel = typeof(VMStopAllSoundsOperand)
             });
 
+            AddPrimitive(new VMPrimitiveRegistration(new VMNotifyOutOfIdle())
+            {
+                Opcode = 49,
+                Name = "stackobj_notify_out_of_idle",
+                //OperandModel = typeof(VMAnimateSimOperand)
+            });
 
             AddPrimitive(new VMPrimitiveRegistration(new VMChangeActionString())
             {
