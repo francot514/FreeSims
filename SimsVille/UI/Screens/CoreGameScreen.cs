@@ -32,14 +32,18 @@ using TSO.SimsAntics.Primitives;
 using System.IO;
 using SimsHomeMaker;
 using Microsoft.Xna.Framework.Graphics;
+using TSOVille.Code.UI.Controls;
+using SimsVille.UI.Model;
 
 namespace TSOVille.Code.UI.Screens
 {
     public class CoreGameScreen : TSOVille.Code.UI.Framework.GameScreen
     {
 
+        public Neighborhood Neighborhood;
         private UIButton VMDebug, SaveHouseButton;
         public UIUCP ucp;
+        //public UIGizmo gizmo;
         public XmlHouseData LotInfo;
         public UILotControl LotController; //world, lotcontrol and vm will be null if we aren't in a lot.
         private World World;
@@ -70,7 +74,7 @@ namespace TSOVille.Code.UI.Screens
                         if (m_ZoomLevel > 3)
                         {
                             PlayBackgroundMusic(new string[] { "none" }); //disable city music
-                          
+                            Neighborhood.Visible = false;
                             LotController.Visible = true;
                             World.Visible = true;
                             ucp.SetMode(UIUCP.UCPMode.LotMode);
@@ -81,12 +85,26 @@ namespace TSOVille.Code.UI.Screens
                 }
                 else //cityrenderer! we'll need to recreate this if it doesn't exist...
                 {
-                   
-                    
+
+                    if (m_ZoomLevel < 4)
+                    { //coming from lot view... snap zoom % to 0 or 1
+                        Neighborhood.m_ZoomProgress = (value == 4) ? 1 : 0;
+                        //PlayBackgroundMusic(CityMusic); //play the city music as well
+                        Neighborhood.Visible = true;
+                        //gizmo.Visible = true;
+                        if (World != null)
+                        {
+                            World.Visible = false;
+                            LotController.Visible = false;
+                        }
+                        ucp.SetMode(UIUCP.UCPMode.CityMode);
+                    }
+                    m_ZoomLevel = value;
+                    Neighborhood.m_Zoomed = (value == 4);
                 }
                 ucp.UpdateZoomButton();
             }
-        } //in future, merge LotDebugScreen and CoreGameScreen so that we can store the City+Lot combo information and controls in there.
+        }
 
         private int _Rotation = 0;
         public int Rotation
@@ -143,26 +161,26 @@ namespace TSOVille.Code.UI.Screens
         public CoreGameScreen()
         {
 
-            VMDebug = new UIButton()
+            //VMDebug = new UIButton()
+           // {
+                //Caption = "SimsAntics",
+               // Y = 45,
+               // Width = 100,
+               // X = GlobalSettings.GraphicsWidth - 110
+            //};
+            //VMDebug.OnButtonClick += new ButtonClickDelegate(VMDebug_OnButtonClick);
+            //VMDebug.Visible = false;
+            //this.Add(VMDebug);
+
+            SaveHouseButton = new UIButton()
             {
-                Caption = "SimsAntics",
+                Caption = "Enter House",
                 Y = 45,
                 Width = 100,
                 X = GlobalSettings.GraphicsWidth - 110
             };
-            VMDebug.OnButtonClick += new ButtonClickDelegate(VMDebug_OnButtonClick);
-            VMDebug.Visible = false;
-            this.Add(VMDebug);
-
-            SaveHouseButton = new UIButton()
-            {
-                Caption = "Save House",
-                Y = 105,
-                Width = 100,
-                X = GlobalSettings.GraphicsWidth - 110
-            };
             SaveHouseButton.OnButtonClick += new ButtonClickDelegate(SaveHouseButton_OnButtonClick);
-            SaveHouseButton.Visible = false;
+            SaveHouseButton.Visible = true;
             this.Add(SaveHouseButton);
 
 
@@ -174,8 +192,19 @@ namespace TSOVille.Code.UI.Screens
             ucp.Visible = true;
             this.Add(ucp);
 
+            Neighborhood = new Neighborhood(GameFacade.Game.GraphicsDevice);
+            Neighborhood.LoadContent();
+            
+            Neighborhood.Initialize(GameFacade.HousesDataRetriever);
 
-            ZoomLevel = 1; //Lot view.
+
+            Neighborhood.SetTimeOfDay(0.5);
+
+            GameFacade.Scenes.Add(Neighborhood);
+
+            ZoomLevel = 4; //Nhood view.
+
+           
 
         }
 
@@ -185,14 +214,22 @@ namespace TSOVille.Code.UI.Screens
             base.Update(state);
 
 
+            if (ZoomLevel > 3 && Neighborhood.m_Zoomed != (ZoomLevel == 4)) ZoomLevel = (Neighborhood.m_Zoomed) ? 4 : 5;
+
+            if (InLot) //if we're in a lot, use the VM's more accurate time!
+                Neighborhood.SetTimeOfDay((vm.Context.Clock.Hours / 24.0) + (vm.Context.Clock.Minutes / 1440.0) + (vm.Context.Clock.Seconds / 86400.0));
+
             if (vm != null) vm.Update(state.Time);
 
-            
+            if (!Visible)
+                Neighborhood.Visible = false;
+   
         }
 
         public void CleanupLastWorld()
         {
             //GameFacade.Scenes.Remove(World);
+            GameFacade.Scenes.Remove(Neighborhood);
             this.Remove(LotController);
             ucp.SetPanel(-1);
             ucp.SetInLot(false);
@@ -236,8 +273,8 @@ namespace TSOVille.Code.UI.Screens
             World.State.CenterTile = new Vector2(mailbox.VisualPosition.X, mailbox.VisualPosition.Y);
 
 
-            SaveHouseButton.Visible = true;
-            VMDebug.Visible = true;
+            SaveHouseButton.Caption = "Save House";
+            //VMDebug.Visible = true;
 
 
         }
@@ -258,28 +295,43 @@ namespace TSOVille.Code.UI.Screens
 
         private void SaveHouseButton_OnButtonClick(UIElement button)
         {
-            if (vm == null) return;
 
-            string path = "Houses/" + LotInfo.Name;
-            Stream file = File.Create(path + ".png");
-            Texture2D thumbnail = World.GetLotThumb(GameFacade.GraphicsDevice);
+            
 
-            var exporter = new VMWorldExporter();
-            exporter.SaveHouse(vm, GlobalSettings.DocumentsPath + "Houses//" + LotInfo.Name + ".xml", LotInfo.Name);
+            if (InLot) 
+            {
+                if (vm == null) return;
 
-            thumbnail.SaveAsPng(file, thumbnail.Width, thumbnail.Height);
-            file.Close();
+            
 
-        }
+                var exporter = new VMWorldExporter();
+
+                string path = "Houses/" + LotInfo.Name;
+
+                exporter.SaveHouse(vm, path + ".xml", LotInfo.Name);
+
+                Stream file = File.Create(path + ".png");
+                Texture2D thumbnail = World.GetLotThumb(GameFacade.GraphicsDevice);
+
+
+                thumbnail.SaveAsPng(file, thumbnail.Width, thumbnail.Height);
+                file.Close();
+
+            }
+            else
+            {
+                InitTestLot("Houses/house1.xml");
+
+                ZoomLevel = 1;
+
+            }
+       }
 
 
 
         private void MouseHandler(UIMouseEventType type, UpdateState state)
         {
-            //todo: change handler to game engine when in simulation mode.
 
-           // CityRenderer.UIMouseEvent(type.ToString()); //all the city renderer needs are events telling it if the mouse is over it or not.
-            //if the mouse is over it, the city renderer will handle the rest.
         }
     }
 }

@@ -209,6 +209,8 @@
     <Compile Include="UI\Framework\UITween.cs" />
     <Compile Include="UI\GameController.cs" />
     <Compile Include="UI\GameFacade.cs" />
+    <Compile Include="UI\Model\HouseDataRetriever.cs" />
+    <Compile Include="UI\Model\Neighborhood.cs" />
     <Compile Include="UI\Model\SlicedTextureRef.cs" />
     <Compile Include="UI\Model\UIElementState.cs" />
     <Compile Include="UI\Model\UISounds.cs" />
@@ -264,6 +266,7 @@
     <Compile Include="World\model\WallTile.cs" />
     <Compile Include="World\model\WorldRotation.cs" />
     <Compile Include="World\model\WorldZoom.cs" />
+    <Compile Include="World\model\XmlCity.cs" />
     <Compile Include="World\model\XmlHouse.cs" />
     <Compile Include="World\utils\DGRPRenderer.cs" />
     <Compile Include="World\utils\IsometricTileIterator.cs" />

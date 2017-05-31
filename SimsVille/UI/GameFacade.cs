@@ -23,6 +23,7 @@ using TSO.Common.rendering.framework.model;
 using TSO.Common.rendering.framework;
 using Microsoft.Xna.Framework;
 using SimsHomeMaker;
+using SimsVille.UI.Model;
 
 namespace TSOVille.Code
 {
@@ -37,12 +38,14 @@ namespace TSOVille.Code
         public static _3DLayer Scenes;
         public static GraphicsDevice GraphicsDevice; 
         public static GraphicsDeviceManager GraphicsDeviceManager;
+        public static HouseDataRetriever HousesDataRetriever;
         public static Font MainFont;
         public static UpdateState LastUpdateState;
         public static Thread GameThread;
         public static bool Focus = true;
         public static ContentStrings Strings;
         public static CursorManager Cursor;
+
 
         //Entries received from city server, see UIPacketHandlers.OnCityTokenResponse()
 
@@ -64,6 +67,8 @@ namespace TSOVille.Code
                 Directory.Delete(CacheDirectory);
             }
 
+           HousesDataRetriever = new HouseDataRetriever(GraphicsDevice);
+           HousesDataRetriever.GetCityLots();
 
            Controller.StartLoading();
 
