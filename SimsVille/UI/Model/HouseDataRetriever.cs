@@ -49,7 +49,7 @@ namespace SimsVille.UI.Model
                 LotTileData.Add(new LotTileEntry(lot.Id, lot.Name, 
                     (short)lot.X, (short)lot.Y, (byte)lot.Flags, lot.Cost));
 
-
+             if (CityData.Lots.Count > 0) 
             foreach (LotTileEntry lotentry in LotTileData)
                 HousesImages.Add(RetrieveHouseGFX(lotentry.id, lotentry.name));
 
@@ -61,7 +61,7 @@ namespace SimsVille.UI.Model
             
             try
             {
-                    HouseImg = ImageLoader.FromStream(GfxDevice, 
+                    HouseImg = Texture2D.FromStream(GfxDevice, 
                     new FileStream(@"Houses/" + name.ToString() + ".png", FileMode.Open, FileAccess.Read, FileShare.Read)); 
                 
 

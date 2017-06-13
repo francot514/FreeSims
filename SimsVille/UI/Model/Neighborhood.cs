@@ -41,11 +41,11 @@ namespace SimsVille.UI.Model
         private MouseState m_MouseState, m_LastMouseState;
         private int m_ScrHeight, m_ScrWidth;
         private int m_LotCost = 0;
-        private byte[] m_ElevationData;
         private int[] m_SelTile = new int[] { -1, -1 };
         private int[] m_SelTileTmp = new int[] { -1, -1 };
         private static LotTileEntry m_CurrentLot;
         private ArrayList m_2DVerts;
+        private double m_SecondsBehind = 0, m_DayNightCycle = 24.0;
 
         private Dictionary<int, Texture2D> m_HouseGraphics;
 
@@ -69,97 +69,6 @@ namespace SimsVille.UI.Model
             new Color(60, 80, 132),
             new Color(50, 70, 122)
         };
-
-        public Vector2 transformSpr(float iScale, Vector3 pos)
-        { //transform 3d position to view.
-            Vector3 temp = Vector3.Transform(pos, m_MovMatrix);
-            int width = m_ScrWidth;
-            int height = m_ScrHeight;
-            return new Vector2((temp.X - m_ViewOffX) * iScale + width / 2, (-(temp.Y - m_ViewOffY) * iScale) + height / 2);
-        }
-
-        private Vector2 CalculateR(Vector2 m) //get approx 3d position of 2d screen position in model/tile space.
-        {
-            Vector2 ReturnM = new Vector2(m.X, m.Y);
-            ReturnM.Y = 2.0f * m.Y;
-            float temp = ReturnM.X;
-            double cos = Math.Cos((-45.0 / 180.0) * Math.PI);
-            double sin = Math.Sin((-45.0 / 180.0) * Math.PI);
-            ReturnM.X = (float)(cos * ReturnM.X + sin * ReturnM.Y);
-            ReturnM.Y = (float)(cos * ReturnM.Y - sin * temp);
-            ReturnM.X += 254.55844122715712f;
-            ReturnM.Y += 254.55844122715712f;
-            return ReturnM;
-        }
-
-        private bool IsInsidePoly(double[] Poly, double[] Pos)
-        {
-            if (Poly.Length % 2 != 0) return false; //invalid polygon
-            int n = Poly.Length / 2;
-            bool result = false;
-
-            for (int i = 0; i < n; i++)
-            {
-                double x1 = Poly[i * 2];
-                double y1 = Poly[i * 2 + 1];
-                double x2 = Poly[((i + 1) * 2) % Poly.Length];
-                double y2 = Poly[((i + 1) * 2 + 1) % Poly.Length];
-                double slope = (y2 - y1) / (x2 - x1);
-                double c = y1 - (slope * x1);
-                if ((Pos[1] < (slope * Pos[0]) + c) && (Pos[0] >= Math.Min(x1, x2)) && (Pos[0] < Math.Max(x1, x2)))
-                    result = !(result);
-            }
-
-            return result;
-        }
-
-        private byte[] ConvertToBinaryArray(Color[] ColorArray)
-        {
-            byte[] BinArray = new byte[ColorArray.Length * 4];
-
-            for (int i = 0; i < ColorArray.Length; i++)
-            {
-                BinArray[i * 4] = ColorArray[i].R;
-                BinArray[i * 4 + 1] = ColorArray[i].G;
-                BinArray[i * 4 + 2] = ColorArray[i].B;
-                BinArray[i * 4 + 3] = ColorArray[i].A;
-            }
-
-            return BinArray;
-        }
-
-
-        private int[] GetHoverSquare()
-        {
-            double ResScale = 768.0 / m_ScrHeight;
-            double fisoScale = (Math.Sqrt(0.5 * 0.5 * 2) / 5.10) * ResScale; // is 5.10 on far zoom
-            double zisoScale = Math.Sqrt(0.5 * 0.5 * 2) / 144.0; // currently set 144 to near zoom
-            double isoScale = (1 - m_ZoomProgress) * fisoScale + (m_ZoomProgress) * zisoScale;
-            double width = m_ScrWidth;
-            float iScale = (float)(width / (width * isoScale * 2));
-
-            Vector2 mid = CalculateR(new Vector2(m_ViewOffX, -m_ViewOffY));
-            mid.X -= 6;
-            mid.Y += 6;
-            double[] bounds = new double[] { Math.Round(mid.X - 19), Math.Round(mid.Y - 19), Math.Round(mid.X + 19), Math.Round(mid.Y + 19) };
-            double[] pos = new double[] { m_MouseState.X, m_MouseState.Y };
-
-            for (int y = (int)bounds[1]; y < bounds[3]; y++)
-            {
-                if (y < 0 || y > 511) continue;
-                for (int x = (int)bounds[0]; x < bounds[2]; x++)
-                {
-                    if (x < 0 || x > 511) continue;
-                    //get the 4 points of this tile, and check if the mouse cursor is inside them.
-                    var xy = transformSpr(iScale, new Vector3(x + 0, m_ElevationData[(y * 512 + x) * 4] / 12.0f, y + 0));
-                    var xy2 = transformSpr(iScale, new Vector3(x + 1, m_ElevationData[(y * 512 + Math.Min(x + 1, 511)) * 4] / 12.0f, y + 0));
-                    var xy3 = transformSpr(iScale, new Vector3(x + 1, m_ElevationData[(Math.Min(y + 1, 511) * 512 + Math.Min(x + 1, 511)) * 4] / 12.0f, y + 1));
-                    var xy4 = transformSpr(iScale, new Vector3(x + 0, m_ElevationData[(Math.Min(y + 1, 511) * 512 + x) * 4] / 12.0f, y + 1));
-                    if (IsInsidePoly(new double[] { xy.X, xy.Y, xy2.X, xy2.Y, xy3.X, xy3.Y, xy4.X, xy4.Y }, pos)) return new int[] { x, y }; //we have a match
-                }
-            }
-            return new int[] { -1, -1 }; //no match, return invalid mouse selection (-1, -1)
-        }
 
 
         public Neighborhood(GraphicsDevice Device)
@@ -197,22 +106,17 @@ namespace SimsVille.UI.Model
             m_HousesData = housesData;
 
             LotTileEntry[] data = m_HousesData.LotTileData.ToArray();
+             m_HouseGraphics = new Dictionary<int, Texture2D>();
+
             m_HousesLookup = new Dictionary<Vector2, LotTileEntry>();
             for (int i = 0; i < data.Length; i++)
             {
                 m_HousesLookup[new Vector2(data[i].x, data[i].y)] = data[i];
+                  m_HouseGraphics[i] = m_HousesData.HousesImages[i];
             }
 
             m_ScrHeight = GameFacade.GraphicsDevice.Viewport.Height;
             m_ScrWidth = GameFacade.GraphicsDevice.Viewport.Width;
-
-            m_2DVerts = new ArrayList();
-
-            Color[] ColorData = new Color[m_ScrWidth * m_ScrHeight];
-
-            m_ElevationData = ConvertToBinaryArray(ColorData);
-
-            m_HouseGraphics = new Dictionary<int, Texture2D>();
 
             m_HandleMouse = false;
 
@@ -225,72 +129,7 @@ namespace SimsVille.UI.Model
              RegenData = true;
          }
 
-         private void FixedTimeUpdate()
-         {
-             m_SpotOsc = (m_SpotOsc + 0.01f) % 1; //spotlight oscillation. Cycles fully every 100 frames.
-             if (m_Zoomed)
-             {
-                 m_ZoomProgress += (1.0f - m_ZoomProgress) / 5.0f;
-                 bool Triggered = false;
-
-                 if (m_MouseMove)
-                 {
-                     m_TargVOffX += (m_MouseState.X - m_MouseStart.X) / 1000; //move by fraction of distance between the mouse and where it started in both axis
-                     m_TargVOffY -= (m_MouseState.Y - m_MouseStart.Y) / 1000;
-
-                     //it's your duty to deal with the mouse cursor stuff when moving into PD!
-
-                     /*var dir = Math.Round((Math.Atan2(m_MouseStart.X - m_MouseState.Y,
-                         m_MouseState.X - m_MouseStart.X) / Math.PI) * 4) + 4;
-                     ChangeCursor(dir);*/
-                 }
-                 else //edge scroll check - do this even if mouse events are blocked
-                 {
-                     if (m_MouseState.X > m_ScrWidth - 32)
-                     {
-                         Triggered = true;
-                         m_TargVOffX += m_ScrollSpeed;
-                         CursorManager.INSTANCE.SetCursor(CursorType.ArrowRight);
-                         //changeCursor("right.cur")
-                     }
-                     if (m_MouseState.X < 32)
-                     {
-                         Triggered = true;
-                         m_TargVOffX -= m_ScrollSpeed;
-                         CursorManager.INSTANCE.SetCursor(CursorType.ArrowLeft);
-                         //changeCursor("left.cur");
-                     }
-                     if (m_MouseState.Y > m_ScrHeight - 32)
-                     {
-                         Triggered = true;
-                         m_TargVOffY -= m_ScrollSpeed;
-                         CursorManager.INSTANCE.SetCursor(CursorType.ArrowDown);
-                         //changeCursor("down.cur");
-                     }
-                     if (m_MouseState.Y < 32)
-                     {
-                         Triggered = true;
-                         m_TargVOffY += m_ScrollSpeed;
-                         CursorManager.INSTANCE.SetCursor(CursorType.ArrowUp);
-                         //changeCursor("up.cur");
-                     }
-
-                     if (!Triggered)
-                     {
-                         m_ScrollSpeed = 0.1f; //not scrolling. Reset speed, set default cursor.
-                         CursorManager.INSTANCE.SetCursor(CursorType.Normal);
-                         //changeCursor("auto", true); AKA the default cursor.
-                     }
-                     else
-                         m_ScrollSpeed += 0.005f; //if edge scrolling make the speed increase the longer the mouse is at the edge.
-                 }
-
-                 m_TargVOffX = Math.Max(-135, Math.Min(m_TargVOffX, 138)); //maximum offsets for zoomed camera. Need adjusting for other screen sizes...
-                 m_TargVOffY = Math.Max(-100, Math.Min(m_TargVOffY, 103));
-             }
-             else
-                 m_ZoomProgress += (0 - m_ZoomProgress) / 5.0f; //zoom progress interpolation. Isn't very fixed but it's a nice gradiation.
-         }
+ 
 
          public void SetTimeOfDay(double time)
          {
@@ -335,12 +174,7 @@ namespace SimsVille.UI.Model
 
                  if (m_HandleMouse)
                  {
-                     if (m_Zoomed)
-                     {
-                         m_SelTile = GetHoverSquare();
-
-
-                     }
+                     
 
                      if (m_MouseState.RightButton == ButtonState.Pressed && m_LastMouseState.RightButton == ButtonState.Released)
                      {
@@ -405,11 +239,12 @@ namespace SimsVille.UI.Model
                      m_SelTile = new int[] { -1, -1 };
                  }
 
-                 //m_SecondsBehind += time.ElapsedGameTime.TotalSeconds;
-                 //m_SecondsBehind -= 1 / 60;
-                 FixedTimeUpdate();
-                 //SetTimeOfDay(m_DayNightCycle % 1); //calculates sun/moon light colour and position
-                 //m_DayNightCycle += 0.001; //adjust the cycle speed here. When ingame, set m_DayNightCycle to to the percentage of time passed through the day. (0 to 1)
+                 GameTime time = new GameTime();
+
+                 m_SecondsBehind += time.ElapsedGameTime.TotalSeconds;
+                 m_SecondsBehind -= 1 / 60;
+                 SetTimeOfDay(m_DayNightCycle % 1); //calculates sun/moon light colour and position
+                 m_DayNightCycle += 0.001; //adjust the cycle speed here. When ingame, set m_DayNightCycle to to the percentage of time passed through the day. (0 to 1)
 
                  m_ViewOffX = (m_TargVOffX) * m_ZoomProgress;
                  m_ViewOffY = (m_TargVOffY) * m_ZoomProgress;
@@ -473,21 +308,7 @@ namespace SimsVille.UI.Model
             }
         }
 
-        private void PathTile(int x, int y, float iScale, float opacity)
-        { //quick and dirty function to fill a tile with white using the 2DVerts system. Used in near view for online houses.
-            Vector2 xy = transformSpr(iScale, new Vector3(x + 0, m_ElevationData[(y * 512 + x) * 4] / 12.0f, y + 0));
-            Vector2 xy2 = transformSpr(iScale, new Vector3(x + 1, m_ElevationData[(y * 512 + Math.Min(x + 1, 511)) * 4] / 12.0f, y + 0));
-            Vector2 xy3 = transformSpr(iScale, new Vector3(x + 1, m_ElevationData[(Math.Min(y + 1, 511) * 512 + Math.Min(x + 1, 511)) * 4] / 12.0f, y + 1));
-            Vector2 xy4 = transformSpr(iScale, new Vector3(x + 0, m_ElevationData[(Math.Min(y + 1, 511) * 512 + x) * 4] / 12.0f, y + 1));
 
-            m_2DVerts.Add(new VertexPositionColor(new Vector3(xy, 1), new Color(1.0f, 1.0f, 1.0f, opacity)));
-            m_2DVerts.Add(new VertexPositionColor(new Vector3(xy2, 1), new Color(1.0f, 1.0f, 1.0f, opacity)));
-            m_2DVerts.Add(new VertexPositionColor(new Vector3(xy3, 1), new Color(1.0f, 1.0f, 1.0f, opacity)));
-
-            m_2DVerts.Add(new VertexPositionColor(new Vector3(xy, 1), new Color(1.0f, 1.0f, 1.0f, opacity)));
-            m_2DVerts.Add(new VertexPositionColor(new Vector3(xy3, 1), new Color(1.0f, 1.0f, 1.0f, opacity)));
-            m_2DVerts.Add(new VertexPositionColor(new Vector3(xy4, 1), new Color(1.0f, 1.0f, 1.0f, opacity)));
-        }
 
         public void Draw2DPoly()
         {
@@ -515,124 +336,27 @@ namespace SimsVille.UI.Model
             m_GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         }
 
-        private void DrawSprites(float HB, float VB)
+        private void DrawSprites(SpriteBatch sbatch)
         {
-            SpriteBatch spriteBatch = new SpriteBatch(m_GraphicsDevice);
-            spriteBatch.Begin();
 
-            if (!m_Zoomed && m_HandleMouse)
+            for (int i = 0; i < m_HousesData.LotTileData.Count; i++)
             {
-                //draw rectangle to indicate zoom position
-                DrawLine(m_WhiteLine, new Vector2(m_MouseState.X - 15, m_MouseState.Y - 11), new Vector2(m_MouseState.X - 15, m_MouseState.Y + 11), spriteBatch, 2, 1);
-                DrawLine(m_WhiteLine, new Vector2(m_MouseState.X - 16, m_MouseState.Y + 10), new Vector2(m_MouseState.X + 16, m_MouseState.Y + 10), spriteBatch, 2, 1);
-                DrawLine(m_WhiteLine, new Vector2(m_MouseState.X + 15, m_MouseState.Y + 11), new Vector2(m_MouseState.X + 15, m_MouseState.Y - 11), spriteBatch, 2, 1);
-                DrawLine(m_WhiteLine, new Vector2(m_MouseState.X + 16, m_MouseState.Y - 10), new Vector2(m_MouseState.X - 16, m_MouseState.Y - 10), spriteBatch, 2, 1);
-            }
-            else if (m_Zoomed && m_HandleMouse)
-            {
-                if (m_LotCost != 0)
-                {
-                    float X = GetHoverSquare()[0];
-                    float Y = GetHoverSquare()[1];
-                    //TODO: Should this have opacity? Might have to change this to render only when hovering over a lot.
-                    DrawTooltip(spriteBatch, m_LotCost.ToString() + "§", new Vector2(X, Y), 0.5f);
-                }
-                else
-                {
-                    if (m_CurrentLot != null)
-                    {
-                        float X = GetHoverSquare()[0];
-                        float Y = GetHoverSquare()[1];
 
-                    }
-                }
+                LotTileEntry lot = m_HousesData.LotTileData[i];
+
+                if (m_HousesData.HousesImages[i] != null)
+                    sbatch.Draw(m_HousesData.HousesImages[i], new Rectangle(lot.x, lot.y, 256, 256), Color.White);       
+
+
             }
 
-            if (m_ZoomProgress < 0.5)
-            {
-                spriteBatch.End();
-                spriteBatch.Dispose();
-                return;
-            }
+            //Draw2DPoly();
 
-            float iScale = (float)m_ScrWidth / (HB * 2);
-
-            float treeWidth = (float)(Math.Sqrt(2) * (128.0 / 144.0));
-            float treeHeight = treeWidth * (80 / 128);
-
-            Vector2 mid = CalculateR(new Vector2(m_ViewOffX, -m_ViewOffY)); //determine approximate tile position at center of screen
-            mid.X -= 6;
-            mid.Y += 6;
-            float[] bounds = new float[] { (float)Math.Round(mid.X - 19), (float)Math.Round(mid.Y - 19), (float)Math.Round(mid.X + 19), (float)Math.Round(mid.Y + 19) };
-
-
-            for (short y = (short)bounds[1]; y < bounds[3]; y++) //iterate over tiles close to the approximate tile position at the center of the screen and draw any trees/houses on them
-            {
-                if (y < 0 || y > 511) continue;
-                for (short x = (short)bounds[0]; x < bounds[2]; x++)
-                {
-                    if (x < 0 || x > 511) continue;
-
-                    float elev = (m_ElevationData[(y * 512 + x) * 4] + m_ElevationData[(y * 512 + Math.Min(x + 1, 511)) * 4] +
-                        m_ElevationData[(Math.Min(y + 1, 511) * 512 + Math.Min(x + 1, 511)) * 4] +
-                        m_ElevationData[(Math.Min(y + 1, 511) * 512 + x) * 4]) / 4; //elevation of sprite is the average elevation of the 4 vertices of the tile
-
-                    var xy = transformSpr(iScale, new Vector3((float)(x + 0.5), elev / 12.0f, (float)(y + 0.5)));
-
-                    if (xy.X > -64 && xy.X < m_ScrWidth + 64 && xy.Y > -40 && xy.Y < m_ScrHeight + 40) //is inside screen
-                    {
-
-                        Vector2 loc = new Vector2(x, y);
-                        LotTileEntry house;
-
-                        if (m_HousesLookup.ContainsKey(loc))
-                        {
-                            house = m_HousesLookup[loc];
-                        }
-                        else
-                        {
-                            house = null;
-                        }
-                        if (house != null) //if there is a house here, draw it
-                        {
-                            if ((house.flags & 1) > 0)
-                            {
-                                PathTile(x, y, iScale, (float)(0.3 + Math.Sin(4 * Math.PI * (m_SpotOsc % 1)) * 0.15));
-                            }
-
-                            double scale = treeWidth * iScale / 128.0;
-                            if (!m_HouseGraphics.ContainsKey(house.id))
-                            {
-                               
-
-                                Texture2D HouseGraphic = m_HousesData.RetrieveHouseGFX(house.id, house.name);
-
-                                if (HouseGraphic != null)
-                                    m_HouseGraphics[house.id] = HouseGraphic;
-                            }
-                            Texture2D lotImg = m_HouseGraphics[house.id];
-                            spriteBatch.Draw(lotImg, new Rectangle((int)(xy.X - 64.0 * scale), (int)(xy.Y - 32.0 * scale), (int)(scale * 128), (int)(scale * 64)), m_TintColor);
-                        }
-                        
-                    }
-                }
-            }
-
-            Draw2DPoly(); //fill the tiles below online houses BEFORE actually drawing the houses and trees!
-            
         }
 
         public override void Draw(GraphicsDevice GraphicsDevice)
         {
-            float ResScale = 768.0f / m_ScrHeight; //scales up the vertical height to match that of the target resolution (for the far view)
 
-            float FisoScale = (float)(Math.Sqrt(0.5 * 0.5 * 2) / 5.10f) * ResScale; // is 5.10 on far zoom
-            float ZisoScale = (float)Math.Sqrt(0.5 * 0.5 * 2) / 144f;  // currently set 144 to near zoom
-
-            float IsoScale = (1 - m_ZoomProgress) * FisoScale + (m_ZoomProgress) * ZisoScale;
-
-            float HB = m_ScrWidth * IsoScale;
-            float VB = m_ScrHeight * IsoScale;
 
             m_GraphicsDevice.Clear(Color.Black);
 
@@ -642,7 +366,7 @@ namespace SimsVille.UI.Model
 
             spriteBatch.Draw(TerrainImage, new Rectangle(0, 0, m_GraphicsDevice.Viewport.Width, m_GraphicsDevice.Viewport.Height), Color.White);
 
-            //DrawSprites(HB, VB);
+            DrawSprites(spriteBatch);
 
 
             spriteBatch.End();
