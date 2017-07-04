@@ -50,22 +50,22 @@ namespace tso.world.Model
     public class XmlLot
     {
 
-        [XmlElement("id")]
+        [XmlAttribute("id")]
         public int Id { get; set; }
 
-        [XmlElement("name")]
+        [XmlAttribute("name")]
         public string Name { get; set; }
 
-        [XmlElement("cost")]
+        [XmlAttribute("cost")]
         public int Cost { get; set; }
 
-        [XmlElement("x")]
+        [XmlAttribute("x")]
         public int X { get; set; }
 
-        [XmlElement("y")]
+        [XmlAttribute("y")]
         public int Y { get; set; }
 
-        [XmlElement("flags")]
+        [XmlAttribute("flags")]
         public int Flags { get; set; }
 
     }
