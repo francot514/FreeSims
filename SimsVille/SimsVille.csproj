@@ -39,6 +39,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ContentManager\Audio.cs" />
+    <Compile Include="ContentManager\AvatarTextureProvider.cs" />
     <Compile Include="ContentManager\codecs\IffCodec.cs" />
     <Compile Include="ContentManager\Content.cs" />
     <Compile Include="ContentManager\ContentManager.cs" />
@@ -47,6 +48,7 @@
     <Compile Include="ContentManager\framework\FileProvider.cs" />
     <Compile Include="ContentManager\framework\IContentCodec.cs" />
     <Compile Include="ContentManager\framework\IFFProvider.cs" />
+    <Compile Include="ContentManager\framework\OtherProvider.cs" />
     <Compile Include="ContentManager\framework\PackingslipProvider.cs" />
     <Compile Include="ContentManager\model\Roof.cs" />
     <Compile Include="ContentManager\UIFileIDs.cs" />
@@ -248,6 +250,10 @@
     <Compile Include="Utils\MathUtils.cs" />
     <Compile Include="Utils\ThreeDMesh.cs" />
     <Compile Include="Utils\UIUtils.cs" />
+    <Compile Include="Vitaboy\AdultVitaboyModel.cs" />
+    <Compile Include="Vitaboy\Animator.cs" />
+    <Compile Include="Vitaboy\Avatar.cs" />
+    <Compile Include="Vitaboy\SimAvatar.cs" />
     <Compile Include="World\components\EntityComponent.cs" />
     <Compile Include="World\components\FloorComponent.cs" />
     <Compile Include="World\components\ObjectComponent.cs" />
@@ -300,6 +306,8 @@
       <HintPath>Dependencies\OpenTK.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml" />
     <Reference Include="Tao.Sdl, Version=1.2.13.0, Culture=neutral, PublicKeyToken=9c7a200e36c0094e, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
