@@ -8,6 +8,8 @@ using Microsoft.Xna.Framework.Graphics;
 using TSO.Common.content;
 using TSO.Files;
 using SimsHomeMaker.ContentManager;
+using TSOVille.Code.UI.Model;
+using TSO.Common.rendering.vitaboy;
 
 namespace TSO.Content
 {
@@ -50,6 +52,15 @@ namespace TSO.Content
             WorldWalls = new WorldWallProvider(this);
             WorldObjectGlobals = new WorldGlobalProvider(this);
             WorldRoofs = new WorldRoofProvider(this, device);
+
+            SimsProvider = new TS1Provider(this);
+            AvatarTextures = new TexturesProvider(SimsProvider);
+            AvatarMeshes = new MeshesProvider(SimsProvider);
+
+            BCFGlobal = new TS1BCFProvider(this, SimsProvider);
+            AvatarAnimations = new TS1BCFAnimationProvider(BCFGlobal);
+            AvatarSkeletons = new TS1BCFSkeletonProvider(BCFGlobal);
+            AvatarAppearances = new TS1BCFAppearanceProvider(BCFGlobal);
 
             Init();
         }
@@ -148,6 +159,17 @@ namespace TSO.Content
         public WorldWallProvider WorldWalls;
         public WorldRoofProvider WorldRoofs;
         public UIGraphicsProvider UIGraphics;
+
+        /** Avatar **/
+        public IContentProvider<Skeleton> AvatarSkeletons;
+        public IContentProvider<Appearance> AvatarAppearances;
+        public IContentProvider<Animation> AvatarAnimations;
+        public IContentProvider<ITextureRef> AvatarTextures;
+        public IContentProvider<Mesh> AvatarMeshes;
+        public TS1Provider SimsProvider;
+        public TS1BCFProvider BCFGlobal;
+
+
         public Audio Audio;
 
  
