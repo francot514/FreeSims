@@ -25,6 +25,17 @@ namespace TSO.Common.content
             this.FileID = fileID;
         }
 
+        public ContentID(string name)
+        {
+            this.Name = name;
+        }
+
+        public ContentID(long v)
+        {
+            this.TypeID = (uint)v;
+            this.FileID = (uint)(v >> 32);
+        }
+
         public ulong Shift()
         {
             var fileIDLong = ((ulong)FileID) << 32;

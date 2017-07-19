@@ -8,6 +8,7 @@ namespace TSO.Common.content
     public interface IContentProvider <T>
     {
         T Get(ulong id);
+        T Get(string name);
         T Get(uint type, uint fileID);
         List<IContentReference<T>> List();
     }

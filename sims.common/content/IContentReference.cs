@@ -9,4 +9,11 @@ namespace TSO.Common.content
     {
         T Get();
     }
+
+    public interface IContentReference
+    {
+        object GetGeneric();
+        object GetThrowawayGeneric();
+    }
+
 }
