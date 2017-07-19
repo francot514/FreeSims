@@ -110,6 +110,22 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="rendering\framework\3DAbstract.cs" />
+    <Compile Include="rendering\vitaboy\Animation.cs" />
+    <Compile Include="rendering\vitaboy\Appearance.cs" />
+    <Compile Include="rendering\vitaboy\BCF.cs" />
+    <Compile Include="rendering\vitaboy\Binding.cs" />
+    <Compile Include="rendering\vitaboy\BlendData.cs" />
+    <Compile Include="rendering\vitaboy\Bone.cs" />
+    <Compile Include="rendering\vitaboy\CFP.cs" />
+    <Compile Include="rendering\vitaboy\Collection.cs" />
+    <Compile Include="rendering\vitaboy\HandGroup.cs" />
+    <Compile Include="rendering\vitaboy\Mesh.cs" />
+    <Compile Include="rendering\vitaboy\MeshVertex.cs" />
+    <Compile Include="rendering\vitaboy\Outfit.cs" />
+    <Compile Include="rendering\vitaboy\PurchasableOutfit.cs" />
+    <Compile Include="rendering\vitaboy\ShadowVertex.cs" />
+    <Compile Include="rendering\vitaboy\Skeleton.cs" />
+    <Compile Include="rendering\vitaboy\VitaboyVertex.cs" />
     <Compile Include="utils\DirectionUtils.cs" />
     <Compile Include="utils\FileUtils.cs" />
     <Compile Include="utils\HTMLPrinter.cs" />
