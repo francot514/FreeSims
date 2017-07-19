@@ -273,6 +273,11 @@ namespace TSO.Content
             
         }
 
+        public GameObject Get(string id)
+        {
+            return Get((Convert.ToUInt32(id)));
+        }
+
         public GameObject Get(uint type, uint fileID)
         {
             return Get(fileID);
@@ -299,6 +304,9 @@ namespace TSO.Content
         }
 
         #region IContentReference<GameObject> Members
+
+
+
 
         public GameObject Get()
         {

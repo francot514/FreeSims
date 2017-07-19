@@ -43,6 +43,7 @@
     <Compile Include="ContentManager\codecs\IffCodec.cs" />
     <Compile Include="ContentManager\Content.cs" />
     <Compile Include="ContentManager\ContentManager.cs" />
+    <Compile Include="ContentManager\AvatarMeshesProvider.cs" />
     <Compile Include="ContentManager\framework\FAR1Provider.cs" />
     <Compile Include="ContentManager\framework\FAR3Provider.cs" />
     <Compile Include="ContentManager\framework\FileProvider.cs" />
@@ -50,6 +51,7 @@
     <Compile Include="ContentManager\framework\IFFProvider.cs" />
     <Compile Include="ContentManager\framework\OtherProvider.cs" />
     <Compile Include="ContentManager\framework\PackingslipProvider.cs" />
+    <Compile Include="ContentManager\framework\TS1BCFProvider.cs" />
     <Compile Include="ContentManager\model\Roof.cs" />
     <Compile Include="ContentManager\UIFileIDs.cs" />
     <Compile Include="ContentManager\model\AudioReference.cs" />

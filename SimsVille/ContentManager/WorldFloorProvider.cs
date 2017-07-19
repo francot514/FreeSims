@@ -119,6 +119,14 @@ namespace TSO.Content
 
         #region IContentProvider<Floor> Members
 
+
+        public Floor Get(string id)
+        {
+
+
+            return new Floor();
+        }
+
         public Floor Get(ulong id)
         {
             if (ById.ContainsKey((ushort)id))

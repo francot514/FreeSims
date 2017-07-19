@@ -45,6 +45,11 @@ namespace TSO.Content
             return Get(fileIDLong | type);
         }
 
+
+        public T Get(string name)
+        {
+            throw new NotImplementedException();
+        }
         /// <summary>
         /// Get an asset by its ID.
         /// </summary>

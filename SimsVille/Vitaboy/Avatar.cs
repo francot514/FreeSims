@@ -122,7 +122,7 @@ namespace TSO.vitaboy
 
             foreach (var bindingReference in appearance.Bindings)
             {
-                var binding = bindingReference.RealBinding ?? TSO.Content.Content.Get().AvatarBindings.Get(bindingReference.TypeID, bindingReference.FileID);
+                var binding = bindingReference.RealBinding;
                 if (binding == null) { continue; }
                 if (texOverride != null)
                 {

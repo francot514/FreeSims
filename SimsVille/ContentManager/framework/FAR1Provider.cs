@@ -18,6 +18,7 @@ namespace TSO.Content.framework
     {
         protected Content ContentManager;
         protected Dictionary<string, Far1ProviderEntry<T>> EntriesByName;
+        protected Dictionary<string, List<Far1ProviderEntry<T>>> EntriesOfType; 
 
         protected IContentCodec<T> Codec;
         protected Dictionary<string, T> Cache;
@@ -76,7 +77,7 @@ namespace TSO.Content.framework
         /// Gets an archive based on its filename.
         /// </summary>
         /// <param name="Filename">The name of the archive to get.</param>
-        /// <returns>A FAR3 archive.</returns>
+        /// <returns>A FAR1 archive.</returns>
         public T Get(string filename)
         {
             if (!EntriesByName.ContainsKey(filename))
@@ -132,6 +133,14 @@ namespace TSO.Content.framework
             }
         }
 
+
+        public List<Far1ProviderEntry<T>> GetEntriesForExtension(string ext)
+        {
+            List<Far1ProviderEntry<T>> result = null;
+            if (EntriesOfType.TryGetValue(ext, out result)) return result;
+            return null;
+        }
+
         public T ThrowawayGet(Far1ProviderEntry<T> entry)
         {
             byte[] data = entry.Archive.GetEntry(entry.FarEntry);
@@ -148,6 +157,7 @@ namespace TSO.Content.framework
         {
             Cache = new Dictionary<string, T>();
             EntriesByName = new Dictionary<string, Far1ProviderEntry<T>>();
+            EntriesOfType = new Dictionary<string, List<Far1ProviderEntry<T>>>();
 
             if (FarFilePattern != null)
             {
@@ -182,6 +192,16 @@ namespace TSO.Content.framework
                             System.Diagnostics.Debug.WriteLine("Duplicate! " + entry.Filename);
                         }
                         EntriesByName[entry.Filename] = referenceItem;
+
+                        var ext = Path.GetExtension(entry.Filename).ToLowerInvariant();
+                        List<Far1ProviderEntry<T>> group = null;
+                        if (!EntriesOfType.TryGetValue(ext, out group))
+                        {
+                            group = new List<Far1ProviderEntry<T>>();
+                            EntriesOfType[ext] = group;
+                        }
+                        group.Add(referenceItem);
+
                     }
                 }
             }

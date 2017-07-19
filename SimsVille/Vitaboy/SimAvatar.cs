@@ -134,7 +134,7 @@ namespace TSO.vitaboy
                 {
                     var HandgroupID = m_Handgroup.GetHandgroup();
                     if (HandgroupID.FileID == 0) HandgroupID.FileID = (int)(158913789970 >> 32);
-                    hgroup = TSO.Content.Content.Get().AvatarHandgroups.Get(HandgroupID.TypeID, HandgroupID.FileID);
+                   //hgroup = TSO.Content.Content.Get().AvatarHandgroups.Get(HandgroupID.TypeID, HandgroupID.FileID);
                 }
 
                 HandSet HSet = null;
@@ -226,8 +226,8 @@ namespace TSO.vitaboy
                             break;
                     }
 
-                    LeftApr = TSO.Content.Content.Get().AvatarAppearances.Get(LeftID);
-                    RightApr = TSO.Content.Content.Get().AvatarAppearances.Get(RightID);
+                    LeftApr = TSO.Content.Content.Get().AvatarAppearances.Get(LeftID.Name);
+                    RightApr = TSO.Content.Content.Get().AvatarAppearances.Get(RightID.Name);
                 }
 
                 if (LeftApr != null)
@@ -417,9 +417,9 @@ namespace TSO.vitaboy
             set
             {
                 _BodyOutfitId = value;
-                var outfit = Content.Content.Get().AvatarOutfits.Get(value);
-                this.Body = outfit;
-                this.Handgroup = outfit;
+               // var outfit = Content.Content.Get().AvatarOutfits.Get(value);
+               //this.Body = outfit;
+               //this.Handgroup = outfit;
             }
             get
             {
@@ -433,8 +433,8 @@ namespace TSO.vitaboy
             set
             {
                 _HeadOutfitId = value;
-                var outfit = Content.Content.Get().AvatarOutfits.Get(value);
-                this.Head = outfit;
+                // var outfit = Content.Content.Get().AvatarOutfits.Get(value);
+                //this.Head = outfit;
             }
             get
             {

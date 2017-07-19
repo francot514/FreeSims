@@ -82,6 +82,12 @@ namespace SimsHomeMaker.ContentManager
              else return null;
          }
 
+        public Roof Get(string id)
+        {
+
+
+            return new Roof();
+        }
 
          public Roof Get(ulong id)
         {

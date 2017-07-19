@@ -243,6 +243,13 @@ namespace TSO.Content
 
         #region IContentProvider<Wall> Members
 
+        public Wall Get(string id)
+        {
+
+
+            return new Wall();
+        }
+
         public Wall Get(ulong id)
         {
             if (ById.ContainsKey((ushort)id))
