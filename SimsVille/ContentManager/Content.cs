@@ -53,7 +53,7 @@ namespace TSO.Content
             WorldObjectGlobals = new WorldGlobalProvider(this);
             WorldRoofs = new WorldRoofProvider(this, device);
 
-            SimsProvider = new TS1Provider(this);
+            SimsProvider = new TS1Provider(this, device);
             AvatarTextures = new TexturesProvider(SimsProvider);
             AvatarMeshes = new MeshesProvider(SimsProvider);
 
@@ -89,7 +89,9 @@ namespace TSO.Content
 
             Archives = new Dictionary<string, FAR3Archive>();
             UIGraphics.Init();
- 
+            ((TexturesProvider)AvatarTextures).Init();
+            ((MeshesProvider)AvatarMeshes).Init();
+
 
             InitWorld();
         }

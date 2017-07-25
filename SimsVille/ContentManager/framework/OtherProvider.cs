@@ -5,8 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.Xna.Framework.Graphics;
 using TSO.Common.content;
 using TSO.Content.framework;
+using TSO.Content.codecs;
+
 
 namespace TSO.Content
 {
@@ -14,8 +17,9 @@ namespace TSO.Content
     {
         private FAR1Provider<object> FarProvider;
 
-        public TS1Provider(Content contentManager)
+        public TS1Provider(Content contentManager, GraphicsDevice device)
         {
+            
             FarProvider = new FAR1Provider<object>(contentManager, null, new Regex(@".*\.far"));
             //todo: files provider?
         }
@@ -25,16 +29,18 @@ namespace TSO.Content
             FarProvider.Init(0);
         }
 
-        public Dictionary<string, IContentReference> BuildDictionary(string ext, string exclude)
+        public Dictionary<string, Far1ProviderEntry<object>> BuildDictionary(string ext, string exclude)
         {
+
+            Init();
             var entries = FarProvider.GetEntriesForExtension(ext);
-            var result = new Dictionary<string, IContentReference>();
+            var result = new Dictionary<string, Far1ProviderEntry<object>>();
             if (entries == null) return result;
             foreach (var entry in entries)
             {
                 var name = Path.GetFileName(entry.FarEntry.Filename.ToLowerInvariant());
                 if (name.Contains(exclude)) continue;
-                result[name] = (IContentReference)entry;
+                result[name] = entry;
             }
             return result;
         }
@@ -47,7 +53,7 @@ namespace TSO.Content
     public class TS1SubProvider<T> : IContentProvider<T>
     {
         private TS1Provider BaseProvider;
-        private Dictionary<string, IContentReference> Entries;
+        private Dictionary<string, Far1ProviderEntry<object>> Entries;
         private string Extension;
         private Func<object, T> Converter;
 
@@ -75,11 +81,11 @@ namespace TSO.Content
 
         public virtual T Get(string name)
         {
-            IContentReference result = null;
+            Far1ProviderEntry<object> result = null;
 
             if (Entries.TryGetValue(name, out result))
             {
-                return Converter(result.GetGeneric());
+                return Converter(result.Get());
             }
 
             return default(T);
@@ -95,9 +101,9 @@ namespace TSO.Content
             throw new NotImplementedException();
         }
 
-        public List<IContentReference> ListGeneric()
+        public List<Far1ProviderEntry<object>> ListGeneric()
         {
-            return new List<IContentReference>(Entries.Values);
+            return new List<Far1ProviderEntry<object>>(Entries.Values);
         }
 
         public T Get(ContentID id)

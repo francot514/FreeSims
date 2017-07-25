@@ -41,7 +41,7 @@ namespace TSO.Content
             var allBCFs = BCFProvider.ListGeneric();
             foreach (var bcf in allBCFs)
             {
-                var file = (BCF)bcf.GetThrowawayGeneric();
+                var file = (BCF)bcf.Get();
                 foreach (var anim in file.Animations)
                 {
                     AnimHostBCF[anim.Name.ToLowerInvariant()] = Path.GetFileName(bcf.ToString().ToLowerInvariant());
