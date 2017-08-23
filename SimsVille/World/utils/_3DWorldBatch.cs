@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
+using TSO.vitaboy;
 
 namespace tso.world.Utils
 {
@@ -44,6 +45,17 @@ namespace tso.world.Utils
         }
 
 
+        public void DrawMesh(Matrix world, Avatar binding, short objID, ushort room)
+        {
+            this.Sprites.Add(new _3DSprite
+            {
+                Effect = _3DSpriteEffect.CHARACTER,
+                Geometry = binding,
+                World = world,
+                ObjectID = objID,
+                Room = room
+            });
+        }
         /// <summary>
         /// Ends rendering, should always be called after DrawMesh()!
         /// </summary>

@@ -26,7 +26,7 @@ namespace TSO.SimsAntics.Engine
         public VMThreadBreakMode ThreadBreak = VMThreadBreakMode.Active;
         public int BreakFrame; //frame the last breakpoint was performed on
         public bool RoutineDirty;
-        public byte ActiveQueueBlock = 0;
+
         //check tree only vars
         public bool IsCheck;
         public List<VMPieMenuInteraction> ActionStrings;
@@ -129,7 +129,15 @@ namespace TSO.SimsAntics.Engine
             var frame = Stack[Stack.Count - 1];
             frame.StackObject = stackObj;
 
-            
+            try {
+                while (Stack.Count > 0)
+                {
+                    NextInstruction();
+                }
+            } catch (Exception)
+            {
+                //we need to catch these so that the parent can be restored.
+            }
 
             //copy child stack things to parent stack
             Stack = OldStack;
@@ -161,9 +169,8 @@ namespace TSO.SimsAntics.Engine
             }
 
             if (DialogCooldown > 0) DialogCooldown--;
-
-            try
-            {
+//#if !DEBUG
+            try {
                 //#endif
                 if (!Entity.Dead)
                 {
@@ -179,8 +186,7 @@ namespace TSO.SimsAntics.Engine
                         if (item.Cancelled) Entity.SetFlag(VMEntityFlags.InteractionCanceled, true);
                         if (IsCheck || (item.Mode != VMQueueMode.ParentIdle || !Entity.GetFlag(VMEntityFlags.InteractionCanceled)))
                             ExecuteAction(item);
-                        else
-                        {
+                        else {
                             Queue.RemoveAt(0);
                             return;
                         }
@@ -224,58 +230,78 @@ namespace TSO.SimsAntics.Engine
                     Queue.Clear();
                 }
 
-                //#if !DEBUG
-            }
-            catch (Exception e)
-            {
-
-                if (Stack.Count > 0)
-                     {
-
+//#if !DEBUG
+            } catch (Exception e) {
                 var context = Stack[Stack.Count - 1];
                 bool Delete = ((Entity is VMGameObject) && (DialogCooldown > 30 * 20 - 10));
-               
+                if (DialogCooldown == 0)
+                {
+                    
+                    var simExcept = new VMSimanticsException(e.Message, context);
+                    string exceptionStr = "A SimAntics Exception has occurred, and has been suppressed: \r\n\r\n" + simExcept.ToString() + "\r\n\r\nThe object will be reset. Please report this!";
+                    VMDialogInfo info = new VMDialogInfo
+                    {
+                        Caller = null,
+                        Icon = context.Callee,
+                        Operand = new VMDialogOperand { },
+                        Message = exceptionStr,
+                        Title = "SimAntics Exception!"
+                    };
+                    Context.VM.SignalDialog(info);
+                    DialogCooldown = 30 * 20;
+                }
 
                 context.Callee.Reset(context.VM.Context);
                 context.Caller.Reset(context.VM.Context);
 
                 if (Delete) Entity.Delete(true, context.VM.Context);
-                     }
-
-                
             }
+//#endif
+            //Interrupt = true;
         }
 
-        private void EvaluateQueuePriorities()
-        {
+        private void EvaluateQueuePriorities() {
             if (Queue.Count == 0) return;
             int CurrentPriority = (int)Queue[0].Priority;
-            for (int i = ActiveQueueBlock + 1; i < Queue.Count; i++)
+            for (int i = 1; i < Queue.Count; i++)
             {
-                if (Queue[i].Callee == null || Queue[i].Callee.Dead)
-                {
-                    Queue.RemoveAt(i--); //remove interactions to dead objects (not within active queue block)
-                    continue;
-                }
                 if ((int)Queue[i].Priority > CurrentPriority)
                 {
                     Queue[0].Cancelled = true;
                     Entity.SetFlag(VMEntityFlags.InteractionCanceled, true);
+                    break;
                 }
             }
         }
 
         private void NextInstruction()
         {
-            if (Stack.Count == 0)
-            {
+            if (Stack.Count == 0){
                 return;
             }
 
             /** Next instruction **/
             var currentFrame = Stack.Last();
 
-            ExecuteInstruction(currentFrame);
+            if (currentFrame is VMRoutingFrame) HandleResult(currentFrame, null, ((VMRoutingFrame)currentFrame).Tick());
+            else ExecuteInstruction(currentFrame);
+        }
+
+        public VMRoutingFrame PushNewRoutingFrame(VMStackFrame frame, bool failureTrees)
+        {
+            var childFrame = new VMRoutingFrame
+            {
+                Routine = frame.Routine,
+                Caller = frame.Caller,
+                Callee = frame.Callee,
+                CodeOwner = frame.CodeOwner,
+                StackObject = frame.StackObject,
+                Thread = this,
+                CallFailureTrees = failureTrees
+            };
+
+            Stack.Add(childFrame);
+            return childFrame;
         }
 
         public void ExecuteSubRoutine(VMStackFrame frame, BHAV bhav, GameObject codeOwner, VMSubRoutineOperand args)
@@ -402,11 +428,14 @@ namespace TSO.SimsAntics.Engine
             }
         }
 
-        private void MoveToInstruction(VMStackFrame frame, byte instruction, bool continueExecution)
-        {
-
-            switch (instruction)
+        private void MoveToInstruction(VMStackFrame frame, byte instruction, bool continueExecution){
+            if (frame is VMRoutingFrame)
             {
+                //TODO: Handle returning false into the pathfinder (indicates failure)
+                return;
+            }
+
+            switch (instruction) {
                 case 255:
                     Pop(VMPrimitiveExitCode.RETURN_FALSE);
                     break;
@@ -416,10 +445,10 @@ namespace TSO.SimsAntics.Engine
                     Pop(VMPrimitiveExitCode.ERROR); break;
                 default:
                     frame.InstructionPointer = instruction;
-                    if (frame.GetCurrentInstruction().Breakpoint ||
+                    if (frame.GetCurrentInstruction().Breakpoint || 
                         (ThreadBreak != VMThreadBreakMode.Active && (
-                            ThreadBreak == VMThreadBreakMode.StepIn ||
-                            (ThreadBreak == VMThreadBreakMode.StepOver && Stack.Count - 1 <= BreakFrame) ||
+                            ThreadBreak == VMThreadBreakMode.StepIn || 
+                            (ThreadBreak == VMThreadBreakMode.StepOver && Stack.Count-1 <= BreakFrame) ||
                             (ThreadBreak == VMThreadBreakMode.StepOut && Stack.Count <= BreakFrame)
                         )))
                     {
@@ -454,7 +483,85 @@ namespace TSO.SimsAntics.Engine
         }
 
 
-        
+        public List<VMPieMenuInteraction> CheckAction(VMQueuedAction action)
+        {
+            // 1. check action flags for permissions (if we are avatar)
+            // 2. run check tree
+
+            // rules:
+            // Dogs/Cats means people CANNOT use these interactions. (DogsFlag|CatsFlag & IsDog|IsCat)
+
+            // When Allow Object Owner is OFF it disallows the object owner, otherwise no effect
+            // Visitors, Roommates, Ghosts have this same negative effect.
+            // Friends apprars to override Owner, Visitors, Roommates
+
+            // Allow CSRs:positive effect.
+
+            if (action == null) return null;
+            var result = new List<VMPieMenuInteraction>();
+
+            if (((action.Flags & TTABFlags.MustRun) == 0) && Entity is VMAvatar && ((action.Flags2 & TSOFlags.AllowCSRs) == 0)) //just let everyone use the CSR interactions
+            {
+                var avatar = (VMAvatar)Entity;
+
+                if (avatar.GetSlot(0) != null && (action.Flags | TTABFlags.TSOAvailableCarrying) == 0) return null;
+
+                if ((action.Flags & (TTABFlags.AllowCats | TTABFlags.AllowDogs)) > 0)
+                {
+                    //interaction can only be performed by cats or dogs
+                    if (!avatar.IsPet) return null;
+                    //check we're the correct type
+                    if (avatar.IsPet && (action.Flags & TTABFlags.AllowCats) == 0) return null;
+                    if (avatar.IsPet && (action.Flags & TTABFlags.AllowDogs) == 0) return null;
+                }
+                else if (avatar.IsPet) return null; //not allowed
+
+                if ((action.Flags & TTABFlags.TSOIsRepair) > 0) return null;
+
+                TSOFlags tsoState =
+                    ((!(action.Callee is VMGameObject))
+                    ? TSOFlags.AllowObjectOwner : 0)
+                    | ((avatar.GetPersonData(VMPersonDataVariable.IsGhost) > 0) ? TSOFlags.AllowGhost : 0)
+                    | TSOFlags.AllowFriends;
+                TSOFlags tsoCompare = action.Flags2;
+
+                //DEBUG: enable debug interction for all roommates. change to only CSRs for production!
+                if ((action.Flags & TTABFlags.Debug) > 0)
+                {
+
+                    if ((tsoState & TSOFlags.AllowRoommates) > 0)
+                        return result; //do not bother running check
+                    else
+                        return null; //disable debug for everyone else.
+                }
+
+                if ((action.Flags & TTABFlags.TSOAvailableWhenDead) > 0) tsoCompare |= TSOFlags.AllowGhost;
+                if ((action.Flags & TTABFlags.AllowVisitors) > 0) tsoCompare |= TSOFlags.AllowVisitors; //wrong???????
+
+                var posMask = (TSOFlags.AllowObjectOwner);
+                if (((tsoState & posMask) & (tsoCompare & posMask)) == 0)
+                {
+                    //NEGATIVE EFFECTS:
+                    var negMask = (TSOFlags.AllowVisitors | TSOFlags.AllowRoommates | TSOFlags.AllowGhost);
+
+                    var negatedFlags = (~tsoCompare) & negMask;
+                    if ((negatedFlags & tsoState) > 0) return null; //we are disallowed
+                    //if ((tsoCompare & TSOFlags.AllowCSRs) > 0) return null; // && (tsoState & TSOFlags.AllowCSRs) == 0
+                }
+            }
+            if (((action.Flags & TTABFlags.MustRun) == 0 || ((action.Flags & TTABFlags.TSORunCheckAlways) > 0))
+                && action.Routine != null && EvaluateCheck(Context, Entity, new VMStackFrame()
+                {
+                    Caller = Entity,
+                    Callee = action.Callee,
+                    CodeOwner = action.CodeOwner,
+                    StackObject = action.StackObject,
+                    Routine = action.Routine,
+                    Args = new short[4]
+                }, null, result) != VMPrimitiveExitCode.RETURN_TRUE) return null;
+
+            return result;
+        }
 
         public void Pop(VMPrimitiveExitCode result){
             Stack.RemoveAt(Stack.Count - 1);
@@ -502,7 +609,7 @@ namespace TSO.SimsAntics.Engine
             {
                 var item = Queue[0];
                 if (item.Cancelled) Entity.SetFlag(VMEntityFlags.InteractionCanceled, true);
-                if (IsCheck || ((item.Mode != VMQueueMode.ParentIdle || !Entity.GetFlag(VMEntityFlags.InteractionCanceled))))
+                if (IsCheck || ((item.Mode != VMQueueMode.ParentIdle || !Entity.GetFlag(VMEntityFlags.InteractionCanceled)) && CheckAction(item) != null))
                 {
                     ExecuteAction(item);
                     return true;
@@ -533,7 +640,22 @@ namespace TSO.SimsAntics.Engine
             else if ((invocation.Flags & TTABFlags.Leapfrog) > 0)
                 //place right after active interaction, ignoring all priorities.
                 this.Queue.Insert(1, invocation);
-            
+            else //we've got an even harder job! find a place for this interaction based on its priority
+            {
+                bool hitParentEnd = (invocation.Mode != VMQueueMode.ParentIdle);
+                for (int i = Queue.Count - 1; i > 0; i--)
+                {
+                    if (hitParentEnd && (invocation.Priority <= Queue[i].Priority || Queue[i].Mode == VMQueueMode.ParentExit)) //skip until we find a parent exit or something with the same or higher priority.
+                    {
+                        this.Queue.Insert(i+1, invocation);
+                        EvaluateQueuePriorities();
+                        return;
+                    }
+                    if (Queue[i].Mode == VMQueueMode.ParentExit) hitParentEnd = true;
+                }
+                this.Queue.Insert(1, invocation); //this is more important than all other queued items that are not running, so stick this to run next.
+            }
+            EvaluateQueuePriorities();
         }
 
       

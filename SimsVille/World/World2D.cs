@@ -248,7 +248,7 @@ namespace tso.world
 
             //full invalidation because we must recalculate all object sprites. slow but necessary!
             state.Zoom = WorldZoom.Far;
-            state.Rotation = WorldRotation.TopLeft;
+            state.Rotation = oldRotation;
             state.Level = Blueprint.Stories;
             state.WorldSpace.Invalidate();
             state.InvalidateCamera();
@@ -286,7 +286,7 @@ namespace tso.world
                         _2d.OffsetTile(tilePosition);
                         obj.Draw(gd, state);
                     }
-                    Blueprint.RoofComp.Draw(gd, state);
+                    //Blueprint.RoofComp.Draw(gd, state);
 
                 }
             }

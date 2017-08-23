@@ -134,7 +134,7 @@ namespace TSOVille.Code.UI.Screens
                         //init audio now
                         //HITVM.Init();
                         
-                        GameFacade.Controller.ShowLot();
+                        GameFacade.Controller.ShowCity();
                     }
                 }
             }

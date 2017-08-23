@@ -62,6 +62,8 @@ namespace TSO.Content
             AvatarSkeletons = new TS1BCFSkeletonProvider(BCFGlobal);
             AvatarAppearances = new TS1BCFAppearanceProvider(BCFGlobal);
 
+            GlobalTuning = new Tuning(Path.Combine(basePath, "Content\\tuning.dat"));
+
             Init();
         }
 
@@ -173,7 +175,7 @@ namespace TSO.Content
 
 
         public Audio Audio;
-
+        public Tuning GlobalTuning;
  
         
     }

@@ -229,6 +229,7 @@ namespace TSO.Content
                 /** Better set this up! **/
                 var iff = this.Iffs.Get(reference.FileName + ".iff");
 
+
                 if (iff == null)
                     iff = new Iff("Downloads/" + reference.FileName + ".iff");
 

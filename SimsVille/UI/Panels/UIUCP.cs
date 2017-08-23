@@ -393,7 +393,7 @@ namespace TSOVille.Code.UI.Panels
             FirstFloorButton.Visible = isLotMode;
             SecondFloorButton.Visible = isLotMode;
 
-            LiveModeButton.Visible = isCityMode;
+            LiveModeButton.Visible = isLotMode;
             BuyModeButton.Visible = isLotMode;
             BuildModeButton.Visible = isLotMode;
             HouseModeButton.Visible = isLotMode;

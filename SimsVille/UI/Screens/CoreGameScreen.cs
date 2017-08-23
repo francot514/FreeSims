@@ -44,6 +44,9 @@ namespace TSOVille.Code.UI.Screens
         private UIButton VMDebug, SaveHouseButton;
         public UIUCP ucp;
         //public UIGizmo gizmo;
+        private string[] CharacterInfos;
+        public List<XmlCharacter> Characters;
+        public List<VMAvatar> Avatars;
         public XmlHouseData LotInfo;
         public UILotControl LotController; //world, lotcontrol and vm will be null if we aren't in a lot.
         private World World;
@@ -161,17 +164,6 @@ namespace TSOVille.Code.UI.Screens
         public CoreGameScreen()
         {
 
-            //VMDebug = new UIButton()
-           // {
-                //Caption = "SimsAntics",
-               // Y = 45,
-               // Width = 100,
-               // X = GlobalSettings.GraphicsWidth - 110
-            //};
-            //VMDebug.OnButtonClick += new ButtonClickDelegate(VMDebug_OnButtonClick);
-            //VMDebug.Visible = false;
-            //this.Add(VMDebug);
-
             SaveHouseButton = new UIButton()
             {
                 Caption = "Enter House",
@@ -183,7 +175,9 @@ namespace TSOVille.Code.UI.Screens
             SaveHouseButton.Visible = true;
             this.Add(SaveHouseButton);
 
-
+            Avatars = new List<VMAvatar>();
+            Characters = new List<XmlCharacter>();
+            CharacterInfos = new string[9];
 
             ucp = new UIUCP(this);
             ucp.Y = ScreenHeight - 210;
@@ -246,7 +240,7 @@ namespace TSOVille.Code.UI.Screens
             World = new World(GameFacade.Game.GraphicsDevice);
             GameFacade.Scenes.Add(World);
 
-            vm = new VM(new VMContext(World));
+            vm = new VM(new VMContext(World), null);
             vm.Init();
 
             var activator = new VMWorldActivator(vm, World);
@@ -276,6 +270,29 @@ namespace TSOVille.Code.UI.Screens
             SaveHouseButton.Caption = "Save House";
             //VMDebug.Visible = true;
 
+            var DirectoryInfo = new DirectoryInfo(GlobalSettings.DocumentsPath + "\\Characters");
+
+            for (int i = 0; i <= DirectoryInfo.GetFiles().Count() - 1; i++)
+            {
+
+                var file = DirectoryInfo.GetFiles()[i];
+                CharacterInfos[i] = file.FullName;
+                Characters.Add(XmlCharacter.Parse(file.FullName));
+                Avatars.Add(activator.CreateAvatar(Convert.ToUInt32(Characters[i].ObjID, 16)));
+            }
+
+            if (Characters.Count > 0)
+            for (int i = 0; i <= Characters.Count - 1; i++)
+            {
+                //if (Characters[i].Name != gizmo.SelectedCharInfo.Name)
+
+                short pos = Convert.ToInt16(56 + i);
+
+                Avatars[i].SetAvatarData(Characters[i]);
+                Avatars[i].Position = LotTilePos.FromBigTile(pos, 33, 1);
+                VMFindLocationFor.FindLocationFor(Avatars[i], mailbox, vm.Context);
+
+            }
 
         }
 
@@ -308,7 +325,7 @@ namespace TSOVille.Code.UI.Screens
 
                 string path = "Houses/" + LotInfo.Name;
 
-                exporter.SaveHouse(vm, path + ".xml", LotInfo.Name);
+                exporter.SaveHouse(vm, path + ".xml");
 
                 Stream file = File.Create(path + ".png");
                 Texture2D thumbnail = World.GetLotThumb(GameFacade.GraphicsDevice);

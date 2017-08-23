@@ -30,9 +30,6 @@ namespace TSO.SimsAntics
         public FloorTile[][] Floors;
         public FloorTile[][] VisFloors;
 
-        public RoofTile[][] Roofs;
-        public RoofTile[][] VisRoofs;
-
         public bool[][] ObjectSupport;
         public bool[][] Supported;
 
@@ -54,6 +51,9 @@ namespace TSO.SimsAntics
         private bool FloorsDirty;
 
         private bool Redraw;
+
+        public float RoofPitch;
+        public uint RoofStyle;
 
         private Color[] m_TimeColors = new Color[]
         {
@@ -85,8 +85,8 @@ namespace TSO.SimsAntics
             this.Floors = new FloorTile[Stories][];
             this.VisFloors = new FloorTile[Stories][];
 
-            this.Roofs = new RoofTile[Stories][];
-            this.VisRoofs = new RoofTile[Stories][];
+            this.RoofStyle = 0x10;
+            this.RoofPitch = 0.66f;
 
             this.ObjectSupport = new bool[Stories][]; //true if there's an object support in the specified position
             this.Supported = new bool[Stories-1][]; //no supported array for bottom floor. true if this tile is supported.
@@ -102,10 +102,6 @@ namespace TSO.SimsAntics
 
                 this.Floors[i] = new FloorTile[numTiles];
                 this.VisFloors[i] = new FloorTile[numTiles];
-
-                this.Roofs[i] = new RoofTile[numTiles];
-                this.VisRoofs[i] = new RoofTile[numTiles];
-
                 this.ObjectSupport[i] = new bool[numTiles];
 
                 if (i<Stories-1) this.Supported[i] = new bool[numTiles];
@@ -217,11 +213,19 @@ namespace TSO.SimsAntics
         public void RegenRoomMap()
         {
             RoomData = new List<VMRoom>();
+            WorldUI.Rooms = new List<Room>();
+
+
             RoomData.Add(new VMRoom()); //dummy at index 0
             for (int i=0; i<Stories; i++)
             {
                 Rooms[i].GenerateMap(Walls[i], Floors[i], Width, Height, RoomData);
-                if (VM.UseWorld) WorldUI.RoomMap[i] = Rooms[i].Map;
+                if (VM.UseWorld) 
+                 {      
+                    WorldUI.RoomMap[i] = Rooms[i].Map;
+                    WorldUI.Rooms.Add(new Room(RoomData[i].RoomID, RoomData[i].IsOutside, RoomData[i].Bounds, RoomData[i].Area));
+
+                 }
                 RegenerateSupported(i + 1);
             }
         }
@@ -320,16 +324,6 @@ namespace TSO.SimsAntics
                     case VMArchitectureCommandType.FLOOR_RECT:
                         VMArchitectureTools.FloorPatternRect(this, new Rectangle(com.x, com.y, com.x2, com.y2), com.style, com.pattern, com.level);
                         break;
-
-                    case VMArchitectureCommandType.ROOF_FILL:
-                        VMArchitectureTools.RoofPatternFill(this, new Point(com.x, com.y), com.pattern, com.level);
-                        break;
-
-                    case VMArchitectureCommandType.ROOF_RECT:
-                        VMArchitectureTools.RoofPatternRect(this, new Rectangle(com.x, com.y, com.x2, com.y2), com.style, com.pattern, com.level);
-                        break;
-
-
                 }
             }
         }
@@ -479,6 +473,17 @@ namespace TSO.SimsAntics
             return Floors[level-1][offset];
         }
 
+
+        public void SetRoof(float pitch, uint style)
+        {
+            this.RoofPitch = pitch;
+            this.RoofStyle = style;
+            if (VM.UseWorld)
+            {
+                this.WorldUI.RoofComp.SetStylePitch(style, pitch);
+            }
+        }
+
         public bool SetFloor(short tileX, short tileY, sbyte level, FloorTile floor, bool force)
         {
             //returns false on failure
@@ -496,33 +501,7 @@ namespace TSO.SimsAntics
             Floors[level-1][offset] = floor;
 
             if (RealMode) FloorsDirty = true;
-            //Redraw = true;
-            return true;
-        }
-
-        public RoofTile GetRoof(short tileX, short tileY, sbyte level)
-        {
-            var offset = GetOffset(tileX, tileY);
-            return Roofs[level - 1][offset];
-        }
-
-        public bool SetRoof(short tileX, short tileY, sbyte level, RoofTile roof, bool force)
-        {
-            //returns false on failure
-            var offset = GetOffset(tileX, tileY);
-
-            if (!force)
-            {
-                //first check if we're supported
-                if (roof.Pattern > 65533 && level > 1 && RoomData[(int)Rooms[level - 2].Map[offset] & 0xFFFF].IsOutside) return false;
-                if (level > 1 && !Supported[level - 2][offset]) return false;
-             
-            }
-
-            Roofs[level - 1][offset] = roof;
-
-            //if (RealMode) FloorsDirty = true;
-            //Redraw = true;
+            Redraw = true;
             return true;
         }
 

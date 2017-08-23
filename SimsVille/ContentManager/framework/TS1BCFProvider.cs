@@ -94,14 +94,19 @@ namespace TSO.Content
             }
             else if (expected == typeof(Skeleton))
             {
-                name = name.Substring(0, name.Length - 5).ToLowerInvariant(); //remove .skel
-                string filename = null;
-                if (SkelHostBCF.TryGetValue(name, out filename))
+
+                if (name.Contains("skel"))
                 {
-                    var bcf = BCFProvider.Get(filename);
-                    var skel = bcf.Skeletons.FirstOrDefault(x => x.Name.ToLowerInvariant() == name);
-                    return skel;
+                    name = name.Substring(0, name.Length - 8).ToLowerInvariant(); //remove .cmx.bcf
+                    string filename = null;
+                    if (SkelHostBCF.TryGetValue(name, out filename))
+                    {
+                        var bcf = BCFProvider.Get(filename);
+                        var skel = bcf.Skeletons.FirstOrDefault(x => x.Name.ToLowerInvariant() == name);
+                        return skel;
+                    }
                 }
+
                 return null;
             }
             throw new NotImplementedException();

@@ -69,9 +69,6 @@ namespace TSO.SimsAntics.Model
         PATTERN_FILL,
 
         FLOOR_RECT,
-        FLOOR_FILL,
-
-        ROOF_RECT,
-        ROOF_FILL
+        FLOOR_FILL
     }
 }

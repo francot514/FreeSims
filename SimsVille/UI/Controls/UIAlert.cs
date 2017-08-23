@@ -35,6 +35,8 @@ namespace TSOVille.Code.UI.Controls
 
         private List<UIButton> Buttons;
 
+        private UITextBox TextBox;
+
         public UIAlert(UIAlertOptions options) : base(UIDialogStyle.Standard, true)
         {
             this.m_Options = options;
@@ -72,6 +74,12 @@ namespace TSOVille.Code.UI.Controls
                 Buttons.Add(AddButton(GameFacade.Strings.GetString("142", "no button"), UIAlertButtons.No, true));
             }
 
+            if (options.TextEntry)
+            {
+                this.TextBox = new UITextBox();
+                base.Add(this.TextBox);
+            }
+
             /** Position buttons **/
             RefreshSize();
         }
@@ -82,7 +90,15 @@ namespace TSOVille.Code.UI.Controls
             var h = m_Options.Height;
             h = Math.Max(h, Math.Max((int)IconSpace.Y, m_MessageText.BoundingBox.Height) + 74);
 
+            if (this.m_Options.TextEntry)
+            {
+                this.TextBox.X = 32f;
+                this.TextBox.Y = h - 0x36;
+                this.TextBox.SetSize((float)(w - 0x40), 25f);
+                h += 0x2d;
+            }
             SetSize(w, h);
+            
 
             var btnX = (w - ((Buttons.Count * 100) + ((Buttons.Count - 1) * 45))) / 2;
             var btnY = h - 58;
@@ -92,6 +108,8 @@ namespace TSOVille.Code.UI.Controls
                 button.X = btnX;
                 btnX += 150;
             }
+
+            
         }
 
         public void SetIcon(Texture2D img, int width, int height)
@@ -202,6 +220,8 @@ namespace TSOVille.Code.UI.Controls
         public int Width = 340;
         public int Height = -1;
         public TextAlignment Alignment = TextAlignment.Center;
+        public bool TextEntry;
+
 
         public int TextSize = 10;
 

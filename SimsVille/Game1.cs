@@ -7,6 +7,7 @@ using TSOVille;
 using TSOVille.Code;
 using tso.world;
 using System.Threading;
+using System.IO;
 
 
 namespace SimsHomeMaker
@@ -72,7 +73,16 @@ namespace SimsHomeMaker
 
             WorldContent.Init(this.Services, Content.RootDirectory);
 
-            
+
+            GlobalSettings.DocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\Sims Ville";
+
+            if (!Directory.Exists(GlobalSettings.DocumentsPath))
+                {
+                Directory.CreateDirectory(GlobalSettings.DocumentsPath);
+                Directory.CreateDirectory(GlobalSettings.DocumentsPath + "\\Characters");
+                Directory.CreateDirectory(GlobalSettings.DocumentsPath + "\\Houses");
+
+                }
 
             base.Screen.Layers.Add(SceneMgr);
             base.Screen.Layers.Add(uiLayer);

@@ -49,6 +49,7 @@ namespace TSO.SimsAntics
 
         public World World { get; internal set; }
         public VMPrimitiveRegistration[] Primitives = new VMPrimitiveRegistration[256];
+        public VMAmbientSound Ambience;
         public ulong RandomSeed;
 
         public GameGlobal Globals;
@@ -65,6 +66,13 @@ namespace TSO.SimsAntics
             this.World = world;
             this.Clock = new VMClock();
 
+            if (oldContext == null)
+            {
+                this.Ambience = new VMAmbientSound();
+            } else
+            {
+                this.Ambience = oldContext.Ambience;
+            }
 
             RandomSeed = (ulong)((new Random()).NextDouble() * UInt64.MaxValue); //when resuming state, this should be set.
             Clock.TicksPerMinute = 30; //1 minute per irl second
@@ -106,7 +114,12 @@ namespace TSO.SimsAntics
                 OperandModel = typeof(VMDropOperand)
             });
 
-
+            AddPrimitive(new VMPrimitiveRegistration(new VMChangeSuitOrAccessory())
+            {
+                Opcode = 6,
+                Name = "change_suit_or_accessory",
+                OperandModel = typeof(VMChangeSuitOrAccessoryOperand)
+            });
 
             AddPrimitive(new VMPrimitiveRegistration(new VMRefresh())
             {
@@ -193,6 +206,13 @@ namespace TSO.SimsAntics
 
             //Show string: may be used but no functional result.
 
+            AddPrimitive(new VMPrimitiveRegistration(new VMLookTowards())
+            {
+                Opcode = 22,
+                Name = "look_towards",
+                OperandModel = typeof(VMLookTowardsOperand)
+            });
+
             AddPrimitive(new VMPrimitiveRegistration(new VMPlaySound())
             {
                 Opcode = 23,
@@ -221,13 +241,12 @@ namespace TSO.SimsAntics
                 OperandModel = typeof(VMRelationshipOperand)
             });
 
-            //AddPrimitive(new VMPrimitiveRegistration(new VMGotoRelativePosition())
-            //{
-               // Opcode = 27,
-               // Name = "goto_relative",
-               // OperandModel = typeof(VMGotoRelativePositionOperand)
-            //});
-
+            AddPrimitive(new VMPrimitiveRegistration(new VMGotoRelativePosition())
+            {
+                Opcode = 27,
+                Name = "goto_relative",
+                OperandModel = typeof(VMGotoRelativePositionOperand)
+            });
 
             AddPrimitive(new VMPrimitiveRegistration(new VMRunTreeByName())
             {
@@ -236,12 +255,12 @@ namespace TSO.SimsAntics
                 OperandModel = typeof(VMRunTreeByNameOperand)
             });
 
-            //AddPrimitive(new VMPrimitiveRegistration(new VMSetMotiveChange())
-            //{
-               // Opcode = 29,
-                //Name = "set_motive_deltas",
-               // OperandModel = typeof(VMSetMotiveChangeOperand)
-            //});
+            AddPrimitive(new VMPrimitiveRegistration(new VMSetMotiveChange())
+            {
+                Opcode = 29,
+                Name = "set_motive_deltas",
+                OperandModel = typeof(VMSetMotiveChangeOperand)
+            });
 
             AddPrimitive(new VMPrimitiveRegistration(new VMSysLog())
             {
@@ -331,34 +350,32 @@ namespace TSO.SimsAntics
                 OperandModel = typeof(VMDropOntoOperand)
             });
 
-            //AddPrimitive(new VMPrimitiveRegistration(new VMAnimateSim())
-            //{
-                //Opcode = 44,
-                //Name = "animate",
-                //OperandModel = typeof(VMAnimateSimOperand)
-            //});
+            AddPrimitive(new VMPrimitiveRegistration(new VMAnimateSim()) {
+                Opcode = 44,
+                Name = "animate",
+                OperandModel = typeof(VMAnimateSimOperand)
+            });
 
-           // AddPrimitive(new VMPrimitiveRegistration(new VMGotoRoutingSlot())
-            //{
-                //Opcode = 45,
-               // Name = "goto_routing_slot",
-                //OperandModel = typeof(VMGotoRoutingSlotOperand)
-            //});
+            AddPrimitive(new VMPrimitiveRegistration(new VMGotoRoutingSlot())
+            {
+                Opcode = 45,
+                Name = "goto_routing_slot",
+                OperandModel = typeof(VMGotoRoutingSlotOperand)
+            });
 
-            //AddPrimitive(new VMPrimitiveRegistration(new VMSnap()) //not functional right now
-            //{
-                //Opcode = 46,
-                //Name = "snap",
-               // OperandModel = typeof(VMSnapOperand)
-            //});
+            AddPrimitive(new VMPrimitiveRegistration(new VMSnap()) //not functional right now
+            {
+                Opcode = 46,
+                Name = "snap",
+                OperandModel = typeof(VMSnapOperand)
+            });
 
-            //AddPrimitive(new VMPrimitiveRegistration(new VMReach())
-            //{
-                //Opcode = 47,
-                //Name = "reach",
-                //OperandModel = typeof(VMReachOperand)
-            //});
-
+            AddPrimitive(new VMPrimitiveRegistration(new VMReach())
+            {
+                Opcode = 47,
+                Name = "reach",
+                OperandModel = typeof(VMReachOperand)
+            });
 
             AddPrimitive(new VMPrimitiveRegistration(new VMStopAllSounds())
             {
@@ -371,7 +388,7 @@ namespace TSO.SimsAntics
             {
                 Opcode = 49,
                 Name = "stackobj_notify_out_of_idle",
-                //OperandModel = typeof(VMAnimateSimOperand)
+                OperandModel = typeof(VMAnimateSimOperand)
             });
 
             AddPrimitive(new VMPrimitiveRegistration(new VMChangeActionString())
@@ -381,9 +398,6 @@ namespace TSO.SimsAntics
                 OperandModel = typeof(VMChangeActionStringOperand)
             });
 
-            //lots of unused primitives. see http://simantics.wikidot.com/wiki:primitives
-
-            //TODO: Send Maxis Letter
 
             AddPrimitive(new VMPrimitiveRegistration(new VMInvokePlugin())
             {
@@ -401,6 +415,12 @@ namespace TSO.SimsAntics
 
             //UNUSED: Leave Lot and Goto
 
+            AddPrimitive(new VMPrimitiveRegistration(new VMFindBestAction())
+            {
+                Opcode = 65,
+                Name = "find_best_action",
+                OperandModel = typeof(VMFindBestActionOperand)
+            });
 
             //TODO: Set Dynamic Object Name
             
@@ -434,7 +454,20 @@ namespace TSO.SimsAntics
         {
             RegeneratePortalInfo();
 
-            
+            //TODO: this could get very slow! find a way to make this quicker.
+            foreach (var obj in VM.Entities)
+            {
+                if (obj is VMAvatar && obj.Thread != null)
+                {
+                    foreach (var frame in obj.Thread.Stack)
+                    {
+                        if (frame is VMRoutingFrame)
+                        {
+                            ((VMRoutingFrame)frame).InvalidateRoomRoute();
+                        }
+                    }
+                }
+            }
         }
 
         public void RegeneratePortalInfo()
@@ -684,7 +717,7 @@ namespace TSO.SimsAntics
             var objs = RoomInfo[room].Entities;
             foreach (var obj in objs)
             {
-                if (obj.MultitileGroup == target.MultitileGroup) continue;
+                if (obj.MultitileGroup == target.MultitileGroup || (obj is VMAvatar && allowAvatars)) continue;
                 var oFoot = obj.Footprint;
 
                 if (oFoot != null && oFoot.Intersects(footprint)
@@ -808,8 +841,27 @@ namespace TSO.SimsAntics
             }
             else
             {
-                
-                
+                if (objDefinition.OBJ.ObjectType == OBJDType.Person) //person
+                {
+                    var vmObject = new VMAvatar(objDefinition);
+                    vmObject.MultitileGroup = group;
+                    group.AddObject(vmObject);
+
+                    vmObject.GhostImage = ghostImage;
+                    if (!ghostImage) VM.AddEntity(vmObject);
+
+                    if (UseWorld) Blueprint.AddAvatar((AvatarComponent)vmObject.WorldUI);
+
+                    vmObject.MainParam = MainParam;
+                    vmObject.MainStackOBJ = MainStackOBJ;
+
+                    group.Init(this);
+                    vmObject.SetPosition(pos, direction, this);
+                 
+                    return group;
+                }
+                else
+                {
                     var worldObject = new ObjectComponent(objDefinition);
                     var vmObject = new VMGameObject(objDefinition, worldObject);
 
@@ -828,7 +880,7 @@ namespace TSO.SimsAntics
                     vmObject.SetPosition(pos, direction, this);
                     
                     return group;
-                
+                }
             }
         }
 
@@ -839,7 +891,7 @@ namespace TSO.SimsAntics
             if (UseWorld)
             {
                 if (target is VMGameObject) Blueprint.RemoveObject((ObjectComponent)target.WorldUI);
-                
+                else Blueprint.RemoveAvatar((AvatarComponent)target.WorldUI);
             }
         }
 

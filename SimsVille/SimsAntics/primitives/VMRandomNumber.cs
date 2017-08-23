@@ -10,8 +10,8 @@ using System.Linq;
 using System.Text;
 using TSO.Files.utils;
 using TSO.SimsAntics.Engine.Scopes;
-using System.IO;
 using TSO.SimsAntics.Engine.Utils;
+using System.IO;
 
 namespace TSO.SimsAntics.Engine.Primitives
 {

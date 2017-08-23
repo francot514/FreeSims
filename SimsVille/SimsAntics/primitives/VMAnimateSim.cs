@@ -11,10 +11,11 @@ using System.Text;
 using TSO.Files.utils;
 using TSO.SimsAntics.Engine.Scopes;
 using TSO.SimsAntics.Engine.Utils;
-using TSO.Vitaboy;
 using TSO.SimsAntics.Model;
 using TSO.SimsAntics.Utils;
 using System.IO;
+using TSO.Common.rendering.vitaboy;
+using TSO.vitaboy;
 
 namespace TSO.SimsAntics.Engine.Primitives
 {

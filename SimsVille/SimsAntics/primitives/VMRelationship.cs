@@ -47,9 +47,6 @@ namespace TSO.SimsAntics.Primitives
                     throw new VMSimanticsException("Invalid relationship type!", context);
             }
 
-            if (obj1 == null || obj2 == null)
-                return VMPrimitiveExitCode.GOTO_TRUE;
-
             var rels = obj1.MeToObject;
             var targId = (ushort)obj2.ObjectID;
 

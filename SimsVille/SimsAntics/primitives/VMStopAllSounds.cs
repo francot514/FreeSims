@@ -23,7 +23,10 @@ namespace TSO.SimsAntics.Primitives
             var owner = (operand.Flags == 1)?context.StackObject:context.Caller;
             var threads = owner.SoundThreads;
 
-            
+            for (int i = 0; i < threads.Count; i++)
+            {
+                threads[i].Sound.RemoveOwner(owner.ObjectID);
+            }
             threads.Clear();
 
             return VMPrimitiveExitCode.GOTO_TRUE;

@@ -47,7 +47,7 @@ namespace tso.world.Model
         public bool[][] Supported; //directly the VM's copy at all times. DO NOT MODIFY.
 
         public List<ObjectComponent> Objects = new List<ObjectComponent>();
-
+        public List<AvatarComponent> Avatars = new List<AvatarComponent>();
         public TerrainComponent Terrain;
         
         /// <summary>
@@ -55,7 +55,7 @@ namespace tso.world.Model
         /// </summary>
         /// 
         public List<Rectangle> Cutaway = new List<Rectangle>();
-
+        
         public Color OutsideColor = Color.White;
         public RoomLighting[] Light = new RoomLighting[0];
         public uint[][] RoomMap;
@@ -160,6 +160,16 @@ namespace tso.world.Model
         {
             Damage.Add(new BlueprintDamage(BlueprintDamageType.OBJECT_MOVE, component.TileX, component.TileY, component.Level) { Component = component });
             Objects.Remove(component);
+        }
+
+        public void AddAvatar(AvatarComponent avatar)
+        {
+            this.Avatars.Add(avatar);
+        }
+
+        public void RemoveAvatar(AvatarComponent avatar)
+        {
+            this.Avatars.Remove(avatar);
         }
 
         private ushort GetOffset(int tileX, int tileY){

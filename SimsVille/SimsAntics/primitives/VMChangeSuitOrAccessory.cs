@@ -13,8 +13,9 @@ using TSO.Files.utils;
 using TSO.SimsAntics.Engine.Scopes;
 using TSO.SimsAntics.Engine.Utils;
 using TSO.Files.formats.iff.chunks;
-using TSO.Vitaboy;
+
 using System.IO;
+using TSO.SimAntics.Model;
 
 namespace TSO.SimsAntics.Primitives
 {
@@ -27,7 +28,7 @@ namespace TSO.SimsAntics.Primitives
 
             if ((operand.Flags & VMChangeSuitOrAccessoryFlags.Update) == VMChangeSuitOrAccessoryFlags.Update)
             { //update default outfit with outfit in stringset 304 with index in temp 0
-                avatar.DefaultSuits.Daywear = Convert.ToUInt64(context.Callee.Object.Resource.Get<STR>(304).GetString((context.Thread.TempRegisters[0])), 16);
+                avatar.DefaultSuits.Daywear = new VMOutfitReference(Convert.ToUInt64(context.Callee.Object.Resource.Get<STR>(304).GetString((context.Thread.TempRegisters[0])), 16));
                 avatar.BodyOutfit = avatar.DefaultSuits.Daywear;
             } 
             else 
@@ -56,7 +57,7 @@ namespace TSO.SimsAntics.Primitives
                 {
                     var oft = (ulong)suit;
                     avatar.SetPersonData(Model.VMPersonDataVariable.CurrentOutfit, operand.SuitData);
-                    avatar.BodyOutfit = oft;
+                    avatar.BodyOutfit = new VMOutfitReference(oft);
                 }
             }
 

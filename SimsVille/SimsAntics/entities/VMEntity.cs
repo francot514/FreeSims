@@ -16,7 +16,7 @@ using TSO.Content;
 using TSO.Content.model;
 
 using TSO.Files.formats.iff.chunks;
-
+using TSO.HIT;
 using TSO.SimsAntics.Engine;
 using TSO.SimsAntics.Entities;
 using TSO.SimsAntics.Model;
@@ -260,8 +260,49 @@ namespace TSO.SimsAntics
 
         public void TickSounds()
         {
-           
+            if (!UseWorld) return;
+            if (SoundThreads.Count > 0 && Thread != null)
+            {
+                var scrPos = WorldUI.LastScreenPos;
+                var worldSpace = Thread.Context.World.State.WorldSpace;
+                scrPos -= new Vector2(worldSpace.WorldPxWidth/2, worldSpace.WorldPxHeight/2);
+                for (int i = 0; i < SoundThreads.Count; i++)
+                {
+                    if (SoundThreads[i].Sound.Dead)
+                    {
+                        var old = SoundThreads[i];
+                        SoundThreads.RemoveAt(i--);
+                        if (old.Loop)
+                        {
+                            var thread = HITVM.Get().PlaySoundEvent(old.Name);
+                            if (thread != null)
+                            {
+                                var owner = this;
+                                if (!thread.AlreadyOwns(owner.ObjectID)) thread.AddOwner(owner.ObjectID);
 
+                                var entry = new VMSoundEntry()
+                                {
+                                    Sound = thread,
+                                    Pan = old.Pan,
+                                    Zoom = old.Zoom,
+                                    Loop = old.Loop,
+                                    Name = old.Name
+                                };
+                                owner.SoundThreads.Add(entry);
+                            }
+                        }
+                        continue;
+                    }
+
+                    float pan = (SoundThreads[i].Pan) ? Math.Max(-1.0f, Math.Min(1.0f, scrPos.X / worldSpace.WorldPxWidth)) : 0;
+                    float volume = (SoundThreads[i].Pan) ? 1 - (float)Math.Max(0, Math.Min(1, Math.Sqrt(scrPos.X * scrPos.X + scrPos.Y * scrPos.Y) / worldSpace.WorldPxWidth)) : 1;
+
+                    if (SoundThreads[i].Zoom) volume /= 4 - WorldUI.LastZoomLevel;
+
+                    SoundThreads[i].Sound.SetVolume(volume, pan);
+
+                }
+            }
         }
 
         public OBJfFunctionEntry[] GenerateFunctionTable(OBJD obj)
@@ -736,7 +777,7 @@ namespace TSO.SimsAntics
             if (floorValid != VMPlacementError.Success) return new VMPlacementResult { Status = floorValid };
 
             //we've passed the wall test, now check if we intersect any objects.
-            var valid =  context.GetObjPlace(this, pos, direction);
+            var valid = (this is VMAvatar)? context.GetAvatarPlace(this, pos, direction) : context.GetObjPlace(this, pos, direction);
             return valid;
         }
 
@@ -829,8 +870,13 @@ namespace TSO.SimsAntics
             if (cleanupAll) MultitileGroup.Delete(context);
             else
             {
-              
-               
+                var threads = SoundThreads;
+
+                for (int i = 0; i < threads.Count; i++)
+                {
+                    threads[i].Sound.RemoveOwner(ObjectID);
+                }
+                threads.Clear();
 
                 PrePositionChange(context);
                 context.RemoveObjectInstance(this);
@@ -1052,12 +1098,10 @@ namespace TSO.SimsAntics
 
     public struct VMSoundEntry
     {
-       
+        public HITThread Sound;
         public bool Pan;
         public bool Zoom;
         public bool Loop;
         public string Name;
-        public HIT.HITThread Sound;
-
     }
 }

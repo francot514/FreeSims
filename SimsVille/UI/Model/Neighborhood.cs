@@ -210,7 +210,7 @@ namespace SimsVille.UI.Model
                                  AlertCoords.Buttons = UIAlertButtons.YesNo;
 
                                  foreach (LotTileEntry Lot in m_HousesData.LotTileData)
-                                     if (Lot.x == m_SelTile[0] && Lot.y == m_SelTileTmp[1])
+                                     if (Lot.x == m_SelTile[0] && Lot.y == m_SelTile[1])
                                          m_CurrentLot = Lot;
 
 

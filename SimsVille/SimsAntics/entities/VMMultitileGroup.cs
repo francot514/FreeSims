@@ -23,7 +23,6 @@ namespace TSO.SimsAntics.Entities
         public bool MultiTile;
         public List<VMEntity> Objects = new List<VMEntity>();
         public List<LotTilePos> Offsets = new List<LotTilePos>();
-        public VMEntity Default;
 
         public VMEntity BaseObject
         {
@@ -48,8 +47,6 @@ namespace TSO.SimsAntics.Entities
 
         public void AddObject(VMEntity obj)
         {
-
-            Default = obj;
             AddDynamicObject(obj, 
                 new LotTilePos((short)((sbyte)(((ushort)obj.Object.OBJ.SubIndex) >> 8) * 16), 
                 (short)((sbyte)(((ushort)obj.Object.OBJ.SubIndex) & 0xFF) * 16), 
@@ -124,19 +121,9 @@ namespace TSO.SimsAntics.Entities
             Matrix rotMat = Matrix.CreateRotationZ((float)(Dir * Math.PI / 4.0));
             VMPlacementResult[] places = new VMPlacementResult[Objects.Count];
 
-            LotTilePos bOff;
-            Vector3 leadOff;
-
-            bOff = Default.Position;
-            leadOff = new Vector3(bOff.x, bOff.y, 0);
-
-            if (Objects.Count > 0)
-                 {
-            bOff = Offsets[Objects.IndexOf(BaseObject)];
-            leadOff = new Vector3(bOff.x, bOff.y, 0);
-                 }
-            
-
+            var bObj = BaseObject;
+            var bOff = Offsets[Objects.IndexOf(BaseObject)];
+            var leadOff = new Vector3(bOff.x, bOff.y, 0);
 
             //TODO: optimize so we don't have to recalculate all of this
             if (pos != LotTilePos.OUT_OF_WORLD)
