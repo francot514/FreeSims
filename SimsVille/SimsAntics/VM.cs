@@ -44,7 +44,6 @@ namespace TSO.SimsAntics
         public VMEntity ActiveEntity = null;
         public short[] GlobalState;
         public string LotName;
-        //public VMFreeWill FreeWill;
 
         private object ThreadLock;
         private HashSet<VMThread> ActiveThreads = new HashSet<VMThread>();
@@ -71,13 +70,11 @@ namespace TSO.SimsAntics
         /// Constructs a new Virtual Machine instance.
         /// </summary>
         /// <param name="context">The VMContext instance to use.</param>
-        public VM(VMContext context, VMHeadlineRendererProvider headline)
+        public VM(VMContext context)
         {
             context.VM = this;
             ThreadLock = this;
             this.Context = context;
-            Headline = headline;
-            //FreeWill = new VMFreeWill(this);
             OnBHAVChange += VM_OnBHAVChange;
 
             //Set VM Ready
@@ -109,7 +106,7 @@ namespace TSO.SimsAntics
         /// </summary>
         public void Init()
         {
-            Context.Globals = TSO.Content.Content.Get().WorldObjectGlobals.Get("global");
+            Context.Globals = TSO.Content.Content.Get().WorldObjectGlobals.Get("Global");
             GlobalState = new short[33];
             GlobalState[20] = 255; //Game Edition. Basically, what "expansion packs" are running. Let's just say all of them.
             GlobalState[25] = 4; //as seen in EA-Land edith's simulator globals, this needs to be set for people to do their idle interactions.
@@ -129,14 +126,7 @@ namespace TSO.SimsAntics
             {
                 Tick(time);
             }
-            else
-            {
-                //fractional animation for avatars
-                foreach (var obj in Entities)
-                {
-                    if (obj is VMAvatar) ((VMAvatar)obj).FractionalAnim(0.5f); 
-                }
-            }
+            
             AlternateTick = !AlternateTick;
         }
 
@@ -145,6 +135,8 @@ namespace TSO.SimsAntics
         private void Tick(GameTime time)
         {
             Context.Clock.Tick();
+
+            if (Context.Architecture != null)
             Context.Architecture.Tick();
 
             lock (ThreadLock)
@@ -183,9 +175,7 @@ namespace TSO.SimsAntics
                     obj.Tick(); //run object specific tick behaviors, like lockout count decrement
                 } //run object specific tick behaviors, like lockout count decrement
 
-                //Tick for the Free Will control
-               // if (!Context.Blueprint.JobLot)
-               // FreeWill.Tick();
+                
 
             }
         }

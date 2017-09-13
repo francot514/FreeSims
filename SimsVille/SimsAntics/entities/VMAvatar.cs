@@ -213,8 +213,8 @@ namespace TSO.SimsAntics
             switch (AvatarType)
             {
                 case VMAvatarType.Adult:
-                    Avatar = new SimAvatar(TSO.Content.Content.Get().AvatarSkeletons.Get("adult-skeleton"));
-                    Avatar.Head = _HeadOutfit.GetContent();
+                    Avatar = new SimAvatar(TSO.Content.Content.Get().AvatarSkeletons.Get("adult.skel"));
+                    Avatar.Head = _HeadOutfit.GetContent();//default to bob newbie, why not
                     Avatar.Body = _BodyOutfit.GetContent();
                     Avatar.Handgroup = Avatar.Body;
                     break;

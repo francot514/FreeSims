@@ -92,7 +92,7 @@ namespace TSO.SimsAntics.Primitives
                 entity.SetValue(VMStackObjectVariable.PrimitiveResultID, (posChange.Object == null) ? (short)0 : posChange.Object.ObjectID);
                 return false;
             }
-            if (entity is VMAvatar) entity.RadianDirection = radDir;
+           entity.RadianDirection = radDir;
             return true;
         }
     }

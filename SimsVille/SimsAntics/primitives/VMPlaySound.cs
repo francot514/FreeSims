@@ -12,8 +12,8 @@ using TSO.Files.utils;
 
 using TSO.Files.formats.iff.chunks;
 using TSO.SimsAntics.Engine;
-using TSO.HIT;
 using System.IO;
+
 
 namespace TSO.SimsAntics.Primitives
 {
@@ -29,14 +29,14 @@ namespace TSO.SimsAntics.Primitives
 
             if (fwav != null)
             {
-                var thread = HITVM.Get().PlaySoundEvent(fwav.Name);
+                var thread = TSO.HIT.HITVM.Get().PlaySoundEvent(fwav.Name);
                 if (thread != null)
                 {
                     var owner = (operand.StackObjAsSource)?context.StackObject:context.Caller;
                     if (owner == null) return VMPrimitiveExitCode.GOTO_TRUE;
                     if (!thread.AlreadyOwns(owner.ObjectID)) thread.AddOwner(owner.ObjectID);
 
-                    if (owner is VMAvatar && thread is HITThread) ((VMAvatar)owner).SubmitHITVars(thread);
+                   // if (thread is HITThread) (owner).SubmitHITVars(thread);
 
                     var entry = new VMSoundEntry()
                     {

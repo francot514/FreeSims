@@ -63,7 +63,7 @@ namespace TSO.SimsAntics.Primitives
                         case VMDialogType.TextEntry:
                             //todo: filter profanity, limit name length
                             //also verify behaviour.
-                            ((VMAvatar)context.StackObject).Name = curDialog.ResponseText;
+                            //((VMAvatar)context.StackObject).Name = curDialog.ResponseText;
                             return VMPrimitiveExitCode.GOTO_TRUE;
                         case VMDialogType.NumericEntry:
                             int number;

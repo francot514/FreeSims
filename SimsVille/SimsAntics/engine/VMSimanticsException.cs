@@ -63,12 +63,7 @@ namespace TSO.SimsAntics.Engine
 
                 output.Append(" > ");
 
-                if (frame is VMRoutingFrame)
-                {
-                    output.Append("VMRoutingFrame with state: ");
-                    output.Append(((VMRoutingFrame)frame).State.ToString());
-                }
-                else 
+                
                 {
                     output.Append(frame.Routine.Rti.Name.TrimEnd('\0'));
                     output.Append(':');

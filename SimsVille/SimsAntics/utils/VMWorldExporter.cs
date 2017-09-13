@@ -10,8 +10,6 @@ using System.Linq;
 using System.Text;
 using tso.world.Model;
 using tso.world.Components;
-using tso.world;
-
 
 namespace TSO.SimsAntics.Utils
 {
@@ -20,7 +18,7 @@ namespace TSO.SimsAntics.Utils
 
         public XmlHouseData housedata;
 
-        public void SaveHouse(VM vm, string name)
+        public void SaveHouse(VM vm, string path, string name)
         {
 
             if (vm.Context.Architecture != null)
@@ -86,7 +84,7 @@ namespace TSO.SimsAntics.Utils
 
             foreach (var entity in vm.Entities)
             {
-                if (entity != entity.MultitileGroup.BaseObject || entity is VMAvatar) continue;
+                if (entity != entity.MultitileGroup.BaseObject) continue;
 
                 uint GUID = (entity.MultitileGroup.MultiTile)?entity.MasterDefinition.GUID:entity.Object.OBJ.GUID;
 
@@ -100,10 +98,8 @@ namespace TSO.SimsAntics.Utils
                 });
             }
 
-            string path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/TSO Ville/Houses/" + name + ".xml";
+
             XmlHouseData.Save(path, housedata);
-            
-            
 
         }
     }

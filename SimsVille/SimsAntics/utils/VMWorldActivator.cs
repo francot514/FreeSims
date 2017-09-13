@@ -58,8 +58,9 @@ namespace TSO.SimsAntics.Utils
 
             var arch = VM.Context.Architecture;
 
-            foreach (var floor in model.World.Floors){
-                arch.SetFloor(floor.X, floor.Y, (sbyte)(floor.Level+1), new FloorTile { Pattern = (ushort)floor.Value }, true);
+            foreach (var floor in model.World.Floors)
+            {
+                arch.SetFloor(floor.X, floor.Y, (sbyte)(floor.Level + 1), new FloorTile { Pattern = (ushort)floor.Value }, true);
             }
 
             foreach (var pool in model.World.Pools)
@@ -69,7 +70,7 @@ namespace TSO.SimsAntics.Utils
 
             foreach (var wall in model.World.Walls)
             {
-                arch.SetWall((short)wall.X, (short)wall.Y, (sbyte)(wall.Level+1), new WallTile() //todo: these should read out in their intended formats - a cast shouldn't be necessary
+                arch.SetWall((short)wall.X, (short)wall.Y, (sbyte)(wall.Level + 1), new WallTile() //todo: these should read out in their intended formats - a cast shouldn't be necessary
                 {
                     Segments = wall.Segments,
                     TopLeftPattern = (ushort)wall.TopLeftPattern,
@@ -85,35 +86,22 @@ namespace TSO.SimsAntics.Utils
 
             foreach (var obj in model.Objects)
             {
-                //if (obj.Level == 0) continue;
+                if (obj.Level == 0) continue;
                 //if (obj.GUID == "0xE9CEB12F") obj.GUID = "0x01A0FD79"; //replace onlinejobs door with a normal one
                 //if (obj.GUID == "0x346FE2BC") obj.GUID = "0x98E0F8BD"; //replace kitchen door with a normal one
                 CreateObject(obj);
             }
 
+            
+
             if (VM.UseWorld)
             {
-                foreach (var obj in model.Sounds)
-                {
-                    VM.Context.Ambience.SetAmbience(VM.Context.Ambience.GetAmbienceFromGUID(obj.ID), (obj.On == 1));
-                    World.State.WorldSize = model.Size;
-                    
-                }
+                World.State.WorldSize = model.Size;
+               
                 Blueprint.Terrain = CreateTerrain(model);
+               
             }
 
-
-           
-
-            var testObject = new XmlHouseDataObject(); //test npc controller, not normally present on a job lot.
-            testObject.GUID = "0x70F69082";
-            testObject.X = 0;
-            testObject.Y = 0;
-            testObject.Level = 1;
-            testObject.Dir = 0;
-            CreateObject(testObject);
-
-            arch.Tick();
             return this.Blueprint;
         }
 
@@ -134,8 +122,10 @@ namespace TSO.SimsAntics.Utils
             return (VMAvatar)VM.Context.CreateObjectInstance(guid, LotTilePos.OUT_OF_WORLD, Direction.NORTH).Objects[0];
         }
 
+
         public VMEntity CreateObject(XmlHouseDataObject obj){
             LotTilePos pos = (obj.Level == 0) ? LotTilePos.OUT_OF_WORLD : LotTilePos.FromBigTile((short)obj.X, (short)obj.Y, (sbyte)obj.Level);
+
             var nobj = VM.Context.CreateObjectInstance(obj.GUIDInt, pos, obj.Direction).Objects[0];
 
             if (obj.Group != 0)
@@ -148,7 +138,7 @@ namespace TSO.SimsAntics.Utils
 
             for (int i = 0; i < nobj.MultitileGroup.Objects.Count; i++) nobj.MultitileGroup.Objects[i].ExecuteEntryPoint(11, VM.Context, true);
 
-            return nobj;
+            return null;
             
         }
 

@@ -11,7 +11,6 @@ using System.Text;
 using TSO.Files.utils;
 using TSO.SimsAntics.Engine.Scopes;
 using TSO.SimsAntics.Engine.Utils;
-
 using TSO.SimsAntics.Model;
 using TSO.SimsAntics.Utils;
 using TSO.SimsAntics.Engine;

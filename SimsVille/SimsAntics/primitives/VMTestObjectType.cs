@@ -11,8 +11,8 @@ using System.Text;
 using TSO.SimsAntics.Engine;
 using TSO.SimsAntics.Engine.Scopes;
 using TSO.Files.utils;
-using TSO.SimsAntics.Engine.Utils;
 using System.IO;
+using TSO.SimsAntics.Engine.Utils;
 
 namespace TSO.SimsAntics.Primitives
 {

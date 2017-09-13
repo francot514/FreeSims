@@ -39,8 +39,10 @@ namespace tso.simantics.Engine
         public short[] MotiveFractions = new short[7]; //in 1/1000ths
         public int LastMinute;
 
-        TuningEntry LotMotives = Content.Get().GlobalTuning.EntriesByName["lotmotives"];
-        TuningEntry SimMotives = Content.Get().GlobalTuning.EntriesByName["simmotives"];
+        TuningEntry LotMotives = new TuningEntry();
+        //Content.Get().GlobalTuning.EntriesByName["lotmotives"];
+        TuningEntry SimMotives = new TuningEntry();
+        //Content.Get().GlobalTuning.EntriesByName["simmotives"];
 
         public void Tick(VMAvatar avatar, VMContext context)
         {

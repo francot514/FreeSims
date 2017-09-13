@@ -240,7 +240,7 @@ namespace TSOVille.Code.UI.Screens
             World = new World(GameFacade.Game.GraphicsDevice);
             GameFacade.Scenes.Add(World);
 
-            vm = new VM(new VMContext(World), null);
+            vm = new VM(new VMContext(World));
             vm.Init();
 
             var activator = new VMWorldActivator(vm, World);
@@ -325,7 +325,7 @@ namespace TSOVille.Code.UI.Screens
 
                 string path = "Houses/" + LotInfo.Name;
 
-                exporter.SaveHouse(vm, path + ".xml");
+                exporter.SaveHouse(vm, path + ".xml", LotInfo.Name);
 
                 Stream file = File.Create(path + ".png");
                 Texture2D thumbnail = World.GetLotThumb(GameFacade.GraphicsDevice);
