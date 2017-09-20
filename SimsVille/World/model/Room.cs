@@ -9,9 +9,11 @@ namespace tso.world.Model
     public class Room
     {
         public ushort RoomID;
+
         public bool IsOutside;
         public ushort Area;
         public bool IsPool;
+
         public Rectangle Bounds;
 
         public Room(ushort id, bool outside, Rectangle bounds, ushort area)
@@ -23,5 +25,15 @@ namespace tso.world.Model
             Area = area;
 
         }
+
+    }
+
+    public class RoomLighting
+    {
+        //TODO: point lights
+
+        public ushort OutsideLight;
+        public ushort AmbientLight;
+        public short RoomScore;
     }
 }

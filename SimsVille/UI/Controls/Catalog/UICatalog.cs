@@ -1,24 +1,46 @@
-﻿using System;
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+If a copy of the MPL was not distributed with this file, You can obtain one at
+http://mozilla.org/MPL/2.0/.
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSOVille.Code.UI.Framework;
+using FSO.Client.UI.Framework;
 using System.Xml;
 using System.IO;
-using TSO.Content;
+using FSO.Content;
 using Microsoft.Xna.Framework.Graphics;
-using TSO.Files.formats.iff.chunks;
-using TSOVille.LUI;
-using TSOVille.Code.UI.Panels.LotControls;
-using SimsHomeMaker;
-using SimsHomeMaker.ContentManager;
-using TSO.Files.formats.iff;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.Client.UI.Controls;
+using FSO.Client.UI.Panels.LotControls;
+using FSO.Common;
 
-namespace TSOVille.Code.UI.Controls.Catalog
+namespace FSO.Client.UI.Controls.Catalog
 {
     public class UICatalog : UIContainer
     {
         private int Page;
+        private int _Budget;
+        public int Budget
+        {
+            get { return _Budget; }
+            set {
+                if (value != _Budget)
+                {
+                    if (CatalogItems != null)
+                    {
+                        for (int i = 0; i < CatalogItems.Length; i++)
+                        {
+                            CatalogItems[i].SetDisabled(CatalogItems[i].Info.Price > value);
+                        }
+                    }
+                    _Budget = value;
+                }
+            }
+        }
         private static List<UICatalogElement>[] _Catalog;
         public event CatalogSelectionChangeDelegate OnSelectionChange;
 
@@ -32,14 +54,34 @@ namespace TSOVille.Code.UI.Controls.Catalog
                     _Catalog = new List<UICatalogElement>[30];
                     for (int i = 0; i < 30; i++) _Catalog[i] = new List<UICatalogElement>();
 
-                    if (Directory.Exists("GameData"))
+                    var packingslip = new XmlDocument();
+                    
+                    packingslip.Load(Path.Combine(GlobalSettings.Default.StartupPath, "packingslips/catalog.xml"));
+                    var objectInfos = packingslip.GetElementsByTagName("P");
+
+                    foreach (XmlNode objectInfo in objectInfos)
                     {
-                        var packingslip = new XmlDocument();
+                        sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
+                        if (Category < 0) continue;
+                        _Catalog[Category].Add(new UICatalogElement()
+                        {
+                            GUID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16),
+                            Category = Category,
+                            Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
+                            Name = objectInfo.Attributes["n"].Value
+                        });
+                    }
 
-                        packingslip.Load("Content\\objects.xml");
-                        var objectInfos = packingslip.GetElementsByTagName("P");
+                    //load and build Content Objects into catalog
+                    var path = Path.Combine(FSOEnvironment.ContentDir, "catalog_downloads.xml");
+                    if (File.Exists(path))
+                    {
+                        var dpackingslip = new XmlDocument();
 
-                        foreach (XmlNode objectInfo in objectInfos)
+                        dpackingslip.Load(path);
+                        var downloadInfos = dpackingslip.GetElementsByTagName("P");
+
+                        foreach (XmlNode objectInfo in downloadInfos)
                         {
                             sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
                             if (Category < 0) continue;
@@ -51,119 +93,7 @@ namespace TSOVille.Code.UI.Controls.Catalog
                                 Name = objectInfo.Attributes["n"].Value
                             });
                         }
-
                     }
-
-
-                    if (Directory.Exists("ExpansionPack"))
-                    {
-
-                        var ep1packingslip = new XmlDocument();
-
-                        ep1packingslip.Load("Content\\ep1.xml");
-                        var ep1objectInfos = ep1packingslip.GetElementsByTagName("P");
-
-                        foreach (XmlNode objectInfo in ep1objectInfos)
-                        {
-                            sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
-                            if (Category < 0) continue;
-                            _Catalog[Category].Add(new UICatalogElement()
-                            {
-                                GUID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16),
-                                Category = Category,
-                                Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
-                                Name = objectInfo.Attributes["n"].Value
-                            });
-                        }
-
-                    }
-
-                    if (Directory.Exists("ExpansionPack2"))
-                    {
-
-                        var ep2packingslip = new XmlDocument();
-
-                        ep2packingslip.Load("Content\\ep2.xml");
-                        var ep2objectInfos = ep2packingslip.GetElementsByTagName("P");
-
-                        foreach (XmlNode objectInfo in ep2objectInfos)
-                        {
-                            sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
-                            if (Category < 0) continue;
-                            _Catalog[Category].Add(new UICatalogElement()
-                            {
-                                GUID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16),
-                                Category = Category,
-                                Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
-                                Name = objectInfo.Attributes["n"].Value
-                            });
-                        }
-
-                    }
-
-                    if (Directory.Exists("ExpansionPack3"))
-                    {
-
-                        var ep3packingslip = new XmlDocument();
-
-                        ep3packingslip.Load("Content\\ep3.xml");
-                        var ep3objectInfos = ep3packingslip.GetElementsByTagName("P");
-
-                        foreach (XmlNode objectInfo in ep3objectInfos)
-                        {
-                            sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
-                            if (Category < 0) continue;
-                            _Catalog[Category].Add(new UICatalogElement()
-                            {
-                                GUID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16),
-                                Category = Category,
-                                Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
-                                Name = objectInfo.Attributes["n"].Value
-                            });
-                        }
-
-                    }
-
-                    if (Directory.Exists("ExpansionPack4"))
-                    {
-
-                        var ep4packingslip = new XmlDocument();
-
-                        ep4packingslip.Load("Content\\ep4.xml");
-                        var ep4objectInfos = ep4packingslip.GetElementsByTagName("P");
-
-                        foreach (XmlNode objectInfo in ep4objectInfos)
-                        {
-                            sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
-                            if (Category < 0) continue;
-                            _Catalog[Category].Add(new UICatalogElement()
-                            {
-                                GUID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16),
-                                Category = Category,
-                                Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
-                                Name = objectInfo.Attributes["n"].Value
-                            });
-                        }
-
-                    }
-
-                    DirectoryInfo dir = new DirectoryInfo("Downloads");
-                    foreach (FileInfo file in dir.GetFiles())
-                        if (file.Extension == ".iff")
-                        {
-                            var iff = new Iff(file.FullName);
-                            sbyte Category = 18;
-                            if (Category < 0) continue;
-                            _Catalog[Category].Add(new UICatalogElement()
-                            {
-                                GUID = iff.List<OBJD>()[0].GUID,
-                                Category = Category,
-                                Price = iff.List<OBJD>()[0].Price,
-                                Name = iff.List<CTSS>()[0].Strings[0].Value
-                            });
-
-
-                        }
 
                     AddWallpapers();
                     AddFloors();
@@ -182,7 +112,7 @@ namespace TSOVille.Code.UI.Controls.Catalog
         {
             var res = new UICatalogWallpaperResProvider();
 
-            var walls = Content.Get().WorldWalls.List();
+            var walls = Content.Content.Get().WorldWalls.List();
 
             for (int i = 0; i < walls.Count; i++)
             {
@@ -207,15 +137,13 @@ namespace TSOVille.Code.UI.Controls.Catalog
         {
             var res = new UICatalogFloorResProvider();
 
-            var floors = Content.Get().WorldFloors.List();
+            var floors = Content.Content.Get().WorldFloors.List();
 
-            sbyte category = 9;
-
-
-            for (int i = 0; i < floors.Count - 1; i++)
+            for (int i = 0; i < floors.Count; i++)
             {
                 var floor = (FloorReference)floors[i];
-                _Catalog[9].Insert(0, new UICatalogElement
+                sbyte category = (sbyte)((floor.ID >= 65534)?5:9);
+                _Catalog[category].Insert(0, new UICatalogElement
                 {
                     Name = floor.Name,
                     Category = category,
@@ -229,22 +157,31 @@ namespace TSOVille.Code.UI.Controls.Catalog
                     }
                 });
             }
+        }
 
-            var pool = (FloorReference)floors[floors.Count - 1];
-            _Catalog[5].Insert(0, new UICatalogElement
+        private static void AddRoofs()
+        {
+            var res = new UICatalogRoofResProvider();
+
+            var total = Content.Content.Get().WorldRoofs.Count;
+
+            for (int i = 0; i < total; i++)
             {
-                Name = pool.Name,
-                Category = 5,
-                Price = (uint)pool.Price,
-                Special = new UISpecialCatalogElement
+                sbyte category = 6;
+                _Catalog[category].Insert(0, new UICatalogElement
                 {
-                    Control = typeof(UIFloorPainter),
-                    ResID = pool.ID,
-                    Res = res,
-                    Parameters = new List<int> { (int)pool.ID } //pattern
-                }
-            });
-
+                    Name = "",
+                    Category = category,
+                    Price = 0,
+                    Special = new UISpecialCatalogElement
+                    {
+                        Control = typeof(UIRoofer),
+                        ResID = (uint)i,
+                        Res = res,
+                        Parameters = new List<int> { i } //pattern
+                    }
+                });
+            }
         }
 
         private static void AddWallStyles()
@@ -253,11 +190,10 @@ namespace TSOVille.Code.UI.Controls.Catalog
 
             for (int i = 0; i < WallStyleIDs.Length; i++)
             {
-                var walls = Content.Get().WorldWalls;
+                var walls = Content.Content.Get().WorldWalls;
                 var style = walls.GetWallStyle((ulong)WallStyleIDs[i]);
                 _Catalog[7].Insert(0, new UICatalogElement
                 {
-                
                     Name = style.Name,
                     Category = 7,
                     Price = (uint)style.Price,
@@ -271,36 +207,6 @@ namespace TSOVille.Code.UI.Controls.Catalog
                 });
             }
         }
-
-        private static void AddRoofs()
-         {
-            var res = new UICatalogRoofResProvider();
-
-            var roofs = Content.Get().WorldRoofs.List();
-
-            sbyte category = 6;
-
-
-            for (int i = 0; i < roofs.Count - 1; i++)
-            {
-                var roof = (RoofReference)roofs[i];
-                _Catalog[6].Insert(0, new UICatalogElement
-                {
-                    Name = roof.Name,
-                    Category = category,
-                    Price = (uint)roof.Price,
-                    Special = new UISpecialCatalogElement
-                    {
-                        Control = typeof(UIRoofPainter),
-                        ResID = roof.ID,
-                        Res = res,
-                        Parameters = new List<int> { (int)roof.ID } //pattern
-                    }
-                });
-            }
-
-
-         }
 
         public static short[] WallStyleIDs =
         {
@@ -374,6 +280,7 @@ namespace TSOVille.Code.UI.Controls.Catalog
                 elem.X = (i % halfPage) * 45 + 2;
                 elem.Y = (i / halfPage) * 45 + 2;
                 elem.OnMouseEvent += new ButtonClickDelegate(InnerSelect);
+                elem.SetDisabled(elem.Info.Price > Budget);
                 CatalogItems[i] = elem;
                 this.Add(elem);
             }
@@ -388,7 +295,7 @@ namespace TSOVille.Code.UI.Controls.Catalog
         public Texture2D GetObjIcon(uint GUID)
         {
             if (!IconCache.ContainsKey(GUID)) {
-                var obj = Content.Get().WorldObjects.Get(GUID);
+                var obj = Content.Content.Get().WorldObjects.Get(GUID);
                 if (obj == null)
                 {
                     IconCache[GUID] = null;
@@ -423,6 +330,7 @@ namespace TSOVille.Code.UI.Controls.Catalog
         public sbyte Category;
         public uint Price;
         public string Name;
+        public byte DisableLevel; //1 = only shopping, 2 = rare (unsellable?)
         public UISpecialCatalogElement Special;
     }
 

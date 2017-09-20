@@ -4,14 +4,14 @@
  * http://mozilla.org/MPL/2.0/. 
  */
 
-using TSO.SimsAntics.Model.Routing;
+using FSO.SimAntics.Model.Routing;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TSO.SimsAntics.Engine.Routing
+namespace FSO.SimAntics.Engine.Routing
 {
     public class VMRectRouter
     {

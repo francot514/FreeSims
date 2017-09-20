@@ -8,17 +8,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
-using TSO.Files.formats.iff.chunks;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
+using FSO.Files.Formats.IFF.Chunks;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMDialogSemiGlobalStrings : VMPrimitiveHandler
     {
         public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-            return VMDialogPrivateStrings.ExecuteGeneric(context, args, context.Callee.SemiGlobal.Resource.Get<STR>(301));
+            return VMDialogPrivateStrings.ExecuteGeneric(context, args, context.Callee.SemiGlobal.Get<STR>(301));
         }
     }
 }

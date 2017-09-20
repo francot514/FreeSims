@@ -1,11 +1,11 @@
-﻿
+﻿using FSO.SimAntics.Marshals;
+using FSO.SimAntics.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Primitives;
 
-namespace TSO.SimsAntics.Model
+namespace FSO.SimAntics.Model
 {
     public class VMRuntimeHeadline
     {
@@ -25,6 +25,26 @@ namespace TSO.SimsAntics.Model
             Duration = (op.DurationInLoops && op.Duration != -1) ? op.Duration * 15 : op.Duration;
         }
 
+        public VMRuntimeHeadline(VMRuntimeHeadlineMarshal input, VMContext context)
+        {
+            Operand = input.Operand;
+            Target = context.VM.GetObjectById(input.Target);
+            IconTarget = context.VM.GetObjectById(input.IconTarget);
+            Index = input.Index;
+            Duration = input.Duration;
+            Anim = input.Anim;
+        }
 
+        public VMRuntimeHeadlineMarshal Save()
+        {
+            var result = new VMRuntimeHeadlineMarshal();
+            result.Operand = Operand;
+            result.Target = (Target == null) ? (short)0 : Target.ObjectID;
+            result.IconTarget = (IconTarget == null) ? (short)0 : IconTarget.ObjectID;
+            result.Index = Index;
+            result.Duration = Duration;
+            result.Anim = Anim;
+            return result;
+        }
     }
 }

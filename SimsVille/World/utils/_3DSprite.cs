@@ -10,10 +10,10 @@ using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TSO.Common.rendering.framework;
-using TSO.vitaboy;
+using FSO.Common.Rendering.Framework;
+using FSO.Vitaboy;
 
-namespace tso.world.Utils
+namespace FSO.LotView.Utils
 {
     public class _3DSprite {
         public _3DSpriteEffect Effect;
@@ -21,6 +21,7 @@ namespace tso.world.Utils
         public Avatar Geometry;
         public short ObjectID;
         public ushort Room;
+        public Color Color;
     }
 
     public enum _3DSpriteEffect {

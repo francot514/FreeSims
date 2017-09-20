@@ -1,13 +1,7 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-Mats 'Afr0' Vederhus. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
@@ -16,18 +10,20 @@ using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using TSOVille.Code.UI.Model;
-using TSOVille.Code.Utils;
+using FSO.Client.UI.Model;
+using FSO.Common.Utils;
 using System.IO;
-using TSOVille.Code.UI.Framework.Parser;
+using FSO.Client.UI.Framework.Parser;
 using System.Threading;
-using TSO.Common.rendering.framework.model;
-using TSO.Common.rendering.framework.io;
-using TSO.Common.rendering.framework;
-using TSO.Common.content;
-using TSO.Files;
+using FSO.Common.Rendering.Framework.Model;
+using FSO.Common.Rendering.Framework.IO;
+using FSO.Common.Rendering.Framework;
+using FSO.Common.Content;
+using FSO.Files;
+using FSO.Client.GameContent;
+using FSO.Client.Utils;
 
-namespace TSOVille.Code.UI.Framework
+namespace FSO.Client.UI.Framework
 {
     /// <summary>
     /// Base class for all UIElements. This class has all the common stuff that user interface
@@ -765,11 +761,28 @@ namespace TSOVille.Code.UI.Framework
         {
             //if (!m_IsInvalidated)
             //{
-            batch.Draw(texture, FlooredLocalPoint(to), from, new Color(_BlendColor.ToVector4() * blend.ToVector4()), 0.0f,
+            batch.Draw(texture, FlooredLocalPoint(to), from, new Color(_BlendColor.ToVector4()*blend.ToVector4()), 0.0f,
                         new Vector2(0.0f, 0.0f), _Scale * scale, SpriteEffects.None, 0.0f);
             //}
         }
 
+        public void DrawTiledTexture(SpriteBatch batch, Texture2D texture, Rectangle dest, Color blend)
+        {
+            //if (!m_IsInvalidated)
+            //{
+            var col = new Color(_BlendColor.ToVector4() * blend.ToVector4());
+            for (int x = 0; x < dest.Width; x+=texture.Width)
+            {
+                for (int y= 0; y<dest.Height; y += texture.Height)
+                {
+                    batch.Draw(texture, FlooredLocalPoint(new Vector2(dest.X+x, dest.Y+y)), new Rectangle(0, 0, Math.Min(texture.Width, dest.Width-x), Math.Min(texture.Height, dest.Height - y)), col, 0.0f,
+                        new Vector2(0.0f, 0.0f), _Scale, SpriteEffects.None, 0.0f);
+                }
+            }
+
+
+            //}
+        }
 
         private Dictionary<Rectangle, Vector4> _HitTestCache = new Dictionary<Rectangle, Vector4>();
 
@@ -803,6 +816,10 @@ namespace TSOVille.Code.UI.Framework
 
                 if (cache)
                 {
+                    globalLeft = globalPosition.X;
+                    globalTop = globalPosition.Y;
+                    globalRight = globalPosition.Right;
+                    globalBottom = globalPosition.Bottom;
                     _HitTestCache.Add(area, new Vector4(globalPosition.X, globalPosition.Y, globalPosition.Right, globalPosition.Bottom));
                 }
             }
@@ -841,6 +858,12 @@ namespace TSOVille.Code.UI.Framework
             return newRegion;
         }
 
+        public void RemoveMouseListener(UIMouseEventRef item)
+        {
+            if (m_MouseRefs == null) return;
+            m_MouseRefs.Remove(item);
+        }
+
         private float[] _InvertedMtx;
 
         /// <summary>
@@ -864,15 +887,10 @@ namespace TSOVille.Code.UI.Framework
             new Color(0xFF, 0x01, 0xFF, 0xFF).PackedValue
         };
 
+        
         public static Texture2D StoreTexture(ulong id, ContentResource assetData)
         {
             return StoreTexture(id, assetData, true, false);
-        }
-
-        public static Texture2D LoadTexture(Stream stream)
-        {
-            
-            return Texture2D.FromStream(GameFacade.GraphicsDevice, stream);
         }
 
         public static Texture2D StoreTexture(ulong id, ContentResource assetData, bool mask, bool cacheOnDisk)
@@ -893,7 +911,7 @@ namespace TSOVille.Code.UI.Framework
                     stream.Seek(0, SeekOrigin.Begin);
                     texture = ImageLoader.FromStream(GameFacade.GraphicsDevice, stream); //, textureParams);
 
-                    TextureUtils.ManualTextureMaskSingleThreaded(ref texture, MASK_COLORS);
+                    //TextureUtils.ManualTextureMaskSingleThreaded(ref texture, MASK_COLORS);
                 }
                 else
                 {
@@ -910,8 +928,22 @@ namespace TSOVille.Code.UI.Framework
             return GetTexture(id.Shift());
         }
 
+        public static Texture2D GetTexture(ulong id)
+        {
+            try
+            {
+                return Content.Content.Get().UIGraphics.Get(id).Get(GameFacade.GraphicsDevice);
+            }
+            catch (Exception e)
+            {
+            }
+            //TODO: darren wants to return null here. that might break some existing code
+            return new Texture2D(GameFacade.GraphicsDevice, 1, 1);
+        }
+
         private static Dictionary<ulong, Texture2D> UI_TEXTURE_CACHE = new Dictionary<ulong, Texture2D>();
         private static List<ulong> UI_TEMP_CACHE = new List<ulong>();
+        /*
         public static Texture2D GetTexture(ulong id)
         {
             try
@@ -929,9 +961,9 @@ namespace TSOVille.Code.UI.Framework
             {
                 var test = e;
             }
-            return new Texture2D(GameFacade.GraphicsDevice, 1, 1);
+            return new Texture2D(GameFacade.GraphicsDevice, 1, 1); //TODO: use cache for empty textures, so we don't accidentally create a ton
         }
-
+        */
         //These do not seem to be neccessary when maximizing and minimizing.
         //Commenting out until further testing has been done.
         /*public static void InvalidateEverything()
@@ -1037,11 +1069,6 @@ namespace TSOVille.Code.UI.Framework
                 return _Tooltip;
             }
         }
-
-        /// <summary>
-        /// Used to control Tooltip visibility and position on elements that draw it
-        /// </summary>
-        public UITooltipProperties TooltipProperties;
 
         /// <summary>
         /// Little utility to make it easier to do work outside of the UI thread

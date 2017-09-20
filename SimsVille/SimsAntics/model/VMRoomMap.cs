@@ -9,10 +9,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework;
-using tso.world.Model;
-using TSO.SimsAntics.Model.Routing;
+using FSO.LotView.Model;
+using FSO.SimAntics.Model.Routing;
 
-namespace TSO.SimsAntics.Model
+namespace FSO.SimAntics.Model
 {
     /// <summary>
     /// Generates and manages a room map for a specified level.

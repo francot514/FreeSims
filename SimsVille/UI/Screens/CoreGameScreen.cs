@@ -1,13 +1,7 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
@@ -15,42 +9,52 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
-using TSOVille.Code.UI.Framework;
-using TSOVille.Code.UI.Panels;
-using TSOVille.Code.UI.Model;
-using TSOVille.LUI;
+using FSO.Client.UI.Framework;
+using FSO.Client.UI.Panels;
+using FSO.Client.UI.Model;
+using FSO.Client.Rendering.City;
 using Microsoft.Xna.Framework;
-using TSOVille.Code.Utils;
-using TSO.Common.rendering.framework.model;
-using TSO.Common.rendering.framework.io;
-using TSO.Common.rendering.framework;
-using tso.world;
-using tso.world.Model;
-using TSO.SimsAntics;
-using TSO.SimsAntics.Utils;
-using TSO.SimsAntics.Primitives;
+using FSO.Client.Utils;
+using FSO.Common.Rendering.Framework.Model;
+using FSO.Common.Rendering.Framework.IO;
+using FSO.Common.Rendering.Framework;
+using FSO.Client.Network;
+using FSO.LotView;
+using FSO.LotView.Model;
+using FSO.SimAntics;
+using FSO.SimAntics.Utils;
+using FSO.SimAntics.Primitives;
+using TSO.HIT;
+using FSO.SimAntics.NetPlay.Drivers;
+using FSO.SimAntics.NetPlay.Model.Commands;
 using System.IO;
-using SimsHomeMaker;
-using Microsoft.Xna.Framework.Graphics;
-using TSOVille.Code.UI.Controls;
-using SimsVille.UI.Model;
+using FSO.SimAntics.NetPlay;
+using FSO.Client.UI.Controls;
+using FSO.Client.UI.Panels.WorldUI;
+using FSO.SimAntics.Engine.TSOTransaction;
+using FSO.Common;
 
-namespace TSOVille.Code.UI.Screens
+namespace FSO.Client.UI.Screens
 {
-    public class CoreGameScreen : TSOVille.Code.UI.Framework.GameScreen
+    public class CoreGameScreen : FSO.Client.UI.Framework.GameScreen
     {
-
-        public Neighborhood Neighborhood;
-        private UIButton VMDebug, SaveHouseButton;
         public UIUCP ucp;
-        //public UIGizmo gizmo;
-        private string[] CharacterInfos;
-        public List<XmlCharacter> Characters;
-        public List<VMAvatar> Avatars;
-        public XmlHouseData LotInfo;
+        public UIGizmo gizmo;
+        public UIInbox Inbox;
+        public UIGameTitle Title;
+        private UIButton SaveHouseButton;
+        private string[] CityMusic;
+        private String city;
+
+        private bool Connecting;
+        private UILoginProgress ConnectingDialog;
+        private Queue<SimConnectStateChange> StateChanges;
+
+        //private Terrain CityRenderer; //city view
+
         public UILotControl LotController; //world, lotcontrol and vm will be null if we aren't in a lot.
-        private World World;
-        public TSO.SimsAntics.VM vm;
+        private LotView.World World;
+        public FSO.SimAntics.VM vm;
         public bool InLot
         {
             get
@@ -74,10 +78,11 @@ namespace TSOVille.Code.UI.Screens
                     if (vm == null) ZoomLevel = 4; //call this again but set minimum cityrenderer view
                     else
                     {
+                        Title.SetTitle(LotController.GetLotTitle());
                         if (m_ZoomLevel > 3)
                         {
-                            PlayBackgroundMusic(new string[] { "none" }); //disable city music
-                            Neighborhood.Visible = false;
+                            HITVM.Get().PlaySoundEvent(UIMusic.None);
+                            gizmo.Visible = false;
                             LotController.Visible = true;
                             World.Visible = true;
                             ucp.SetMode(UIUCP.UCPMode.LotMode);
@@ -88,26 +93,26 @@ namespace TSOVille.Code.UI.Screens
                 }
                 else //cityrenderer! we'll need to recreate this if it doesn't exist...
                 {
+                    
+                        Title.SetTitle(city);                  
 
-                    if (m_ZoomLevel < 4)
-                    { //coming from lot view... snap zoom % to 0 or 1
-                        Neighborhood.m_ZoomProgress = (value == 4) ? 1 : 0;
-                        //PlayBackgroundMusic(CityMusic); //play the city music as well
-                        Neighborhood.Visible = true;
-                        //gizmo.Visible = true;
-                        if (World != null)
-                        {
-                            World.Visible = false;
-                            LotController.Visible = false;
+                        if (m_ZoomLevel < 4)
+                        { //coming from lot view... snap zoom % to 0 or 1
+                            HITVM.Get().PlaySoundEvent(UIMusic.Map); //play the city music as well
+                            gizmo.Visible = true;
+                            if (World != null)
+                            {
+                                World.Visible = false;
+                                LotController.Visible = false;
+                            }
+                            ucp.SetMode(UIUCP.UCPMode.CityMode);
                         }
-                        ucp.SetMode(UIUCP.UCPMode.CityMode);
-                    }
-                    m_ZoomLevel = value;
-                    Neighborhood.m_Zoomed = (value == 4);
+                        m_ZoomLevel = value;
+                    
                 }
                 ucp.UpdateZoomButton();
             }
-        }
+        } //in future, merge LotDebugScreen and CoreGameScreen so that we can store the City+Lot combo information and controls in there.
 
         private int _Rotation = 0;
         public int Rotation
@@ -161,194 +166,420 @@ namespace TSOVille.Code.UI.Screens
             }
         }
 
-        public CoreGameScreen()
+        public CoreGameScreen() : base()
         {
+            /** City Scene **/
+            ListenForMouse(new Rectangle(0, 0, ScreenWidth, ScreenHeight), new UIMouseEvent(MouseHandler));
+
+           // CityRenderer = new Terrain(GameFacade.Game.GraphicsDevice); //The Terrain class implements the ThreeDAbstract interface so that it can be treated as a scene but manage its own drawing and updates.
+
+            city = "Queen Margaret's";
+            if (PlayerAccount.CurrentlyActiveSim != null)
+                city = PlayerAccount.CurrentlyActiveSim.ResidingCity.Name;
+
+
+            StateChanges = new Queue<SimConnectStateChange>();
+
+            /**
+            * Music
+            */
+            CityMusic = new string[]{
+                GlobalSettings.Default.StartupPath + "\\music\\modes\\map\\tsobuild1.mp3",
+                GlobalSettings.Default.StartupPath + "\\music\\modes\\map\\tsobuild3.mp3",
+                GlobalSettings.Default.StartupPath + "\\music\\modes\\map\\tsomap2_v2.mp3",
+                GlobalSettings.Default.StartupPath + "\\music\\modes\\map\\tsomap3.mp3",
+                GlobalSettings.Default.StartupPath + "\\music\\modes\\map\\tsomap4_v1.mp3"
+            };
+            HITVM.Get().PlaySoundEvent(UIMusic.Map);
+
+            /*VMDebug = new UIButton()
+            {
+                Caption = "Simantics",
+                Y = 45,
+                Width = 100,
+                X = GlobalSettings.Default.GraphicsWidth - 110
+            };
+            VMDebug.OnButtonClick += new ButtonClickDelegate(VMDebug_OnButtonClick);
+            this.Add(VMDebug);*/
 
             SaveHouseButton = new UIButton()
             {
-                Caption = "Enter House",
-                Y = 45,
+                Caption = "Save House",
+                Y = 10,
                 Width = 100,
-                X = GlobalSettings.GraphicsWidth - 110
+                X = GlobalSettings.Default.GraphicsWidth - 110
             };
             SaveHouseButton.OnButtonClick += new ButtonClickDelegate(SaveHouseButton_OnButtonClick);
-            SaveHouseButton.Visible = true;
             this.Add(SaveHouseButton);
-
-            Avatars = new List<VMAvatar>();
-            Characters = new List<XmlCharacter>();
-            CharacterInfos = new string[9];
 
             ucp = new UIUCP(this);
             ucp.Y = ScreenHeight - 210;
+            ucp.SetInLot(false);
             ucp.UpdateZoomButton();
-            ucp.MoneyText.Caption = "";
-            ucp.Visible = true;
+            ucp.MoneyText.Caption = PlayerAccount.Money.ToString();
             this.Add(ucp);
 
-            Neighborhood = new Neighborhood(GameFacade.Game.GraphicsDevice);
-            Neighborhood.LoadContent();
-            
-            Neighborhood.Initialize(GameFacade.HousesDataRetriever);
+            gizmo = new UIGizmo();
+            gizmo.X = ScreenWidth - 500;
+            gizmo.Y = ScreenHeight - 300;
+            this.Add(gizmo);
 
+            Title = new UIGameTitle();
+            Title.SetTitle(city);
+            this.Add(Title);
 
-            Neighborhood.SetTimeOfDay(0.5);
+            //OpenInbox();
 
-            GameFacade.Scenes.Add(Neighborhood);
+            this.Add(GameFacade.MessageController);
+            GameFacade.MessageController.OnSendLetter += new LetterSendDelegate(MessageController_OnSendLetter);
+            GameFacade.MessageController.OnSendMessage += new MessageSendDelegate(MessageController_OnSendMessage);
 
-            ZoomLevel = 4; //Nhood view.
+            NetworkFacade.Controller.OnNewTimeOfDay += new OnNewTimeOfDayDelegate(Controller_OnNewTimeOfDay);
+            NetworkFacade.Controller.OnPlayerJoined += new OnPlayerJoinedDelegate(Controller_OnPlayerJoined);
 
-           
+            //THIS IS KEPT HERE AS A DOCUMENTATION OF THE MESSAGE PASSING API FOR NOW.
+            /*
+            MessageAuthor Author = new MessageAuthor();
+            Author.Author = "Whats His Face";
+            Author.GUID = Guid.NewGuid().ToString();
 
+            GameFacade.MessageController.PassMessage(Author, "you suck");
+            GameFacade.MessageController.PassMessage(Author, "no rly");
+            GameFacade.MessageController.PassMessage(Author, "jk im just testing message recieving please love me");
+
+            Author.Author = "yer maw";
+            Author.GUID = Guid.NewGuid().ToString();
+
+            GameFacade.MessageController.PassMessage(Author, "dont let whats his face get to you");
+            GameFacade.MessageController.PassMessage(Author, "i will always love you");
+
+            Author.Author = "M.O.M.I";
+            Author.GUID = Guid.NewGuid().ToString();
+
+            GameFacade.MessageController.PassEmail(Author, "Ban Notice", "You have been banned for playing too well. \r\n\r\nWe don't know why you still have access to the game, but it's probably related to you playing the game pretty well. \r\n\r\nPlease stop immediately.\r\n\r\n - M.O.M.I. (this is just a test message btw, you're not actually banned)");
+            */
+
+            ZoomLevel = 5; //screen always starts at far zoom, city visible.
         }
 
+        #region Network handlers
 
-        public override void Update(TSO.Common.rendering.framework.model.UpdateState state)
+        private void Controller_OnNewTimeOfDay(DateTime TimeOfDay)
         {
+            if (TimeOfDay.Hour <= 12)
+                ucp.TimeText.Caption = TimeOfDay.Hour + ":" + TimeOfDay.Minute + "am";
+            else ucp.TimeText.Caption = TimeOfDay.Hour + ":" + TimeOfDay.Minute + "pm";
+
+            double time = TimeOfDay.Hour / 24.0 + TimeOfDay.Minute / (1440.0) + TimeOfDay.Second / (86400.0);
+        }
+
+        private void Controller_OnPlayerJoined(LotTileEntry TileEntry)
+        {
+            
+        }
+
+        #endregion
+
+        private void MessageController_OnSendMessage(string message, string GUID)
+        {
+            //TODO: Implement special packet for message (as opposed to letter)?
+            //Don't send empty strings!!
+            Network.UIPacketSenders.SendLetter(Network.NetworkFacade.Client, message, "Empty", GUID);
+        }
+
+        /// <summary>
+        /// Message was sent by player to another player.
+        /// </summary>
+        /// <param name="message">Message to send.</param>
+        /// <param name="subject">Subject of message.</param>
+        /// <param name="destinationUser">GUID of destination user.</param>
+        private void MessageController_OnSendLetter(string message, string subject, string destinationUser)
+        {
+            Network.UIPacketSenders.SendLetter(Network.NetworkFacade.Client, message, subject, destinationUser);
+        }
+
+        public override void Update(FSO.Common.Rendering.Framework.Model.UpdateState state)
+        {
+            GameFacade.Game.IsFixedTimeStep = (vm == null || vm.Ready);
+
             base.Update(state);
 
 
-            if (ZoomLevel > 3 && Neighborhood.m_Zoomed != (ZoomLevel == 4)) ZoomLevel = (Neighborhood.m_Zoomed) ? 4 : 5;
+            lock (StateChanges)
+            {
+                while (StateChanges.Count > 0)
+                {
+                    var e = StateChanges.Dequeue();
+                    ClientStateChangeProcess(e.State, e.Progress);
+                }
+            }
 
-            if (InLot) //if we're in a lot, use the VM's more accurate time!
-                Neighborhood.SetTimeOfDay((vm.Context.Clock.Hours / 24.0) + (vm.Context.Clock.Minutes / 1440.0) + (vm.Context.Clock.Seconds / 86400.0));
-
-            if (vm != null) vm.Update(state.Time);
-
-            if (!Visible)
-                Neighborhood.Visible = false;
-   
+            if (vm != null) vm.Update();
         }
 
         public void CleanupLastWorld()
         {
-            //GameFacade.Scenes.Remove(World);
-            GameFacade.Scenes.Remove(Neighborhood);
+            if (ZoomLevel < 4) ZoomLevel = 5;
+            vm.Context.Ambience.Kill();
+            foreach (var ent in vm.Entities) { //stop object sounds
+                var threads = ent.SoundThreads;
+                for (int i = 0; i < threads.Count; i++)
+                {
+                    threads[i].Sound.RemoveOwner(ent.ObjectID);
+                }
+                threads.Clear();
+            }
+            vm.CloseNet(VMCloseNetReason.LeaveLot);
+            GameFacade.Scenes.Remove(World);
             this.Remove(LotController);
             ucp.SetPanel(-1);
             ucp.SetInLot(false);
+        }
+
+        public void ClientStateChange(int state, float progress)
+        {
+            lock (StateChanges) StateChanges.Enqueue(new SimConnectStateChange(state, progress));
+        }
+
+        public void ClientStateChangeProcess(int state, float progress)
+        {
+            //TODO: queue these up and try and sift through them in an update loop to avoid UI issues. (on main thread)
+            if (state == 4) //disconnected
+            {
+                var reason = (VMCloseNetReason)progress;
+                if (reason == VMCloseNetReason.Unspecified)
+                {
+                    var alert = UIScreen.ShowAlert(new UIAlertOptions
+                    {
+                        Title = GameFacade.Strings.GetString("222", "3"),
+                        Message = GameFacade.Strings.GetString("222", "2", new string[] { "0" }),
+                    }, true);
+
+                    if (Connecting)
+                    {
+                        UIScreen.RemoveDialog(ConnectingDialog);
+                        ConnectingDialog = null;
+                        Connecting = false;
+                    }
+
+                    alert.ButtonMap[UIAlertButtonType.OK].OnButtonClick += DisconnectedOKClick;
+                } else
+                {
+                    DisconnectedOKClick(null);
+                }
+            }
+
+            if (ConnectingDialog == null) return;
+            switch (state)
+            {
+                case 1:
+                    ConnectingDialog.ProgressCaption = GameFacade.Strings.GetString("211", "26");
+                    ConnectingDialog.Progress = 25f;
+                    break;
+                case 2:
+                    ConnectingDialog.ProgressCaption = GameFacade.Strings.GetString("211", "27");
+                    ConnectingDialog.Progress = 100f*(0.5f+progress*0.5f);
+                    break;
+                case 3:
+                    UIScreen.RemoveDialog(ConnectingDialog);
+                    ConnectingDialog = null;
+                    Connecting = false;
+                    ZoomLevel = 1;
+                    ucp.SetInLot(true);
+                    break;
+            }
+        }
+
+        private void DisconnectedOKClick(UIElement button)
+        {
+            if (vm != null) CleanupLastWorld();
+            Connecting = false;
+        }
+
+        public void InitTestLot(string path, bool host)
+        {
+            if (Connecting) return;
+
+            if (vm != null) CleanupLastWorld();
+
+            World = new LotView.World(GameFacade.Game.GraphicsDevice);
+            GameFacade.Scenes.Add(World);
+
+            VMNetDriver driver;
+            if (host)
+            {
+                driver = new VMServerDriver(37564, null);
+            }
+            else
+            {
+                Connecting = true;
+                ConnectingDialog = new UILoginProgress();
+
+                ConnectingDialog.Caption = GameFacade.Strings.GetString("211", "1");
+                ConnectingDialog.ProgressCaption = GameFacade.Strings.GetString("211", "24");
+                //this.Add(ConnectingDialog);
+
+                UIScreen.ShowDialog(ConnectingDialog, true);
+
+                driver = new VMClientDriver(path, 37564, ClientStateChange);
+            }
+
+            vm = new VM(new VMContext(World), driver, new UIHeadlineRendererProvider());
+            vm.Init();
+            vm.LotName = (path == null) ? "localhost" : path.Split('/').LastOrDefault(); //quick hack just so we can remember where we are
+
+            if (host)
+            {
+                //check: do we have an fsov to try loading from?
+
+                string filename = Path.GetFileName(path);
+                try
+                {
+                    using (var file = new BinaryReader(File.OpenRead(Path.Combine(FSOEnvironment.UserDir, "LocalHouse/")+filename.Substring(0, filename.Length-4)+".fsov")))
+                    {
+                        var marshal = new SimAntics.Marshals.VMMarshal();
+                        marshal.Deserialize(file);
+                        vm.Load(marshal);
+                        vm.Reset();
+                    }
+                }
+                catch (Exception) {
+                    short jobLevel = -1;
+
+                    //quick hack to find the job level from the chosen blueprint
+                    //the final server will know this from the fact that it wants to create a job lot in the first place...
+
+                    try
+                    {
+                        if (filename.StartsWith("nightclub") || filename.StartsWith("restaurant") || filename.StartsWith("robotfactory"))
+                            jobLevel = Convert.ToInt16(filename.Substring(filename.Length - 9, 2));
+                    }
+                    catch (Exception) { }
+
+                    vm.SendCommand(new VMBlueprintRestoreCmd
+                    {
+                        JobLevel = jobLevel,
+                        XMLData = File.ReadAllBytes(path)
+                    });
+                }
+            }
+
+            uint simID = (uint)(new Random()).Next();
+            vm.MyUID = simID;
+
+            vm.SendCommand(new VMNetSimJoinCmd
+            {
+                ActorUID = simID,
+                HeadID = GlobalSettings.Default.DebugHead,
+                BodyID = GlobalSettings.Default.DebugBody,
+                SkinTone = (byte)GlobalSettings.Default.DebugSkin,
+                Gender = !GlobalSettings.Default.DebugGender,
+                Name = GlobalSettings.Default.LastUser
+            });
+
+            LotController = new UILotControl(vm, World);
+            this.AddAt(0, LotController);
+
+            vm.Context.Clock.Hours = 10;
+            if (m_ZoomLevel > 3)
+            {
+                World.Visible = false;
+                LotController.Visible = false;
+            }
+
+            if (host)
+            {
+                ZoomLevel = 1;
+                ucp.SetInLot(true);
+            } else
+            {
+                ZoomLevel = Math.Max(ZoomLevel, 4);
+            }
+
+            vm.OnFullRefresh += VMRefreshed;
+            vm.OnChatEvent += Vm_OnChatEvent;
+            vm.OnEODMessage += LotController.EODs.OnEODMessage;
 
         }
 
-        public void InitTestLot(string path)
+        private void Vm_OnChatEvent(SimAntics.NetPlay.Model.VMChatEvent evt)
         {
-            if (vm != null) CleanupLastWorld();
-
-            LotInfo = XmlHouseData.Parse(path);
-
-
-            World = new World(GameFacade.Game.GraphicsDevice);
-            GameFacade.Scenes.Add(World);
-
-            vm = new VM(new VMContext(World));
-            vm.Init();
-
-            var activator = new VMWorldActivator(vm, World);
-            var blueprint = activator.LoadFromXML(LotInfo);
-
-            World.InitBlueprint(blueprint);
-            vm.Context.Blueprint = blueprint;
-
-
-            LotController = new UILotControl(vm, World, this);
-            
-            this.AddAt(0, LotController);
-
-           
-            ucp.vm = vm;
-            ucp.SetPanel(2);
-            ucp.SetInLot(true);
-
-            if (m_ZoomLevel > 3) World.Visible = false;
-
-            ZoomLevel = 1;
-
-            var mailbox = vm.Entities.First(x => (x.Object.OBJ.GUID == 0xEF121974 || x.Object.OBJ.GUID == 0x1D95C9B0));
-            World.State.CenterTile = new Vector2(mailbox.VisualPosition.X, mailbox.VisualPosition.Y);
-
-
-            SaveHouseButton.Caption = "Save House";
-            //VMDebug.Visible = true;
-
-            var DirectoryInfo = new DirectoryInfo(GlobalSettings.DocumentsPath + "\\Characters");
-
-            for (int i = 0; i <= DirectoryInfo.GetFiles().Count() - 1; i++)
+            if (ZoomLevel < 4)
             {
-
-                var file = DirectoryInfo.GetFiles()[i];
-                CharacterInfos[i] = file.FullName;
-                Characters.Add(XmlCharacter.Parse(file.FullName));
-                Avatars.Add(activator.CreateAvatar(Convert.ToUInt32(Characters[i].ObjID, 16)));
+                Title.SetTitle(LotController.GetLotTitle());
             }
+        }
 
-            if (Characters.Count > 0)
-            for (int i = 0; i <= Characters.Count - 1; i++)
-            {
-                //if (Characters[i].Name != gizmo.SelectedCharInfo.Name)
-
-                short pos = Convert.ToInt16(56 + i);
-
-                Avatars[i].SetAvatarData(Characters[i]);
-                Avatars[i].Position = LotTilePos.FromBigTile(pos, 33, 1);
-                VMFindLocationFor.FindLocationFor(Avatars[i], mailbox, vm.Context);
-
-            }
-
+        private void VMRefreshed()
+        {
+            if (vm == null) return;
+            LotController.ActiveEntity = null;
+            LotController.RefreshCut();
         }
 
         private void VMDebug_OnButtonClick(UIElement button)
         {
+            /*
             if (vm == null) return;
 
-            //var debugTools = new DebugView(vm);
+            var debugTools = new Simantics(vm);
 
             var window = GameFacade.Game.Window;
-            //debugTools.Show();
-            //debugTools.Location = new System.Drawing.Point(window.ClientBounds.X + window.ClientBounds.Width, window.ClientBounds.Y);
-            //debugTools.UpdateAQLocation();
+            debugTools.Show();
+            debugTools.Location = new System.Drawing.Point(window.ClientBounds.X + window.ClientBounds.Width, window.ClientBounds.Y);
+            debugTools.UpdateAQLocation();
+            */
 
         }
 
-
         private void SaveHouseButton_OnButtonClick(UIElement button)
         {
-
+            if (vm == null) return;
             
-
-            if (InLot) 
+            var exporter = new VMWorldExporter();
+            exporter.SaveHouse(vm, GameFacade.GameFilePath("housedata/blueprints/house_00.xml"));
+            var marshal = vm.Save();
+            Directory.CreateDirectory(Path.Combine(FSOEnvironment.UserDir, "LocalHouse/"));
+            using (var output = new FileStream(Path.Combine(FSOEnvironment.UserDir, "LocalHouse/house_00.fsov"), FileMode.Create))
             {
-                if (vm == null) return;
-
-            
-
-                var exporter = new VMWorldExporter();
-
-                string path = "Houses/" + LotInfo.Name;
-
-                exporter.SaveHouse(vm, path + ".xml", LotInfo.Name);
-
-                Stream file = File.Create(path + ".png");
-                Texture2D thumbnail = World.GetLotThumb(GameFacade.GraphicsDevice);
-
-
-                thumbnail.SaveAsPng(file, thumbnail.Width, thumbnail.Height);
-                file.Close();
-
+                marshal.SerializeInto(new BinaryWriter(output));
             }
-            else
+            if (vm.GlobalLink != null) ((VMTSOGlobalLinkStub)vm.GlobalLink).Database.Save();
+        }
+
+        public void CloseInbox()
+        {
+            this.Remove(Inbox);
+            Inbox = null;
+        }
+
+        public void OpenInbox()
+        {
+            if (Inbox == null)
             {
-                InitTestLot("Houses/house1.xml");
-
-                ZoomLevel = 1;
-
+                Inbox = new UIInbox();
+                this.Add(Inbox);
+                Inbox.X = GlobalSettings.Default.GraphicsWidth / 2 - 332;
+                Inbox.Y = GlobalSettings.Default.GraphicsHeight / 2 - 184;
             }
-       }
-
-
+            //todo, on already visible move to front
+        }
 
         private void MouseHandler(UIMouseEventType type, UpdateState state)
         {
+            
+            //if (CityRenderer != null) CityRenderer.UIMouseEvent(type.ToString()); //all the city renderer needs are events telling it if the mouse is over it or not.
+            //if the mouse is over it, the city renderer will handle the rest.
+        }
+    }
 
+    public class SimConnectStateChange
+    {
+        public int State;
+        public float Progress;
+        public SimConnectStateChange(int state, float progress)
+        {
+            State = state; Progress = progress;
         }
     }
 }

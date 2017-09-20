@@ -4,18 +4,17 @@
  * http://mozilla.org/MPL/2.0/. 
  */
 
-
+using FSO.SimAntics.Model.Routing;
+using FSO.SimAntics.NetPlay.Model;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using tso.world.Model;
-using TSO.SimsAntics.Model.Routing;
-using tso.simantics.Model;
+using FSO.LotView.Model;
 
-namespace TSO.SimsAntics.Model
+namespace FSO.SimAntics.Model
 {
     public struct VMRoomInfo
     {

@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace tso.world.Model
+namespace FSO.LotView.Model
 {
     /// <summary>
     /// Current direction of world/camera/renderer

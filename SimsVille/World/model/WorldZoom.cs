@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace tso.world
+namespace FSO.LotView
 {
     /// <summary>
     /// Zoom level for worlds.

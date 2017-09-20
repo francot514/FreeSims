@@ -1,25 +1,19 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSOVille.Code.UI.Framework;
+using FSO.Client.UI.Framework;
 using Microsoft.Xna.Framework;
-using TSOVille.Code.UI.Framework.Parser;
+using FSO.Client.UI.Framework.Parser;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace TSOVille.Code.UI.Controls
+namespace FSO.Client.UI.Controls
 {
     public class UIGridViewer : UIContainer
     {
@@ -221,7 +215,7 @@ namespace TSOVille.Code.UI.Controls
         private UIGridViewerRender GetCellForItemIndex(int index)
         {
             var offset = m_SelectedPage * ItemsPerPage;
-            if (index < offset || index > offset + ItemsPerPage)
+            if (index < offset || index >= offset + ItemsPerPage)
             {
                 /** Not on screen **/
                 return null;

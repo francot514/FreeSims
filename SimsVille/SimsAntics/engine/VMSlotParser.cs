@@ -9,17 +9,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework;
-using TSO.Files.formats.iff.chunks;
-using tso.world.Model;
-using TSO.Common.utils;
-using TSO.SimsAntics.Model.Routing;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.LotView.Model;
+using FSO.Common.Utils;
+using FSO.SimAntics.Model.Routing;
+using FSO.SimAntics.NetPlay.Model;
 using System.IO;
+using FSO.SimAntics.Marshals.Threads;
 
-namespace TSO.SimsAntics.Engine
+namespace FSO.SimAntics.Engine
 {
     public class VMSlotParser
     {
-        public const double ANGLE_ERROR = 0.01f;
+        public const double ANGLE_ERROR = -0.1f;
 
         public List<VMFindLocationResult> Results;
         public VMRouteFailCode FailCode = VMRouteFailCode.NoValidGoals;
@@ -108,7 +110,19 @@ namespace TSO.SimsAntics.Engine
 
             if ((Flags & SLOTFlags.SnapToDirection) > 0)
             { //snap to the specified direction, on the specified point.
-                if (((int)Flags & 255) == 0) Flags |= SLOTFlags.NORTH;
+                double baseRot;
+                if (Slot.Facing > SLOTFacing.FaceAwayFromObject)
+                {
+                    // bit of a legacy thing here. Facing field did not use to exist,
+                    // which is why SnapToDirection was hacked to use the directional flags.
+                    // now that it exists, it is used instead, to encode the same information...
+                    // just transform back into old format.
+                    Flags |= (SLOTFlags)(1 << (int)Slot.Facing);
+                }
+                else
+                {
+                    if (((int)Flags & 255) == 0) Flags |= SLOTFlags.NORTH;
+                }
 
                 var flagRot = DirectionUtils.PosMod(obj.RadianDirection+FlagsAsRad(Flags), Math.PI*2);
                 if (flagRot > Math.PI) flagRot -= Math.PI * 2;
@@ -118,10 +132,10 @@ namespace TSO.SimsAntics.Engine
             }
             else
             {
-                if (((int)Flags & 255) == 0)
+                if (((int)Flags & 255) == 0 || Slot.Offset != new Vector3())
                 {
                     //exact position
-                    Flags |= (SLOTFlags)255;
+                    //Flags |= (SLOTFlags)255;
 
                     // special case, walk directly to point. 
                     VerifyAndAddLocation(obj, circleCtr, center, Flags, Double.MaxValue, context, caller, float.NaN);
@@ -140,7 +154,7 @@ namespace TSO.SimsAntics.Engine
                         double distance = Math.Sqrt(x * x + y * y);
                         if (distance >= MinProximity - 0.01 && distance <= MaxProximity + 0.01 && (ignoreRooms || context.VM.Context.GetRoomAt(new LotTilePos((short)Math.Round(pos.X * 16), (short)Math.Round(pos.Y * 16), obj.Position.Level)) == room)) //slot is within proximity
                         {
-                            var routeEntryFlags = (GetSearchDirection(center, pos, obj.RadianDirection) & Flags); //the route needs to know what conditions it fulfilled
+                            var routeEntryFlags = (GetSearchDirection(circleCtr, pos, obj.RadianDirection) & Flags); //the route needs to know what conditions it fulfilled
                             if (routeEntryFlags > 0) //within search location
                             {
                                 double baseScore = ((maxScore - Math.Abs(DesiredProximity - distance)) + context.VM.Context.NextRandom(1024) / 1024.0f);
@@ -292,6 +306,34 @@ namespace TSO.SimsAntics.Engine
 
         public VMFindLocationResult() { }
 
- 
+        #region VM Marshalling Functions
+        public VMFindLocationResultMarshal Save()
+        {
+            return new VMFindLocationResultMarshal
+            {
+                RadianDirection = RadianDirection,
+                Position = Position,
+                Score = Score,
+                FaceAnywhere = FaceAnywhere,
+                Chair = (Chair == null) ? (short)0 : Chair.ObjectID,
+                RouteEntryFlags = RouteEntryFlags
+            };
+        }
+
+        public void Load(VMFindLocationResultMarshal input, VMContext context)
+        {
+            RadianDirection = input.RadianDirection;
+            Position = input.Position;
+            Score = input.Score;
+            FaceAnywhere = input.FaceAnywhere;
+            Chair = context.VM.GetObjectById(input.Chair);
+            RouteEntryFlags = input.RouteEntryFlags;
+        }
+
+        public VMFindLocationResult(VMFindLocationResultMarshal input, VMContext context)
+        {
+            Load(input, context);
+        }
+        #endregion
     }
 }

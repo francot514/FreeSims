@@ -8,17 +8,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using tso.world.Model;
-using tso.world.Components;
+using FSO.LotView.Model;
+using FSO.LotView.Components;
 
-namespace TSO.SimsAntics.Utils
+namespace FSO.SimAntics.Utils
 {
     public class VMWorldExporter
     {
 
         public XmlHouseData housedata;
 
-        public void SaveHouse(VM vm, string path, string name)
+        public void SaveHouse(VM vm, string path)
         {
 
             if (vm.Context.Architecture != null)
@@ -28,17 +28,13 @@ namespace TSO.SimsAntics.Utils
                 housedata.World.Floors = new List<XmlHouseDataFloor>();
                 housedata.World.Walls = new List<XmlHouseDataWall>();
                 housedata.Objects = new List<XmlHouseDataObject>();
-                
 
             }
 
-            housedata.Name = name;
             var HouseWidth = vm.Context.Architecture.Width;
             var HouseHeight = vm.Context.Architecture.Height;
             var Levels = vm.Context.Architecture.Stories;
             housedata.Size = HouseWidth;
-            housedata.TimeofDay = vm.Context.Clock.Hours;
-            housedata.Category = vm.Context.LotCategory;
 
             for (short x = 0; x < HouseWidth; x++)
             {
@@ -84,7 +80,7 @@ namespace TSO.SimsAntics.Utils
 
             foreach (var entity in vm.Entities)
             {
-                if (entity != entity.MultitileGroup.BaseObject) continue;
+                if (entity != entity.MultitileGroup.BaseObject || entity is VMAvatar) continue;
 
                 uint GUID = (entity.MultitileGroup.MultiTile)?entity.MasterDefinition.GUID:entity.Object.OBJ.GUID;
 

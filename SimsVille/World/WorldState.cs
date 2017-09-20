@@ -8,12 +8,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Common.rendering.framework.camera;
+using FSO.Common.Rendering.Framework.Camera;
 using Microsoft.Xna.Framework;
-using tso.world.Utils;
+using FSO.LotView.Utils;
 using Microsoft.Xna.Framework.Graphics;
+using FSO.LotView.Components;
 
-namespace tso.world
+namespace FSO.LotView
 {
     /// <summary>
     /// Holds state information retaining to world.
@@ -60,7 +61,6 @@ namespace tso.world
         }
 
         public bool TempDraw; //set for OBJID mode and thumbs
-        public bool DrawRoofs;
         public WorldSpace WorldSpace;
         public _2DWorldBatch _2D;
         public _3DWorldBatch _3D;
@@ -68,8 +68,11 @@ namespace tso.world
         public Color OutsideColor; //temporary to give this to terrain component. in future it will use ambient light texture
         public bool DynamicCutaway;
 
+        public AvatarComponent ScrollAnchor;
+
         private int _WorldSize;
 
+        public bool DrawRoofs;
         /// <summary>
         /// Gets or sets size of world.
         /// </summary>
@@ -224,8 +227,6 @@ namespace tso.world
         public float WorldPxWidth;
         public float WorldPxHeight;
         public float OneUnitDistance;
-
-        
 
         private WorldState State;
 

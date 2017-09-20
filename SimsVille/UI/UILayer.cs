@@ -1,43 +1,34 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-Mats 'Afr0' Vederhus. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TSOVille.Code.UI.Framework;
-using TSOVille.Code.UI.Model;
-using TSOVille.LUI;
-using TSOVille.Code;
-using TSOVille.Code.UI.Controls;
-using TSO.Common.rendering.framework.io;
-using TSO.Common.rendering.framework.model;
-using TSO.Common.rendering.framework;
-using TSOVille.Code.Utils;
+using FSO.Client.UI.Framework;
+using FSO.Client.UI.Controls;
+using FSO.Common.Rendering.Framework.Model;
+using FSO.Common.Rendering.Framework;
 using System.Diagnostics;
-using SimsHomeMaker;
+using FSO.Client.Utils;
+using FSO.Common.Rendering.Framework.IO;
+using FSO.Common.Utils;
+using FSO.Common;
 
-namespace TSOVille
+namespace FSO.Client.UI
 {
     public class UILayer : IGraphicsLayer
     {
         private Microsoft.Xna.Framework.Game m_G;
         private List<UIScreen> m_Screens = new List<UIScreen>();
+        private List<UIExternalContainer> m_ExtContainers = new List<UIExternalContainer>();
         private List<IUIProcess> m_UIProcess = new List<IUIProcess>();
 
-        public UITooltipProperties TooltipProperties;
+        public UITooltipProperties TooltipProperties = new UITooltipProperties();
         public string Tooltip;
 
         private SpriteFont m_SprFontBig;
@@ -49,14 +40,13 @@ namespace TSOVille
 
         //for fps counter
         private Stopwatch fpsStopwatch;
-        private bool DebugOptions;
+
         /// <summary>
         /// Top most UI container
         /// </summary>
         private UIContainer mainUI;
         private UIContainer dialogContainer;
 
-        private UIButton debugButton;
         public InputManager inputManager;
         private UIScreen currentScreen;
 
@@ -133,11 +123,6 @@ namespace TSOVille
             {
                 return currentScreen;
             }
-            set
-            {
-                currentScreen = value;
-            }
-
         }
 
         /// <summary>
@@ -192,7 +177,6 @@ namespace TSOVille
                 SelectionBoxColor = new Color(255, 249, 157)
             };
 
-            DebugOptions = false;
             Tween = new UITween();
             this.AddProcess(Tween);
 
@@ -202,7 +186,7 @@ namespace TSOVille
             mainUI.Add(dialogContainer);
 
             // Create a new SpriteBatch, which can be used to draw textures.
-            spriteBatch = new UISpriteBatch(GraphicsDevice, 3);
+            SpriteBatch = new UISpriteBatch(GraphicsDevice, 3);
 
             GameFacade.OnContentLoaderReady += new BasicEventHandler(GameFacade_OnContentLoaderReady);
             m_G.GraphicsDevice.DeviceReset += new EventHandler<EventArgs>(GraphicsDevice_DeviceReset);
@@ -219,22 +203,23 @@ namespace TSOVille
             /**
              * Add a debug button once the content loader is ready so we can load textures
              */
+            
+            /*
             debugButton = new UIButton()
             {
                 Caption = "Debug",
                 Y = 10,
                 Width = 100,
-                X = GlobalSettings.GraphicsWidth - 110
+                X = GlobalSettings.Default.GraphicsWidth - 110
             };
             debugButton.OnButtonClick += new ButtonClickDelegate(debugButton_OnButtonClick);
             mainUI.Add(debugButton);
+            */
         }
 
         void debugButton_OnButtonClick(UIElement button)
         {
-
-            DebugOptions = !DebugOptions;
-            //GameFacade.Controller.StartDebugTools();
+            GameFacade.Controller.StartDebugTools();
         }
 
         public void AddProcess(IUIProcess Proc)
@@ -263,7 +248,7 @@ namespace TSOVille
             /** Bring dialogs to top **/
             mainUI.Add(dialogContainer);
             /** Bring debug to the top **/
-            mainUI.Add(debugButton);
+            //mainUI.Add(debugButton);
 
             Screen.OnShow();
 
@@ -289,6 +274,24 @@ namespace TSOVille
             }
         }
 
+        public void AddExternal(UIExternalContainer cont)
+        {
+            //todo: init?
+            lock (m_ExtContainers)
+            {
+                m_ExtContainers.Add(cont);
+            }
+        }
+
+        public void RemoveExternal(UIExternalContainer cont)
+        {
+            lock (m_ExtContainers)
+            {
+                //todo: release resources?
+                m_ExtContainers.Remove(cont);
+            }
+        }
+
         public void RemoveCurrent()
         {
             /** Remove all dialogs **/
@@ -302,11 +305,8 @@ namespace TSOVille
             {
                 ((UIScreen)currentScreen).OnHide();
                 mainUI.Remove(currentScreen);
-                currentScreen = null;
             }
         }
-
-        private float m_FPS = 0.0f;
 
         public void Update(UpdateState state)
         {
@@ -323,13 +323,29 @@ namespace TSOVille
             state.MouseEvents.Clear();
 
             state.InputManager = inputManager;
+            Content.Content.Get().Changes.RunResModifications();
             mainUI.Update(state);
+
+            lock (m_ExtContainers)
+            {
+                var extCopy = new List<UIExternalContainer>(m_ExtContainers);
+                foreach (var ext in extCopy)
+                {
+                    lock (ext)
+                    {
+                        ext.Update(state);
+                    }
+                }
+            }
 
             /** Process external update handlers **/
             foreach (var item in m_UIProcess)
             {
                 item.Update(state);
             }
+
+            Tooltip = state.UIState.Tooltip;
+            TooltipProperties = state.UIState.TooltipProperties;
         }
 
         public void PreDraw(UISpriteBatch SBatch)
@@ -337,28 +353,21 @@ namespace TSOVille
             mainUI.PreDraw(SBatch);
         }
 
-        public void Draw(UISpriteBatch SBatch, float FPS)
+        public void Draw(UISpriteBatch SBatch)
         {
-            fpsStopwatch.Stop();
-            m_FPS = (float)(1000.0f / fpsStopwatch.ElapsedMilliseconds);
-            fpsStopwatch.Reset();
-            fpsStopwatch.Start();
-
             mainUI.Draw(SBatch);
 
             if (TooltipProperties.UpdateDead) TooltipProperties.Show = false;
-            if (Tooltip != null && TooltipProperties.Show) DrawTooltip(SBatch, TooltipProperties.Position, TooltipProperties.Opacity);
+            if (Tooltip != null && TooltipProperties.Show) DrawTooltip(SBatch, TooltipProperties.Position, TooltipProperties.Opacity, TooltipProperties.Color);
             TooltipProperties.UpdateDead = true;
-
-            if (DebugOptions)
-            SBatch.DrawString(m_SprFontBig, "FPS: " + FPS.ToString(), new Vector2(0, 0), Color.Red);
         }
 
-        public void DrawTooltip(SpriteBatch batch, Vector2 position, float opacity)
+        public void DrawTooltip(SpriteBatch batch, Vector2 position, float opacity, Color color)
         {
             TextStyle style = TextStyle.DefaultLabel.Clone();
-            style.Color = Color.Black;
-            style.Size = 8;
+            var toolScale = FSOEnvironment.DPIScaleFactor; //*zoom scale?
+            style.Color = color;
+            style.Size = 8 * toolScale;
 
             var scale = new Vector2(1, 1);
             if (style.Scale != 1.0f)
@@ -366,32 +375,31 @@ namespace TSOVille
                 scale = new Vector2(scale.X * style.Scale, scale.Y * style.Scale);
             }
 
-            var wrapped = UIUtils.WordWrap(Tooltip, 290, style, scale); //tooltip max width should be 300. There is a 5px margin on each side.
+            var wrapped = UIUtils.WordWrap(Tooltip, 290*toolScale, style, scale); //tooltip max width should be 300. There is a 5px margin on each side.
 
-            int width = wrapped.MaxWidth + 10;
-            int height = 13 * wrapped.Lines.Count + 4; //13 per line + 4.
+            int width = wrapped.MaxWidth + 10*toolScale;
+            int height = toolScale * 13 * wrapped.Lines.Count + 4; //13 per line + 4.
 
-            position.X = Math.Min(position.X, GlobalSettings.GraphicsWidth - width);
+            position.X = Math.Min(position.X, GlobalSettings.Default.GraphicsWidth*FSOEnvironment.DPIScaleFactor - width);
             position.Y = Math.Max(position.Y, height);
 
-            var whiteRectangle = new Texture2D(batch.GraphicsDevice, 1, 1);
-            whiteRectangle.SetData(new[] { Color.White });
+            var whiteRectangle = TextureGenerator.GetPxWhite(batch.GraphicsDevice);
 
             batch.Draw(whiteRectangle, new Rectangle((int)position.X, (int)position.Y - height, width, height), Color.White*opacity); //note: in XNA4 colours need to be premultiplied
 
             //border
-            batch.Draw(whiteRectangle, new Rectangle((int)position.X, (int)position.Y - height, 1, height), new Color(0, 0, 0, opacity));
-            batch.Draw(whiteRectangle, new Rectangle((int)position.X, (int)position.Y - height, width, 1), new Color(0, 0, 0, opacity));
-            batch.Draw(whiteRectangle, new Rectangle((int)position.X + width, (int)position.Y - height, 1, height), new Color(0, 0, 0, opacity));
-            batch.Draw(whiteRectangle, new Rectangle((int)position.X, (int)position.Y, width, 1), new Color(0, 0, 0, opacity));
+            batch.Draw(whiteRectangle, new Rectangle((int)position.X, (int)position.Y - height, 1, height), color * opacity);
+            batch.Draw(whiteRectangle, new Rectangle((int)position.X, (int)position.Y - height, width, 1), color * opacity);
+            batch.Draw(whiteRectangle, new Rectangle((int)position.X + width, (int)position.Y - height, 1, height), color * opacity);
+            batch.Draw(whiteRectangle, new Rectangle((int)position.X, (int)position.Y, width, 1), color * opacity);
 
             position.Y -= height;
 
             for (int i = 0; i < wrapped.Lines.Count; i++)
             {
                 int thisWidth = (int)(style.SpriteFont.MeasureString(wrapped.Lines[i]).X * scale.X);
-                batch.DrawString(style.SpriteFont, wrapped.Lines[i], position + new Vector2((width - thisWidth) / 2, 0), new Color(0, 0, 0, opacity), 0, Vector2.Zero, scale, SpriteEffects.None, 0);
-                position.Y += 13;
+                batch.DrawString(style.SpriteFont, wrapped.Lines[i], position + new Vector2((width - thisWidth) / 2, 0), color*opacity, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
+                position.Y += 13 * FSOEnvironment.DPIScaleFactor;
             }
         }
 
@@ -449,20 +457,34 @@ namespace TSOVille
 
         #region IGraphicsLayer Members
 
-        UISpriteBatch spriteBatch;
+        public UISpriteBatch SpriteBatch;
 
         public void PreDraw(GraphicsDevice device)
         {
-            spriteBatch.UIBegin(BlendState.AlphaBlend, SpriteSortMode.Immediate);
-            this.PreDraw(spriteBatch);
-            spriteBatch.End();
+            lock (m_ExtContainers)
+            {
+                foreach (var ext in m_ExtContainers)
+                {
+                    lock (ext)
+                    {
+                        if (!ext.HasUpdated) ext.Update(null);
+                        ext.PreDraw(null);
+                        ext.Draw(null);
+                    }
+                }
+            }
+
+            SpriteBatch.UIBegin(BlendState.AlphaBlend, SpriteSortMode.Immediate);
+            this.PreDraw(SpriteBatch);
+            SpriteBatch.End();
         }
 
         public void Draw(GraphicsDevice device)
         {
-            spriteBatch.UIBegin(BlendState.AlphaBlend, SpriteSortMode.Immediate);
-            this.Draw(spriteBatch, m_FPS);
-            spriteBatch.End();
+
+            SpriteBatch.UIBegin(BlendState.AlphaBlend, SpriteSortMode.Immediate);
+            this.Draw(SpriteBatch);
+            SpriteBatch.End();
         }
 
         #endregion

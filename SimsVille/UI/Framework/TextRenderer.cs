@@ -1,24 +1,18 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSOVille.Code.UI.Controls;
+using FSO.Client.UI.Controls;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace TSOVille.Code.UI.Framework
+namespace FSO.Client.UI.Framework
 {
     public class TextRenderer
     {
@@ -62,11 +56,14 @@ namespace TSOVille.Code.UI.Framework
 
             var yPosition = topLeft.Y;
             var numLinesAdded = 0;
+            var realMaxWidth = 0;
             for (var i = 0; i < m_Lines.Count; i++)
             {
                 var lineOffset = (i*m_LineHeight < options.TopLeftIconSpace.Y) ? options.TopLeftIconSpace.X : 0;
                 var line = m_Lines[i];
                 var xPosition = topLeft.X+lineOffset;
+
+                if (line.LineWidth > realMaxWidth) realMaxWidth = (int)line.LineWidth;
 
                 /** Alignment **/
                 if (options.Alignment == TextAlignment.Center)
@@ -90,7 +87,8 @@ namespace TSOVille.Code.UI.Framework
                 position.Y += m_LineHeight;
             }
 
-            result.BoundingBox = new Rectangle((int)topLeft.X, (int)topLeft.Y, (int)options.MaxWidth, (int)yPosition);
+            result.BoundingBox = new Rectangle((int)topLeft.X, (int)topLeft.Y, (int)options.MaxWidth, (int)(yPosition-m_LineHeight));
+            result.MaxWidth = realMaxWidth;
             foreach (var cmd in drawCommands)
             {
                 cmd.Init();
@@ -149,15 +147,24 @@ namespace TSOVille.Code.UI.Framework
                                 currentLineWidth = 0;
                             }
 
+                            // binary search, makes this a bit faster?
+                            // we can safely say that no character is thinner than 4px, so set max substring to maxwidth/4
                             float width = allowedWidth + 1;
-                            int j = word.Length;
-                            while (width > allowedWidth)
+                            int min = 1;
+                            int max = Math.Min(word.Length, (int)allowedWidth / 4);
+                            int mid = (min + max) / 2;
+                            while (max-min > 1)
                             {
-                                width = TextStyle.MeasureString(word.Substring(0, --j)).X;
+                                width = TextStyle.MeasureString(word.Substring(0, mid)).X;                    
+                                if (width > allowedWidth)
+                                    max = mid;
+                                else
+                                    min = mid;
+                                mid = (max + min) / 2;
                             }
-                            currentLine.Append(word.Substring(0, j));
+                            currentLine.Append(word.Substring(0, min));
                             currentLineWidth += width;
-                            word = word.Substring(j);
+                            word = word.Substring(min);
 
                             m_Lines.Add(new UITextEditLine
                             {
@@ -244,6 +251,8 @@ namespace TSOVille.Code.UI.Framework
     {
         public List<ITextDrawCmd> DrawingCommands;
         public Rectangle BoundingBox;
+        public int MaxWidth;
+        public int Lines;
     }
 
     public class TextRendererOptions

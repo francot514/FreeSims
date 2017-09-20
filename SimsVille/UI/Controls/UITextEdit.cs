@@ -1,30 +1,27 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSOVille.Code.UI.Framework;
+using FSO.Client.UI.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using TSOVille.Code.UI.Model;
-using TSOVille.Code.Utils;
-using TSOVille.Code.UI.Framework.Parser;
-using TSO.Common.rendering.framework.model;
-using TSO.Common.rendering.framework.io;
+using FSO.Client.UI.Model;
+using FSO.Client.Utils;
+using FSO.Client.UI.Framework.Parser;
+using FSO.Common.Rendering.Framework.Model;
+using FSO.Common.Rendering.Framework.IO;
+using FSO.Common.Utils;
+using FSO.Common;
+using System.Threading;
 
-namespace TSOVille.Code.UI.Controls
+namespace FSO.Client.UI.Controls
 {
     /// <summary>
     /// Big complex text edit control, used in many places
@@ -118,6 +115,8 @@ namespace TSOVille.Code.UI.Controls
             set
             {
                 m_SBuilder = new StringBuilder(value);
+                SelectionStart = Math.Max(0, Math.Min(SelectionStart, value.Length - 1));
+                SelectionEnd = -1; //todo: move along maybe?
                 m_DrawDirty = true;
             }
         }
@@ -159,7 +158,7 @@ namespace TSOVille.Code.UI.Controls
             set
             {
                 m_FrameColor = value;
-                m_FrameTexture = TextureUtils.TextureFromColor(GameFacade.GraphicsDevice, value);
+                m_FrameTexture = TextureGenerator.GetPxWhite(GameFacade.GraphicsDevice);
             }
         }
 
@@ -209,7 +208,7 @@ namespace TSOVille.Code.UI.Controls
         /// </summary>
         public float Width
         {
-            get { return m_Height; }
+            get { return m_Width; }
         }
         
         /// <summary>
@@ -261,6 +260,7 @@ namespace TSOVille.Code.UI.Controls
         /**
          * Interaction Functionality
          */
+         
         public void OnMouseEvent(UIMouseEventType evt, UpdateState state)
         {
             if (m_IsReadOnly) { return; }
@@ -298,6 +298,7 @@ namespace TSOVille.Code.UI.Controls
         #region IFocusableUI Members
 
         private bool IsFocused;
+        private string QueuedChange;
         public void OnFocusChanged(FocusEvent newFocus)
         {
             IsFocused = newFocus == FocusEvent.FocusIn;
@@ -305,6 +306,10 @@ namespace TSOVille.Code.UI.Controls
             {
                 m_cursorBlink = true;
                 m_cursorBlinkLastTime = GameFacade.LastUpdateState.Time.TotalGameTime.Ticks;
+                if (FSOEnvironment.SoftwareKeyboard)
+                {
+                    
+                }
             }
             else
             {
@@ -329,6 +334,16 @@ namespace TSOVille.Code.UI.Controls
             if (!Visible) { return; }
 
             base.Update(state);
+            lock (this)
+            {
+                if (QueuedChange != null)
+                {
+                    CurrentText = QueuedChange;
+                    QueuedChange = null;
+                    if (OnChange != null) OnChange(this);
+                }
+            }
+            if (FSOEnvironment.SoftwareKeyboard && state.InputManager.GetFocus() == this) state.InputManager.SetFocus(null);
             if (m_IsReadOnly) { return; }
 
             if (FlashOnEmpty)
@@ -766,8 +781,8 @@ namespace TSOVille.Code.UI.Controls
                     {
                         m_DrawCmds.Add(new TextDrawCmd_SelectionBox
                         {
-                            BlendColor = new Color(0xFF, 0xFF, 0xFF, 200),
-                            Texture = TextureUtils.TextureFromColor(GameFacade.GraphicsDevice, TextStyle.SelectionBoxColor),
+                            BlendColor = TextStyle.SelectionBoxColor,
+                            Texture = TextureGenerator.GetPxWhite(GameFacade.GraphicsDevice),
                             Position = segmentPosition,
                             Scale = new Vector2(segmentSize.X, m_LineHeight) * _Scale
                         });
@@ -823,7 +838,8 @@ namespace TSOVille.Code.UI.Controls
                 {
                     Scale = new Vector2(_Scale.X, m_LineHeight * _Scale.Y),
                     Position = LocalPoint(cursorPosition),
-                    Texture = TextureUtils.TextureFromColor(GameFacade.GraphicsDevice, TextStyle.CursorColor)
+                    Texture = TextureGenerator.GetPxWhite(GameFacade.GraphicsDevice),
+                    Color = TextStyle.CursorColor
                 });
             }
 
@@ -959,6 +975,7 @@ namespace TSOVille.Code.UI.Controls
         /// <param name="batch"></param>
         public override void Draw(UISpriteBatch batch)
         {
+            if (m_Slider != null) m_Slider.Visible = Visible;
             if (!Visible) { return; }
 
             if (m_DrawDirty)
@@ -981,7 +998,7 @@ namespace TSOVille.Code.UI.Controls
              */
             if (m_frameBlinkOn && m_frameBlink)
             {
-                DrawingUtils.DrawBorder(batch, LocalRect(0, 0, m_Width, m_Height), 1, m_FrameTexture, Color.White);
+                DrawingUtils.DrawBorder(batch, LocalRect(0, 0, m_Width, m_Height), 1, m_FrameTexture, m_FrameColor);
             }
             
             /**
@@ -1111,12 +1128,33 @@ namespace TSOVille.Code.UI.Controls
 
         #region Scrollbar
 
+        [UIAttribute("scrollbarImage")]
+        public Texture2D ScrollbarImage { get; set; }
+
+        [UIAttribute("scrollbarGutter")]
+        public int ScrollbarGutter { get; set; }
+
         private UISlider m_Slider;
 
         public void AttachSlider(UISlider slider)
         {
             m_Slider = slider;
             m_Slider.OnChange += new ChangeDelegate(m_Slider_OnChange);
+        }
+
+        public void InitDefaultSlider()
+        {
+            m_Slider = new UISlider();
+            m_Slider.Texture = ScrollbarImage;
+            AttachSlider(m_Slider);
+            PositionChildSlider();
+            Parent.Add(m_Slider);
+        }
+
+        public void PositionChildSlider()
+        {
+            m_Slider.Position = this.Position + new Vector2(this.Width + ScrollbarGutter, 0);
+            m_Slider.SetSize(1, this.Height);
         }
 
         void m_Slider_OnChange(UIElement element)

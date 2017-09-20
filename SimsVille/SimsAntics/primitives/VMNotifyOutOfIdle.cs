@@ -8,10 +8,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMNotifyOutOfIdle : VMPrimitiveHandler
     {

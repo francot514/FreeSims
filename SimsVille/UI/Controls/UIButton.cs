@@ -1,13 +1,7 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-Mats 'Afr0' Vederhus. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
@@ -16,16 +10,17 @@ using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using TSOVille.Code.UI.Framework;
-using TSOVille.Code.Utils;
-using TSOVille.Code.UI.Framework.Parser;
-using TSOVille.Code.UI.Model;
-using TSOVille.Code;
-using TSO.Common.rendering.framework.io;
-using TSO.Common.rendering.framework.model;
+using FSO.Client.UI.Framework;
+using FSO.Client.Utils;
+using FSO.Client.UI.Framework.Parser;
+using FSO.Client.UI.Model;
+using FSO.Client;
+using FSO.Common.Rendering.Framework.IO;
+using FSO.Common.Rendering.Framework.Model;
+using TSO.HIT;
+using FSO.Client.GameContent;
 
-
-namespace TSOVille.LUI
+namespace FSO.Client.UI.Controls
 {
     public delegate void ButtonClickDelegate(UIElement button);
 
@@ -49,15 +44,23 @@ namespace TSOVille.LUI
 
         private Rectangle m_Bounds;
         private int m_Width;
+        private int m_Height;
         private int m_WidthDiv3;
         private bool m_Disabled;
         private bool m_HighlightNextDraw;
         private float m_ResizeWidth;
         private int m_ImageStates = 4;
+        private int m_ButtonFrames = 1;
+        private int m_ButtonFrame = 0;
         private int m_AutoMargins = -1;
         private UITooltipHandler m_TooltipHandler;
 
         private UIElementState m_State = UIElementState.Normal;
+
+        public bool Hovered
+        {
+            get { return m_isOver; }
+        }
 
         /// <summary>
         /// Sets the margins to be used for automatic button widths. -1 (default) uses the width of the button ends.
@@ -93,7 +96,7 @@ namespace TSOVille.LUI
             this.Texture = Texture;
 
             ClickHandler =
-                ListenForMouse(new Rectangle(0, 0, m_Width, m_Texture.Height), new UIMouseEvent(OnMouseEvent));
+                ListenForMouse(new Rectangle(0, 0, m_Width, m_Height), new UIMouseEvent(OnMouseEvent));
 
             m_TooltipHandler = UIUtils.GiveTooltip(this); //buttons can have tooltips
         }
@@ -103,7 +106,7 @@ namespace TSOVille.LUI
         {
             get
             {
-                return new Vector2(m_WidthDiv3, m_Texture.Height);
+                return new Vector2(m_WidthDiv3, m_Height);
             }
             set
             {
@@ -122,12 +125,40 @@ namespace TSOVille.LUI
             {
                 m_ImageStates = value; //recalculate button offsets
                 m_Width = m_Texture.Width/m_ImageStates;
+                m_Height = m_Texture.Height / m_ButtonFrames;
                 m_WidthDiv3 = m_Width / 3;
 
                 if (ClickHandler != null)
                 {
                     ClickHandler.Region.Width = (m_ResizeWidth == 0) ? m_Width : (int)m_ResizeWidth;
-                    ClickHandler.Region.Height = m_Texture.Height;
+                    ClickHandler.Region.Height = m_Height;
+                }
+            }
+        }
+
+        public int ButtonFrame
+        {
+            get { return m_ButtonFrame; }
+            set { m_ButtonFrame = value; }
+        }
+        
+        public int ButtonFrames
+        {
+            get
+            {
+                return m_ButtonFrames;
+            }
+            set
+            {
+                m_ButtonFrames = value; //recalculate button offsets
+                m_Width = m_Texture.Width / m_ImageStates;
+                m_Height = m_Texture.Height / m_ButtonFrames;
+                m_WidthDiv3 = m_Width / 3;
+
+                if (ClickHandler != null)
+                {
+                    ClickHandler.Region.Width = (m_ResizeWidth == 0) ? m_Width : (int)m_ResizeWidth;
+                    ClickHandler.Region.Height = m_Height;
                 }
             }
         }
@@ -184,12 +215,13 @@ namespace TSOVille.LUI
 
                 m_Width = m_Texture.Width / m_ImageStates;
                 m_WidthDiv3 = m_Width / 3;
+                m_Height = m_Texture.Height / m_ButtonFrames;
                 m_CurrentFrame = 0;
 
                 if (ClickHandler != null)
                 {
                     ClickHandler.Region.Width = (m_ResizeWidth == 0) ? m_Width : (int)m_ResizeWidth;
-                    ClickHandler.Region.Height = m_Texture.Height;
+                    ClickHandler.Region.Height = m_Height;
                 }
             } 
         }
@@ -307,7 +339,7 @@ namespace TSOVille.LUI
                         if (OnButtonClick != null)
                         {
                             OnButtonClick(this);
-                            //HITVM.Get().PlaySoundEvent(UISounds.Click);
+                            HITVM.Get().PlaySoundEvent(UISounds.Click);
                         }
                     }
                     m_isDown = false;
@@ -339,24 +371,24 @@ namespace TSOVille.LUI
             }
             frame = Math.Min(m_ImageStates - 1, frame);
             int offset = frame * m_Width;
-
+            int vOffset = m_ButtonFrame * m_Height;
 
             if (Width != 0)
             {
                 //TODO: Work out these numbers once & cache them. Invalidate when texture or width changes
 
                 /** left **/
-                base.DrawLocalTexture(SBatch, m_Texture, new Rectangle(offset, 0, m_WidthDiv3, m_Texture.Height), Vector2.Zero);
+                base.DrawLocalTexture(SBatch, m_Texture, new Rectangle(offset, vOffset, m_WidthDiv3, m_Height), Vector2.Zero);
 
                 /** center **/
-                base.DrawLocalTexture(SBatch, m_Texture, new Rectangle(offset + m_WidthDiv3, 0, m_WidthDiv3, m_Texture.Height), new Vector2(m_WidthDiv3, 0), new Vector2( (Width - (m_WidthDiv3 * 2)) / m_WidthDiv3, 1.0f));
+                base.DrawLocalTexture(SBatch, m_Texture, new Rectangle(offset + m_WidthDiv3, vOffset, m_WidthDiv3, m_Height), new Vector2(m_WidthDiv3, 0), new Vector2( (Width - (m_WidthDiv3 * 2)) / m_WidthDiv3, 1.0f));
 
                 /** right **/
-                base.DrawLocalTexture(SBatch, m_Texture, new Rectangle(offset + (m_Width - m_WidthDiv3), 0, m_WidthDiv3, m_Texture.Height), new Vector2(Width - m_WidthDiv3, 0));
+                base.DrawLocalTexture(SBatch, m_Texture, new Rectangle(offset + (m_Width - m_WidthDiv3), vOffset, m_WidthDiv3, m_Height), new Vector2(Width - m_WidthDiv3, 0));
             }
             else
             {
-                base.DrawLocalTexture(SBatch, m_Texture, new Rectangle(offset, 0, m_Width, m_Texture.Height), Vector2.Zero);
+                base.DrawLocalTexture(SBatch, m_Texture, new Rectangle(offset, vOffset, m_Width, m_Height), Vector2.Zero);
             }
 
             /**

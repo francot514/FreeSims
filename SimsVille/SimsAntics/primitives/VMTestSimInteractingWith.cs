@@ -8,17 +8,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMTestSimInteractingWith : VMPrimitiveHandler
     {
         public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
             //if caller's active interaction is with stack object, return true.
-            return (context.Caller.Thread.Queue[0].Callee == context.StackObject)?VMPrimitiveExitCode.GOTO_TRUE:VMPrimitiveExitCode.GOTO_FALSE;
+            var callerActive = context.Caller.Thread.Stack.LastOrDefault();
+            return (callerActive != null && callerActive.ActionTree && context.Caller.Thread.Queue[0].Callee == context.StackObject) 
+                ? VMPrimitiveExitCode.GOTO_TRUE:VMPrimitiveExitCode.GOTO_FALSE;
         }
     }
 

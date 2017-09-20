@@ -1,27 +1,19 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-RHY3756547. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSOVille.Code.UI.Framework;
+using FSO.Client.UI.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TSOVille.LUI;
-using TSOVille.Code.UI.Controls;
-using Microsoft.Xna.Framework;
-using SimsHomeMaker;
+using FSO.Client.UI.Controls;
+using FSO.Common;
 
-namespace TSOVille.Code.UI.Panels
+namespace FSO.Client.UI.Panels
 {
 
     /// <summary>
@@ -48,17 +40,7 @@ namespace TSOVille.Code.UI.Panels
         {
             var script = this.RenderScript("optionspanel.uis");
 
-            /*var bgimage = new TSOVille.Code.UI.Framework.Parser.UINode();
-            var imageAtts = new Dictionary<string,string>();
-            imageAtts.Add("assetID", (GlobalSettings.GraphicsWidth < 1024)?"0x000000D800000002":"0x0000018300000002");
-            bgimage.ID = "BackgroundGameImage";
-
-            bgimage.AddAtts(imageAtts);
-            script.DefineImage(bgimage);*/
-
-            //we really need to figure out how graphics reset works to see what and how we need to reload things
-
-            Background = new UIImage(GetTexture((GlobalSettings.GraphicsWidth < 1024) ? (ulong)0x000000D800000002 : (ulong)0x0000018300000002));
+            Background = new UIImage(GetTexture((FSOEnvironment.UIZoomFactor>1f || GlobalSettings.Default.GraphicsWidth < 1024) ? (ulong)0x000000D800000002 : (ulong)0x0000018300000002));
             this.AddAt(0, Background);
             Background.BlockInput();
 
@@ -122,8 +104,7 @@ namespace TSOVille.Code.UI.Panels
 
         private void ExitButton_OnButtonClick(UIElement button)
         {
-            GameFacade.Kill();
-            //UIScreen.ShowDialog(new UIExitDialog(), true);
+            UIScreen.ShowDialog(new UIExitDialog(), true);
         }
 
         private void GraphicsButton_OnButtonClick(UIElement button)
@@ -178,13 +159,12 @@ namespace TSOVille.Code.UI.Panels
         {
             UISlider elm = (UISlider)slider;
 
-            //if (elm == FXSlider) GlobalSettings.FXVolume = (byte)elm.Value;
-            //else if (elm == MusicSlider) GlobalSettings.MusicVolume = (byte)elm.Value;
-            //else if (elm == VoxSlider) GlobalSettings.VoxVolume = (byte)elm.Value;
-            //else if (elm == AmbienceSlider) GlobalSettings.AmbienceVolume = (byte)elm.Value;
+            if (elm == FXSlider) GlobalSettings.Default.FXVolume = (byte)elm.Value;
+            else if (elm == MusicSlider) GlobalSettings.Default.MusicVolume = (byte)elm.Value;
+            else if (elm == VoxSlider) GlobalSettings.Default.VoxVolume = (byte)elm.Value;
+            else if (elm == AmbienceSlider) GlobalSettings.Default.AmbienceVolume = (byte)elm.Value;
 
-            //GlobalSettings.Save();
-            //GameFacade.SoundManager.UpdateMusicVolume();
+            GlobalSettings.Default.Save();
         }
     }
 
@@ -196,7 +176,6 @@ namespace TSOVille.Code.UI.Panels
         public UIButton LightingCheckButton { get; set; }
         public UIButton UIEffectsCheckButton { get; set; }
         public UIButton EdgeScrollingCheckButton { get; set; }
-        public UIButton FullScreenCheckButton;
 
         // High-Medium-Low detail buttons:
 
@@ -218,16 +197,11 @@ namespace TSOVille.Code.UI.Panels
             UIEffectsLabel.Alignment = TextAlignment.Middle;
             CharacterDetailLabel.Caption = "Shadow Detail";
 
-            FullScreenCheckButton = new UIButton();
-            FullScreenCheckButton.Caption = "Full Screen";
-            FullScreenCheckButton.Position = new Vector2(245, 281);
-
             AntiAliasCheckButton.OnButtonClick += new ButtonClickDelegate(FlipSetting);
             ShadowsCheckButton.OnButtonClick += new ButtonClickDelegate(FlipSetting);
             LightingCheckButton.OnButtonClick += new ButtonClickDelegate(FlipSetting);
             UIEffectsCheckButton.OnButtonClick += new ButtonClickDelegate(FlipSetting);
             EdgeScrollingCheckButton.OnButtonClick += new ButtonClickDelegate(FlipSetting);
-            FullScreenCheckButton.OnButtonClick += new ButtonClickDelegate(FlipSetting);
 
             CharacterDetailLowButton.OnButtonClick += new ButtonClickDelegate(ChangeShadowDetail);
             CharacterDetailMedButton.OnButtonClick += new ButtonClickDelegate(ChangeShadowDetail);
@@ -238,20 +212,39 @@ namespace TSOVille.Code.UI.Panels
 
         private void FlipSetting(UIElement button)
         {
-            
+            var settings = GlobalSettings.Default;
+            if (button == AntiAliasCheckButton && !GameFacade.DirectX) settings.AntiAlias = !(settings.AntiAlias);
+            else if (button == ShadowsCheckButton) settings.SimulationShadows = !(settings.SimulationShadows);
+            else if (button == LightingCheckButton) settings.Lighting = !(settings.Lighting);
+            else if (button == UIEffectsCheckButton) settings.CityShadows = !(settings.CityShadows);
+            else if (button == EdgeScrollingCheckButton) settings.EdgeScroll = !(settings.EdgeScroll);
+            GlobalSettings.Default.Save();
             SettingsChanged();
         }
 
         private void ChangeShadowDetail(UIElement button)
         {
-           
-            //GlobalSettings.Save();
+            var settings = GlobalSettings.Default;
+            if (button == CharacterDetailLowButton) settings.ShadowQuality = 512;
+            else if (button == CharacterDetailMedButton) settings.ShadowQuality = 1024;
+            else if (button == CharacterDetailHighButton) settings.ShadowQuality = 2048;
+            GlobalSettings.Default.Save();
             SettingsChanged();
         }
 
         private void SettingsChanged()
         {
-            
+            var settings = GlobalSettings.Default;
+            AntiAliasCheckButton.Selected = settings.AntiAlias; //antialias for render targets
+            ShadowsCheckButton.Selected = settings.SimulationShadows;
+            LightingCheckButton.Selected = settings.Lighting;
+            UIEffectsCheckButton.Selected = settings.CityShadows; //instead of being able to disable UI transparency, you can toggle City Shadows.
+            EdgeScrollingCheckButton.Selected = settings.EdgeScroll;
+
+            // Character detail changed for city shadow detail.
+            CharacterDetailLowButton.Selected = (settings.ShadowQuality <= 512);
+            CharacterDetailMedButton.Selected = (settings.ShadowQuality > 512 && settings.ShadowQuality <= 1024);
+            CharacterDetailHighButton.Selected = (settings.ShadowQuality > 1024);
 
             //not used right now! We need to determine if this should be ingame or not... It affects the density of grass blades on the simulation terrain.
             TerrainDetailLowButton.Disabled = true;

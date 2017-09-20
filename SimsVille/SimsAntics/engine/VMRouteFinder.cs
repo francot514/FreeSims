@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework;
-using TSO.Files.formats.iff.chunks;
+using FSO.Files.Formats.IFF.Chunks;
 
 namespace TSO.Simantics.engine
 {

@@ -1,20 +1,25 @@
-﻿using System;
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+If a copy of the MPL was not distributed with this file, You can obtain one at
+http://mozilla.org/MPL/2.0/.
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSOVille.Code.UI.Framework;
-using TSOVille.Code.UI.Controls;
+using FSO.Client.UI.Framework;
+using FSO.Client.UI.Controls;
 using Microsoft.Xna.Framework.Graphics;
-using TSO.SimsAntics;
-using TSOVille.LUI;
-using TSOVille.Code.UI.Controls.Catalog;
-using tso.world.Model;
-using TSO.SimsAntics.Entities;
-using TSO.Common.rendering.framework.model;
+using FSO.SimAntics;
+using FSO.Client.UI.Controls.Catalog;
+using FSO.LotView.Model;
+using FSO.SimAntics.Entities;
+using FSO.Common.Rendering.Framework.Model;
 using Microsoft.Xna.Framework.Input;
-using SimsHomeMaker;
+using FSO.Common;
 
-namespace TSOVille.Code.UI.Panels
+namespace FSO.Client.UI.Panels
 {
     public class UIBuyMode : UIDestroyablePanel
     {
@@ -24,7 +29,7 @@ namespace TSOVille.Code.UI.Panels
         public Texture2D inventoryVisitorBackground { get; set; }
 
         public VM vm;
-        //public VMAvatar SelectedAvatar;
+        public VMAvatar SelectedAvatar;
 
         //roommate catalog elements
         public UIImage CatBg;
@@ -85,9 +90,10 @@ namespace TSOVille.Code.UI.Panels
             Holder = LotController.ObjectHolder;
             QueryPanel = LotController.QueryPanel;
 
-            var script = this.RenderScript("buypanel"+((GlobalSettings.GraphicsWidth < 1024)?"":"1024")+".uis");
+            var useSmall = (FSOEnvironment.UIZoomFactor > 1f || GlobalSettings.Default.GraphicsWidth < 1024);
+            var script = this.RenderScript("buypanel"+(useSmall?"":"1024")+".uis");
 
-            Background = new UIImage(GetTexture((GlobalSettings.GraphicsWidth < 1024) ? (ulong)0x000000D800000002 : (ulong)0x0000018300000002));
+            Background = new UIImage(GetTexture(useSmall ? (ulong)0x000000D800000002 : (ulong)0x0000018300000002));
             Background.Y = 0;
             Background.BlockInput();
             this.AddAt(0, Background);
@@ -104,7 +110,7 @@ namespace TSOVille.Code.UI.Panels
             NonRMInventoryCatBg.Position = new Microsoft.Xna.Framework.Vector2(68, 5);
             this.AddAt(3, InventoryCatBg);
 
-            Catalog = new UICatalog((GlobalSettings.GraphicsWidth < 1024) ? 14 : 24);
+            Catalog = new UICatalog(useSmall ? 14 : 24);
             Catalog.OnSelectionChange += new CatalogSelectionChangeDelegate(Catalog_OnSelectionChange);
             Catalog.Position = new Microsoft.Xna.Framework.Vector2(275, 7);
             this.Add(Catalog);
@@ -155,6 +161,7 @@ namespace TSOVille.Code.UI.Panels
             Holder.OnPickup += HolderPickup;
             Holder.OnDelete += HolderDelete;
             Holder.OnPutDown += HolderPutDown;
+            Add(QueryPanel);
         }
 
         public override void Destroy()
@@ -168,7 +175,7 @@ namespace TSOVille.Code.UI.Panels
             {
                 //delete object that hasn't been placed yet
                 //TODO: all holding objects should obviously just be ghosts.
-                Holder.Holding.Group.Delete(vm.Context);
+                //Holder.Holding.Group.Delete(vm.Context);
                 Holder.ClearSelected();
                 QueryPanel.Active = false;
             }
@@ -179,7 +186,7 @@ namespace TSOVille.Code.UI.Panels
             QueryPanel.Mode = 0;
             QueryPanel.Active = true;
             QueryPanel.Tab = 1;
-            QueryPanel.SetInfo(holding.Group.BaseObject, holding.IsBought);
+            QueryPanel.SetInfo(LotController.vm, holding.Group.BaseObject, holding.IsBought);
         }
         private void HolderPutDown(UIObjectSelection holding, UpdateState state)
         {
@@ -189,7 +196,7 @@ namespace TSOVille.Code.UI.Panels
                     //place another
                     var prevDir = holding.Dir;
                     Catalog_OnSelectionChange(OldSelection);
-                    Holder.Holding.Dir = prevDir;
+                    if (Holder.Holding != null) Holder.Holding.Dir = prevDir;
                 } else {
                     Catalog.SetActive(OldSelection, false);
                     OldSelection = -1;
@@ -210,42 +217,31 @@ namespace TSOVille.Code.UI.Panels
 
         public override void Update(UpdateState state)
         {
-            if (QueryPanel.Mode == 0 && QueryPanel.Active)
-            {
-                if (Opacity > 0) Opacity -= 1f / 20f;
-                else
-                {
-                    Opacity = 0;
-                    Visible = false;
-                }
-            }
-            else
-            {
-                Visible = true;
-                if (Opacity < 1) Opacity += 1f / 20f;
-                else Opacity = 1;
-            }
+
+            if (LotController.ActiveEntity != null) Catalog.Budget = (int)LotController.ActiveEntity.TSOState.Budget.Value;
             base.Update(state);
         }
 
         void Catalog_OnSelectionChange(int selection)
         {
-            if (BuyItem != null && Holder.Holding != null && BuyItem == Holder.Holding.Group) {
-                BuyItem.Delete(vm.Context);
+            var item = CurrentCategory[selection];
+
+            if (LotController.ActiveEntity != null && item.Price > LotController.ActiveEntity.TSOState.Budget.Value)
+            {
+                TSO.HIT.HITVM.Get().PlaySoundEvent(Model.UISounds.Error);
+                return;
             }
+
             if (OldSelection != -1) Catalog.SetActive(OldSelection, false);
             Catalog.SetActive(selection, true);
-            BuyItem = vm.Context.CreateObjectInstance(CurrentCategory[selection].GUID, LotTilePos.OUT_OF_WORLD, Direction.NORTH);
-
-            if (BuyItem != null)
-            {
-            QueryPanel.SetInfo(BuyItem.Objects[0], false);
+            BuyItem = vm.Context.CreateObjectInstance(item.GUID, LotTilePos.OUT_OF_WORLD, Direction.NORTH, true);
+            if (BuyItem == null) return; //uh
+            QueryPanel.SetInfo(LotController.vm, BuyItem.Objects[0], false);
             QueryPanel.Mode = 1;
             QueryPanel.Tab = 0;
             QueryPanel.Active = true;
             Holder.SetSelected(BuyItem);
             OldSelection = selection;
-            }
         }
 
         public void PageSlider(UIElement element)

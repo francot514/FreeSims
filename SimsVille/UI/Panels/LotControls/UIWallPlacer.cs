@@ -1,27 +1,35 @@
-﻿using Microsoft.Xna.Framework;
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+If a copy of the MPL was not distributed with this file, You can obtain one at
+http://mozilla.org/MPL/2.0/.
+*/
+
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using tso.world;
-using tso.world.Model;
-using TSO.Common.rendering.framework.model;
-using TSO.Common.utils;
+using FSO.LotView;
+using FSO.LotView.Components;
+using FSO.LotView.Model;
+using FSO.Common.Rendering.Framework.Model;
+using FSO.Common.Utils;
+using TSO.HIT;
+using FSO.SimAntics;
+using FSO.SimAntics.Entities;
+using FSO.SimAntics.Model;
+using FSO.SimAntics.NetPlay.Model.Commands;
+using FSO.Client.UI.Model;
+using FSO.Common;
 
-using TSO.SimsAntics;
-using TSO.SimsAntics.Entities;
-using TSO.SimsAntics.Model;
-using TSOVille.Code.UI.Model;
-using tso.world.Components;
-
-namespace TSOVille.Code.UI.Panels.LotControls
+namespace FSO.Client.UI.Panels.LotControls
 {
     public class UIWallPlacer : UICustomLotControl
     {
         VMMultitileGroup WallCursor;
         VM vm;
-        World World;
+        LotView.World World;
         UILotControl Parent;
 
         private bool Drawing;
@@ -50,7 +58,7 @@ namespace TSOVille.Code.UI.Panels.LotControls
             new Point(1, -1),
         };
 
-        public UIWallPlacer(VM vm, World world, UILotControl parent, List<int> parameters)
+        public UIWallPlacer(VM vm, LotView.World world, UILotControl parent, List<int> parameters)
         {
             Pattern = (ushort)parameters[0];
             Style = (ushort)parameters[1];
@@ -67,7 +75,7 @@ namespace TSOVille.Code.UI.Panels.LotControls
             this.vm = vm;
             World = parent.World;
             Parent = parent;
-            WallCursor = vm.Context.CreateObjectInstance(0x00000439, LotTilePos.OUT_OF_WORLD, tso.world.Model.Direction.NORTH);
+            WallCursor = vm.Context.CreateObjectInstance(0x00000439, LotTilePos.OUT_OF_WORLD, FSO.LotView.Model.Direction.NORTH, true);
 
             ((ObjectComponent)WallCursor.Objects[0].WorldUI).ForceDynamic = true;
         }
@@ -86,9 +94,9 @@ namespace TSOVille.Code.UI.Panels.LotControls
         {
             if (!Drawing)
             {
-                //HITVM.Get().PlaySoundEvent(UISounds.BuildDragToolDown);
+                HITVM.Get().PlaySoundEvent(UISounds.BuildDragToolDown);
                 Drawing = true;
-                var tilePos = World.State.WorldSpace.GetTileAtPosWithScroll(new Vector2(state.MouseState.X, state.MouseState.Y));
+                var tilePos = World.State.WorldSpace.GetTileAtPosWithScroll(new Vector2(state.MouseState.X, state.MouseState.Y) / FSOEnvironment.DPIScaleFactor);
                 StartPosition = new Point((int)Math.Round(tilePos.X), (int)Math.Round(tilePos.Y));
             }
         }
@@ -128,18 +136,23 @@ namespace TSOVille.Code.UI.Panels.LotControls
                             VMArchitectureCommandType.WALL_DELETE:VMArchitectureCommandType.WALL_LINE,
                         level = World.State.Level, pattern = Pattern, style = Style, x = StartPosition.X, y = StartPosition.Y, x2 = DrawLength, y2 = DrawDir });
                 }
-                if (cmds.Count > 0)
+                if (cmds.Count > 0 && (Parent.ActiveEntity == null || vm.Context.Architecture.LastTestCost <= Parent.ActiveEntity.TSOState.Budget.Value))
                 {
-                    vm.Context.Architecture.RunCommands(cmds);
-                    //HITVM.Get().PlaySoundEvent(UISounds.BuildDragToolPlace);
-                } 
+                    vm.SendCommand(new VMNetArchitectureCmd
+                    {
+                        Commands = new List<VMArchitectureCommand>(cmds)
+                    });
+
+                    //vm.Context.Architecture.RunCommands(cmds);
+                    HITVM.Get().PlaySoundEvent(UISounds.BuildDragToolPlace);
+                } else HITVM.Get().PlaySoundEvent(UISounds.BuildDragToolUp);
             }
             Drawing = false;
         }
 
         public void Update(UpdateState state, bool scrolled)
         {
-            var tilePos = World.State.WorldSpace.GetTileAtPosWithScroll(new Vector2(state.MouseState.X, state.MouseState.Y));
+            var tilePos = World.State.WorldSpace.GetTileAtPosWithScroll(new Vector2(state.MouseState.X, state.MouseState.Y) / FSOEnvironment.DPIScaleFactor);
             Point cursor = new Point((int)Math.Round(tilePos.X), (int)Math.Round(tilePos.Y));
 
             var cmds = vm.Context.Architecture.Commands;
@@ -177,9 +190,31 @@ namespace TSOVille.Code.UI.Panels.LotControls
                 if (!WasDown || !cmds[0].Equals(LastCmd))
                 {
                     vm.Context.Architecture.SignalRedraw();
-                    LastCmd = cmds[0];
                     WasDown = true;
                 }
+
+                var cost = vm.Context.Architecture.LastTestCost;
+                if (cost != 0)
+                {
+                    var disallowed = Parent.ActiveEntity != null && cost > Parent.ActiveEntity.TSOState.Budget.Value;
+                    state.UIState.TooltipProperties.Show = true;
+                    state.UIState.TooltipProperties.Color = disallowed?Color.DarkRed:Color.Black;
+                    state.UIState.TooltipProperties.Opacity = 1;
+                    state.UIState.TooltipProperties.Position = new Vector2(state.MouseState.X, state.MouseState.Y);
+                    state.UIState.Tooltip = (cost < 0) ? ("-$" + (-cost)) : ("$" + cost);
+                    state.UIState.TooltipProperties.UpdateDead = false;
+
+                    if (!cmds[0].Equals(LastCmd) && disallowed)
+                    {
+                        HITVM.Get().PlaySoundEvent(UISounds.Error);
+                    }
+                }
+                else
+                {
+                    state.UIState.TooltipProperties.Show = false;
+                    state.UIState.TooltipProperties.Opacity = 0;
+                }
+                LastCmd = cmds[0];
             }
             else
             {
@@ -200,6 +235,8 @@ namespace TSOVille.Code.UI.Panels.LotControls
         public void Release()
         {
             WallCursor.Delete(vm.Context);
+            vm.Context.Architecture.Commands.Clear();
+            vm.Context.Architecture.SignalRedraw();
         }
     }
 }

@@ -1,13 +1,7 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
@@ -15,15 +9,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
-using TSOVille.LUI;
-using TSOVille.Code.UI.Controls;
-using TSOVille.Code.UI.Framework;
-using TSOVille.Code.UI.Model;
-using TSOVille.Code.Utils;
-using TSO.Common.rendering.framework.model;
-using SimsHomeMaker;
+using FSO.Client.UI.Controls;
+using FSO.Client.UI.Framework;
+using FSO.Client.UI.Model;
+using FSO.Client.Utils;
+using FSO.Common.Rendering.Framework.Model;
 
-namespace TSOVille.Code.UI.Panels
+namespace FSO.Client.UI.Panels
 {
     public class UIMessage : UIContainer
     {
@@ -146,12 +138,37 @@ namespace TSOVille.Code.UI.Panels
 
         private void SendMessage(UIElement button)
         {
-            
+            if (MessageType != UIMessageType.IM) return;
+            SendMessageButton.Disabled = true;
+            if (MessageTextEdit.CurrentText.Length == 0) return; //if they somehow get past the disabled button or press enter, don't send an empty message.
+
+            AddMessage("Current User", MessageTextEdit.CurrentText);
+
+            UIMessageController controller = GameFacade.MessageController;
+
+            if (!String.IsNullOrEmpty(Author.GUID))
+            {
+                lock (MessageTextEdit.CurrentText)
+                {
+                    controller.SendMessage(MessageTextEdit.CurrentText, Author.GUID);
+                    MessageTextEdit.CurrentText = "";
+                }
+            }
+            else
+            {
+                UIAlertOptions Options = new UIAlertOptions();
+                Options.Message = "Couldn't find player! Maybe their GUID wasn't sent from the server. Try reopening a chat window to this user.";
+                Options.Title = "Player Offline";
+                UI.Framework.UIScreen.ShowAlert(Options, true);
+            }
         }
 
         private void SendLetter(UIElement button)
         {
-           
+            if (MessageType != UIMessageType.Compose) return;
+            UIMessageController controller = (UIMessageController)GameFacade.MessageController;
+
+            controller.SendLetter(LetterTextEdit.CurrentText, LetterSubjectTextEdit.CurrentText, Author.GUID);
         }
 
         private void MessageTextEdit_OnChange(UIElement TextEdit)
@@ -271,8 +288,8 @@ namespace TSOVille.Code.UI.Panels
 
             window = new UIMessage(type, author);
             this.Add(window);
-            window.X = GlobalSettings.GraphicsWidth / 2 - 194;
-            window.Y = GlobalSettings.GraphicsHeight / 2 - 125;
+            window.X = GlobalSettings.Default.GraphicsWidth / 2 - 194;
+            window.Y = GlobalSettings.Default.GraphicsHeight / 2 - 125;
             icon = new UIMessageIcon(type);
             this.Add(icon);
 
@@ -335,11 +352,11 @@ namespace TSOVille.Code.UI.Panels
         {
             if (pos == -1)
             {
-                icon.X = GlobalSettings.GraphicsWidth+5; //put offscreen
+                icon.X = GlobalSettings.Default.GraphicsWidth+5; //put offscreen
             }
             else
             {
-                icon.X = GlobalSettings.GraphicsWidth - 70;
+                icon.X = GlobalSettings.Default.GraphicsWidth - 70;
                 icon.Y = 80 + 45 * pos; //should be 10 without debug buttons
             }
         }

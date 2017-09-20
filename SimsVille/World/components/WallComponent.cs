@@ -8,17 +8,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using tso.world.Model;
+using FSO.LotView.Model;
 using Microsoft.Xna.Framework;
-using TSO.Content.model;
-using TSO.Content;
-using tso.world.Utils;
-using TSO.Files.formats.iff.chunks;
+using FSO.Content.Model;
+using FSO.Content;
+using FSO.LotView.Utils;
+using FSO.Files.Formats.IFF.Chunks;
 using Microsoft.Xna.Framework.Graphics;
-using TSO.Common.utils;
-using tso.common.utils;
+using FSO.Common.Utils;
 
-namespace tso.world.Components
+namespace FSO.LotView.Components
 {
     //a mega fun component that draws all walls for you!!
     public class WallComponent : WorldComponent
@@ -133,8 +132,8 @@ namespace tso.world.Components
             if (WallZBuffers == null) WallZBuffers = TextureGenerator.GetWallZBuffer(device);
 
             var pxOffset = world.WorldSpace.GetScreenOffset();
-            var wallContent = Content.Get().WorldWalls;
-            var floorContent = Content.Get().WorldFloors;
+            var wallContent = Content.Content.Get().WorldWalls;
+            var floorContent = Content.Content.Get().WorldFloors;
 
             //draw walls
             for (sbyte level = 1; level <= world.Level; level++)
@@ -215,7 +214,7 @@ namespace tso.world.Components
                                             var comp2 = RotateWall(world.Rotation, blueprint.GetWall((short)(contOff.X), (short)(contOff.Y), level), (short)(contOff.X), (short)(contOff.Y), level);
                                             if (!comp2.TopLeftThick)
                                             {
-                                                _Sprite = CopySprite(_Sprite);
+                                                _Sprite = CopySprite(world, _Sprite);
                                                 tlStyle = GetStyle(comp.TopLeftStyle); //return to normal if cutaway
                                                 var tilePosition2 = contOff;
 
@@ -347,7 +346,7 @@ namespace tso.world.Components
                                             var comp2 = RotateWall(world.Rotation, blueprint.GetWall((short)(contOff.X), (short)(contOff.Y), level), (short)(contOff.X), (short)(contOff.Y), level);
                                             if (!comp2.TopRightThick)
                                             {
-                                                _Sprite = CopySprite(_Sprite);
+                                                _Sprite = CopySprite(world, _Sprite);
                                                 trStyle = GetStyle(comp.TopRightStyle); //return to normal if cutaway
 
                                                 var tilePosition2 = contOff;
@@ -569,10 +568,7 @@ namespace tso.world.Components
                             world._2D.OffsetPixel(world.WorldSpace.GetScreenFromTile(tilePosition));
                             world._2D.OffsetTile(tilePosition);
 
-                            var _Sprite = new _2DSprite()
-                            {
-                                RenderMode = _2DBatchRenderMode.Z_BUFFER
-                            };
+                            var _Sprite = world._2D.NewSprite(_2DBatchRenderMode.Z_BUFFER);
 
                             var Junctions = wallContent.Junctions;
 
@@ -652,8 +648,9 @@ namespace tso.world.Components
                         if (cuts != 0)
                         {
                             if ((cuts & CutawayEdges.NegativeX) == CutawayEdges.NegativeX) result.TLCut = WallCut.Up; //if we are on the very edge of the cut we're up
-                            else if ((cuts & CutawayEdges.PositiveY) == CutawayEdges.PositiveY) {
-                                if ((cuts & CutawayEdges.NegativeY) == CutawayEdges.NegativeY)
+                            else 
+                            if ((cuts & (CutawayEdges.PositiveY | CutawayEdges.SpecialPositiveY)) > 0) {
+                                if ((cuts & (CutawayEdges.NegativeY | CutawayEdges.SpecialNegativeY)) > 0)
                                 {
                                     result.TLCut = WallCut.Down; //special case, cuts at both sides... just put wall down
                                 }
@@ -662,10 +659,11 @@ namespace tso.world.Components
                                     result.TLCut = WallCut.DownRightUpLeft;
                                 }
                             }
-                            else if ((cuts & CutawayEdges.NegativeY) == CutawayEdges.NegativeY)
+                            else if ((cuts & (CutawayEdges.NegativeY | CutawayEdges.SpecialNegativeY)) > 0)
                             {
                                 result.TLCut = WallCut.DownLeftUpRight;
                             }
+                            //else if ((cuts & CutawayEdges.NegativeX) == CutawayEdges.NegativeX) result.TLCut = WallCut.Up; //if we are on the very edge of the cut we're up
                             else result.TLCut = WallCut.Down;
                         }
                         else
@@ -713,9 +711,10 @@ namespace tso.world.Components
                             if (cuts != 0)
                             {
                                 if ((cuts & CutawayEdges.NegativeY) == CutawayEdges.NegativeY) result.TRCut = WallCut.Up; //if we are on the very edge of the cut we're up
-                                else if ((cuts & CutawayEdges.PositiveX) == CutawayEdges.PositiveX)
+                                else 
+                                if ((cuts & (CutawayEdges.PositiveX | CutawayEdges.SpecialPositiveX)) > 0)
                                 {
-                                    if ((cuts & CutawayEdges.NegativeX) == CutawayEdges.NegativeX)
+                                    if ((cuts & (CutawayEdges.NegativeX | CutawayEdges.SpecialNegativeX)) > 0)
                                     { //special case, cuts at both sides... just put wall down
                                         result.TRCut = WallCut.Down;
                                     }
@@ -724,10 +723,11 @@ namespace tso.world.Components
                                         result.TRCut = WallCut.DownLeftUpRight;
                                     }
                                 }
-                                else if ((cuts & CutawayEdges.NegativeX) == CutawayEdges.NegativeX)
+                                else if ((cuts & (CutawayEdges.NegativeX | CutawayEdges.SpecialNegativeX)) > 0)
                                 {
                                     result.TRCut = WallCut.DownRightUpLeft;
                                 }
+                                //else if ((cuts & CutawayEdges.NegativeY) == CutawayEdges.NegativeY) result.TRCut = WallCut.Up; //if we are on the very edge of the cut we're up
                                 else result.TRCut = WallCut.Down;
                             }
                             else
@@ -737,18 +737,22 @@ namespace tso.world.Components
                         }
                     }
                 }
+
+                bool hasXNext = DownJunctions.Length > off + 1;
+                bool hasYNext = DownJunctions.Length > off + width;
+
                 //add to relevant junctions
                 if ((wall.Segments & WallSegments.TopLeft) > 0 && !(wall.TopLeftDoor && result.TLCut > 0) && wall.TopLeftThick)
                 {
                     if (result.TLCut > 0)
                     {
                         DownJunctions[off] |= JunctionFlags.BottomLeft;
-                        if (y < height) DownJunctions[off + width] |= JunctionFlags.TopRight;
+                        if (y < height && hasYNext) DownJunctions[off + width] |= JunctionFlags.TopRight;
                     }
                     else
                     {
                         UpJunctions[off] |= JunctionFlags.BottomLeft;
-                        if (y < height) UpJunctions[off + width] |= JunctionFlags.TopRight;
+                        if (y < height && hasYNext) UpJunctions[off + width] |= JunctionFlags.TopRight;
                     }
                 }
 
@@ -757,12 +761,12 @@ namespace tso.world.Components
                     if (result.TRCut > 0)
                     {
                         DownJunctions[off] |= JunctionFlags.BottomRight;
-                        if (x < width) DownJunctions[off + 1] |= JunctionFlags.TopLeft;
+                        if (x < width && hasXNext) DownJunctions[off + 1] |= JunctionFlags.TopLeft;
                     }
                     else
                     {
                         UpJunctions[off] |= JunctionFlags.BottomRight;
-                        if (x < width) UpJunctions[off + 1] |= JunctionFlags.TopLeft;
+                        if (x < width && hasXNext) UpJunctions[off + 1] |= JunctionFlags.TopLeft;
                     }
                 }
 
@@ -771,25 +775,25 @@ namespace tso.world.Components
                     if (result.TRCut > 0)
                     {
                         DownJunctions[off] |= JunctionFlags.DiagBottom;
-                        if (x < width && y < height) DownJunctions[off + 1 + width] |= JunctionFlags.DiagTop;
+                        if (x < width && y < height && DownJunctions.Length > off + 1 + width) DownJunctions[off + 1 + width] |= JunctionFlags.DiagTop;
                     }
                     else
                     {
                         UpJunctions[off] |= JunctionFlags.DiagBottom;
-                        if (x < width && y < height) UpJunctions[off + 1 + width] |= JunctionFlags.DiagTop;
+                        if (x < width && y < height && DownJunctions.Length> off + 1 + width) UpJunctions[off + 1 + width] |= JunctionFlags.DiagTop;
                     }
                 }
                 else if (wall.Segments == WallSegments.HorizontalDiag && (wall.TopRightStyle == 1 || wall.TopRightStyle == 255))
                 {
                     if (result.TRCut > 0)
                     {
-                        if (x < width) DownJunctions[off + 1] |= JunctionFlags.DiagLeft;
-                        if (y < height) DownJunctions[off + width] |= JunctionFlags.DiagRight;
+                        if (x < width && hasXNext) DownJunctions[off + 1] |= JunctionFlags.DiagLeft;
+                        if (y < height && hasYNext) DownJunctions[off + width] |= JunctionFlags.DiagRight;
                     }
                     else
                     {
-                        if (x < width) UpJunctions[off + 1] |= JunctionFlags.DiagLeft;
-                        if (y < height) UpJunctions[off + width] |= JunctionFlags.DiagRight;
+                        if (x < width && hasXNext) UpJunctions[off + 1] |= JunctionFlags.DiagLeft;
+                        if (y < height && hasYNext) UpJunctions[off + width] |= JunctionFlags.DiagRight;
                     }
                 }
                 Cuts[off] = result;
@@ -802,11 +806,7 @@ namespace tso.world.Components
         private bool WallsDownAt(int x, int y)
         {
             var cuts = blueprint.Cutaway;
-            foreach (var cut in cuts)
-            {
-                if (cut.Contains(x, y)) return true;
-            }
-            return false;
+            return cuts[y * blueprint.Width + x];
         }
 
         private CutawayEdges GetCutEdges(int x, int y) //todo, rotate result for rotations
@@ -816,27 +816,27 @@ namespace tso.world.Components
             if (!WallsDownAt(x - 1, y)) result |= CutawayEdges.NegativeX;
             if (!WallsDownAt(x, y + 1)) result |= CutawayEdges.PositiveY;
             if (!WallsDownAt(x, y - 1)) result |= CutawayEdges.NegativeY;
+            if (!WallsDownAt(x - 1, y - 1)) result |= CutawayEdges.SpecialNegativeX | CutawayEdges.SpecialNegativeY;
+            if (!WallsDownAt(x - 1, y + 1)) result |= CutawayEdges.SpecialPositiveY;
+            if (!WallsDownAt(x + 1, y - 1)) result |= CutawayEdges.SpecialPositiveX;
             return result;
         }
 
         private Wall GetPattern(ushort id)
         {
-            if (!WallCache.ContainsKey(id)) WallCache.Add(id, Content.Get().WorldWalls.Get(id));
+            if (!WallCache.ContainsKey(id)) WallCache.Add(id, Content.Content.Get().WorldWalls.Get(id));
             return WallCache[id];
         }
 
         private WallStyle GetStyle(ushort id)
         {
-            if (!WallStyleCache.ContainsKey(id)) WallStyleCache.Add(id, Content.Get().WorldWalls.GetWallStyle(id));
+            if (!WallStyleCache.ContainsKey(id)) WallStyleCache.Add(id, Content.Content.Get().WorldWalls.GetWallStyle(id));
             return WallStyleCache[id];
         }
 
         private _2DSprite GetWallSprite(Wall pattern, WallStyle style, int rotation, bool down, WorldState world)
         {
-            var _Sprite = new _2DSprite()
-            {
-                RenderMode = _2DBatchRenderMode.WALL
-            };
+            var _Sprite = world._2D.NewSprite(_2DBatchRenderMode.WALL);
             SPR sprite = null;
             SPR mask = null;
             switch (world.Zoom)
@@ -877,10 +877,7 @@ namespace tso.world.Components
 
         private _2DSprite GetFloorSprite(Floor pattern, int rotation, WorldState world, byte cut)
         {
-            var _Sprite = new _2DSprite()
-            {
-                RenderMode = _2DBatchRenderMode.Z_BUFFER
-            };
+            var _Sprite = world._2D.NewSprite(_2DBatchRenderMode.Z_BUFFER);
             if (pattern == null) return _Sprite;
             SPR2 sprite = null;
             switch (world.Zoom)
@@ -1132,17 +1129,15 @@ namespace tso.world.Components
             return output;
         }
 
-        private _2DSprite CopySprite(_2DSprite _Sprite)
+        private _2DSprite CopySprite(WorldState world, _2DSprite _Sprite)
         {
-            return new _2DSprite()
-            {
-                DestRect = _Sprite.DestRect,
-                SrcRect = _Sprite.SrcRect,
-                RenderMode = _2DBatchRenderMode.WALL,
-                Pixel = _Sprite.Pixel,
-                Depth = _Sprite.Depth,
-                Room = _Sprite.Room
-            };
+            var spr = world._2D.NewSprite(_2DBatchRenderMode.WALL);
+            spr.DestRect = _Sprite.DestRect;
+            spr.SrcRect = _Sprite.SrcRect;
+            spr.Pixel = _Sprite.Pixel;
+            spr.Depth = _Sprite.Depth;
+            spr.Room = _Sprite.Room;
+            return spr;
         }
     }
 
@@ -1167,6 +1162,10 @@ namespace tso.world.Components
         PositiveX = 2,
         NegativeY = 4,
         NegativeX = 8,
+        SpecialPositiveY = 16,
+        SpecialPositiveX = 32,
+        SpecialNegativeY = 64,
+        SpecialNegativeX = 128
     }
 
     [Flags]

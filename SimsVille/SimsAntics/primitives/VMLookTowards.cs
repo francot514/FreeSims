@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
-using tso.world.Model;
-using TSO.Files.formats.iff.chunks;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
+using FSO.LotView.Model;
+using FSO.Files.Formats.IFF.Chunks;
 using System.IO;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     // This primitive allows the sim to look at objects or other people eg. when talking to them. Not important right now
     // but crucial for tv/eating conversations to make sense
@@ -24,6 +24,7 @@ namespace TSO.SimsAntics.Primitives
             var result = new VMFindLocationResult();
             result.Position = new LotTilePos(sim.Position);
 
+            LotTilePos pos = new LotTilePos();
             switch (operand.Mode)
             {
                 case VMLookTowardsMode.HeadTowardsObject:
@@ -37,7 +38,19 @@ namespace TSO.SimsAntics.Primitives
                     result.RadianDirection = (float)GetDirectionTo(sim.Position, context.StackObject.Position);
                     result.RadianDirection = (float)((result.RadianDirection + Math.PI) % (Math.PI*2));
                     break;
-
+                case VMLookTowardsMode.BodyTowardsAverageStackObj:
+                    foreach (var obj in context.StackObject.MultitileGroup.Objects)
+                        pos += obj.Position;
+                    pos /= context.StackObject.MultitileGroup.Objects.Count;
+                    result.RadianDirection = (float)GetDirectionTo(sim.Position, pos);
+                    break;
+                case VMLookTowardsMode.BodyAwayFromAverageStackObj:
+                    foreach (var obj in context.StackObject.MultitileGroup.Objects)
+                        pos += obj.Position;
+                    pos /= context.StackObject.MultitileGroup.Objects.Count;
+                    result.RadianDirection = (float)GetDirectionTo(sim.Position, pos);
+                    result.RadianDirection = (float)((result.RadianDirection + Math.PI) % (Math.PI * 2));
+                    break;
             }
 
             if (context.Thread.IsCheck) return VMPrimitiveExitCode.GOTO_FALSE;
@@ -85,6 +98,8 @@ namespace TSO.SimsAntics.Primitives
         HeadTowardsObject = 0,
         BodyTowardsCamera = 1,
         BodyTowardsStackObj = 2,
-        BodyAwayFromStackObj = 3
+        BodyAwayFromStackObj = 3,
+        BodyTowardsAverageStackObj = 4,
+        BodyAwayFromAverageStackObj = 5
     }
 }

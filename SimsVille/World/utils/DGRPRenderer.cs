@@ -9,10 +9,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework;
-using TSO.Files.formats.iff.chunks;
-using tso.world.Model;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.LotView.Model;
 
-namespace tso.world.Utils
+namespace FSO.LotView.Utils
 {
     public class DGRPRendererItem 
     {
@@ -28,7 +28,8 @@ namespace tso.world.Utils
         private DGRP DrawGroup;
         public Rectangle Bounding;
         private List<DGRPRendererItem> Items = new List<DGRPRendererItem>();
-        public uint DynamicSpriteFlags = 0x00000000;
+        public ulong DynamicSpriteFlags = 0x00000000;
+        public ulong DynamicSpriteFlags2 = 0x00000000;
         public ushort DynamicSpriteBaseID;
         public ushort NumDynamicSprites;
 
@@ -137,14 +138,15 @@ namespace tso.world.Utils
                             if (isDynamic)
                             {
                                 var dynamicIndex = (ushort)(sprite.SpriteID - DynamicSpriteBaseID);
-
-                                var isVisible = (DynamicSpriteFlags & (0x1 << dynamicIndex)) > 0;
+                                
+                                var isVisible = (dynamicIndex > 63) ? ((DynamicSpriteFlags2 & ((ulong)0x1 << (dynamicIndex-64))) > 0):
+                                    ((DynamicSpriteFlags & ((ulong)0x1 << dynamicIndex)) > 0);
                                 if (!isVisible)
                                 {
                                     continue;
                                 }
                             }
-                            var item = new _2DSprite();
+                            var item = new _2DSprite(); //do not use sprite pool for DGRP, since we can reliably remember our own sprites.
                             item.Pixel = texture.Pixel;
                             item.Depth = texture.ZBuffer;
                             if (texture.ZBuffer != null)

@@ -8,11 +8,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
-using TSO.SimsAntics.Model;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
+using FSO.SimAntics.Model;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMGrab : VMPrimitiveHandler
     {
@@ -20,10 +20,9 @@ namespace TSO.SimsAntics.Primitives
         {
             var operand = (VMGrabOperand)args;
 
-            if (context.Caller.GetSlot(0) == null) context.Caller.PlaceInSlot(context.StackObject, 0, true, context.VM.Context);
-            else return VMPrimitiveExitCode.GOTO_FALSE;
+            return (context.Caller.PlaceInSlot(context.StackObject, 0, true, context.VM.Context)) ? VMPrimitiveExitCode.GOTO_TRUE : VMPrimitiveExitCode.GOTO_FALSE;
 
-            return VMPrimitiveExitCode.GOTO_TRUE;
+           // return VMPrimitiveExitCode.GOTO_TRUE;
         }
     }
 

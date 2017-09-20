@@ -1,32 +1,25 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-RHY3756547. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
-
 
 using System;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TSOVille.Code.UI.Framework;
-using TSOVille.Code.UI.Framework.Parser;
-using TSOVille.Code.UI.Model;
-using TSO.Common.rendering.framework.model;
-using TSO.Common.rendering.framework.io;
-using TSOVille.Code.Utils;
-using TSO.SimsAntics;
-using TSOVille.LUI;
-using tso.common.utils;
+using FSO.Client.UI.Framework;
+using FSO.Client.UI.Framework.Parser;
+using FSO.Client.UI.Model;
+using FSO.Common.Rendering.Framework.Model;
+using FSO.Common.Rendering.Framework.IO;
+using FSO.Client.Utils;
+using FSO.SimAntics;
+using FSO.Common.Utils;
+using FSO.Client.UI.Panels;
 
-namespace TSOVille.Code.UI.Controls
+namespace FSO.Client.UI.Controls
 {
     /// <summary>
     /// Used to display an interaction. Will eventually have all features like the timer, big huge red x support for cancel etc.
@@ -71,9 +64,8 @@ namespace TSOVille.Code.UI.Controls
             DrawLocalTexture(batch, Background, new Vector2(0, 0));
             if (Icon != null)
             {
-                if (Icon.Width <= 45)
-                {
-                    DrawLocalTexture(batch, Icon, new Rectangle(0, 0, Icon.Width, Icon.Height), new Vector2(4, 4), new Vector2(37f / Icon.Width, 37f / Icon.Height));
+                if (Icon.Width <= 45) {
+                    DrawLocalTexture(batch, Icon, new Rectangle(0, 0, Icon.Width, Icon.Height), new Vector2(4, 4), new Vector2(37f/Icon.Width, 37f/Icon.Height));
                 }
                 else DrawLocalTexture(batch, Icon, new Rectangle(0, 0, Icon.Width / 2, Icon.Height), new Vector2(4, 4));
             }

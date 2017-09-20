@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace tso.world.Model
+namespace FSO.LotView.Model
 {
     public class ScrollBuffer
     {

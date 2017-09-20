@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TSO.SimsAntics.Engine
+namespace FSO.SimAntics.Engine
 {
     public interface VMPrimitiveOperand
     {

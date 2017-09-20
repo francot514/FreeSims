@@ -1,13 +1,7 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
@@ -16,19 +10,21 @@ using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using GOLDEngine;
 
-namespace TSOVille.Code.UI.Framework.Parser
+namespace FSO.Client.UI.Framework.Parser
 {
     public class UIGroup : UINode
     {
         public UINode SharedProperties { get; set; }
         public List<UINode> Children { get; set; }
 
-        public static UIGroup FromReduction(GOLD.Reduction r)
+
+		public static UIGroup FromReduction(GOLDEngine.Reduction r, Dictionary<Token, object> dataMap)
         {
             UIGroup result = new UIGroup();
-            // <Object> ::= BeginLiteral <Content> EndLiteral
-            var content = (List<UINode>)r.get_Data(1);
+			// <Object> ::= BeginLiteral <Content> EndLiteral
+            var content = (List<UINode>)dataMap[r[1]];
             var sharedProps = content.FirstOrDefault(x => x.Name == "SetSharedProperties");
 
             result.SharedProperties = sharedProps;
@@ -40,7 +36,7 @@ namespace TSOVille.Code.UI.Framework.Parser
 
     public class UISharedProperties
     {
-        public static UISharedProperties FromReduction(GOLD.Reduction r)
+        public static UISharedProperties FromReduction(GOLDEngine.Reduction r)
         {
             UISharedProperties result = new UISharedProperties();
             return result;

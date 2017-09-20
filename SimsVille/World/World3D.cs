@@ -9,9 +9,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
-using tso.world.Model;
+using FSO.LotView.Model;
 
-namespace tso.world
+namespace FSO.LotView
 {
     /// <summary>
     /// Handles rendering the 3D world.
@@ -36,12 +36,18 @@ namespace tso.world
         public void DrawAfter2D(GraphicsDevice gd, WorldState state){
             var pxOffset = state.WorldSpace.GetScreenOffset();
             var _2d = state._2D;
-
-            if (state.DrawRoofs)
+            foreach (var avatar in Blueprint.Avatars)
             {
-                this.Blueprint.RoofComp.Draw(gd, state);
+                if ((avatar.Position.Z + 0.05f) / 2.95f < state.Level)
+                {
+                    _2d.OffsetPixel(state.WorldSpace.GetScreenFromTile(avatar.Position));
+                    _2d.OffsetTile(avatar.Position);
+                    avatar.Draw(gd, state);
+
+                    if (state.DrawRoofs) Blueprint.RoofComp.Draw(gd, state);
+
+                }
             }
-            
         }
     }
 }

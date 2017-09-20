@@ -1,13 +1,7 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
@@ -15,15 +9,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
-using TSOVille.LUI;
-using TSOVille.Code.UI.Controls;
-using TSOVille.Code.UI.Framework;
-using TSOVille.Code.UI.Model;
-using TSOVille.Code.Utils;
-using TSO.Common.rendering.framework.model;
+using FSO.Client.UI.Controls;
+using FSO.Client.UI.Framework;
+using FSO.Client.UI.Model;
+using FSO.Client.Utils;
+using FSO.Common.Rendering.Framework.Model;
+using TSO.HIT;
 
-
-namespace TSOVille.Code.UI.Panels
+namespace FSO.Client.UI.Panels
 {
     /// <summary>
     /// A controller for messages.
@@ -58,7 +51,7 @@ namespace TSOVille.Code.UI.Panels
         /// </summary>
         public void SendMessage(string message, string GUID)
         {
-            //HITVM.Get().PlaySoundEvent(UISounds.CallSend);
+            HITVM.Get().PlaySoundEvent(UISounds.CallSend);
             if (OnSendMessage != null) OnSendMessage(message, GUID);
         }
 
@@ -67,7 +60,7 @@ namespace TSOVille.Code.UI.Panels
         /// </summary>
         public void SendLetter(string message, string subject, string destinationUser)
         {
-            //HITVM.Get().PlaySoundEvent(UISounds.LetterSend);
+            HITVM.Get().PlaySoundEvent(UISounds.LetterSend);
             if (OnSendLetter != null) OnSendLetter(message, subject, destinationUser);
         }
 
@@ -87,12 +80,12 @@ namespace TSOVille.Code.UI.Panels
 
                 if (Message != null)
                 {
-                    //HITVM.Get().PlaySoundEvent(UISounds.CallRecieveFirst);
+                    HITVM.Get().PlaySoundEvent(UISounds.CallRecieveFirst);
                 }
             }
             else
             {
-                //HITVM.Get().PlaySoundEvent((soundAlt) ? UISounds.CallRecieve : UISounds.CallRecieveNext);
+                HITVM.Get().PlaySoundEvent((soundAlt) ? UISounds.CallRecieve : UISounds.CallRecieveNext);
                 soundAlt = !soundAlt;
             }
 
@@ -105,7 +98,7 @@ namespace TSOVille.Code.UI.Panels
         /// </summary>
         public void PassEmail(MessageAuthor sender, string subject, string message)
         {
-            //HITVM.Get().PlaySoundEvent(UISounds.LetterRecieve);
+            HITVM.Get().PlaySoundEvent(UISounds.LetterRecieve);
             //PendingEmails.Add(new EmailStore(sender, message));
             OpenEmail(sender, subject, message); //will eventually show alert asking if you want to do this...
         }

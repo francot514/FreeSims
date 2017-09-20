@@ -1,30 +1,24 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSOVille.Code.UI.Framework;
-using TSOVille.Code.UI.Framework.Parser;
+using FSO.Client.UI.Framework;
+using FSO.Client.UI.Framework.Parser;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TSOVille.Code.Utils;
-using TSOVille.Code.UI.Model;
-using TSO.Common.rendering.framework.io;
-using TSO.Common.rendering.framework.model;
-using TSOVille.LUI;
+using FSO.Client.Utils;
+using FSO.Client.UI.Model;
+using FSO.Common.Rendering.Framework.IO;
+using FSO.Common.Rendering.Framework.Model;
+using FSO.Common.Utils;
 
-namespace TSOVille.Code.UI.Controls
+namespace FSO.Client.UI.Controls
 {
     public class UIListBox : UIElement
     {
@@ -81,7 +75,7 @@ namespace TSOVille.Code.UI.Controls
             set
             {
                 m_SelectionFillColor = value;
-                m_SelectionTexture = TextureUtils.TextureFromColor(GameFacade.GraphicsDevice, value);
+                m_SelectionTexture = TextureGenerator.GetPxWhite(GameFacade.GraphicsDevice);
             }
         }
 
@@ -194,6 +188,7 @@ namespace TSOVille.Code.UI.Controls
                     if (m_DoubleClickTime > 0)
                     {
                         if (OnDoubleClick != null) OnDoubleClick(this);
+                        m_DoubleClickTime = 0;
                     }
                     else m_DoubleClickTime = 20;
                     break;
@@ -281,6 +276,7 @@ namespace TSOVille.Code.UI.Controls
 
         public override void Draw(UISpriteBatch batch)
         {
+            if (!Visible) return;
             for (var i = 0; i < VisibleRows; i++)
             {
                 int j = i + VerticalScrollPosition;
@@ -294,7 +290,8 @@ namespace TSOVille.Code.UI.Controls
                 if (selected)
                 {
                     /** Draw selection background **/
-                    DrawLocalTexture(batch, m_SelectionTexture, null, new Vector2(0, rowY), new Vector2(m_Width, RowHeight));
+                    var white = TextureGenerator.GetPxWhite(batch.GraphicsDevice);
+                    DrawLocalTexture(batch, white, null, new Vector2(0, rowY), new Vector2(m_Width, RowHeight), m_SelectionFillColor);
                 }
 
                 var ts = TextStyle;

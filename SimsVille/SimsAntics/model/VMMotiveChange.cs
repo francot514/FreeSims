@@ -4,14 +4,14 @@
  * http://mozilla.org/MPL/2.0/. 
  */
 
+using FSO.SimAntics.NetPlay.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using tso.simantics.Model;
 
-namespace TSO.SimsAntics.Model
+namespace FSO.SimAntics.Model
 {
     public class VMMotiveChange : VMSerializable
     {
@@ -29,19 +29,20 @@ namespace TSO.SimsAntics.Model
 
         public void Tick(VMAvatar avatar)
         {
-
             Ticked = true;
             if (PerHourChange != 0)
             {
-                double rate = (PerHourChange/60.0)/30.0;     //remember to fix when we implement the clock! right now assumes time for an hour is a realtime minute
+                double rate = (PerHourChange/60.0)/(30.0*5.0); //timed for 5 second minutes
                 fractional += rate;
                 if (Math.Abs(fractional) >= 1)
                 {
                     var motive = avatar.GetMotiveData(Motive);
+                    if (((rate > 0) && (motive > MaxValue)) || ((rate < 0) && (motive < MaxValue))) { return; } //we're already over, do nothing. (do NOT clamp)
                     motive += (short)(fractional);
                     fractional %= 1.0;
 
-                    if (((rate > 0) && (motive > MaxValue)) || ((rate < 0) && (motive < MaxValue))) { motive = MaxValue; Clear(); }
+                    if (((rate > 0) && (motive > MaxValue)) || ((rate < 0) && (motive < MaxValue))) { motive = MaxValue; }
+                    //DO NOT CLEAR MOTIVE WHEN IT HITS MAX VALUE! fixes pet, maybe shower.
                     avatar.SetMotiveData(Motive, motive);
                 }
             }

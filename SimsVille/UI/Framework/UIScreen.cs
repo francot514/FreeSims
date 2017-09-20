@@ -1,43 +1,34 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSOVille.Code.UI.Controls;
+using FSO.Client.UI.Controls;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using SimsHomeMaker;
+using FSO.Common;
 
-namespace TSOVille.Code.UI.Framework
+namespace FSO.Client.UI.Framework
 {
     public class UIScreen : UIContainer
     {
+        public UIScreen() : base()
+        {
+            ScaleX = ScaleY = FSOEnvironment.DPIScaleFactor;
+        }
+
         public virtual void OnShow()
         {
         }
 
         public virtual void OnHide()
         {
-            //stopping background music should be handled by the screen itself, so that music can play between screens.
-        }
 
-        private int backgroundTrack = -1;
-        public void PlayBackgroundMusic(string[] paths)
-        {
-            //backgroundTrack = GameFacade.SoundManager.PlayBackgroundMusic(paths);
-                
-            
         }
 
         public static UIScreen Current
@@ -94,7 +85,7 @@ namespace TSOVille.Code.UI.Framework
         {
             get
             {
-                return GlobalSettings.GraphicsWidth;
+                return GlobalSettings.Default.GraphicsWidth;
             }
         }
 
@@ -102,7 +93,7 @@ namespace TSOVille.Code.UI.Framework
         {
             get
             {
-                return GlobalSettings.GraphicsHeight;
+                return GlobalSettings.Default.GraphicsHeight;
             }
         }
     }

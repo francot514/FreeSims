@@ -8,12 +8,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.utils;
-using TSO.SimsAntics.Engine.Scopes;
+using FSO.Files.Utils;
+using FSO.SimAntics.Engine.Scopes;
+using FSO.SimAntics.Engine.Utils;
 using System.IO;
-using TSO.SimsAntics.Engine.Utils;
 
-namespace TSO.SimsAntics.Engine.Primitives
+namespace FSO.SimAntics.Engine.Primitives
 {
     public class VMRandomNumber : VMPrimitiveHandler {
         public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)

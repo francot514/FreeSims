@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TSO.SimsAntics.Model.Routing
+namespace FSO.SimAntics.Model.Routing
 {
     public class VMWalkableRect : VMObstacle
     {

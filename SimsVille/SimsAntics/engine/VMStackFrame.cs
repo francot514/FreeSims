@@ -8,11 +8,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.formats.iff;
-using TSO.Content;
-using TSO.Files.formats.iff.chunks;
+using FSO.Files.Formats.IFF;
+using FSO.Content;
+using FSO.SimAntics.Marshals.Threads;
+using FSO.Files.Formats.IFF.Chunks;
 
-namespace TSO.SimsAntics.Engine
+namespace FSO.SimAntics.Engine
 {
     /// <summary>
     /// Holds information about the execution of a routine
@@ -26,7 +27,7 @@ namespace TSO.SimsAntics.Engine
 
         /** Routine that this context relates to **/
         public VMRoutine Routine;
-
+        
         /** Current instruction **/
         public ushort InstructionPointer;
 
@@ -38,6 +39,15 @@ namespace TSO.SimsAntics.Engine
 
         /** An object selected by the code to perform operations on. **/
         public VMEntity StackObject;
+
+        /** If true, this stack frame is not a subroutine. Return with a continue. **/
+        public bool DiscardResult;
+        
+        /** Indicates that the current stack frame is part of an action tree.
+         ** Set by "idle for input, allow push", when an interaction is selected.
+         ** Used to stop recursive interactions, is only false when within "main".
+         **/
+        public bool ActionTree;
 
         /** Used to get strings and other resources (for primitives) from the code owner, as it may not be the callee but instead a semiglobal or global. **/
         public GameIffResource ScopeResource {
@@ -106,6 +116,49 @@ namespace TSO.SimsAntics.Engine
             return (T)GetCurrentInstruction().Operand;
         }
 
+        #region VM Marshalling Functions
+        public virtual VMStackFrameMarshal Save()
+        {
+            return new VMStackFrameMarshal
+            {
+                RoutineID = Routine.ID,
+                InstructionPointer = InstructionPointer,
+                Caller = (Caller == null) ? (short)0 : Caller.ObjectID,
+                Callee = (Callee == null) ? (short)0 : Callee.ObjectID,
+                StackObject = (StackObject == null) ? (short)0 : StackObject.ObjectID,
+                CodeOwnerGUID = CodeOwner.OBJ.GUID,
+                Locals = Locals,
+                Args = Args,
+                DiscardResult = DiscardResult,
+                ActionTree = ActionTree,
+            };
+        }
 
+        public virtual void Load(VMStackFrameMarshal input, VMContext context)
+        {
+            CodeOwner = FSO.Content.Content.Get().WorldObjects.Get(input.CodeOwnerGUID);
+
+            BHAV bhav = null;
+            if (input.RoutineID >= 8192) bhav = ScopeResource.SemiGlobal.Get<BHAV>(input.RoutineID);
+            else if (input.RoutineID >= 4096) bhav = ScopeResource.Get<BHAV>(input.RoutineID);
+            else bhav = Global.Resource.Get<BHAV>(input.RoutineID);
+            Routine = VM.Assemble(bhav);
+
+            InstructionPointer = input.InstructionPointer;
+            Caller = context.VM.GetObjectById(input.Caller);
+            Callee = context.VM.GetObjectById(input.Callee);
+            StackObject = context.VM.GetObjectById(input.StackObject);
+            Locals = input.Locals;
+            Args = input.Args;
+            DiscardResult = input.DiscardResult;
+            ActionTree = input.ActionTree;
+        }
+
+        public VMStackFrame(VMStackFrameMarshal input, VMContext context, VMThread thread)
+        {
+            Thread = thread;
+            Load(input, context);  
+        }
+        #endregion
     }
 }

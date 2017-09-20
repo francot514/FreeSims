@@ -8,11 +8,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.utils;
-using TSO.SimsAntics.Engine;
+using FSO.Files.Utils;
+using FSO.SimAntics.Engine;
 using System.IO;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMOnlineJobsCall : VMPrimitiveHandler
     {

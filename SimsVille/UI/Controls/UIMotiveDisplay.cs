@@ -1,30 +1,23 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-RHY3756547. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
-
 
 using System;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TSOVille.Code.UI.Framework;
-using TSOVille.Code.UI.Framework.Parser;
-using TSOVille.Code.UI.Model;
-using TSO.Common.rendering.framework.model;
-using TSO.Common.rendering.framework.io;
-using TSOVille.Code.Utils;
-using tso.common.utils;
+using FSO.Client.UI.Framework;
+using FSO.Client.UI.Framework.Parser;
+using FSO.Client.UI.Model;
+using FSO.Common.Rendering.Framework.Model;
+using FSO.Common.Rendering.Framework.IO;
+using FSO.Client.Utils;
+using FSO.Common.Utils;
 
-namespace TSOVille.Code.UI.Controls
+namespace FSO.Client.UI.Controls
 {
     /// <summary>
     /// The motive display used in live mode. Labels, values and increment rate indicators can be custom set.
@@ -53,25 +46,25 @@ namespace TSOVille.Code.UI.Controls
         public UIMotiveDisplay()
         {
             MotiveValues = new short[8];
-            Filler = TextureUtils.TextureFromColor(GameFacade.GraphicsDevice, Color.White);
+            Filler = TextureGenerator.GetPxWhite(GameFacade.GraphicsDevice);
             for (int i = 0; i < 8; i++) ChangeBuffer[i] = new Queue<int>();
         }
 
         private void DrawMotive(UISpriteBatch batch, int x, int y, int motive)
         {
-            double p = (MotiveValues[motive] + 100) / 200.0;
+            double p = (MotiveValues[motive]+100)/200.0;
             Color barcol = new Color((byte)(57 * (1 - p)), (byte)(213 * p + 97 * (1 - p)), (byte)(49 * p + 90 * (1 - p)));
-            Color bgcol = new Color((byte)(57 * p + 214 * (1 - p)), (byte)(97 * p), (byte)(90 * p));
+            Color bgcol = new Color((byte)(57 * p + 214*(1-p)), (byte)(97 * p), (byte)(90 * p));
 
             batch.Draw(Filler, LocalRect(x, y, 60, 5), bgcol);
-            batch.Draw(Filler, LocalRect(x, y, (int)(60 * p), 5), barcol);
-            batch.Draw(Filler, LocalRect(x + (int)(60 * p), y, 1, 5), Color.Black);
+            batch.Draw(Filler, LocalRect(x, y, (int)(60*p), 5), barcol);
+            batch.Draw(Filler, LocalRect(x+(int)(60 * p), y, 1, 5), Color.Black); 
             var style = TextStyle.DefaultLabel.Clone();
             style.Size = 8;
 
             var temp = style.Color;
             style.Color = Color.Black;
-            DrawLocalString(batch, MotiveNames[motive], new Vector2(x + 1, y - 14), style, new Rectangle(0, 0, 60, 12), TextAlignment.Center); //shadow
+            DrawLocalString(batch, MotiveNames[motive], new Vector2(x+1, y - 14), style, new Rectangle(0, 0, 60, 12), TextAlignment.Center); //shadow
 
             style.Color = temp;
             DrawLocalString(batch, MotiveNames[motive], new Vector2(x, y - 15), style, new Rectangle(0, 0, 60, 12), TextAlignment.Center);
@@ -81,13 +74,12 @@ namespace TSOVille.Code.UI.Controls
             if (arrowState > 0)
             {
                 for (int i = 0; i < Math.Ceiling(arrowState / 60f); i++)
-                    DrawLocalTexture(batch, arrow, new Rectangle(2, 0, 3, 5), new Vector2(x + 61 + i * 4, y), new Vector2(1, 1), new Color(0x00, 0xCB, 0x39) * Math.Min(1f, arrowState / 60f - i));
-            }
-            else if (arrowState < 0)
+                    DrawLocalTexture(batch, arrow, new Rectangle(2, 0, 3, 5), new Vector2(x + 61 + i*4, y), new Vector2(1, 1), new Color(0x00, 0xCB, 0x39) * Math.Min(1f, arrowState/60f-i));
+            } else if (arrowState < 0)
             {
                 arrowState = -arrowState;
                 for (int i = 0; i < Math.Ceiling(arrowState / 60f); i++)
-                    DrawLocalTexture(batch, arrow, new Rectangle(0, 0, 3, 5), new Vector2(x - 4 - i * 4, y), new Vector2(1, 1), new Color(0xD6, 0x00, 0x00) * Math.Min(1f, arrowState / 60f - i));
+                    DrawLocalTexture(batch, arrow, new Rectangle(0, 0, 3, 5), new Vector2(x-4 - i * 4, y), new Vector2(1, 1), new Color(0xD6, 0x00, 0x00) * Math.Min(1f, arrowState / 60f - i));
             }
         }
 
@@ -112,7 +104,7 @@ namespace TSOVille.Code.UI.Controls
             }
             FirstFrame = false;
 
-            for (int i = 0; i < 8; i++)
+            for (int i=0; i<8; i++)
             {
                 if (TargetArrowStates[i] > ArrowStates[i]) ArrowStates[i]++;
                 else if (TargetArrowStates[i] < ArrowStates[i]) ArrowStates[i]--;
@@ -121,6 +113,7 @@ namespace TSOVille.Code.UI.Controls
 
         public override void Draw(UISpriteBatch batch)
         {
+            if (!Visible) return;
             for (int i = 0; i < 4; i++)
             {
                 DrawMotive(batch, 20, 13 + 20 * i, i); //left side

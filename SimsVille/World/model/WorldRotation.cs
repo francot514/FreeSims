@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace tso.world
+namespace FSO.LotView
 {
     /// <summary>
     /// The rotation names refer to the position of the tile 0,0 when projected

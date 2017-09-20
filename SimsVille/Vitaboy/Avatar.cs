@@ -8,15 +8,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using FSO.Common.Rendering.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using FSO.Content;
 using Microsoft.Xna.Framework;
-using TSO.Content;
-using TSO.Common.rendering.vitaboy;
-using TSO.Common.rendering.framework;
-using TSOVille.Code.UI.Model;
-using TSO.Common.rendering.framework.model;
+using FSO.Content.Model;
 
-namespace TSO.vitaboy
+namespace FSO.Vitaboy
 {
     /// <summary>
     /// The base class for all avatars in the game.
@@ -27,7 +25,6 @@ namespace TSO.vitaboy
         public static Effect Effect;
         public Skeleton Skeleton { get; internal set; }
         public Skeleton BaseSkeleton { get; internal set; }
-        public List<Vector2> LightPositions;
         private Matrix[] SkelBones;
 
         public static void setVitaboyEffect(Effect e) {
@@ -76,7 +73,7 @@ namespace TSO.vitaboy
                 return;
             }
 
-            var add = AddAppearance(apr, null);
+            var add = AddAppearance(apr);
             Accessories.Add(apr, add);
         }
 
@@ -86,7 +83,6 @@ namespace TSO.vitaboy
         /// <param name="apr">The Appearance of the accessory to remove.</param>
         public void RemoveAccessory(Appearance apr)
         {
-            if (apr == null) return;
             if (Accessories.ContainsKey(apr))
             {
                 RemoveAppearance(Accessories[apr], true);
@@ -100,13 +96,10 @@ namespace TSO.vitaboy
         {
             GPUMode = true;
             GPUDevice = device;
-            lock (Bindings)
+            foreach (var binding in Bindings)
             {
-                foreach (var binding in Bindings)
-                {
-                    binding.Mesh.StoreOnGPU(device);
-                    //binding.Texture.Get(device);
-                }
+                binding.Mesh.StoreOnGPU(device);
+                binding.Texture.Get(device);
             }
         }
 
@@ -115,20 +108,15 @@ namespace TSO.vitaboy
         /// </summary>
         /// <param name="appearance">The Appearance instance to add.</param>
         /// <returns>An AvatarAppearanceInstance instance.</returns>
-        protected AvatarAppearanceInstance AddAppearance(Appearance appearance, string texOverride)
+        protected AvatarAppearanceInstance AddAppearance(Appearance appearance)
         {
             var result = new AvatarAppearanceInstance();
             result.Bindings = new List<AvatarBindingInstance>();
 
             foreach (var bindingReference in appearance.Bindings)
             {
-                var binding = bindingReference.RealBinding;
+                var binding = FSO.Content.Content.Get().AvatarBindings.Get(bindingReference.TypeID, bindingReference.FileID);
                 if (binding == null) { continue; }
-                if (texOverride != null)
-                {
-                    binding = binding.TS1Copy();
-                    binding.TextureName = texOverride;
-                }
                 result.Bindings.Add(AddBinding(binding));
             }
 
@@ -142,13 +130,9 @@ namespace TSO.vitaboy
         /// <param name="dispose">Should the appearance be disposed?</param>
         public void RemoveAppearance(AvatarAppearanceInstance appearance, bool dispose)
         {
-            lock (Bindings)
+            foreach (var binding in appearance.Bindings)
             {
-                if (appearance == null) return;
-                foreach (var binding in appearance.Bindings)
-                {
-                    RemoveBinding(binding, dispose);
-                }
+                RemoveBinding(binding, dispose);
             }
         }
 
@@ -159,18 +143,9 @@ namespace TSO.vitaboy
         /// <returns>An AvatarBindingInstance instance.</returns>
         protected AvatarBindingInstance AddBinding(Binding binding)
         {
-            var content = TSO.Content.Content.Get();
+            var content = FSO.Content.Content.Get();
             var instance = new AvatarBindingInstance();
-            if (binding.MeshName != null)
-            {
-                instance.Mesh = content.AvatarMeshes.Get(binding.MeshName);
-                instance.Texture = content.AvatarTextures.Get(binding.TextureName ?? instance.Mesh.TextureName);
-            }
-            else
-            {
-                instance.Mesh = content.AvatarMeshes.Get(binding.MeshTypeID, binding.MeshFileID);
-                instance.Texture = content.AvatarTextures.Get(binding.TextureTypeID, binding.TextureFileID);
-            }
+            instance.Mesh = content.AvatarMeshes.Get(binding.MeshTypeID, binding.MeshFileID);
 
             /*if (instance.Mesh != null)
             {
@@ -180,17 +155,18 @@ namespace TSO.vitaboy
                 instance.Mesh = instance.Mesh.Clone();
             }*/
 
+            if (binding.TextureFileID > 0 && binding.TextureFileID != 4992)
+            {
+                instance.Texture = content.AvatarTextures.Get(binding.TextureTypeID, binding.TextureFileID);
+            }
+
             instance.Mesh.Prepare(Skeleton.RootBone);
 
             if (GPUMode)
             {
                 instance.Mesh.StoreOnGPU(GPUDevice);
-                //instance.Texture.Get(GPUDevice);
             }
-            lock (Bindings)
-            {
-                Bindings.Add(instance);
-            }
+            Bindings.Add(instance);
             return instance;
         }
 
@@ -201,10 +177,7 @@ namespace TSO.vitaboy
         /// <param name="dispose">Should the binding be disposed?</param>
         protected void RemoveBinding(AvatarBindingInstance instance, bool dispose)
         {
-            lock (Bindings)
-            {
-                Bindings.Remove(instance);
-            }
+            Bindings.Remove(instance);
         }
 
         /// <summary>
@@ -233,11 +206,9 @@ namespace TSO.vitaboy
         /// Updates this Avatar instance.
         /// </summary>
         /// <param name="state">An UpdateState instance.</param>
-        public override void Update(UpdateState state)
+        public override void Update(FSO.Common.Rendering.Framework.Model.UpdateState state)
         {
         }
-
-        public static int DefaultTechnique = 0;
 
         /// <summary>
         /// Draws the meshes making up this Avatar instance.
@@ -245,7 +216,7 @@ namespace TSO.vitaboy
         /// <param name="device">A GraphicsDevice instance.</param>
         public override void Draw(Microsoft.Xna.Framework.Graphics.GraphicsDevice device)
         {
-            Effect.CurrentTechnique = Effect.Techniques[DefaultTechnique];
+            Effect.CurrentTechnique = Effect.Techniques[0];
             Effect.Parameters["View"].SetValue(View);
             Effect.Parameters["Projection"].SetValue(Projection);
             Effect.Parameters["World"].SetValue(World);
@@ -260,64 +231,16 @@ namespace TSO.vitaboy
             if (SkelBones == null) ReloadSkeleton();
             effect.Parameters["SkelBindings"].SetValue(SkelBones);
 
-            lock (Bindings)
+            foreach (var pass in effect.CurrentTechnique.Passes)
             {
-                foreach (var pass in effect.CurrentTechnique.Passes)
+                foreach (var binding in Bindings)
                 {
-                    foreach (var binding in Bindings)
-                    {
-                        
-                        effect.Parameters["MeshTex"].SetValue((Texture2D)null);
-                        
-                        pass.Apply();
-                        binding.Mesh.Draw(device);
-                    }
+                    effect.Parameters["MeshTex"].SetValue(binding.Texture.Get(device));
+                    pass.Apply();
+                    binding.Mesh.Draw(device);
                 }
             }
-
-            if (LightPositions == null) return;
-
-            if (ShadBuf == null)
-            {
-                var shadVerts = new ShadowVertex[]
-                {
-                new ShadowVertex(new Vector3(-1, 0, -1), 25),
-                new ShadowVertex(new Vector3(-1, 0, 1), 25),
-                new ShadowVertex(new Vector3(1, 0, 1), 25),
-                new ShadowVertex(new Vector3(1, 0, -1), 25),
-
-                new ShadowVertex(new Vector3(-1, 0, -1), 19),
-                new ShadowVertex(new Vector3(-1, 0, 1), 19),
-                new ShadowVertex(new Vector3(1, 0, 1), 19),
-                new ShadowVertex(new Vector3(1, 0, -1), 19)
-                };
-                for (int i = 0; i < shadVerts.Length; i++) shadVerts[i].Position *= 1f;
-                int[] shadInd = new int[] { 2, 1, 0, 2, 0, 3, 6, 5, 4, 6, 4, 7 };
-
-                ShadBuf = new VertexBuffer(device, typeof(ShadowVertex), shadVerts.Length, BufferUsage.None);
-                ShadBuf.SetData(shadVerts);
-                ShadIBuf = new IndexBuffer(device, IndexElementSize.ThirtyTwoBits, shadInd.Length, BufferUsage.None);
-                ShadIBuf.SetData(shadInd);
-            }
-
-            foreach (var light in LightPositions)
-            {
-                //effect.Parameters["FloorHeight"].SetValue((float)(Math.Floor(Position.Y/2.95)*2.95 + 0.05));
-                effect.Parameters["LightPosition"].SetValue(light);
-                var oldTech = effect.CurrentTechnique;
-                effect.CurrentTechnique = Avatar.Effect.Techniques[4];
-                effect.CurrentTechnique.Passes[0].Apply();
-                device.DepthStencilState = DepthStencilState.DepthRead;
-                device.SetVertexBuffer(ShadBuf);
-                device.Indices = ShadIBuf;
-                device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 0, 0, 4);
-                effect.CurrentTechnique = oldTech;
-                device.DepthStencilState = DepthStencilState.Default;
-            }
         }
-
-        private static VertexBuffer ShadBuf;
-        private static IndexBuffer ShadIBuf;
 
         public override void DeviceReset(GraphicsDevice Device)
         {

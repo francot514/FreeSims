@@ -8,14 +8,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.utils;
-
-using TSO.Files.formats.iff.chunks;
-using TSO.SimsAntics.Engine;
+using FSO.Files.Utils;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.SimAntics.Engine;
+using TSO.HIT;
 using System.IO;
+using FSO.SimAntics.Model.Sound;
 
-
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMPlaySound : VMPrimitiveHandler
     {
@@ -27,16 +27,16 @@ namespace TSO.SimsAntics.Primitives
             FWAV fwav = context.ScopeResource.Get<FWAV>(operand.EventID);
             if (fwav == null) fwav = context.VM.Context.Globals.Resource.Get<FWAV>(operand.EventID);
 
-            if (fwav != null)
+            var owner = (operand.StackObjAsSource) ? context.StackObject : context.Caller;
+            if (fwav != null && owner.SoundThreads.FirstOrDefault(x => x.Name == fwav.Name) == null)
             {
-                var thread = TSO.HIT.HITVM.Get().PlaySoundEvent(fwav.Name);
+                var thread = HITVM.Get().PlaySoundEvent(fwav.Name);
                 if (thread != null)
                 {
-                    var owner = (operand.StackObjAsSource)?context.StackObject:context.Caller;
                     if (owner == null) return VMPrimitiveExitCode.GOTO_TRUE;
                     if (!thread.AlreadyOwns(owner.ObjectID)) thread.AddOwner(owner.ObjectID);
 
-                   // if (thread is HITThread) (owner).SubmitHITVars(thread);
+                    if (owner is VMAvatar && thread is HITThread) ((VMAvatar)owner).SubmitHITVars((HITThread)thread);
 
                     var entry = new VMSoundEntry()
                     {
@@ -57,10 +57,10 @@ namespace TSO.SimsAntics.Primitives
 
     public class VMPlaySoundOperand : VMPrimitiveOperand {
 
-        public ushort EventID;
+        public ushort EventID { get; set; }
         public ushort Pad;
-        public byte Flags;
-        public byte Volume;
+        public byte Flags { get; set; }
+        public byte Volume { get; set; }
 
         #region VMPrimitiveOperand Members
 

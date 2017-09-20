@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
-using Microsoft.Xna.Framework;
+using System.Linq;
+using System.Text;
 
-namespace tso.world.Model
+namespace FSO.LotView.Model
 {
     public enum LotTypes : byte
     {

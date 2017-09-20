@@ -8,12 +8,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
-using TSO.Files.formats.iff.chunks;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
+using FSO.Files.Formats.IFF.Chunks;
 using System.IO;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMChangeActionString : VMPrimitiveHandler
     {
@@ -27,7 +27,7 @@ namespace TSO.SimsAntics.Primitives
                     table = context.ScopeResource.Get<STR>(operand.StringTable);
                     break;
                 case 1:
-                    table = context.Callee.SemiGlobal.Resource.Get<STR>(operand.StringTable);
+                    table = context.Callee.SemiGlobal.Get<STR>(operand.StringTable);
                     break;
                 case 2:
                     table = context.Global.Resource.Get<STR>(operand.StringTable);

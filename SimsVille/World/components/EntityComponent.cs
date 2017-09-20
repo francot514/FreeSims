@@ -5,15 +5,15 @@ using System.Text;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 
-namespace tso.world.Components
+namespace FSO.LotView.Components
 {
     public abstract class EntityComponent : WorldComponent
     {
         public Texture2D Headline;
-        public Vector2 LastScreenPos; //used by vm to set sound volume and pa
-        public int LastZoomLevel;
 
         public short ObjectID; //set this any time it changes so that hit test works.
+
+        public abstract Vector2 GetScreenPos(WorldState world);
 
         public abstract ushort Room { get; set; }
 

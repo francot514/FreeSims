@@ -4,17 +4,16 @@
  * http://mozilla.org/MPL/2.0/. 
  */
 
-using TSO.Common.content;
-
-using TSO.Files.formats.iff.chunks;
-using TSO.SimsAntics.Engine.Scopes;
-using TSO.SimsAntics.Model;
+using FSO.Common.Content;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.SimAntics.Engine.Scopes;
+using FSO.SimAntics.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TSO.SimsAntics.Engine
+namespace FSO.SimAntics.Engine
 {
     public class VMSuitProvider
     {
@@ -134,7 +133,7 @@ namespace TSO.SimsAntics.Engine
                 var suitFile = suitTable.GetString(id) + ".apr";
 
                 return suitFile;
-                //var apr = TSO.Content.Content.Get().AvatarAppearances.Get(suitFile);
+                //var apr = FSO.Content.Content.Get().AvatarAppearances.Get(suitFile);
                 //return apr;
             }
             return null;

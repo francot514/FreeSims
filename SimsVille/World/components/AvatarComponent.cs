@@ -10,12 +10,12 @@ using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
-using tso.world.Model;
-using tso.world.Utils;
-using tso.common.utils;
-using TSO.vitaboy;
+using FSO.Vitaboy;
+using FSO.LotView.Model;
+using FSO.LotView.Utils;
+using FSO.Common.Utils;
 
-namespace tso.world.Components
+namespace FSO.LotView.Components
 {
     public class AvatarComponent : EntityComponent
     {
@@ -33,8 +33,15 @@ namespace tso.world.Components
             return Vector3.Transform(new Vector3(handpos.X, handpos.Z, handpos.Y), Matrix.CreateRotationZ((float)(RadianDirection+Math.PI))) + this.Position - new Vector3(0.5f, 0.5f, 0f);
         }
 
+        public Vector3 GetPelvisPosition()
+        {
+            var pelvis = Avatar.Skeleton.GetBone("PELVIS").AbsolutePosition / 3.0f;
+            return Vector3.Transform(new Vector3(pelvis.X, pelvis.Z, pelvis.Y), Matrix.CreateRotationZ((float)(RadianDirection + Math.PI))) + this.Position - new Vector3(0.5f, 0.5f, 0f);
+        }
+
         public double RadianDirection;
         public override ushort Room { get; set; }
+        public AvatarDisplayFlags DisplayFlags;
 
         private Direction _Direction;
         public override Direction Direction
@@ -90,21 +97,23 @@ namespace tso.world.Components
             Avatar.StoreOnGPU(device);
         }
 
+        public override Vector2 GetScreenPos(WorldState world)
+        {
+            var headpos = Avatar.Skeleton.GetBone("HEAD").AbsolutePosition / 3.0f;
+            var transhead = Vector3.Transform(new Vector3(headpos.X, headpos.Z, headpos.Y), Matrix.CreateRotationZ((float)(RadianDirection + Math.PI))) + this.Position - new Vector3(0.5f, 0.5f, 0f);
+            return world.WorldSpace.GetScreenFromTile(transhead) + world.WorldSpace.GetScreenOffset() + PosCenterOffsets[(int)world.Zoom - 1];
+        }
+
         public override void Draw(GraphicsDevice device, WorldState world)
         {
             var headpos = Avatar.Skeleton.GetBone("HEAD").AbsolutePosition / 3.0f;
             var transhead = Vector3.Transform(new Vector3(headpos.X, headpos.Z, headpos.Y), Matrix.CreateRotationZ((float)(RadianDirection + Math.PI))) + this.Position - new Vector3(0.5f, 0.5f, 0f);
-            if (!world.TempDraw)
-            {
-                LastScreenPos = world.WorldSpace.GetScreenFromTile(transhead) + world.WorldSpace.GetScreenOffset() + PosCenterOffsets[(int)world.Zoom-1];
-
-                LastZoomLevel = (int)world.Zoom;
-            }
 
             if (!Visible) return;
 
             if (Avatar != null){
-                world._3D.DrawMesh(Matrix.CreateRotationY((float)(Math.PI-RadianDirection))*this.World, Avatar, (short)ObjectID, Room); //negated so avatars spin clockwise
+                world._3D.DrawMesh(Matrix.CreateRotationY((float)(Math.PI-RadianDirection))*this.World, Avatar, (short)ObjectID, Room, 
+                    ((DisplayFlags & AvatarDisplayFlags.ShowAsGhost) > 0)?new Color(32, 255, 96)*0.66f:Color.White); 
             }
 
             if (Headline != null)
@@ -112,10 +121,9 @@ namespace tso.world.Components
                 var headOff = (transhead-Position) + new Vector3(0,0,0.66f);
                 var headPx = world.WorldSpace.GetScreenFromTile(headOff);
 
-                var item = new _2DSprite();
+                var item = world._2D.NewSprite(_2DBatchRenderMode.Z_BUFFER);
                 item.Pixel = Headline;
                 item.Depth = TextureGenerator.GetWallZBuffer(device)[30];
-                item.RenderMode = _2DBatchRenderMode.Z_BUFFER;
 
                 item.SrcRect = new Rectangle(0, 0, Headline.Width, Headline.Height);
                 item.WorldPosition = headOff;

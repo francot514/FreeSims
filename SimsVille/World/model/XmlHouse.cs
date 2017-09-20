@@ -11,22 +11,16 @@ using System.Text;
 using System.Xml.Serialization;
 using System.IO;
 
-namespace tso.world.Model
+namespace FSO.LotView.Model
 {
     [XmlRoot("house")]
     public class XmlHouseData
     {
-        [XmlElement("name")]
-        public string Name { get; set; }
-
         [XmlElement("size")]
         public int Size { get; set; }
 
         [XmlElement("category")]
         public int Category { get; set; }
-
-        [XmlElement("timeofday")]
-        public int TimeofDay { get; set; }
 
         [XmlElement("world")]
         public XmlHouseDataWorld World { get; set; }

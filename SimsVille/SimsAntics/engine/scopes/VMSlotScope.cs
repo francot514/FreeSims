@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TSO.SimsAntics.Engine.Scopes
+namespace FSO.SimAntics.Engine.Scopes
 {
     public enum VMSlotScope
     {

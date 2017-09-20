@@ -8,17 +8,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.utils;
-using TSO.SimsAntics.Engine.Scopes;
-using TSO.SimsAntics.Engine.Utils;
-using TSO.SimsAntics.Model;
-using TSO.SimsAntics.Utils;
-using TSO.SimsAntics.Engine;
-using TSO.Files.formats.iff.chunks;
+using FSO.Files.Utils;
+using FSO.SimAntics.Engine.Scopes;
+using FSO.SimAntics.Engine.Utils;
+using FSO.Vitaboy;
+using FSO.SimAntics.Model;
+using FSO.SimAntics.Utils;
+using FSO.SimAntics.Engine;
+using FSO.Files.Formats.IFF.Chunks;
 using System.IO;
-using TSO.vitaboy;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMReach : VMPrimitiveHandler
     {
@@ -55,7 +55,7 @@ namespace TSO.SimsAntics.Primitives
             else if (height < 4) animationName = "a2o-reach-seatht.anim";
             else animationName = "a2o-reach-tableht.anim";
 
-            var animation = TSO.Content.Content.Get().AvatarAnimations.Get(animationName);
+            var animation = FSO.Content.Content.Get().AvatarAnimations.Get(animationName);
             if(animation == null){
                 return VMPrimitiveExitCode.ERROR;
             }
@@ -82,10 +82,10 @@ namespace TSO.SimsAntics.Primitives
                     avatar.Animations.Clear();
                     return VMPrimitiveExitCode.GOTO_TRUE;
                 } 
-                else if (avatar.CurrentAnimationState.EventFired)
+                else if (avatar.CurrentAnimationState.EventQueue.Count > 0)
                 {
 
-                    if (avatar.CurrentAnimationState.EventCode == 0)
+                    if (avatar.CurrentAnimationState.EventQueue[0] == 0)
                     {
                         //do the grab/drop
                         if (operand.Mode == 0)
@@ -109,7 +109,7 @@ namespace TSO.SimsAntics.Primitives
                                 var item = context.StackObject.GetSlot(slotNum);
                                 if (item != null)
                                 {
-                                    context.Caller.PlaceInSlot(item, 0, true, context.VM.Context);
+                                    if (!context.Caller.PlaceInSlot(item, 0, true, context.VM.Context)) failed = true;
                                 }
                                 else failed = true; //can't grab from an empty space
                             }
@@ -118,14 +118,13 @@ namespace TSO.SimsAntics.Primitives
                                 var itemTest = context.StackObject.GetSlot(slotNum);
                                 if (itemTest == null)
                                 {
-                                    context.StackObject.PlaceInSlot(holding, slotNum, true, context.VM.Context);
+                                    if (!context.StackObject.PlaceInSlot(holding, slotNum, true, context.VM.Context)) failed = true;
                                 }
                                 else failed = true; //can't drop in an occupied space
                             }
                         }
                     }
-
-                    avatar.CurrentAnimationState.EventFired = false; //clear fired flag
+                    avatar.CurrentAnimationState.EventQueue.RemoveAt(0);
                     return VMPrimitiveExitCode.CONTINUE_NEXT_TICK;
                 }
                 else

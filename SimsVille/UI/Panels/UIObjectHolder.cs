@@ -1,25 +1,34 @@
-﻿using System;
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+If a copy of the MPL was not distributed with this file, You can obtain one at
+http://mozilla.org/MPL/2.0/.
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using tso.world;
-using TSO.SimsAntics;
-using TSO.Common.rendering.framework.model;
+using FSO.LotView;
+using FSO.SimAntics;
+using FSO.Common.Rendering.Framework.Model;
 using Microsoft.Xna.Framework;
-using tso.world.Components;
-using TSO.SimsAntics.Entities;
-using tso.world.Model;
-using TSOVille.Code.UI.Model;
-using TSO.SimsAntics.Model;
+using FSO.LotView.Components;
+using FSO.SimAntics.Entities;
+using FSO.LotView.Model;
+using FSO.Client.UI.Model;
+using TSO.HIT;
+using FSO.SimAntics.Model;
 using Microsoft.Xna.Framework.Input;
-using TSOVille.Code.UI.Framework;
+using FSO.Client.UI.Framework;
+using FSO.SimAntics.NetPlay.Model.Commands;
+using FSO.Common;
 
-namespace TSOVille.Code.UI.Panels
+namespace FSO.Client.UI.Panels
 {
     public class UIObjectHolder //controls the object holder interface
     {
         public VM vm;
-        public World World;
+        public LotView.World World;
         public UILotControl ParentControl;
 
         public Direction Rotation;
@@ -28,6 +37,9 @@ namespace TSOVille.Code.UI.Panels
         private bool MouseIsDown;
         private bool MouseWasDown;
         private bool MouseClicked;
+
+        private int OldMX;
+        private int OldMY;
         public bool DirChanged;
         public bool ShowTooltip;
 
@@ -37,7 +49,7 @@ namespace TSOVille.Code.UI.Panels
 
         public UIObjectSelection Holding;
 
-        public UIObjectHolder(VM vm, World World, UILotControl parent)
+        public UIObjectHolder(VM vm, LotView.World World, UILotControl parent)
         {
             this.vm = vm;
             this.World = World;
@@ -55,13 +67,21 @@ namespace TSOVille.Code.UI.Panels
             for (int i = 0; i < Group.Objects.Count; i++)
             {
                 var target = Group.Objects[i];
+                target.SetRoom(65534);
                 if (target is VMGameObject) ((ObjectComponent)target.WorldUI).ForceDynamic = true;
-                CursorTiles[i] = vm.Context.CreateObjectInstance(0x00000437, new LotTilePos(target.Position), tso.world.Model.Direction.NORTH).Objects[0];
+                CursorTiles[i] = vm.Context.CreateObjectInstance(0x00000437, new LotTilePos(target.Position), FSO.LotView.Model.Direction.NORTH, true).Objects[0];
                 CursorTiles[i].SetPosition(new LotTilePos(0,0,1), Direction.NORTH, vm.Context);
                 ((ObjectComponent)CursorTiles[i].WorldUI).ForceDynamic = true;
             }
             Holding.TilePosOffset = new Vector2(0, 0);
             Holding.CursorTiles = CursorTiles;
+
+            uint guid;
+            var bobj = Group.BaseObject;
+            guid = bobj.Object.OBJ.GUID;
+            if (bobj.MasterDefinition != null) guid = bobj.MasterDefinition.GUID;
+            var catalogItem = Content.Content.Get().WorldCatalog.GetItemByGUID(guid);
+            if (catalogItem != null) Holding.Price = (int)catalogItem.Price;
         }
 
         public void MoveSelected(Vector2 pos, sbyte level)
@@ -81,16 +101,16 @@ namespace TSOVille.Code.UI.Panels
 
             //rotate through to try all configurations
             var dir = Holding.Dir;
-            VMPlacementResult result = new VMPlacementResult(VMPlacementError.Success);
+            VMPlacementError status = VMPlacementError.Success;
             for (int i = 0; i < 4; i++)
             {
-                result = Holding.Group.ChangePosition(LotTilePos.FromBigTile((short)pos.X, (short)pos.Y, World.State.Level), dir, vm.Context);
-                if (result.Status != VMPlacementError.MustBeAgainstWall) break;
+                status = Holding.Group.ChangePosition(LotTilePos.FromBigTile((short)pos.X, (short)pos.Y, World.State.Level), dir, vm.Context).Status;
+                if (status != VMPlacementError.MustBeAgainstWall) break;
                 dir = (Direction)((((int)dir << 6) & 255) | ((int)dir >> 2));
             }
             if (Holding.Dir != dir) Holding.Dir = dir;
 
-            if (result.Status != VMPlacementError.Success) 
+            if (status != VMPlacementError.Success) 
             {
                 Holding.Group.ChangePosition(LotTilePos.OUT_OF_WORLD, Holding.Dir, vm.Context);
 
@@ -107,7 +127,7 @@ namespace TSOVille.Code.UI.Panels
                 tpos.Z = (World.State.Level - 1)*2.95f;
                 Holding.CursorTiles[i].MultitileGroup.SetVisualPosition(tpos, Holding.Dir, vm.Context);
             }
-            Holding.CanPlace = result.Status;
+            Holding.CanPlace = status;
         }
 
         public void ClearSelected()
@@ -117,15 +137,9 @@ namespace TSOVille.Code.UI.Panels
             //      and so that clearing selections doesnt delete already placed objects.
             if (Holding != null)
             {
-               
-                for (int i = 0; i < Holding.Group.Objects.Count; i++)
-                {
-                    var target = Holding.Group.Objects[i];
-                    if (target is VMGameObject) ((ObjectComponent)target.WorldUI).ForceDynamic = false;
-                }
+                Holding.Group.Delete(vm.Context);
 
-                for (int i = 0; i < Holding.CursorTiles.Length; i++)
-                {
+                for (int i = 0; i < Holding.CursorTiles.Length; i++) {
                     Holding.CursorTiles[i].Delete(true, vm.Context);
                     ((ObjectComponent)Holding.CursorTiles[i].WorldUI).ForceDynamic = false;
                 }
@@ -148,23 +162,48 @@ namespace TSOVille.Code.UI.Panels
         public void MouseUp(UpdateState state)
         {
             MouseIsDown = false;
-            
             if (Holding != null && Holding.Clicked)
             {
-                
                 if (Holding.CanPlace == VMPlacementError.Success)
                 {
-                    //HITVM.Get().PlaySoundEvent((Holding.IsBought) ? UISounds.ObjectMovePlace : UISounds.ObjectPlace);
-                    ExecuteEntryPoint(11); //User Placement
+                    HITVM.Get().PlaySoundEvent((Holding.IsBought) ? UISounds.ObjectMovePlace : UISounds.ObjectPlace);
+                    //ExecuteEntryPoint(11); //User Placement
                     var putDown = Holding;
+                    if (Holding.IsBought)
+                    {
+                        var pos = Holding.Group.BaseObject.Position;
+                        vm.SendCommand(new VMNetMoveObjectCmd
+                        {
+                            ObjectID = Holding.MoveTarget,
+                            dir = Holding.Dir,
+                            level = pos.Level,
+                            x = pos.x,
+                            y = pos.y
+                        });
+                    } else
+                    {
+                        var pos = Holding.Group.BaseObject.Position;
+                        var GUID = (Holding.Group.MultiTile)? Holding.Group.BaseObject.MasterDefinition.GUID : Holding.Group.BaseObject.Object.OBJ.GUID;
+                        vm.SendCommand(new VMNetBuyObjectCmd
+                        {
+                            GUID = GUID,
+                            dir = Holding.Dir,
+                            level = pos.Level,
+                            x = pos.x,
+                            y = pos.y
+                        });
+                    }
                     ClearSelected();
-                    if (OnPutDown != null) OnPutDown(putDown, state);
+                    if (OnPutDown != null) OnPutDown(putDown, state); //call this after so that buy mode etc can produce more.
                 }
-                
+                else
+                {
+                    
+                }
             }
 
-            GameFacade.Screens.TooltipProperties.Show = false;
-            GameFacade.Screens.TooltipProperties.Opacity = 0;
+            state.UIState.TooltipProperties.Show = false;
+            state.UIState.TooltipProperties.Opacity = 0;
             ShowTooltip = false;
         }
 
@@ -176,25 +215,38 @@ namespace TSOVille.Code.UI.Panels
         public void SellBack(UIElement button)
         {
             if (Holding == null) return;
-            //if (Holding.IsBought) HITVM.Get().PlaySoundEvent(UISounds.MoneyBack);
-            Holding.Group.Delete(vm.Context);
+            if (Holding.IsBought)
+            {
+                vm.SendCommand(new VMNetDeleteObjectCmd
+                {
+                    ObjectID = Holding.MoveTarget,
+                    CleanupAll = true
+                });
+                HITVM.Get().PlaySoundEvent(UISounds.MoneyBack);
+            }
             OnDelete(Holding, null); //TODO: cleanup callbacks which don't need updatestate into another delegate. will do when refactoring for online
             ClearSelected();
         }
 
         public void Update(UpdateState state, bool scrolled)
         {
-            if (ShowTooltip) GameFacade.Screens.TooltipProperties.UpdateDead = false;
+            if (ShowTooltip) state.UIState.TooltipProperties.UpdateDead = false;
             MouseClicked = (MouseIsDown && (!MouseWasDown));
 
-            if (state.KeyboardState.IsKeyDown(Keys.Delete) && Holding != null)
+            if (Holding != null)
             {
-                SellBack(null);
+                if (state.KeyboardState.IsKeyDown(Keys.Delete))
+                {
+                    SellBack(null);
+                } else if (state.KeyboardState.IsKeyDown(Keys.Escape))
+                {
+                    OnDelete(Holding, null);
+                    ClearSelected();
+                }
             }
             if (Holding != null)
             {
                 if (MouseClicked) Holding.Clicked = true;
-                //TODO: crash if placed out of world
                 if (MouseIsDown && Holding.Clicked)
                 {
                     bool updatePos = MouseClicked;
@@ -217,7 +269,7 @@ namespace TSOVille.Code.UI.Panels
                         if (newDir != Holding.Dir || MouseClicked)
                         {
                             updatePos = true;
-                            //HITVM.Get().PlaySoundEvent(UISounds.ObjectRotate);
+                            HITVM.Get().PlaySoundEvent(UISounds.ObjectRotate);
                             Holding.Dir = newDir;
                             DirChanged = true;
                         }
@@ -225,59 +277,67 @@ namespace TSOVille.Code.UI.Panels
                     if (updatePos)
                     {
                         MoveSelected(Holding.TilePos, Holding.Level);
+                        if (!Holding.IsBought && Holding.CanPlace == VMPlacementError.Success && 
+                            ParentControl.ActiveEntity != null && ParentControl.ActiveEntity.TSOState.Budget.Value < Holding.Price)
+                            Holding.CanPlace = VMPlacementError.InsufficientFunds;
                         if (Holding.CanPlace != VMPlacementError.Success)
                         {
-                            GameFacade.Screens.TooltipProperties.Show = true;
-                            GameFacade.Screens.TooltipProperties.Opacity = 1;
-                            GameFacade.Screens.TooltipProperties.Position = new Vector2(MouseDownX,
+                            state.UIState.TooltipProperties.Show = true;
+                            state.UIState.TooltipProperties.Color = Color.Black;
+                            state.UIState.TooltipProperties.Opacity = 1;
+                            state.UIState.TooltipProperties.Position = new Vector2(MouseDownX,
                                 MouseDownY);
-                            GameFacade.Screens.Tooltip = GameFacade.Strings.GetString("137", "kPErr" + Holding.CanPlace.ToString()
+                            state.UIState.Tooltip = GameFacade.Strings.GetString("137", "kPErr" + Holding.CanPlace.ToString()
                                 + ((Holding.CanPlace == VMPlacementError.CannotPlaceComputerOnEndTable) ? "," : ""));
                             // comma added to curcumvent problem with language file. We should probably just index these with numbers?
-                            GameFacade.Screens.TooltipProperties.UpdateDead = false;
+                            state.UIState.TooltipProperties.UpdateDead = false;
                             ShowTooltip = true;
-                            //HITVM.Get().PlaySoundEvent(UISounds.Error);
+                            HITVM.Get().PlaySoundEvent(UISounds.Error);
                         }
                         else
                         {
-                            GameFacade.Screens.TooltipProperties.Show = false;
-                            GameFacade.Screens.TooltipProperties.Opacity = 0;
+                            state.UIState.TooltipProperties.Show = false;
+                            state.UIState.TooltipProperties.Opacity = 0;
                             ShowTooltip = false;
                         }
                     }
                 }
                 else
                 {
-                    var tilePos = World.State.WorldSpace.GetTileAtPosWithScroll(new Vector2(state.MouseState.X, state.MouseState.Y))+Holding.TilePosOffset;
+                    var tilePos = World.State.WorldSpace.GetTileAtPosWithScroll(new Vector2(state.MouseState.X, state.MouseState.Y) / FSOEnvironment.DPIScaleFactor) + Holding.TilePosOffset;
                     MoveSelected(tilePos, 1);
                 }
             }
-            else
+            else if (MouseClicked)
             {
                 //not holding an object, but one can be selected
-                var newHover = World.GetObjectIDAtScreenPos(state.MouseState.X, state.MouseState.Y, GameFacade.GraphicsDevice);
-                if (MouseClicked && (newHover != 0))
+                var newHover = World.GetObjectIDAtScreenPos(state.MouseState.X / FSOEnvironment.DPIScaleFactor, state.MouseState.Y / FSOEnvironment.DPIScaleFactor, GameFacade.GraphicsDevice);
+                if (MouseClicked && (newHover != 0) && (vm.GetObjectById(newHover) is VMGameObject))
                 {
                     var objGroup = vm.GetObjectById(newHover).MultitileGroup;
                     var objBasePos = objGroup.BaseObject.Position;
                     if (objBasePos.Level == World.State.Level)
                     {
-                        SetSelected(objGroup);
 
-                        Holding.TilePosOffset = new Vector2(objBasePos.x / 16f, objBasePos.y / 16f) - World.State.WorldSpace.GetTileAtPosWithScroll(new Vector2(state.MouseState.X, state.MouseState.Y));
+                        var ghostGroup = vm.Context.GhostCopyGroup(objGroup);
+                        SetSelected(ghostGroup);
+
+                        Holding.MoveTarget = newHover;
+                        Holding.TilePosOffset = new Vector2(objBasePos.x / 16f, objBasePos.y / 16f) - World.State.WorldSpace.GetTileAtPosWithScroll(new Vector2(state.MouseState.X, state.MouseState.Y) / FSOEnvironment.DPIScaleFactor);
                         if (OnPickup != null) OnPickup(Holding, state);
-                        ExecuteEntryPoint(12); //User Pickup
+                        //ExecuteEntryPoint(12); //User Pickup
                     }
                     else
                     {
-                        GameFacade.Screens.TooltipProperties.Show = true;
-                        GameFacade.Screens.TooltipProperties.Opacity = 1;
-                        GameFacade.Screens.TooltipProperties.Position = new Vector2(MouseDownX,
+                        state.UIState.TooltipProperties.Show = true;
+                        state.UIState.TooltipProperties.Color = Color.Black;
+                        state.UIState.TooltipProperties.Opacity = 1;
+                        state.UIState.TooltipProperties.Position = new Vector2(MouseDownX,
                             MouseDownY);
-                        GameFacade.Screens.Tooltip = GameFacade.Strings.GetString("137", "kPErr" + VMPlacementError.CantEffectFirstLevelFromSecondLevel.ToString());
-                        GameFacade.Screens.TooltipProperties.UpdateDead = false;
+                        state.UIState.Tooltip = GameFacade.Strings.GetString("137", "kPErr" + VMPlacementError.CantEffectFirstLevelFromSecondLevel.ToString());
+                        state.UIState.TooltipProperties.UpdateDead = false;
                         ShowTooltip = true;
-                        //HITVM.Get().PlaySoundEvent(UISounds.Error);
+                        HITVM.Get().PlaySoundEvent(UISounds.Error);
                     }
                 }
             }
@@ -290,6 +350,8 @@ namespace TSOVille.Code.UI.Panels
 
     public class UIObjectSelection
     {
+        public short MoveTarget = 0;
+
         public VMMultitileGroup Group;
         public VMEntity[] CursorTiles;
         public LotTilePos PreviousTile;
@@ -299,12 +361,13 @@ namespace TSOVille.Code.UI.Panels
         public bool Clicked;
         public VMPlacementError CanPlace;
         public sbyte Level;
+        public int Price;
 
         public bool IsBought
         {
             get
             {
-                return PreviousTile != LotTilePos.OUT_OF_WORLD;
+                return (MoveTarget != 0);
             }
         }
     }

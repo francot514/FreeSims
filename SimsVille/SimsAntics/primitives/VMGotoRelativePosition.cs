@@ -8,15 +8,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
 using Microsoft.Xna.Framework;
-using tso.world;
-using TSO.Files.formats.iff.chunks;
-using tso.world.Model;
+using FSO.LotView;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.LotView.Model;
 using System.IO;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMGotoRelativePosition : VMPrimitiveHandler
     {

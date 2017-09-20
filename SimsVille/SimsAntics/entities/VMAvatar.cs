@@ -8,38 +8,37 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using tso.world.Components;
-using TSO.Content;
+using FSO.LotView.Components;
+using FSO.Vitaboy;
+using FSO.Content;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TSO.SimsAntics.Model;
-using tso.world.Model;
-using TSO.Files.formats.iff.chunks;
-using TSO.Common.utils;
-using TSO.SimsAntics.Model.Routing;
+using FSO.SimAntics.Model;
+using FSO.LotView.Model;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.Common.Utils;
+using FSO.SimAntics.Model.Routing;
 using TSO.HIT;
+using FSO.SimAntics.NetPlay.Model;
 using System.IO;
-using tso.simantics.Model;
-using TSO.vitaboy;
-using TSO.Common.rendering.vitaboy;
-using TSO.SimAntics.Model;
-using tso.simantics.Engine;
+using FSO.SimAntics.Marshals;
+using FSO.SimAntics.Entities;
+using FSO.SimAntics.Model.TSOPlatform;
+using FSO.SimAntics.Model.Sound;
+using FSO.SimAntics.Engine;
+using FSO.SimAntics.Primitives;
 
-namespace TSO.SimsAntics
+namespace FSO.SimAntics
 {
     public class VMAvatar : VMEntity
     {
         public static uint TEMPLATE_PERSON = 0x7FD96B54;
-        public static uint NPC_MAID = 0xC61931DC;
-        public static uint NPC_GARDENER = 0xD62B91B4;
-        public static uint DOG_TEMPLATE = 0x5F0C674C;
 
         public SimAvatar Avatar;
 
         /** Animation vars **/
 
         public List<VMAnimationState> Animations;
-
         public VMAnimationState CurrentAnimationState {
             get
             {
@@ -48,8 +47,6 @@ namespace TSO.SimsAntics
         }
         public VMAnimationState CarryAnimationState;
 
-
-        public string Name;
         private string m_Message = "";
         public string Message
         {
@@ -58,7 +55,7 @@ namespace TSO.SimsAntics
             {
                 m_Message = value;
                 SetPersonData(VMPersonDataVariable.ChatBaloonOn, 1);
-                MessageTimeout = 150 + value.Length/2;
+                MessageTimeout = 150 + value.Length / 2;
             }
         }
 
@@ -66,11 +63,15 @@ namespace TSO.SimsAntics
         public Vector3 Velocity; //used for 60 fps walking animation
 
         private VMMotiveChange[] MotiveChanges = new VMMotiveChange[16];
-        private VMMotiveDecay MotiveDecay;
+        private VMAvatarMotiveDecay MotiveDecay;
         private short[] PersonData = new short[100];
         private short[] MotiveData = new short[16];
         private VMEntity HandObject;
         private float _RadianDirection;
+
+        private int KillTimeout = -1;
+        private static readonly int FORCE_DELETE_TIMEOUT = 60 * 30;
+        private readonly ushort LEAVE_LOT_TREE = 8373;
 
         /*
             APPEARANCE DATA
@@ -78,17 +79,14 @@ namespace TSO.SimsAntics
         public VMAvatarDefaultSuits DefaultSuits = new VMAvatarDefaultSuits(false);
         public HashSet<string> BoundAppearances = new HashSet<string>();
 
-        private VMOutfitReference _BodyOutfit;
-        public VMOutfitReference BodyOutfit
+        private ulong _BodyOutfit;
+        public ulong BodyOutfit
         {
             set
             {
                 _BodyOutfit = value;
-                if (UseWorld)
-                {
-                    Avatar.Body = value.GetContent();
-                    if (AvatarType == VMAvatarType.Adult || AvatarType == VMAvatarType.Child) Avatar.Handgroup = Avatar.Body;
-                }
+                Avatar.Body = FSO.Content.Content.Get().AvatarOutfits.Get(value);
+                if (AvatarType == VMAvatarType.Adult || AvatarType == VMAvatarType.Child) Avatar.Handgroup = Avatar.Body;
             }
             get
             {
@@ -96,23 +94,19 @@ namespace TSO.SimsAntics
             }
         }
 
-        private VMOutfitReference _HeadOutfit;
-        public VMOutfitReference HeadOutfit
+        private ulong _HeadOutfit;
+        public ulong HeadOutfit
         {
             set
             {
                 _HeadOutfit = value;
-                if (UseWorld)
-                {
-                    Avatar.Head = value.GetContent();
-                }
+                Avatar.Head = (_HeadOutfit == 0)?null:FSO.Content.Content.Get().AvatarOutfits.Get(value);
             }
             get
             {
                 return _HeadOutfit;
             }
         }
-
 
         private AppearanceType _SkinTone;
         public AppearanceType SkinTone
@@ -171,11 +165,28 @@ namespace TSO.SimsAntics
             }
         }
 
+        public bool IsDog
+        {
+            get
+            {
+                var gender = GetPersonData(VMPersonDataVariable.Gender);
+                return (gender & 8) > 0;
+            }
+        }
+
+        public bool IsCat
+        {
+            get
+            {
+                var gender = GetPersonData(VMPersonDataVariable.Gender);
+                return (gender & 16) > 0; //flags are dog, cat.
+            }
+        }
+
         public VMAvatar(GameObject obj)
             : base(obj)
         {
-            Name = "Sim";
-
+            PlatformState = new VMTSOAvatarState(); //todo: ts1 switch
             BodyStrings = Object.Resource.Get<STR>(Object.OBJ.BodyStringID);
 
             SetAvatarType(BodyStrings);
@@ -188,7 +199,8 @@ namespace TSO.SimsAntics
                 avatarc.Avatar = Avatar;
             }
 
-            MotiveDecay = new VMMotiveDecay();
+
+            MotiveDecay = new VMAvatarMotiveDecay();
             for (int i = 0; i < 16; i++)
             {
                 MotiveChanges[i] = new VMMotiveChange();
@@ -213,19 +225,19 @@ namespace TSO.SimsAntics
             switch (AvatarType)
             {
                 case VMAvatarType.Adult:
-                    Avatar = new SimAvatar(TSO.Content.Content.Get().AvatarSkeletons.Get("adult.skel"));
-                    Avatar.Head = _HeadOutfit.GetContent();//default to bob newbie, why not
-                    Avatar.Body = _BodyOutfit.GetContent();
+                    Avatar = new SimAvatar(FSO.Content.Content.Get().AvatarSkeletons.Get("adult.skel"));
+                    Avatar.Head = FSO.Content.Content.Get().AvatarOutfits.Get(0x000003a00000000D); //default to bob newbie, why not
+                    Avatar.Body = FSO.Content.Content.Get().AvatarOutfits.Get("mab002_slob.oft");
                     Avatar.Handgroup = Avatar.Body;
                     break;
                 case VMAvatarType.Cat:
-                    var skel = TSO.Content.Content.Get().AvatarSkeletons.Get("cat.skel");
+                    var skel = FSO.Content.Content.Get().AvatarSkeletons.Get("cat.skel");
                     Avatar = new SimAvatar(skel);
-                    Avatar.Body = _BodyOutfit.GetContent();
+                    Avatar.Body = FSO.Content.Content.Get().AvatarOutfits.Get("uaa002cat_calico.oft");
                     break;
                 case VMAvatarType.Dog:
-                    Avatar = new SimAvatar(TSO.Content.Content.Get().AvatarSkeletons.Get("dog.skel"));
-                    Avatar.Body = _BodyOutfit.GetContent();
+                    Avatar = new SimAvatar(FSO.Content.Content.Get().AvatarSkeletons.Get("dog.skel"));
+                    Avatar.Body = FSO.Content.Content.Get().AvatarOutfits.Get("uaa012dog_scottish.oft"); //;)
                     break;
             }
         }
@@ -238,18 +250,17 @@ namespace TSO.SimsAntics
                 var body = data.GetString(1);
                 var randBody = data.GetString(10);
 
-                 if (randBody != "")
-                    {
-                        var bodySpl = randBody.Split(';');
-                        DefaultSuits.Daywear = VMOutfitReference.Parse(bodySpl[context.NextRandom((ulong)bodySpl.Length - 1)], true);
-                    }
-                 else if (body != "")
-                 {
-                     DefaultSuits.Daywear = VMOutfitReference.Parse(body, true);
-                 }
+                if (randBody != "")
+                {
+                    var bodySpl = randBody.Split(';');
+                    DefaultSuits.Daywear = Convert.ToUInt64(bodySpl[context.NextRandom((ulong)bodySpl.Length-1)], 16);
+                }
+                else if (body != "")
+                {
+                    DefaultSuits.Daywear = Convert.ToUInt64(body, 16);
+                }
 
-                HeadOutfit = new VMOutfitReference(data, true);
-                BodyOutfit = DefaultSuits.Daywear; BodyOutfit = DefaultSuits.Daywear;
+                BodyOutfit = DefaultSuits.Daywear;
 
                 var head = data.GetString(2);
                 var randHead = data.GetString(9);
@@ -257,11 +268,11 @@ namespace TSO.SimsAntics
                 if (randHead != "")
                 {
                     var headSpl = randHead.Split(';');
-                    HeadOutfit = VMOutfitReference.Parse(headSpl[context.NextRandom((ulong)headSpl.Length - 1)], true);
+                    HeadOutfit = Convert.ToUInt64(headSpl[context.NextRandom((ulong)headSpl.Length-1)], 16);
                 }
                 else if (head != "")
                 {
-                    HeadOutfit = VMOutfitReference.Parse(head, true);
+                    HeadOutfit = Convert.ToUInt64(head, 16);
                 }
             }
             catch
@@ -294,40 +305,6 @@ namespace TSO.SimsAntics
             else if (skinTone.Equals("drk", StringComparison.InvariantCultureIgnoreCase)) SkinTone = AppearanceType.Dark;
         }
 
-        public void SetAvatarData(XmlCharacter charInfo)
-        {
-
-            if (charInfo != null)
-            {
-                PersistID = Convert.ToUInt16(charInfo.Id);
-                AppearanceType type;
-                Enum.TryParse(charInfo.Appearance, out type);
-
-
-                Name = charInfo.Name;
-                SkinTone = type;
-                AvatarType = VMAvatarType.Adult;
-
-                var Gender = charInfo.Gender;
-                if (Gender == "Male")
-                    SetPersonData(VMPersonDataVariable.Gender, 0);
-                else if (Gender == "Female")
-                    SetPersonData(VMPersonDataVariable.Gender, 1);
-
-                Avatar.Handgroup = Avatar.Body;
-            }
-            else
-            {
-
-                Avatar.Head = _HeadOutfit.GetContent();
-                Avatar.Body = _BodyOutfit.GetContent();
-                Avatar.Handgroup = Avatar.Body;
-
-            }
-
-
-        }
-
         public void InitBodyData(VMContext context)
         {
             //init walking strings
@@ -354,8 +331,6 @@ namespace TSO.SimsAntics
             }
         }
 
-
-
         public override void Init(VMContext context)
         {
             if (UseWorld) WorldUI.ObjectID = ObjectID;
@@ -366,16 +341,44 @@ namespace TSO.SimsAntics
             SetAvatarBodyStrings(Object.Resource.Get<STR>(Object.OBJ.BodyStringID), context);
             InitBodyData(context);
 
-            SetMotiveData(VMMotive.Comfort, 100);
+            for (int i=0; i<MotiveData.Length; i++)
+            {
+                MotiveData[i] = 75;
+            }
+
+            SetMotiveData(VMMotive.SleepState, 0); //max all motives except sleep state
+
             SetPersonData(VMPersonDataVariable.NeatPersonality, 1000); //for testing wash hands after toilet
             SetPersonData(VMPersonDataVariable.OnlineJobID, 1); //for testing wash hands after toilet
-            SetPersonData(VMPersonDataVariable.IsHousemate, 2);
 
             SetPersonData(VMPersonDataVariable.CreativitySkill, 1000);
             SetPersonData(VMPersonDataVariable.CookingSkill, 1000);
             SetPersonData(VMPersonDataVariable.CharismaSkill, 1000);
             SetPersonData(VMPersonDataVariable.LogicSkill, 1000);
             SetPersonData(VMPersonDataVariable.BodySkill, 1000);
+
+            SetPersonData(VMPersonDataVariable.NumOutgoingFriends, 100);
+            SetPersonData(VMPersonDataVariable.IncomingFriends, 100);
+        }
+
+        public override void Reset(VMContext context)
+        {
+            base.Reset(context);
+            if (Animations != null) Animations.Clear();
+            if (Headline != null)
+            {
+                HeadlineRenderer.Dispose();
+                Headline = null;
+                HeadlineRenderer = null;
+            }
+            foreach (var aprName in BoundAppearances)
+            {
+                //remove all appearances, so we don't have stuff stuck to us.
+                var apr = FSO.Content.Content.Get().AvatarAppearances.Get(aprName);
+                Avatar.RemoveAccessory(apr);
+            }
+            BoundAppearances.Clear();
+            if (context.VM.EODHost != null) context.VM.EODHost.ForceDisconnect(this);
         }
 
         private void HandleTimePropsEvent(TimePropertyListItem tp)
@@ -385,8 +388,8 @@ namespace TSO.SimsAntics
             if (evt != null)
             {
                 var eventValue = short.Parse(evt);
-                avatar.CurrentAnimationState.EventCode = eventValue;
-                avatar.CurrentAnimationState.EventFired = true;
+                avatar.CurrentAnimationState.EventQueue.Add(eventValue);
+                avatar.CurrentAnimationState.EventsRun++;
             }
             var rhevt = tp.Properties["righthand"];
             if (rhevt != null)
@@ -402,12 +405,13 @@ namespace TSO.SimsAntics
             }
 
             var soundevt = tp.Properties["sound"];
-            if (UseWorld && soundevt != null)
+            var owner = this;
+            if (UseWorld && soundevt != null && owner.SoundThreads.FirstOrDefault(x => x.Name == soundevt) == null)
             {
                 var thread = TSO.HIT.HITVM.Get().PlaySoundEvent(soundevt);
                 if (thread != null)
                 {
-                    var owner = this;
+
                     if (thread is HITThread) SubmitHITVars((HITThread)thread);
 
                     if (!thread.AlreadyOwns(owner.ObjectID)) thread.AddOwner(owner.ObjectID);
@@ -415,6 +419,7 @@ namespace TSO.SimsAntics
                     var entry = new VMSoundEntry()
                     {
                         Sound = thread,
+                        
                         Pan = true,
                         Zoom = true,
                     };
@@ -445,14 +450,19 @@ namespace TSO.SimsAntics
 
             if (PersonData[(int)VMPersonDataVariable.OnlineJobStatusFlags] == 0) PersonData[(int)VMPersonDataVariable.OnlineJobStatusFlags] = 1;
             if (Thread != null)
-                {
+            {
                 MotiveDecay.Tick(this, Thread.Context);
                 SetPersonData(VMPersonDataVariable.OnlineJobGrade, Math.Max((short)0, Thread.Context.VM.GetGlobalValue(11))); //force job grade to what we expect
+                if (Position == LotTilePos.OUT_OF_WORLD)
+                {
+                    //uh oh!
+                    var mailbox = Thread.Context.VM.Entities.FirstOrDefault(x => (x.Object.OBJ.GUID == 0xEF121974 || x.Object.OBJ.GUID == 0x1D95C9B0));
+                    if (mailbox != null) VMFindLocationFor.FindLocationFor(this, mailbox, Thread.Context);
                 }
+            }
 
             //animation update for avatars
             VMAvatar avatar = this;
-            if (avatar.Position == LotTilePos.OUT_OF_WORLD) avatar.Position = new LotTilePos(8, 8, 1);
             float totalWeight = 0f;
             foreach (var state in Animations)
             {
@@ -522,6 +532,47 @@ namespace TSO.SimsAntics
             avatar.Avatar.ReloadSkeleton();
 
             PersonData[(int)VMPersonDataVariable.TickCounter]++;
+            if (KillTimeout > -1)
+            {
+                if (++KillTimeout > FORCE_DELETE_TIMEOUT) Delete(true, Thread.Context);
+                else
+                {
+                    SetPersonData(VMPersonDataVariable.RenderDisplayFlags, 1);
+                    SetValue(VMStackObjectVariable.Hidden, (short)((KillTimeout % 30) / 15));
+                    if (Thread.BlockingState != null) Thread.BlockingState.WaitTime = Math.Max(Thread.BlockingState.WaitTime, 1000000); //make most things time out
+                    UserLeaveLot(); //keep forcing
+                }
+            }
+        }
+
+        public void UserLeaveLot()
+        {
+            if (Thread.Context.VM.EODHost != null) Thread.Context.VM.EODHost.ForceDisconnect(this); //try this a lot.
+            if (Thread.Queue.Exists(x => x.ActionRoutine.ID == LEAVE_LOT_TREE && Thread.Queue.IndexOf(x) <= Thread.ActiveQueueBlock+1)) return; //we're already leaving
+            var actions = new List<VMQueuedAction>(Thread.Queue);
+            foreach (var action in actions)
+            {
+                Thread.CancelAction(action.UID);
+            }
+
+            var tree = GetBHAVWithOwner(LEAVE_LOT_TREE, Thread.Context);
+            var routine = Thread.Context.VM.Assemble(tree.bhav);
+
+            Thread.EnqueueAction(
+                new FSO.SimAntics.Engine.VMQueuedAction
+                {
+                    Callee = this,
+                    CodeOwner = tree.owner,
+                    ActionRoutine = routine,
+                    Name = "Leave Lot",
+                    StackObject = this,
+                    Args = new short[4],
+                    InteractionNumber = -1,
+                    Priority = short.MaxValue,
+                    Flags = TTABFlags.Leapfrog | TTABFlags.MustRun
+                }
+            );
+            if (KillTimeout == -1) KillTimeout = 0;
         }
 
         public void FractionalAnim(float fraction)
@@ -554,20 +605,22 @@ namespace TSO.SimsAntics
             {
                 case VMPersonDataVariable.Priority:
                     return (Thread.Queue.Count == 0) ? (short)0 : Thread.Queue[0].Priority;
+                case VMPersonDataVariable.IsHousemate:
+                    var level = ((VMTSOAvatarState)TSOState).Permissions;
+                    return (short)((level >= VMTSOAvatarPermissions.BuildBuyRoommate)?2:((level >= VMTSOAvatarPermissions.Roommate)?1:0));
             }
             return PersonData[(ushort)variable];
-            
         }
 
         public virtual void SetMotiveChange(VMMotive motive, short PerHourChange, short MaxValue)
         {
             var temp = MotiveChanges[(int)motive];
             if (temp.Ticked)
-                {
+            {
                 temp.PerHourChange = PerHourChange;
                 temp.MaxValue = MaxValue;
                 temp.Ticked = false;
-                }
+            }
         }
 
         public virtual void ClearMotiveChanges()
@@ -584,7 +637,14 @@ namespace TSO.SimsAntics
             switch (variable)
             {
                 case VMPersonDataVariable.Priority:
-                    if (Thread.Queue.Count != 0) Thread.Queue[0].Priority = value;
+                    if (Thread.Queue.Count != 0 && Thread.Stack.LastOrDefault().ActionTree)
+                    {
+                        Thread.Queue[0].Priority = value;
+                        Thread.QueueDirty = true;
+                    }
+                    return true;
+                case VMPersonDataVariable.RenderDisplayFlags:
+                    if (WorldUI != null) ((AvatarComponent)WorldUI).DisplayFlags = (AvatarDisplayFlags)value;
                     return true;
             }
             PersonData[(ushort)variable] = value;
@@ -593,10 +653,6 @@ namespace TSO.SimsAntics
 
         public virtual short GetMotiveData(VMMotive variable) //needs special conditions for ones like Mood.
         {
-            switch (variable){
-                case VMMotive.Mood:
-                    return 50; //always happy!! really!! it's not a front :(
-            }
             if ((ushort)variable > 15) throw new Exception("Motive Data out of bounds!");
             return MotiveData[(ushort)variable];
         }
@@ -631,14 +687,14 @@ namespace TSO.SimsAntics
 
             if (HandObject != null)
             {
+                context.UnregisterObjectPos(HandObject);
                 HandObject.Position = Position;
-                HandObject.SetRoom(room);
+                HandObject.PositionChange(context, noEntryPoint);
             }
 
+            context.RegisterObjectPos(this);
             if (Container != null) return;
             if (Position == LotTilePos.OUT_OF_WORLD) return;
-
-            context.RegisterObjectPos(this);
 
             base.PositionChange(context, noEntryPoint);
         }
@@ -655,14 +711,14 @@ namespace TSO.SimsAntics
                 }
                 return;
             }
+
+            context.UnregisterObjectPos(this);
             if (Container != null)
             {
                 Container.ClearSlot(ContainerSlot);
                 return;
             }
             if (Position == LotTilePos.OUT_OF_WORLD) return;
-
-            context.UnregisterObjectPos(this);
             base.PrePositionChange(context);
         }
 
@@ -673,15 +729,17 @@ namespace TSO.SimsAntics
             return 1;
         }
 
-        public override void PlaceInSlot(VMEntity obj, int slot, bool cleanOld, VMContext context)
+        public override bool PlaceInSlot(VMEntity obj, int slot, bool cleanOld, VMContext context)
         {
+            if (GetSlot(slot) == obj) return true; //already in slot
+            if (GetSlot(slot) != null) return false;
             if (cleanOld) obj.PrePositionChange(context);
 
             if (!obj.GhostImage)
             {
                 HandObject = obj;
 
-                CarryAnimationState = new VMAnimationState(TSO.Content.Content.Get().AvatarAnimations.Get("a2o-rarm-carry-loop.anim"), false); //set default carry animation
+                CarryAnimationState = new VMAnimationState(FSO.Content.Content.Get().AvatarAnimations.Get("a2o-rarm-carry-loop.anim"), false); //set default carry animation
 
                 obj.Container = this;
                 obj.ContainerSlot = (short)slot;
@@ -698,6 +756,7 @@ namespace TSO.SimsAntics
             }
             obj.Position = Position; //TODO: is physical position the same as the slot offset position?
             if (cleanOld) obj.PositionChange(context, false);
+            return true;
         }
 
         public override int GetSlotHeight(int slot)
@@ -742,11 +801,94 @@ namespace TSO.SimsAntics
 
         public override Texture2D GetIcon(GraphicsDevice gd, int store)
         {
+            if (Avatar.Head == null && Avatar.Body == null) return null;
             Outfit ThumbOutfit = (Avatar.Head == null) ? Avatar.Body : Avatar.Head;
+            var AppearanceID = ThumbOutfit.GetAppearance(Avatar.Appearance);
+            var Appearance = FSO.Content.Content.Get().AvatarAppearances.Get(AppearanceID);
 
-            return null;
+            return FSO.Content.Content.Get().AvatarThumbnails.Get(Appearance.ThumbnailTypeID, Appearance.ThumbnailFileID).Get(gd);
         }
 
+        #region VM Marshalling Functions
+        public VMAvatarMarshal Save()
+        {
+            var anims = new VMAnimationStateMarshal[Animations.Count];
+            int i = 0;
+            foreach (var anim in Animations) anims[i++] = anim.Save();
+            var gameObj = new VMAvatarMarshal
+            {
+                Animations = anims,
+                CarryAnimationState = (CarryAnimationState == null) ? null : CarryAnimationState.Save(), //NULLable
+
+                Message = Message,
+
+                MessageTimeout = MessageTimeout,
+
+                MotiveChanges = MotiveChanges,
+                MotiveDecay = MotiveDecay,
+                PersonData = PersonData,
+                MotiveData = MotiveData,
+                HandObject = (HandObject == null) ? (short)0 : HandObject.ObjectID,
+                RadianDirection = RadianDirection,
+                KillTimeout = KillTimeout,
+                DefaultSuits = DefaultSuits,
+
+                BoundAppearances = BoundAppearances.ToArray(),
+                BodyOutfit = BodyOutfit,
+                HeadOutfit = HeadOutfit,
+                SkinTone = SkinTone
+            };
+            SaveEnt(gameObj);
+            return gameObj;
+        }
+
+        public virtual void Load(VMAvatarMarshal input)
+        {
+            base.Load(input);
+
+            Animations = new List<VMAnimationState>();
+            foreach (var anim in input.Animations) Animations.Add(new VMAnimationState(anim));
+            CarryAnimationState = (input.CarryAnimationState == null) ? null : new VMAnimationState(input.CarryAnimationState); 
+
+            Message = input.Message;
+
+            MessageTimeout = input.MessageTimeout;
+
+            MotiveChanges = input.MotiveChanges;
+            MotiveDecay = input.MotiveDecay;
+            PersonData = input.PersonData;
+            MotiveData = input.MotiveData;
+            RadianDirection = input.RadianDirection;
+            KillTimeout = input.KillTimeout;
+            DefaultSuits = input.DefaultSuits;
+
+            BoundAppearances = new HashSet<string>(input.BoundAppearances);
+
+            foreach (var aprN in BoundAppearances)
+            {
+                var apr = FSO.Content.Content.Get().AvatarAppearances.Get(aprN);
+                Avatar.AddAccessory(apr);
+            }
+
+            SkinTone = input.SkinTone;
+
+            if (UseWorld) WorldUI.ObjectID = ObjectID;
+        }
+
+        public virtual void LoadCrossRef(VMAvatarMarshal input, VMContext context)
+        {
+            base.LoadCrossRef(input, context);
+            HandObject = context.VM.GetObjectById(input.HandObject);
+            if (HandObject != null && HandObject is VMGameObject) ((ObjectComponent)HandObject.WorldUI).ForceDynamic = true;
+            //we need to fix the gender, since InitBodyData resets it.
+            var gender = GetPersonData(VMPersonDataVariable.Gender);
+            InitBodyData(context);
+            SetPersonData(VMPersonDataVariable.Gender, gender);
+            SetPersonData(VMPersonDataVariable.RenderDisplayFlags, GetPersonData(VMPersonDataVariable.RenderDisplayFlags));
+            BodyOutfit = input.BodyOutfit;
+            HeadOutfit = input.HeadOutfit;
+        }
+        #endregion
     }
 
     public enum VMAvatarType : byte {
@@ -758,15 +900,15 @@ namespace TSO.SimsAntics
 
     public class VMAvatarDefaultSuits : VMSerializable
     {
-        public VMOutfitReference Daywear;
-        public VMOutfitReference Swimwear;
-        public VMOutfitReference Sleepwear;
+        public ulong Daywear;
+        public ulong Swimwear;
+        public ulong Sleepwear;
 
         public VMAvatarDefaultSuits(bool female)
         {
-            Daywear = new VMOutfitReference(0x24C0000000D);
-            Swimwear = new VMOutfitReference((ulong)((female) ? 0x620000000D : 0x5470000000D));
-            Sleepwear = new VMOutfitReference((ulong)((female) ? 0x5150000000D : 0x5440000000D));
+            Daywear = 0x24C0000000D;
+            Swimwear = (ulong)((female) ? 0x620000000D : 0x5470000000D);
+            Sleepwear = (ulong)((female) ? 0x5150000000D : 0x5440000000D);
         }
 
         public VMAvatarDefaultSuits(BinaryReader reader)
@@ -776,16 +918,16 @@ namespace TSO.SimsAntics
 
         public void SerializeInto(BinaryWriter writer)
         {
-            Daywear.SerializeInto(writer);
-            Swimwear.SerializeInto(writer);
-            Sleepwear.SerializeInto(writer);
+            writer.Write(Daywear);
+            writer.Write(Swimwear);
+            writer.Write(Sleepwear);
         }
 
         public void Deserialize(BinaryReader reader)
         {
-            Daywear = new VMOutfitReference(reader);
-            Swimwear = new VMOutfitReference(reader);
-            Sleepwear = new VMOutfitReference(reader);
+            Daywear = reader.ReadUInt64();
+            Swimwear = reader.ReadUInt64();
+            Sleepwear = reader.ReadUInt64();
         }
     }
 }

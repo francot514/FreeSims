@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TSO.SimsAntics.Model.Routing
+namespace FSO.SimAntics.Model.Routing
 {
     //used for keeping track of free edges on walkable rectangles (to extend further rectangles out of) 
 

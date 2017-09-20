@@ -8,14 +8,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
-using TSO.SimsAntics.Engine.Scopes;
-using TSO.SimsAntics.Model;
-using TSO.SimsAntics.Engine.Utils;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
+using FSO.SimAntics.Engine.Scopes;
+using FSO.SimAntics.Model;
+using FSO.SimAntics.Engine.Utils;
 using System.IO;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMSetMotiveChange : VMPrimitiveHandler
     {
@@ -36,12 +36,15 @@ namespace TSO.SimsAntics.Primitives
                 var MaxValue = VMMemory.GetVariable(context, (VMVariableScope)operand.MaxOwner, operand.MaxData);
                 if (operand.Once) {
                     var motive = avatar.GetMotiveData(operand.Motive);
-                   motive += rate;
-                   if (((rate > 0) && (motive > MaxValue)) || ((rate < 0) && (motive < MaxValue))) { motive = MaxValue; }
-                   avatar.SetMotiveData(operand.Motive, motive);
-                   }
-                else avatar.SetMotiveChange(operand.Motive, rate, MaxValue);
 
+                    if (((rate > 0) && (motive > MaxValue)) || ((rate < 0) && (motive < MaxValue))) { return VMPrimitiveExitCode.GOTO_TRUE; }
+                    // ^ we're already over, do nothing. (do NOT clamp)
+
+                    motive += rate;
+                    if (((rate > 0) && (motive > MaxValue)) || ((rate < 0) && (motive < MaxValue))) { motive = MaxValue; }
+                    avatar.SetMotiveData(operand.Motive, motive);
+                }
+                else avatar.SetMotiveChange(operand.Motive, rate, MaxValue);
             }
 
             return VMPrimitiveExitCode.GOTO_TRUE;

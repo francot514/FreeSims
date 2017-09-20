@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace tso.world.Utils
+namespace FSO.LotView.Utils
 {
     /// <summary>
     /// Represents a vertex making up a 2D sprite in the game.

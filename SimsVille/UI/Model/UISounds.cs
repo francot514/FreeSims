@@ -1,16 +1,10 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-RHY3756547. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
-namespace TSOVille.Code.UI.Model
+namespace FSO.Client.UI.Model
 {
     /// <summary>
     /// Names of HIT subroutines that are related to the UI. When the HIT system is implemented you will be able to easily call these whenever.

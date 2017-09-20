@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TSO.vitaboy
+namespace FSO.Vitaboy
 {
     /// <summary>
     /// Wrapper class for SimAvatar with a default skeleton, "adult.skel".
@@ -19,7 +19,7 @@ namespace TSO.vitaboy
         /// <summary>
         /// Constructs a new AdultVitaboyModel instance with a default skeleton, "adult.skel".
         /// </summary>
-        public AdultVitaboyModel() : base(TSO.Content.Content.Get().AvatarSkeletons.Get("adult.skel"))
+        public AdultVitaboyModel() : base(FSO.Content.Content.Get().AvatarSkeletons.Get("adult.skel"))
         {
         }
 

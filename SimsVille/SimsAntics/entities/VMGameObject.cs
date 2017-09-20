@@ -8,19 +8,20 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Content;
-using tso.world.Components;
-using tso.world.Model;
+using FSO.Content;
+using FSO.LotView.Components;
+using FSO.LotView.Model;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TSO.Files.formats.iff.chunks;
-using TSO.SimsAntics.Model;
-using TSO.Common.utils;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.SimAntics.Model;
+using FSO.Common.Utils;
+using FSO.Content.Model;
+using FSO.SimAntics.Model.Routing;
+using FSO.SimAntics.Marshals;
+using FSO.SimAntics.Model.TSOPlatform;
 
-using TSO.Content.model;
-using TSO.SimsAntics.Model.Routing;
-
-namespace TSO.SimsAntics
+namespace FSO.SimAntics
 {
     public class VMGameObject : VMEntity
     {
@@ -30,6 +31,7 @@ namespace TSO.SimsAntics
         public VMGameObject(GameObject def, ObjectComponent worldUI) : base(def)
         {
             this.WorldUI = worldUI;
+            PlatformState = new VMTSOObjectState(); //todo: ts1 switch
         }
 
         public override void SetDynamicSpriteFlag(ushort index, bool set)
@@ -37,11 +39,29 @@ namespace TSO.SimsAntics
             base.SetDynamicSpriteFlag(index, set);
             if (this.WorldUI != null){
                 ((ObjectComponent)this.WorldUI).DynamicSpriteFlags = this.DynamicSpriteFlags;
+                ((ObjectComponent)this.WorldUI).DynamicSpriteFlags2 = this.DynamicSpriteFlags2;
             }
         }
 
         public override bool SetValue(VMStackObjectVariable var, short value)
         {
+            switch (var)
+            {
+                case VMStackObjectVariable.Flags:
+                    var flags = (VMEntityFlags)value;
+                    if (UseWorld)
+                        ((ObjectComponent)WorldUI).HideForCutaway = (flags & VMEntityFlags.HideForCutaway) > 0;
+                //            || ((VMEntityFlags2)GetValue(VMStackObjectVariable.FlagField2) & VMEntityFlags2.ArchitectualDoor) > 0;
+                    break;
+                case VMStackObjectVariable.FlagField2:
+                    /*
+                    var flags2 = (VMEntityFlags2)value;
+                    if (UseWorld)
+                        ((ObjectComponent)WorldUI).HideForCutaway = (flags2 & VMEntityFlags2.ArchitectualDoor) > 0
+                            || ((VMEntityFlags)GetValue(VMStackObjectVariable.Flags) & VMEntityFlags.HideForCutaway) > 0; */
+                    break;
+
+            }
             return base.SetValue(var, value);
         }
 
@@ -86,8 +106,9 @@ namespace TSO.SimsAntics
             }
         }
 
-        public override void Init(TSO.SimsAntics.VMContext context){
+        public override void Init(FSO.SimAntics.VMContext context){
             if (UseWorld) WorldUI.ObjectID = ObjectID;
+            PersistID = (uint)ObjectID; //temporary til theres a system to manage these
             if (Slots != null && Slots.Slots.ContainsKey(0))
             {
                 Contained = new VMEntity[Slots.Slots[0].Count];
@@ -128,6 +149,7 @@ namespace TSO.SimsAntics
 
         public override string ToString()
         {
+            if (MultitileGroup.Name != "") return MultitileGroup.Name;
             var strings = Object.Resource.Get<CTSS>(Object.OBJ.CatalogStringsID);
             if (strings != null){
                 return strings.GetString(0);
@@ -147,8 +169,10 @@ namespace TSO.SimsAntics
             return Contained.Length;
         }
 
-        public override void PlaceInSlot(VMEntity obj, int slot, bool cleanOld, VMContext context)
+        public override bool PlaceInSlot(VMEntity obj, int slot, bool cleanOld, VMContext context)
         {
+            if (GetSlot(slot) == obj) return true; //already in slot
+            if (GetSlot(slot) != null) return false;
             if (cleanOld) obj.PrePositionChange(context);
 
             if (Contained != null)
@@ -169,8 +193,10 @@ namespace TSO.SimsAntics
                     }
                     obj.Position = Position; //TODO: is physical position the same as the slot offset position?
                     if (cleanOld) obj.PositionChange(context, false);
+                    return true;
                 }
             }
+            return false;
         }
 
         public override VMEntity GetSlot(int slot)
@@ -238,6 +264,7 @@ namespace TSO.SimsAntics
                 }
                 return; 
             }
+            context.UnregisterObjectPos(this);
             if (Container != null)
             {
                 Container.ClearSlot(ContainerSlot);
@@ -257,8 +284,6 @@ namespace TSO.SimsAntics
             }
             SetWallUse(arch, false);
             if (GetValue(VMStackObjectVariable.Category) == 8) context.Architecture.SetObjectSupported(Position.TileX, Position.TileY, Position.Level, false);
-
-            context.UnregisterObjectPos(this);
             base.PrePositionChange(context);
         }
 
@@ -292,10 +317,13 @@ namespace TSO.SimsAntics
             {
                 if (Contained[i] != null)
                 {
+                    context.UnregisterObjectPos(Contained[i]);
                     Contained[i].Position = Position;
-                    Contained[i].SetRoom(room);
+                    Contained[i].PositionChange(context, noEntryPoint); //recursive
                 }
             }
+
+            context.RegisterObjectPos(this);
 
             if (Container != null) return;
             if (Position == LotTilePos.OUT_OF_WORLD) return;
@@ -316,7 +344,7 @@ namespace TSO.SimsAntics
                         WallsDownMedium = Object.Resource.Get<SPR>((ushort)(id + 4)),
                         WallsDownNear = Object.Resource.Get<SPR>((ushort)(id + 5))
                     };
-                    Object.OBJ.WallStyle = TSO.Content.Content.Get().WorldWalls.AddDynamicWallStyle(style);
+                    Object.OBJ.WallStyle = FSO.Content.Content.Get().WorldWalls.AddDynamicWallStyle(style);
                 }
 
                 var placeFlags = (WallPlacementFlags)ObjectData[(int)VMStackObjectVariable.WallPlacementFlags];
@@ -329,13 +357,34 @@ namespace TSO.SimsAntics
             SetWallUse(arch, true);
             if (GetValue(VMStackObjectVariable.Category) == 8) context.Architecture.SetObjectSupported(Position.TileX, Position.TileY, Position.Level, true);
 
-            context.RegisterObjectPos(this);
-
             if (EntryPoints[8].ActionFunction != 0) UpdateDynamicMultitile(context);
 
             base.PositionChange(context, noEntryPoint);
         }
 
 
+        #region VM Marshalling Functions
+        public VMGameObjectMarshal Save()
+        {
+            var gameObj = new VMGameObjectMarshal { Direction = Direction };
+            SaveEnt(gameObj);
+            return gameObj;
+        }
+
+        public void Load(VMGameObjectMarshal input)
+        {
+            base.Load(input);
+            Position = Position;
+            Direction = input.Direction;
+            if (UseWorld)
+            {
+                ((ObjectComponent)this.WorldUI).DynamicSpriteFlags = this.DynamicSpriteFlags;
+                WorldUI.ObjectID = ObjectID;
+                if (Slots != null && Slots.Slots.ContainsKey(0)) ((ObjectComponent)WorldUI).ContainerSlots = Slots.Slots[0];
+                SetValue(VMStackObjectVariable.Flags, GetValue(VMStackObjectVariable.Flags));
+                RefreshGraphic();
+            }
+        }
+        #endregion
     }
 }

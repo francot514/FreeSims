@@ -1,24 +1,18 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
-using TSOVille.Code.Utils;
+using FSO.Client.Utils;
 using Microsoft.Xna.Framework;
-using TSO.Common.utils;
+using FSO.Common.Utils;
 
-namespace TSOVille.Code.UI.Framework
+namespace FSO.Client.UI.Framework
 {
     public class UISpriteBatch : SpriteBatch
     {
@@ -33,20 +27,44 @@ namespace TSOVille.Code.UI.Framework
         /// </summary>
         /// <param name="gd"></param>
         /// <param name="numBuffers">The number of rendering buffers to pre-alloc</param>
-        public UISpriteBatch(GraphicsDevice gd, int numBuffers)
+        public UISpriteBatch(GraphicsDevice gd, int numBuffers, int width, int height, int multisample)
             : base(gd)
         {
+            _Width = width;
+            _Height = height;
+
             for (var i = 0; i < numBuffers; i++)
             {
                 Buffers.Add(
-                    RenderUtils.CreateRenderTarget(gd, 1, 0, SurfaceFormat.Color, gd.Viewport.Width, gd.Viewport.Height, DepthFormat.Depth24Stencil8)
+                    PPXDepthEngine.CreateRenderTarget(gd, 1, multisample, SurfaceFormat.Color, width, height, DepthFormat.None)
                 );
             }
 
             base.GraphicsDevice.DeviceReset += new EventHandler<EventArgs>(gd_DeviceReset);
         }
 
+        public UISpriteBatch(GraphicsDevice gd, int numBuffers) : this(gd, numBuffers, gd.Viewport.Width, gd.Viewport.Height, 0) { }
+        public UISpriteBatch(GraphicsDevice gd, int numBuffers, int width, int height) : this(gd, numBuffers, width, height, 0) { }
+
         public static bool Invalidated = false;
+
+        private int _Width;
+        public int Width
+        {
+            get
+            {
+                return _Width;
+            }
+        }
+
+        private int _Height;
+        public int Height
+        {
+            get
+            {
+                return _Height;
+            }
+        }
 
         private void gd_DeviceReset(object sender, EventArgs e)
         {
@@ -56,8 +74,8 @@ namespace TSOVille.Code.UI.Framework
             for (var i = 0; i < 3; i++)
             {
                 Buffers.Add(
-                    RenderUtils.CreateRenderTarget(base.GraphicsDevice, 1, 0, SurfaceFormat.Color,
-                    base.GraphicsDevice.Viewport.Width, base.GraphicsDevice.Viewport.Height, DepthFormat.Depth24)
+                    PPXDepthEngine.CreateRenderTarget(base.GraphicsDevice, 1, 0, SurfaceFormat.Color,
+                    Width, Height, DepthFormat.None)
                 );
             }
 
@@ -80,6 +98,7 @@ namespace TSOVille.Code.UI.Framework
             this._SortMode = sortMode;
 
             this.Begin(sortMode, blendMode);
+            GraphicsDevice.RasterizerState = RasterizerState.CullNone;
         }
 
         public void Pause()

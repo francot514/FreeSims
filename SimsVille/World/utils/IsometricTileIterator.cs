@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace tso.world.Utils
+namespace FSO.LotView.Utils
 {
     /// <summary>
     /// Utility to help iterating through tiles in a depth sorted order

@@ -8,17 +8,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
-using TSO.SimsAntics.Engine.Utils;
-using TSO.SimsAntics.Engine.Scopes;
-using TSO.Files.formats.iff.chunks;
-using TSO.SimsAntics.Model;
-using TSO.Content;
-using tso.world.Model;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
+using FSO.SimAntics.Engine.Utils;
+using FSO.SimAntics.Engine.Scopes;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.SimAntics.Model;
+using FSO.Content;
+using FSO.LotView.Model;
 using System.IO;
 
-namespace TSO.SimsAntics.Engine.Primitives
+namespace FSO.SimAntics.Engine.Primitives
 {
 
     public class VMFindBestObjectForFunction : VMPrimitiveHandler
@@ -78,15 +78,20 @@ namespace TSO.SimsAntics.Engine.Primitives
                     if (ent.EntryPoints[entry].ConditionFunction != 0) {
 
                         var Behavior = ent.GetBHAVWithOwner(ent.EntryPoints[entry].ConditionFunction, context.VM.Context);
+                        if (Behavior != null)
+                        {
+                            var test = VMThread.EvaluateCheck(context.VM.Context, context.Caller, new VMStackFrame()
+                            {
+                                Caller = context.Caller,
+                                Callee = ent,
+                                CodeOwner = Behavior.owner,
+                                StackObject = ent,
+                                Routine = context.VM.Assemble(Behavior.bhav),
+                                Args = new short[4]
+                            });
 
-                        var test = VMThread.EvaluateCheck(context.VM.Context, context.Caller, new VMQueuedAction(){
-                            Callee = ent,
-                            CodeOwner = Behavior.owner,
-                            StackObject = ent,
-                            Routine = context.VM.Assemble(Behavior.bhav),
-                        });
-                        
-                        Execute = (test == VMPrimitiveExitCode.RETURN_TRUE);
+                            Execute = (test == VMPrimitiveExitCode.RETURN_TRUE);
+                        } else Execute = true;
 
                     } else {
                         Execute = true;

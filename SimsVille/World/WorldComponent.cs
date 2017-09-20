@@ -10,10 +10,10 @@ using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
-using tso.world.Model;
-using tso.world.Components;
+using FSO.LotView.Model;
+using FSO.LotView.Components;
 
-namespace tso.world
+namespace FSO.LotView
 {
     public abstract class WorldComponent {
         /** Instance ID **/
@@ -26,6 +26,7 @@ namespace tso.world
         }
 
         public abstract void Draw(GraphicsDevice device, WorldState world);
+        public virtual void Update(GraphicsDevice device, WorldState world) { }
 
         public virtual void OnRotationChanged(WorldState world){
             OnWorldChanged(world);

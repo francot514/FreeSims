@@ -8,13 +8,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
-using TSO.SimsAntics.Engine.Utils;
-using TSO.SimsAntics.Engine.Scopes;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
+using FSO.SimAntics.Engine.Utils;
+using FSO.SimAntics.Engine.Scopes;
 using System.IO;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMSleep : VMPrimitiveHandler
     {
@@ -28,18 +28,10 @@ namespace TSO.SimsAntics.Primitives
                 return VMPrimitiveExitCode.GOTO_TRUE;
             }
 
-            var ticks = VMMemory.GetVariable(context, TSO.SimsAntics.Engine.Scopes.VMVariableScope.Parameters, operand.StackVarToDec);
-            ticks--;
-
-            if (ticks < 0)
-            {
+            if (--context.Args[operand.StackVarToDec] < 0)
                 return VMPrimitiveExitCode.GOTO_TRUE;
-            }
             else
-            {
-                VMMemory.SetVariable(context, TSO.SimsAntics.Engine.Scopes.VMVariableScope.Parameters, operand.StackVarToDec, ticks);
                 return VMPrimitiveExitCode.CONTINUE_NEXT_TICK;
-            }
         }
     }
 

@@ -8,9 +8,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Vitaboy;
+using FSO.Vitaboy;
 
-namespace TSO.SimsAntics.Utils
+namespace FSO.SimAntics.Utils
 {
     public class TimePropertyListItemSorter : IComparer<TimePropertyListItem>
     {

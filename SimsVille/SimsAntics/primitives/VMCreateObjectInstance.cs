@@ -8,14 +8,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.utils;
-using TSO.SimsAntics.Engine.Scopes;
-using TSO.SimsAntics.Engine.Utils;
-using tso.world.Model;
+using FSO.Files.Utils;
+using FSO.SimAntics.Engine.Scopes;
+using FSO.SimAntics.Engine.Utils;
+using FSO.LotView.Model;
 using Microsoft.Xna.Framework;
 using System.IO;
 
-namespace TSO.SimsAntics.Engine.Primitives
+namespace FSO.SimAntics.Engine.Primitives
 {
     public class VMCreateObjectInstance : VMPrimitiveHandler
     {
@@ -55,16 +55,16 @@ namespace TSO.SimsAntics.Engine.Primitives
                     tpos = new LotTilePos(objp.Position);
                     switch (objp.Direction)
                     {
-                        case tso.world.Model.Direction.SOUTH:
+                        case FSO.LotView.Model.Direction.SOUTH:
                             tpos.y += 16;
                             break;
-                        case tso.world.Model.Direction.WEST:
+                        case FSO.LotView.Model.Direction.WEST:
                             tpos.x -= 16;
                             break;
-                        case tso.world.Model.Direction.EAST:
+                        case FSO.LotView.Model.Direction.EAST:
                             tpos.x += 16;
                             break;
-                        case tso.world.Model.Direction.NORTH:
+                        case FSO.LotView.Model.Direction.NORTH:
                             tpos.y -= 16;
                             break;
                     }
@@ -107,21 +107,26 @@ namespace TSO.SimsAntics.Engine.Primitives
 
             if (operand.Position == VMCreateObjectPosition.InSlot0OfStackObject) context.StackObject.PlaceInSlot(obj, 0, true, context.VM.Context);
             else if (operand.Position == VMCreateObjectPosition.InMyHand) context.Caller.PlaceInSlot(obj, 0, true, context.VM.Context);
-            else if (operand.Position != VMCreateObjectPosition.OutOfWorld && obj.Position == LotTilePos.OUT_OF_WORLD)
+
+            if (operand.Position != VMCreateObjectPosition.OutOfWorld && obj.Position == LotTilePos.OUT_OF_WORLD && obj.Container == null)
             {
                 obj.Delete(true, context.VM.Context);
                 return VMPrimitiveExitCode.GOTO_FALSE;
             }
             if ((operand.Flags & (1 << 6)) > 0)
             {
-                var interaction = operand.InteractionCallback;
-                if (interaction == 254)
+                short interaction = operand.InteractionCallback;
+                if (interaction == 254 && context.ActionTree)
                 {
                     var temp = context.Thread.Queue[0].InteractionNumber;
                     if (temp == -1) throw new VMSimanticsException("Set callback as 'this interaction' when queue item has no interaction number!", context);
-                    interaction = (byte)temp;
+                    interaction = (short)temp;
+                } else if (interaction == 252 || interaction == 253) {
+                    interaction = context.Thread.TempRegisters[0];
                 }
-                var callback = new VMActionCallback(context.VM, interaction, context.Callee, context.StackObject, context.Caller, true);
+                //target is existing stack object. (where we get the interaction/tree from)
+                var callback = new VMActionCallback(context.VM, interaction, context.StackObject, context.StackObject, 
+                    context.Caller, true, (operand.InteractionCallback == 252));
                 callback.Run(obj);
             }
             else context.StackObject = obj;

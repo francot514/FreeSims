@@ -1,22 +1,28 @@
-﻿using System;
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+If a copy of the MPL was not distributed with this file, You can obtain one at
+http://mozilla.org/MPL/2.0/.
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSOVille.Code.UI.Framework;
-using TSOVille.Code.UI.Controls;
+using FSO.Client.UI.Framework;
+using FSO.Client.UI.Controls;
 using Microsoft.Xna.Framework.Graphics;
-using TSOVille.LUI;
 using Microsoft.Xna.Framework;
-using TSO.Common.rendering.framework.model;
-using TSO.SimsAntics;
-using TSO.Files.formats.iff.chunks;
+using FSO.Common.Rendering.Framework.Model;
+using FSO.SimAntics;
+using FSO.Files.Formats.IFF.Chunks;
+using TSO.HIT;
+using FSO.Client.UI.Model;
+using FSO.LotView;
+using FSO.LotView.Components;
+using FSO.SimAntics.Model.TSOPlatform;
+using FSO.Common;
 
-using TSOVille.Code.UI.Model;
-using tso.world;
-using tso.world.Components;
-using SimsHomeMaker;
-
-namespace TSOVille.Code.UI.Panels
+namespace FSO.Client.UI.Panels
 {
     public class UIQueryPanel : UIContainer
     {
@@ -85,7 +91,7 @@ namespace TSOVille.Code.UI.Panels
         public event ButtonClickDelegate OnSellBackClicked;
 
         //world required for drawing thumbnails
-        public World World;
+        public LotView.World World;
         public UIImage Thumbnail;
 
         private bool _Active;
@@ -93,7 +99,7 @@ namespace TSOVille.Code.UI.Panels
         {
             set
             {
-                if (_Active != value) //HITVM.Get().PlaySoundEvent(UISounds.Whoosh);
+                if (_Active != value) HITVM.Get().PlaySoundEvent(UISounds.Whoosh);
                 _Active = value;
             }
             get
@@ -178,7 +184,7 @@ namespace TSOVille.Code.UI.Panels
             }
             set
             {
-                this.Y = GlobalSettings.GraphicsHeight - ((value == 0) ? 114 : 228);
+                this.Y = ((value == 0) ? 0 : -114);
                 QuerybackPanel.Visible = (value == 0);
                 QuerybackCatalog.Visible = (value == 1);
                 QuerybackTrade.Visible = (value == 2);
@@ -186,20 +192,21 @@ namespace TSOVille.Code.UI.Panels
             }
         }
 
-        public UIQueryPanel(World world) {
+        public UIQueryPanel(LotView.World world) {
             World = world;
             Active = false;
             Opacity = 0;
             Visible = false;
 
-            var script = this.RenderScript("querypanel" + ((GlobalSettings.GraphicsWidth < 1024) ? "" : "1024") + ".uis");
-
             AdStrings = new string[14];
             for (int i = 0; i < 14; i++)
             {
                 string str = GameFacade.Strings.GetString("206", (i + 4).ToString());
-                AdStrings[i] = ((i < 7) ? str.Substring(0, str.Length - 2) + "{0}" : str) + "\r\n";
+                AdStrings[i] = ((i<7)?str.Substring(0,str.Length-2)+"{0}":str) + "\r\n";
             }
+
+            var useSmall = (GlobalSettings.Default.GraphicsWidth < 1024) || FSOEnvironment.UIZoomFactor > 1f;
+            var script = this.RenderScript("querypanel"+(useSmall?"":"1024")+".uis");
 
             //NOTE: the background and position of this element changes with the context it is used in.
             //other elements that are only used for certain modes will be flagged as such with comments.
@@ -226,19 +233,19 @@ namespace TSOVille.Code.UI.Panels
             this.AddAt(3, DescriptionBackgroundImage);
 
             MotivesBackgroundImage = new UIImage(ImageMotivesBackground);
-            MotivesBackgroundImage.Position = new Microsoft.Xna.Framework.Vector2((GlobalSettings.GraphicsWidth < 1024)?395:619, 7);
+            MotivesBackgroundImage.Position = new Microsoft.Xna.Framework.Vector2(useSmall ? 395:619, 7);
             this.AddAt(3, MotivesBackgroundImage);
 
             GeneralTabImage = new UIImage(ImageGeneralTab);
-            GeneralTabImage.Position = new Microsoft.Xna.Framework.Vector2((GlobalSettings.GraphicsWidth < 1024) ? 563 : 787, 0);
+            GeneralTabImage.Position = new Microsoft.Xna.Framework.Vector2(useSmall ? 563 : 787, 0);
             this.AddAt(3, GeneralTabImage);
 
             SpecificTabImage = new UIImage(ImageSpecificTab);
-            SpecificTabImage.Position = new Microsoft.Xna.Framework.Vector2((GlobalSettings.GraphicsWidth < 1024) ? 563 : 787, 0);
+            SpecificTabImage.Position = new Microsoft.Xna.Framework.Vector2(useSmall ? 563 : 787, 0);
             this.AddAt(3, SpecificTabImage);
 
             OwnerPriceBack = new UIImage(GeneralOwnerPriceBack);
-            OwnerPriceBack.Position = new Microsoft.Xna.Framework.Vector2((GlobalSettings.GraphicsWidth < 1024) ? 501 : 725, 80);
+            OwnerPriceBack.Position = new Microsoft.Xna.Framework.Vector2(useSmall ? 501 : 725, 80);
             this.AddAt(3, OwnerPriceBack);
 
             Thumbnail = new UIImage();
@@ -279,7 +286,7 @@ namespace TSOVille.Code.UI.Panels
 
         public override void Update(UpdateState state)
         {
-            if (Mode == 1)
+            if (true)
             {
                 if (Active)
                 {
@@ -303,16 +310,20 @@ namespace TSOVille.Code.UI.Panels
             else
             {
                 Opacity = 1;
-                if (Active) Visible = true;
+                if (Active) 
+                    Visible = true;
             }
             base.Update(state);
         }
 
-        public void SetInfo(VMEntity entity, bool bought)
+        public void SetInfo(VM vm, VMEntity entity, bool bought)
         {
             var obj = entity.Object;
             var def = entity.MasterDefinition;
             if (def == null) def = entity.Object.OBJ;
+
+            var item = Content.Content.Get().WorldCatalog.GetItemByGUID(def.GUID);
+
             CTSS catString = obj.Resource.Get<CTSS>(def.CatalogStringsID);
             if (catString != null)
             {
@@ -324,8 +335,12 @@ namespace TSOVille.Code.UI.Panels
                 DescriptionText.CurrentText = entity.ToString();
                 ObjectNameText.Caption = entity.ToString();
             }
+
+            int price = def.Price;
+            if (item != null) price = (int)item.Price;
+
             StringBuilder motivesString = new StringBuilder();
-            motivesString.AppendFormat(GameFacade.Strings.GetString("206", "19") + "${0}\r\n", def.Price);
+            motivesString.AppendFormat(GameFacade.Strings.GetString("206", "19") + "${0}\r\n", price);
             if (def.RatingHunger != 0) { motivesString.AppendFormat(AdStrings[0], def.RatingHunger); }
             if (def.RatingComfort != 0) { motivesString.AppendFormat(AdStrings[1], def.RatingComfort); }
             if (def.RatingHygiene != 0) { motivesString.AppendFormat(AdStrings[2], def.RatingHygiene); }
@@ -341,9 +356,24 @@ namespace TSOVille.Code.UI.Panels
             }
 
             MotivesText.CurrentText = motivesString.ToString();
-            ObjectOwnerText.Caption = GameFacade.Strings.GetString("206", "24", new string[] { "You" });
+
+            string owner = "Nobody";
+            if (entity is VMGameObject && ((VMTSOObjectState)entity.TSOState).OwnerID > 0)
+            {
+                var ownerID = ((VMTSOObjectState)entity.TSOState).OwnerID;
+                var ownerEnt = vm.GetObjectByPersist(ownerID);
+                owner = (ownerEnt != null) ? owner = ownerEnt.Name : "(offline user)";
+            }
+
+            ObjectOwnerText.Caption = GameFacade.Strings.GetString("206", "24", new string[] { owner });
 
             SpecificTabButton.Disabled = !bought;
+
+            if (bought)
+            {
+                ForSalePrice.CurrentText = GameFacade.Strings.GetString("206", "25", new string[] { " $" + entity.MultitileGroup.Price });
+                ForSalePrice.SetSize(250, ForSalePrice.Height);
+            }
 
             if (entity is VMGameObject) {
                 var objects = entity.MultitileGroup.Objects;
@@ -360,6 +390,22 @@ namespace TSOVille.Code.UI.Panels
                 if (Thumbnail.Texture != null) Thumbnail.Texture.Dispose();
                 Thumbnail.Texture = null;
             }
+        }
+
+        public void SetInfo(Texture2D thumb, string name, string description, int price)
+        {
+            DescriptionText.CurrentText = name + "\r\n" + description;
+            ObjectNameText.Caption = name;
+
+            StringBuilder motivesString = new StringBuilder();
+            motivesString.AppendFormat(GameFacade.Strings.GetString("206", "19") + "${0}\r\n", price);
+            MotivesText.CurrentText = motivesString.ToString();
+
+            SpecificTabButton.Disabled = true;
+
+            if (Thumbnail.Texture != null) Thumbnail.Texture.Dispose();
+            Thumbnail.Texture = thumb;
+            UpdateImagePosition();
         }
 
         private void UpdateImagePosition() {

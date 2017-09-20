@@ -8,13 +8,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
-using TSO.SimsAntics.Engine.Utils;
-using TSO.SimsAntics.Engine.Scopes;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
+using FSO.SimAntics.Engine.Utils;
+using FSO.SimAntics.Engine.Scopes;
 using System.IO;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMRelationship : VMPrimitiveHandler
     {
@@ -46,9 +46,6 @@ namespace TSO.SimsAntics.Primitives
                 default:
                     throw new VMSimanticsException("Invalid relationship type!", context);
             }
-
-            if (obj1 == null || obj2 == null)
-                return VMPrimitiveExitCode.GOTO_TRUE;
 
             var rels = obj1.MeToObject;
             var targId = (ushort)obj2.ObjectID;

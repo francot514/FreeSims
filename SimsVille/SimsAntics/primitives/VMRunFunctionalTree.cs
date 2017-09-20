@@ -8,15 +8,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.utils;
-using TSO.SimsAntics.Engine.Scopes;
-using TSO.SimsAntics.Engine.Utils;
-using TSO.SimsAntics;
-using TSO.Files.formats.iff.chunks;
-using TSO.SimsAntics.Primitives;
+using FSO.Files.Utils;
+using FSO.SimAntics.Engine.Scopes;
+using FSO.SimAntics.Engine.Utils;
+using FSO.SimAntics;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.SimAntics.Primitives;
 using System.IO;
 
-namespace TSO.SimsAntics.Engine.Primitives
+namespace FSO.SimAntics.Engine.Primitives
 {
     //See VMFindBestObjectForFunction for function map table.
 
@@ -34,14 +34,19 @@ namespace TSO.SimsAntics.Engine.Primitives
                 if (ent.EntryPoints[entry].ConditionFunction != 0) //check if we can definitely execute this...
                 {
                     var Behavior = ent.GetBHAVWithOwner(ent.EntryPoints[entry].ConditionFunction, context.VM.Context);
-                    Execute = (VMThread.EvaluateCheck(context.VM.Context, context.Caller, new VMQueuedAction()
+                    if (Behavior != null)
                     {
-                        Callee = ent,
-                        CodeOwner = Behavior.owner,
-                        StackObject = ent,
-                        Routine = context.VM.Assemble(Behavior.bhav),
-                    }) == VMPrimitiveExitCode.RETURN_TRUE);
-
+                        Execute = (VMThread.EvaluateCheck(context.VM.Context, context.Caller, new VMStackFrame()
+                        {
+                            Caller = context.Caller,
+                            Callee = ent,
+                            CodeOwner = Behavior.owner,
+                            StackObject = ent,
+                            Routine = context.VM.Assemble(Behavior.bhav),
+                            Args = new short[4]
+                        }) == VMPrimitiveExitCode.RETURN_TRUE);
+                    }
+                    else Execute = true;
                 }
                 else
                 {
@@ -51,17 +56,19 @@ namespace TSO.SimsAntics.Engine.Primitives
                 if (Execute)
                 {
                     //push it onto our stack, except now the stack object owns our soul!
-                    var Behavior = ent.GetBHAVWithOwner(ent.EntryPoints[entry].ActionFunction, context.VM.Context);
-                    var routine = context.VM.Assemble(Behavior.bhav);
+                    var tree = ent.GetBHAVWithOwner(ent.EntryPoints[entry].ActionFunction, context.VM.Context);
+                    if (tree == null) return VMPrimitiveExitCode.GOTO_FALSE; //does not exist
+                    var routine = context.VM.Assemble(tree.bhav);
                     var childFrame = new VMStackFrame
                     {
                         Routine = routine,
                         Caller = context.Caller,
                         Callee = ent,
-                        CodeOwner = Behavior.owner,
-                        StackObject = ent
+                        CodeOwner = tree.owner,
+                        StackObject = ent,
+                        ActionTree = context.ActionTree
                     };
-                    if (operand.Flags > 0) context.Thread.Queue[0].IconOwner = context.StackObject;
+                    if (operand.Flags > 0 && context.ActionTree) context.Thread.Queue[0].IconOwner = context.StackObject;
                     childFrame.Args = new short[routine.Arguments];
                     context.Thread.Push(childFrame);
                     return VMPrimitiveExitCode.CONTINUE;

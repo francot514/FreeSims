@@ -8,10 +8,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     // Logs a string to the console. Might make this functional again when we implement object development.
 

@@ -8,13 +8,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
-using TSO.Files.formats.iff.chunks;
-using TSO.Content;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.Content;
 using System.IO;
 
-namespace TSO.SimsAntics.Engine.Primitives
+namespace FSO.SimAntics.Engine.Primitives
 {
     public class VMRemoveObjectInstance : VMPrimitiveHandler
     {

@@ -1,13 +1,7 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-Mats 'Afr0' Vederhus. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
@@ -15,13 +9,13 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TSOVille.Code.UI.Framework;
-using TSOVille.Code.UI.Framework.Parser;
-using TSOVille.Code.UI.Model;
-using TSO.Common.rendering.framework.model;
-using TSO.Common.rendering.framework.io;
+using FSO.Client.UI.Framework;
+using FSO.Client.UI.Framework.Parser;
+using FSO.Client.UI.Model;
+using FSO.Common.Rendering.Framework.Model;
+using FSO.Common.Rendering.Framework.IO;
 
-namespace TSOVille.Code.UI.Controls
+namespace FSO.Client.UI.Controls
 {
     /// <summary>
     /// A drawable image that is part of the GUI.
@@ -73,12 +67,10 @@ namespace TSOVille.Code.UI.Controls
                 m_Texture = value;
                 if (Width == 0)
                 {
-                    if (m_Texture != null)
                     m_Width = m_Texture.Width;
                 }
                 if (Height == 0)
                 {
-                    if (m_Texture != null)
                     m_Height = m_Texture.Height;
                 }
             }

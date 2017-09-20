@@ -8,12 +8,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
-using TSO.Files.formats.iff.chunks;
-using TSO.SimsAntics.Model;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
+using FSO.SimAntics.Model;
+using FSO.Files.Formats.IFF.Chunks;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     // Finds a suitable action and queues it onto this sim. Used for pet free will.
 
@@ -21,7 +21,6 @@ namespace TSO.SimsAntics.Primitives
     {
         public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
-           
             var ents = new List<VMEntity>(context.VM.Entities);
             var processed = new HashSet<short>();
             var pos1 = context.Caller.Position;
@@ -48,7 +47,6 @@ namespace TSO.SimsAntics.Primitives
                     int baseScore = 0;
                     for (int i = 0; i < item.Entry.MotiveEntries.Length; i++)
                     {
-                        
                         var motiveScore = item.Entry.MotiveEntries[i];
                         if (motiveScore.EffectRangeMaximum == 0 && motiveScore.EffectRangeMinimum == 0) continue;
                         //LINEAR INTERPOLATE MIN SCORE TO MAX, using motive data of caller
@@ -85,7 +83,6 @@ namespace TSO.SimsAntics.Primitives
 
             return VMPrimitiveExitCode.GOTO_FALSE; //we couldn't find anything... because we didn't check! TODO!!
         }
-        
     }
 
     public class VMFindBestActionOperand : VMPrimitiveOperand

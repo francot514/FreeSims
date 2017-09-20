@@ -8,11 +8,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
 using System.IO;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMDropOnto : VMPrimitiveHandler
     {
@@ -28,9 +28,7 @@ namespace TSO.SimsAntics.Primitives
                 var itemTest = context.StackObject.GetSlot(dest);
                 if (itemTest == null)
                 {
-                    context.Caller.ClearSlot(src);
-                    context.StackObject.PlaceInSlot(item, dest, false, context.VM.Context); //slot to slot needs no cleanup
-                    return VMPrimitiveExitCode.GOTO_TRUE;
+                    return (context.StackObject.PlaceInSlot(item, dest, true, context.VM.Context)) ? VMPrimitiveExitCode.GOTO_TRUE : VMPrimitiveExitCode.GOTO_FALSE;
                 }
                 else return VMPrimitiveExitCode.GOTO_FALSE; //cannot replace items currently in slots
             }

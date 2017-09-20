@@ -8,16 +8,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
-using TSO.Files.formats.iff.chunks;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.SimAntics.NetPlay.Model;
 using System.IO;
-using tso.simantics.Model;
+using FSO.SimAntics.Model.TSOPlatform;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMDialogPrivateStrings : VMPrimitiveHandler
     {
+        public static readonly int DIALOG_MAX_WAITTIME = 60 * 30;
+
         public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
             return ExecuteGeneric(context, args, context.ScopeResource.Get<STR>(301));
@@ -26,16 +29,17 @@ namespace TSO.SimsAntics.Primitives
         public static VMPrimitiveExitCode ExecuteGeneric(VMStackFrame context, VMPrimitiveOperand args, STR table)
         {
             var operand = (VMDialogOperand)args;
-            var curDialog = context.Thread.BlockingDialog;
-            if (context.Thread.BlockingDialog == null)
+            var curDialog = (VMDialogResult)context.Thread.BlockingState;
+            if (curDialog == null)
             {
                 VMDialogHandler.ShowDialog(context, operand, table);
 
                 if ((operand.Flags & VMDialogFlags.Continue) == 0)
                 {
-                    context.Thread.BlockingDialog = new VMDialogResult
+                    context.Thread.BlockingState = new VMDialogResult
                     {
-                        Type = operand.Type
+                        Type = operand.Type,
+                        HasDisplayed = true
                     };
                     return VMPrimitiveExitCode.CONTINUE_NEXT_TICK;
                 }
@@ -43,9 +47,10 @@ namespace TSO.SimsAntics.Primitives
             }
             else
             {
-                if (curDialog.Responded)
+                if (curDialog.Responded || curDialog.WaitTime > DIALOG_MAX_WAITTIME)
                 {
-                    context.Thread.BlockingDialog = null;
+                    context.Thread.BlockingState = null;
+                    context.VM.SignalDialog(null);
                     switch (curDialog.Type)
                     {
                         default:
@@ -63,7 +68,8 @@ namespace TSO.SimsAntics.Primitives
                         case VMDialogType.TextEntry:
                             //todo: filter profanity, limit name length
                             //also verify behaviour.
-                            //((VMAvatar)context.StackObject).Name = curDialog.ResponseText;
+                            if ((curDialog.ResponseText ?? "") != "")
+                                ((VMAvatar)context.StackObject).Name = curDialog.ResponseText;
                             return VMPrimitiveExitCode.GOTO_TRUE;
                         case VMDialogType.NumericEntry:
                             int number;
@@ -76,7 +82,15 @@ namespace TSO.SimsAntics.Primitives
                             return VMPrimitiveExitCode.GOTO_TRUE;
                     }
                 }
-                else return VMPrimitiveExitCode.CONTINUE_NEXT_TICK;
+                else
+                {
+                    if (!curDialog.HasDisplayed)
+                    {
+                        VMDialogHandler.ShowDialog(context, operand, table);
+                        curDialog.HasDisplayed = true;
+                    }
+                    return VMPrimitiveExitCode.CONTINUE_NEXT_TICK;
+                }
             }
         }
     }
@@ -160,28 +174,30 @@ namespace TSO.SimsAntics.Primitives
         UserBitmap = 8
     }
 
-    public class VMDialogResult : VMSerializable
+    public class VMDialogResult : VMAsyncState
     {
         public int Timeout = 30 * 60;
-        public bool Responded;
         public byte ResponseCode; //0,1,2 = yes/ok,no,cancel.
-        public string ResponseText;
+        public string ResponseText = "";
+
+        //local variables
+        public bool HasDisplayed; //re-display dialog if we restore into it being up, in case UI missed it
 
         public VMDialogType Type; //used for input sanitization
 
-        public void SerializeInto(BinaryWriter writer)
+        public override void SerializeInto(BinaryWriter writer)
         {
+            base.SerializeInto(writer);
             writer.Write(Timeout);
-            writer.Write(Responded);
             writer.Write(ResponseCode);
             writer.Write((ResponseText == null)?"":ResponseText);
             writer.Write((byte)Type);
         }
 
-        public void Deserialize(BinaryReader reader)
+        public override void Deserialize(BinaryReader reader)
         {
+            base.Deserialize(reader);
             Timeout = reader.ReadInt32();
-            Responded = reader.ReadBoolean();
             ResponseCode = reader.ReadByte();
             ResponseText = reader.ReadString();
             Type = (VMDialogType)reader.ReadByte();

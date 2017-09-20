@@ -9,16 +9,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
-using TSO.Common.utils;
-using TSO.Files.formats.iff.chunks;
-using tso.world.Utils;
-using TSO.Content.model;
+using FSO.Common.Utils;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.LotView.Utils;
+using FSO.Content.Model;
 using Microsoft.Xna.Framework;
-using tso.world.Model;
-using TSO.Content;
-using tso.common.utils;
+using FSO.LotView.Model;
+using FSO.Content;
 
-namespace tso.world.Components
+namespace FSO.LotView.Components
 {
     public class FloorComponent : WorldComponent
     {
@@ -28,7 +27,6 @@ namespace tso.world.Components
         private static Rectangle FLOORDEST_MED = new Rectangle(3, 158, 63, 32);
         private static Rectangle FLOORDEST_FAR = new Rectangle(2, 79, 31, 16);
         public Blueprint blueprint;
-        public Rectangle? DrawBound;
 
         private static Point[] PoolDirections =
         {
@@ -55,17 +53,13 @@ namespace tso.world.Components
             if (ArchZBuffers == null) ArchZBuffers = TextureGenerator.GetWallZBuffer(device);
 
             var pxOffset = world.WorldSpace.GetScreenOffset();
-            var floorContent = Content.Get().WorldFloors;
-
-            Rectangle db;
-            if (DrawBound == null) db = new Rectangle(0, 0, blueprint.Width, blueprint.Height);
-            else db = DrawBound.Value;
+            var floorContent = Content.Content.Get().WorldFloors;
 
             for (sbyte level = 1; level <= world.Level; level++)
             {
-                for (short y = (short)db.Top; y < db.Bottom; y++)
+                for (short y = 0; y < blueprint.Height; y++)
                 { //ill decide on a reasonable system for components when it's finished ok pls :(
-                    for (short x = (short)db.Left; x < db.Right; x++)
+                    for (short x = 0; x < blueprint.Width; x++)
                     {
                         var comp = blueprint.GetFloor(x, y, level);
                         if (comp.Pattern != 0)
@@ -96,7 +90,8 @@ namespace tso.world.Components
                                 if ((adj & PoolSegments.BottomLeft) > 0) spriteNum |= 4;
                                 if ((adj & PoolSegments.BottomRight) > 0) spriteNum |= 8;
 
-                                var _Sprite = new _2DSprite() { RenderMode = _2DBatchRenderMode.Z_BUFFER };
+                                var _Sprite = world._2D.NewSprite(_2DBatchRenderMode.Z_BUFFER);
+
                                 SPR2 sprite = null;
                                 switch (world.Zoom)
                                 {
@@ -135,7 +130,7 @@ namespace tso.world.Components
                                 if ((adj & CornerChecks[0]) == CornerChecks[0] && (adj & PoolSegments.Top) == 0)
                                 {
                                     //top corner
-                                    var tcS = new _2DSprite() { RenderMode = _2DBatchRenderMode.Z_BUFFER };
+                                    var tcS = world._2D.NewSprite(_2DBatchRenderMode.Z_BUFFER);
                                     //base sprite position on base tile
                                     sprite = floorContent.GetGlobalSPR((ushort)(0x430 + ((int)world.Zoom-1)*4));
                                     tcS.Pixel = world._2D.GetTexture(sprite.Frames[0]);
@@ -149,7 +144,7 @@ namespace tso.world.Components
                                 if ((adj & CornerChecks[1]) == CornerChecks[1] && (adj & PoolSegments.Left) == 0)
                                 {
                                     //left corner
-                                    var tcS = new _2DSprite() { RenderMode = _2DBatchRenderMode.Z_BUFFER };
+                                    var tcS = world._2D.NewSprite(_2DBatchRenderMode.Z_BUFFER);
                                     //base sprite position on base tile
                                     sprite = floorContent.GetGlobalSPR((ushort)(0x431 + ((int)world.Zoom - 1) * 4));
                                     tcS.Pixel = world._2D.GetTexture(sprite.Frames[0]);
@@ -163,7 +158,7 @@ namespace tso.world.Components
                                 if ((adj & CornerChecks[2]) == CornerChecks[2] && (adj & PoolSegments.Bottom) == 0)
                                 {
                                     //bottom corner
-                                    var tcS = new _2DSprite() { RenderMode = _2DBatchRenderMode.Z_BUFFER };
+                                    var tcS = world._2D.NewSprite(_2DBatchRenderMode.Z_BUFFER);
                                     //base sprite position on base tile
                                     sprite = floorContent.GetGlobalSPR((ushort)(0x432 + ((int)world.Zoom - 1) * 4));
                                     tcS.Pixel = world._2D.GetTexture(sprite.Frames[0]);
@@ -177,7 +172,7 @@ namespace tso.world.Components
                                 if ((adj & CornerChecks[3]) == CornerChecks[3] && (adj & PoolSegments.Right) == 0)
                                 {
                                     //right corner
-                                    var tcS = new _2DSprite() { RenderMode = _2DBatchRenderMode.Z_BUFFER };
+                                    var tcS = world._2D.NewSprite(_2DBatchRenderMode.Z_BUFFER);
                                     //base sprite position on base tile
                                     sprite = floorContent.GetGlobalSPR((ushort)(0x433 + ((int)world.Zoom - 1) * 4));
                                     tcS.Pixel = world._2D.GetTexture(sprite.Frames[0]);
@@ -214,10 +209,7 @@ namespace tso.world.Components
 
         private _2DSprite GetAirSprite(WorldState world)
         {
-            var _Sprite = new _2DSprite()
-            {
-                RenderMode = _2DBatchRenderMode.Z_BUFFER
-            };
+            var _Sprite = world._2D.NewSprite(_2DBatchRenderMode.Z_BUFFER);
             var airTiles = TextureGenerator.GetAirTiles(world.Device);
             Texture2D sprite = null;
             switch (world.Zoom)
@@ -255,10 +247,7 @@ namespace tso.world.Components
 
         private _2DSprite GetFloorSprite(Floor pattern, int rotation, WorldState world)
         {
-            var _Sprite = new _2DSprite()
-            {
-                RenderMode = _2DBatchRenderMode.Z_BUFFER
-            };
+            var _Sprite = world._2D.NewSprite(_2DBatchRenderMode.Z_BUFFER);
             if (pattern == null) return _Sprite;
             SPR2 sprite = null;
             bool vertFlip = world.Rotation == WorldRotation.TopRight || world.Rotation == WorldRotation.BottomRight;

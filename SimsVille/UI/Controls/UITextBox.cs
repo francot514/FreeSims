@@ -1,29 +1,27 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSOVille.Code.UI.Framework;
+using FSO.Client.UI.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using TSOVille.Code.UI.Model;
-using TSOVille.Code.Utils;
-using TSO.Common.rendering.framework.io;
-using TSO.Common.rendering.framework.model;
+using FSO.Client.UI.Model;
+using FSO.Client.Utils;
+using FSO.Common.Rendering.Framework.IO;
+using FSO.Common.Rendering.Framework.Model;
+using FSO.Common.Utils;
+using FSO.Client.GameContent;
+using FSO.Common;
+using System.Threading;
 
-namespace TSOVille.Code.UI.Controls
+namespace FSO.Client.UI.Controls
 {
     public class UITextBox : UIContainer, IFocusableUI, ITextControl
     {
@@ -33,17 +31,10 @@ namespace TSOVille.Code.UI.Controls
         static UITextBox()
         {
             StandardBackground = new SlicedTextureRef(
-                UIElement.GetTexture((ulong)TSOVille.FileIDs.UIFileIDs.dialog_textboxbackground),
+                UIElement.GetTexture((ulong)FileIDs.UIFileIDs.dialog_textboxbackground),
                 new Microsoft.Xna.Framework.Rectangle(13, 13, 13, 13)
             );
         }
-
-
-
-
-
-
-
 
         /**
          * Background texture & resize info
@@ -74,17 +65,13 @@ namespace TSOVille.Code.UI.Controls
         public UITextBox()
         {
             this.SetBackgroundTexture(
-                GetTexture((ulong)TSOVille.FileIDs.UIFileIDs.dialog_textboxbackground),
+                GetTexture((ulong)FileIDs.UIFileIDs.dialog_textboxbackground),
                 13, 13, 13, 13);
 
             TextMargin = new Rectangle(8, 3, 8, 5);
 
             m_MouseEvent = ListenForMouse(new Rectangle(0, 0, 10, 10), new UIMouseEvent(OnMouseEvent));
         }
-
-
-        
-
 
         /**
          * Functionality
@@ -96,8 +83,21 @@ namespace TSOVille.Code.UI.Controls
         public string CurrentText
         {
             get { return m_SBuilder.ToString(); }
+            set
+            {
+                m_SBuilder = new StringBuilder(value);
+                SelectionStart = Math.Max(0, Math.Min(SelectionStart, value.Length - 1));
+                SelectionEnd = -1; //todo: move along maybe?
+                m_DrawDirty = true;
+            }
         }
 
+        public void Clear()
+        {
+            SelectionEnd = -1;
+            SelectionStart = -1;
+            m_SBuilder.Clear();
+        }
 
         public TextStyle TextStyle = TextStyle.DefaultLabel;
         public Rectangle TextMargin = Rectangle.Empty;
@@ -197,6 +197,7 @@ namespace TSOVille.Code.UI.Controls
         #region IFocusableUI Members
 
         private bool IsFocused;
+        private string QueuedChange;
         public void OnFocusChanged(FocusEvent newFocus)
         {
             IsFocused = newFocus == FocusEvent.FocusIn;
@@ -204,6 +205,10 @@ namespace TSOVille.Code.UI.Controls
             {
                 m_cursorBlink = true;
                 m_cursorBlinkLastTime = GameFacade.LastUpdateState.Time.TotalGameTime.Ticks;
+                if (FSOEnvironment.SoftwareKeyboard)
+                {
+                   
+                }
             }
             else
             {
@@ -219,6 +224,13 @@ namespace TSOVille.Code.UI.Controls
         public override void Update(UpdateState state)
         {
             base.Update(state);
+            lock (this) {
+                if (QueuedChange != null) {
+                    CurrentText = QueuedChange;
+                    QueuedChange = null;
+                }
+            }
+            if (FSOEnvironment.SoftwareKeyboard && state.InputManager.GetFocus() == this) state.InputManager.SetFocus(null);
             if (IsFocused)
             {
                 /**
@@ -406,8 +418,8 @@ namespace TSOVille.Code.UI.Controls
 
                 /** Selection box **/
                 m_DrawCmds.Add(new TextDrawCmd_SelectionBox {
-                    BlendColor = new Color(0xFF, 0xFF, 0xFF, 200),
-                    Texture = TextureUtils.TextureFromColor(GameFacade.GraphicsDevice, TextStyle.SelectionBoxColor),
+                    BlendColor = TextStyle.SelectionBoxColor,
+                    Texture = TextureGenerator.GetPxWhite(GameFacade.GraphicsDevice),
                     Position = selectionPosition,
                     Scale = new Vector2(selectionTxtSize.X, selectionTxtSize.Y) * _Scale
                 });
@@ -460,7 +472,8 @@ namespace TSOVille.Code.UI.Controls
             {
                 Scale = new Vector2(_Scale.X, (m_Height-(TextMargin.Top + TextMargin.Height)) * _Scale.Y),
                 Position = cursorPosition,
-                Texture = TextureUtils.TextureFromColor(GameFacade.GraphicsDevice, TextStyle.Color)
+                Texture = TextureGenerator.GetPxWhite(GameFacade.GraphicsDevice),
+                Color = TextStyle.Color
             });
 
 
@@ -489,6 +502,7 @@ namespace TSOVille.Code.UI.Controls
         /// <param name="batch"></param>
         public override void Draw(UISpriteBatch batch)
         {
+            if (!Visible) return;
             if (m_DrawDirty)
             {
                 ComputeDrawingCommands();
@@ -575,6 +589,7 @@ namespace TSOVille.Code.UI.Controls
     {
         public Vector2 Position;
         public Texture2D Texture;
+        public Color Color;
         public Vector2 Scale;
 
         public void Init()
@@ -585,7 +600,7 @@ namespace TSOVille.Code.UI.Controls
         {
             if (((ITextControl)ui).DrawCursor)
             {
-                batch.Draw(Texture, Position, null, Color.White, 0, Vector2.Zero, Scale, SpriteEffects.None, 0);
+                batch.Draw(Texture, Position, null, Color, 0, Vector2.Zero, Scale, SpriteEffects.None, 0);
             }
         }
     }

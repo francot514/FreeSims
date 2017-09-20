@@ -11,8 +11,9 @@ using System.Text;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using FSO.Common;
 
-namespace tso.world
+namespace FSO.LotView
 {
     /// <summary>
     /// Handles XNA content for the world.
@@ -27,10 +28,15 @@ namespace tso.world
             ContentManager.RootDirectory = rootDir;
         }
 
+        public static string EffectSuffix
+        {
+            get { return ((FSOEnvironment.SoftwareDepth)?"iOS":""); }
+        }
+
         public static Effect _2DWorldBatchEffect
         {
             get{
-                return ContentManager.Load<Effect>("Effects/2DWorldBatch");
+                return ContentManager.Load<Effect>("Effects/2DWorldBatch"+EffectSuffix);
             }
         }
 
@@ -38,7 +44,7 @@ namespace tso.world
         {
             get
             {
-                return ContentManager.Load<Effect>("Effects/GrassShader");
+                return ContentManager.Load<Effect>("Effects/GrassShader"+EffectSuffix);
             }
         }
 

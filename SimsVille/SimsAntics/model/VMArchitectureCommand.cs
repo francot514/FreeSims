@@ -9,13 +9,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using tso.simantics.Model;
+using FSO.SimAntics.NetPlay.Model;
 
-namespace TSO.SimsAntics.Model
+namespace FSO.SimAntics.Model
 {
     public struct VMArchitectureCommand : VMSerializable
     {
         public VMArchitectureCommandType Type;
+        public uint CallerUID;
         public int x;
         public int y;
         public sbyte level;
@@ -69,9 +70,6 @@ namespace TSO.SimsAntics.Model
         PATTERN_FILL,
 
         FLOOR_RECT,
-        FLOOR_FILL,
-
-        ROOF_RECT,
-        ROOF_FILL
+        FLOOR_FILL
     }
 }

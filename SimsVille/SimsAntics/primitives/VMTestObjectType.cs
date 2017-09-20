@@ -8,13 +8,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.SimsAntics.Engine.Scopes;
-using TSO.Files.utils;
+using FSO.SimAntics.Engine;
+using FSO.SimAntics.Engine.Scopes;
+using FSO.Files.Utils;
+using FSO.SimAntics.Engine.Utils;
 using System.IO;
-using TSO.SimsAntics.Engine.Utils;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMTestObjectType : VMPrimitiveHandler
     {

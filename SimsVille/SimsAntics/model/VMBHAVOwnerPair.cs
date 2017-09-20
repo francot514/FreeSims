@@ -8,10 +8,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.formats.iff.chunks;
-using TSO.Content;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.Content;
 
-namespace TSO.SimsAntics.Model
+namespace FSO.SimAntics.Model
 {
     public class VMBHAVOwnerPair
     {

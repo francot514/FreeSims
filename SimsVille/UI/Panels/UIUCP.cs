@@ -1,29 +1,28 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSOVille.Code.UI.Framework;
+using FSO.Client.UI.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TSOVille.LUI;
-using TSOVille.Code.UI.Controls;
-using TSOVille.Code.UI.Screens;
-using TSO.SimsAntics;
-using TSO.SimsAntics.Model;
-using tso.world;
+using FSO.Client.UI.Controls;
+using FSO.Client.UI.Screens;
+using FSO.Client.Rendering.City;
+using FSO.SimAntics;
+using FSO.SimAntics.Model;
+using FSO.LotView;
+using FSO.Client.Network;
+using Microsoft.Xna.Framework;
+using FSO.SimAntics.Model.TSOPlatform;
+using FSO.Common;
+using FSO.Common.Rendering.Framework.IO;
 
-namespace TSOVille.Code.UI.Panels
+namespace FSO.Client.UI.Panels
 {
     /// <summary>
     /// UCP
@@ -31,13 +30,6 @@ namespace TSOVille.Code.UI.Panels
     public class UIUCP : UIContainer
     {
         private CoreGameScreen Game; //the main screen
-
-        public TSO.SimsAntics.VM vm;
-        public static DateTime GameTime = DateTime.Now;
-        private int GameSpeed;
-
-
-
         private UISelectHouseView SelWallsPanel; //select view panel that is created when clicking the current walls mode
 
         /// <summary>
@@ -100,6 +92,14 @@ namespace TSOVille.Code.UI.Panels
         private UIDestroyablePanel Panel;
         private int CurrentPanel;
 
+        private uint OldMoney;
+        private int MoneyHighlightFrames;
+
+        private UCPFocusMode Focus;
+        private UIBlocker SelfBlocker;
+        private UIBlocker PanelBlocker;
+        private UIBlocker GameBlocker;
+
         public UIUCP(UIScreen owner)
         {
             this.RenderScript("ucp.uis");
@@ -155,19 +155,97 @@ namespace TSOVille.Code.UI.Panels
             SecondFloorButton.Selected = (Game.Level == Game.Stories);
             FirstFloorButton.Selected = (Game.Level == 1);
 
+            MoneyText.CaptionStyle = MoneyText.CaptionStyle.Clone();
+
             SetInLot(false);
-            SetMode(UCPMode.LotMode);
+            SetMode(UCPMode.CityMode);
+            Focus = UCPFocusMode.UCP;
+            SetFocus(UCPFocusMode.Game);
         }
 
         private void SecondFloor(UIElement button)
         {
+            Game.vm.Context.World.State.ScrollAnchor = null; //stop following a sim on a manual adjustment
             Game.Level = Math.Min((sbyte)(Game.Level + 1), Game.Stories);
             SecondFloorButton.Selected = (Game.Level == Game.Stories);
             FirstFloorButton.Selected = (Game.Level == 1);
         }
 
+        /// <summary>
+        /// Sets the "focus mode" of the UCP, used to make the UI accessible on phones.
+        /// </summary>
+        /// <param name="focus"></param>
+        public void SetFocus(UCPFocusMode focus)
+        {
+            if (Focus == focus) return;
+            if (FSOEnvironment.UIZoomFactor>1f)
+            {
+                if (focus != UCPFocusMode.Game)
+                {
+                    var tween = GameFacade.Screens.Tween.To(this, 0.33f, new Dictionary<string, float>()
+                    {
+                        {"ScaleX", FSOEnvironment.UIZoomFactor},
+                        {"ScaleY", FSOEnvironment.UIZoomFactor},
+                        {"Y", Game.ScreenHeight-(int)(210*FSOEnvironment.UIZoomFactor) },
+                        {"X", (focus == UCPFocusMode.ActiveTab)?-(int)(225*FSOEnvironment.UIZoomFactor):0 }
+                    }, TweenQuad.EaseInOut);
+
+                    Remove(SelfBlocker); SelfBlocker = null;
+                    if (focus == UCPFocusMode.ActiveTab)
+                    {
+                        Remove(PanelBlocker); PanelBlocker = null;
+                    }
+
+                    if (GameBlocker == null)
+                    {
+                        GameBlocker = new UIBlocker();
+                        GameBlocker.Position = new Vector2(0, 220 - Game.ScreenHeight);
+                        GameBlocker.OnMouseEvt += (evt, state) =>
+                        {
+                            if (evt == UIMouseEventType.MouseDown) SetFocus(UCPFocusMode.Game);
+                        };
+                        AddAt(0, GameBlocker);
+                    }
+                } else
+                {
+                    var tween = GameFacade.Screens.Tween.To(this, 0.33f, new Dictionary<string, float>()
+                    {
+                        {"ScaleX", 1f},
+                        {"ScaleY", 1f},
+                        {"Y", Game.ScreenHeight-210 },
+                        {"X", 0 }
+                    }, TweenQuad.EaseInOut);
+
+                    if (SelfBlocker == null)
+                    {
+                        SelfBlocker = new UIBlocker(220, 210);
+                        SelfBlocker.OnMouseEvt += (evt, state) =>
+                        {
+                            if (evt == UIMouseEventType.MouseDown) SetFocus(UCPFocusMode.UCP);
+                        };
+                        Add(SelfBlocker);
+                    }
+
+                    if (CurrentPanel > -1 && PanelBlocker == null)
+                    {
+                        PanelBlocker = new UIBlocker(580, 104);
+                        PanelBlocker.Position = new Vector2(220, 106);
+                        PanelBlocker.OnMouseEvt += (evt, state) =>
+                        {
+                            if (evt == UIMouseEventType.MouseDown) SetFocus(UCPFocusMode.ActiveTab);
+                        };
+                        Add(PanelBlocker);
+                    }
+
+                    Remove(GameBlocker); GameBlocker = null;
+                }
+            }
+            Focus = focus;
+        }
+
         private void FirstFloor(UIElement button)
         {
+            Game.vm.Context.World.State.ScrollAnchor = null; //stop following a sim on a manual adjustment
             Game.Level = Math.Max((sbyte)(Game.Level - 1), (sbyte)1);
             SecondFloorButton.Selected = (Game.Level == Game.Stories);
             FirstFloorButton.Selected = (Game.Level == 1);
@@ -205,30 +283,48 @@ namespace TSOVille.Code.UI.Panels
             UpdateWallsMode();
         }
 
-        public override void Update(TSO.Common.rendering.framework.model.UpdateState state)
+        public override void Update(FSO.Common.Rendering.Framework.Model.UpdateState state)
         {
-            if (vm != null)
-                 {
-                     if (!vm.Ready)
-                         GameSpeed = 0;
-
-
-                     if (vm.Speed == 1)
-                         GameSpeed = 3;
-                     else if (vm.Speed == 2)
-                         GameSpeed = 2;
-                     else if (vm.Speed == 3)
-                         GameSpeed = 1;
-                     
-                 }
-                    
-
-            int min = GameTime.Minute;
-            int hour = GameTime.Hour;
-            if (Game.InLot) //if ingame, use time from ingame clock (should be very close to server time anyways, if we set the game pacing up right...)
+            //ScaleX = ScaleY = 1;
+            if (MoneyHighlightFrames > 0)
             {
+                if (--MoneyHighlightFrames == 0) MoneyText.CaptionStyle.Color = TextStyle.DefaultLabel.Color;
+            }
+
+            int min = NetworkFacade.ServerTime.Minute;
+            int hour = NetworkFacade.ServerTime.Hour;
+            uint budget = 0;
+            if (Game.InLot) 
+            {
+                // if ingame, use time from ingame clock 
+                // (should be very close to server time anyways, if we set the game pacing up right...)
                 min = Game.vm.Context.Clock.Minutes;
                 hour = Game.vm.Context.Clock.Hours;
+
+                // update with ingame budget.
+                var cont = Game.LotController;
+                if (cont.ActiveEntity != null && cont.ActiveEntity is VMAvatar)
+                {
+                    var avatar = (VMAvatar)cont.ActiveEntity;
+                    budget = avatar.TSOState.Budget.Value;
+
+                    //check if we have build/buy permissions
+                    //TODO: global build/buy enable/disable (via the global calls)
+                    BuyModeButton.Disabled = ((VMTSOAvatarState)(avatar.TSOState)).Permissions
+                        < VMTSOAvatarPermissions.Roommate;
+                    BuildModeButton.Disabled = ((VMTSOAvatarState)(avatar.TSOState)).Permissions
+                        < VMTSOAvatarPermissions.BuildBuyRoommate;
+                    HouseModeButton.Disabled = BuyModeButton.Disabled;
+                }
+
+                if (CurrentPanel == 2 && BuyModeButton.Disabled || CurrentPanel == 3 && BuildModeButton.Disabled) SetPanel(-1);
+            }
+
+            if (budget != OldMoney)
+            {
+                OldMoney = budget;
+                MoneyText.CaptionStyle.Color = Color.White;
+                MoneyHighlightFrames = 45;
             }
 
             string suffix = (hour > 11) ? "pm" : "am";
@@ -237,6 +333,7 @@ namespace TSOVille.Code.UI.Panels
 
             TimeText.Caption = hour.ToString() + ":" + ZeroPad(min.ToString(), 2) + " " + suffix;
 
+            MoneyText.Caption = "$" + budget.ToString("##,#0");
 
             base.Update(state);
         }
@@ -267,13 +364,14 @@ namespace TSOVille.Code.UI.Panels
 
         void PhoneButton_OnButtonClick(UIElement button)
         {
-            //var screen = (CoreGameScreen)GameFacade.Screens.CurrentUIScreen;
-            //screen.OpenInbox();
+            var screen = (CoreGameScreen)GameFacade.Screens.CurrentUIScreen;
+            screen.OpenInbox();
         }
 
         private void ZoomControl(UIElement button)
         {
             Game.ZoomLevel = (Game.ZoomLevel + ((button == ZoomInButton) ? -1 : 1));
+            /*if(Game.ZoomLevel >= 4) SetPanel(0);    // Make the panels disappear when zoomed out to far mode   -  Causes crashes for unknown reasons*/
         }
 
         private void SetCityZoom(UIElement button)
@@ -308,9 +406,12 @@ namespace TSOVille.Code.UI.Panels
             {
                 this.Remove(Panel);
                 Panel.Destroy();
+
+                if (Game.InLot) Game.LotController.PanelActive = false;
             }
             if (newPanel != CurrentPanel)
             {
+                if (Game.InLot) Game.LotController.PanelActive = true;
                 switch (newPanel)
                 {
                     case 5:
@@ -319,6 +420,7 @@ namespace TSOVille.Code.UI.Panels
                         Panel.Y = 96;
                         this.Add(Panel);
                         OptionsModeButton.Selected = true;
+                        SetFocus(UCPFocusMode.ActiveTab);
                         break;
                     case 2:
                         if (!Game.InLot) break; //not ingame
@@ -326,10 +428,10 @@ namespace TSOVille.Code.UI.Panels
                         Game.LotController.LiveMode = false;
                         Panel.X = 177;
                         Panel.Y = 96;
-                        
                         ((UIBuyMode)Panel).vm = Game.vm;
                         this.Add(Panel);
                         BuyModeButton.Selected = true;
+                        SetFocus(UCPFocusMode.ActiveTab);
                         break;
                     case 3:
                         if (!Game.InLot) break; //not ingame
@@ -341,28 +443,30 @@ namespace TSOVille.Code.UI.Panels
                         Game.LotController.LiveMode = false;
                         Panel.X = 177;
                         Panel.Y = 96;
-
                         ((UIBuildMode)Panel).vm = Game.vm;
                         this.Add(Panel);
                         BuildModeButton.Selected = true;
+                        SetFocus(UCPFocusMode.ActiveTab);
                         break;
                     case 1:
                         if (!Game.InLot) break; //not ingame
-                        Panel = new UILiveMode();
+                        Panel = new UILiveMode(Game.LotController);
                         Panel.X = 177;
                         Panel.Y = 63;
-                        
-                        
                         this.Add(Panel);
                         LiveModeButton.Selected = true;
+                        SetFocus(UCPFocusMode.ActiveTab);
                         break;
                     default:
+                        if (Game.InLot) Game.LotController.PanelActive = false;
                         break;
                 }
                 CurrentPanel = newPanel;
             }
             else
             {
+                Remove(PanelBlocker);
+                PanelBlocker = null;
                 CurrentPanel = -1;
             }
             
@@ -438,6 +542,13 @@ namespace TSOVille.Code.UI.Panels
         {
             LotMode,
             CityMode
+        }
+
+        public enum UCPFocusMode
+        {
+            Game,
+            UCP,
+            ActiveTab
         }
 
     }

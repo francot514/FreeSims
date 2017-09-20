@@ -9,10 +9,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
+using FSO.Vitaboy;
 using Microsoft.Xna.Framework;
-using TSO.vitaboy;
+using FSO.Common.Utils;
+using FSO.Common;
 
-namespace tso.world.Utils
+namespace FSO.LotView.Utils
 {
     /// <summary>
     /// Used for drawing 3D elements in world.
@@ -44,24 +46,32 @@ namespace tso.world.Utils
             this.Device = device;
         }
 
-
-        public void DrawMesh(Matrix world, Avatar binding, short objID, ushort room)
+        public void DrawMesh(Matrix world, Avatar binding, short objID, ushort room, Color color)
         {
-            this.Sprites.Add(new _3DSprite
-            {
+            this.Sprites.Add(new _3DSprite {
                 Effect = _3DSpriteEffect.CHARACTER,
                 Geometry = binding,
                 World = world,
                 ObjectID = objID,
-                Room = room
+                Room = room,
+                Color = color
             });
         }
+
         /// <summary>
         /// Ends rendering, should always be called after DrawMesh()!
         /// </summary>
         public void End()
         {
+            if (Sprites.Count == 0) return;
             //Device.RasterizerState.CullMode = CullMode.CullCounterClockwiseFace;
+
+            var character = Sprites.Where(x => x.Effect == _3DSpriteEffect.CHARACTER).ToList();
+
+            PPXDepthEngine.RenderPPXDepth(Avatar.Effect, true, (depth) =>
+            {
+                RenderSpriteList(character, Avatar.Effect, Avatar.Effect.Techniques[OBJIDMode ? 1 : 0]);
+            });
 
             /*
             ApplyCamera(Effect);
@@ -88,10 +98,7 @@ namespace tso.world.Utils
 
             effect.CurrentTechnique = technique;
             ApplyCamera(effect);
-            //Device.SamplerStates[0].AddressU = TextureAddressMode.Wrap;
-            //Device.SamplerStates[0].AddressV = TextureAddressMode.Wrap;
-            
-            //var byTexture = sprites.GroupBy(x => x.Texture);
+            effect.Parameters["SoftwareDepth"].SetValue(FSOEnvironment.SoftwareDepth);
             foreach (var pass in technique.Passes)
             {
                 foreach (var geom in sprites)
@@ -99,8 +106,8 @@ namespace tso.world.Utils
                     if (OBJIDMode) effect.Parameters["ObjectID"].SetValue(geom.ObjectID / 65535f);
                     if (RoomLights != null)
                     {
-                        var col = RoomLights[geom.Room];
-                        effect.Parameters["AmbientLight"].SetValue(new Vector4(col.R, col.G, col.B, col.A) / 255f);
+                        var col = RoomLights[geom.Room].ToVector4() * geom.Color.ToVector4();
+                        effect.Parameters["AmbientLight"].SetValue(col);
                     }
                     /*if (geom.Geometry is Avatar)
                     {
@@ -110,9 +117,10 @@ namespace tso.world.Utils
                     effect.Parameters["World"].SetValue(geom.World);
                     pass.Apply();
 
-                    //geom.Geometry.DrawGeometry(this.Device, effect);
+                    geom.Geometry.DrawGeometry(this.Device, effect);
                 }
             }
+            effect.Parameters["SoftwareDepth"].SetValue(false); //reset this for non-world purposes
         }
 
         public void ApplyCamera(Effect effect){

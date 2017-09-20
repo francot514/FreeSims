@@ -8,16 +8,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Content;
-using TSO.Files.formats.iff.chunks;
+using FSO.Content;
+using FSO.SimAntics.Marshals.Threads;
+using FSO.Files.Formats.IFF.Chunks;
 
-namespace TSO.SimsAntics.Engine
+namespace FSO.SimAntics.Engine
 {
     public class VMQueuedAction
     {
         public VMQueuedAction() { }
 
-        public VMRoutine Routine;
+        public VMRoutine ActionRoutine;
+        public VMRoutine CheckRoutine;
         public VMEntity Callee;
         public VMEntity StackObject; //set to callee for interactions
 
@@ -49,6 +51,84 @@ namespace TSO.SimsAntics.Engine
 
         public VMActionCallback Callback;
 
+        public VMStackFrame ToStackFrame(VMEntity caller)
+        {
+            var frame = new VMStackFrame
+            {
+                Caller = caller,
+                Callee = Callee,
+                CodeOwner = CodeOwner,
+                Routine = ActionRoutine,
+                StackObject = StackObject,
+                ActionTree = true
+            };
+            if (Args == null) frame.Args = new short[4]; //always 4? i got crashes when i used the value provided by the routine, when for that same routine edith displayed 4 in the properties...
+            else frame.Args = Args; //WARNING - if you use this, the args array MUST have the same number of elements the routine is expecting!
+            return frame;
+        }
+
+        #region VM Marshalling Functions
+        public VMQueuedActionMarshal Save()
+        {
+            return new VMQueuedActionMarshal
+            {
+                RoutineID = ActionRoutine.ID,
+                CheckRoutineID = (CheckRoutine == null) ? (ushort)0 : CheckRoutine.ID,
+                Callee = (Callee == null) ? (short)0 : Callee.ObjectID,
+                StackObject = (StackObject == null) ? (short)0 : StackObject.ObjectID,
+                IconOwner = (IconOwner == null) ? (short)0 : IconOwner.ObjectID,
+                CodeOwnerGUID = CodeOwner.OBJ.GUID,
+                Name = Name,
+                Args = Args,
+                InteractionNumber = InteractionNumber,
+                Cancelled = Cancelled,
+                Priority = Priority,
+                Mode = Mode,
+                Flags = Flags,
+                Flags2 = Flags2,
+                UID = UID,
+                Callback = (Callback == null)?null:Callback.Save()
+            };
+        }
+
+        public void Load(VMQueuedActionMarshal input, VMContext context)
+        {
+            CodeOwner = FSO.Content.Content.Get().WorldObjects.Get(input.CodeOwnerGUID);
+
+            BHAV bhav = null;
+            if (input.RoutineID >= 8192) bhav = CodeOwner.Resource.SemiGlobal.Get<BHAV>(input.RoutineID);
+            else if (input.RoutineID >= 4096) bhav = CodeOwner.Resource.Get<BHAV>(input.RoutineID);
+            else bhav = context.Globals.Resource.Get<BHAV>(input.RoutineID);
+            ActionRoutine = context.VM.Assemble(bhav);
+
+            if (input.CheckRoutineID != 0)
+            {
+                if (input.CheckRoutineID >= 8192) bhav = CodeOwner.Resource.SemiGlobal.Get<BHAV>(input.CheckRoutineID);
+                else if (input.CheckRoutineID >= 4096) bhav = CodeOwner.Resource.Get<BHAV>(input.CheckRoutineID);
+                else bhav = context.Globals.Resource.Get<BHAV>(input.CheckRoutineID);
+                CheckRoutine = context.VM.Assemble(bhav);
+            }
+
+            Callee = context.VM.GetObjectById(input.Callee);
+            StackObject = context.VM.GetObjectById(input.StackObject);
+            IconOwner = context.VM.GetObjectById(input.IconOwner);
+            Name = input.Name;
+            Args = input.Args;
+            InteractionNumber = input.InteractionNumber;
+            Cancelled = input.Cancelled;
+            Priority = input.Priority;
+            Mode = input.Mode;
+            Flags = input.Flags;
+            Flags2 = input.Flags2;
+            UID = input.UID;
+            Callback = (input.Callback == null)?null:new VMActionCallback(input.Callback, context);
+        }
+
+        public VMQueuedAction(VMQueuedActionMarshal input, VMContext context)
+        {
+            Load(input, context);
+        }
+        #endregion
     }
 
     public enum VMQueuePriority : short

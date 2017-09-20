@@ -8,16 +8,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.utils;
-using TSO.SimsAntics.Engine.Scopes;
-using TSO.SimsAntics.Engine.Utils;
-using TSO.SimsAntics.Model;
-using TSO.SimsAntics.Utils;
+using FSO.Files.Utils;
+using FSO.SimAntics.Engine.Scopes;
+using FSO.SimAntics.Engine.Utils;
+using FSO.Vitaboy;
+using FSO.SimAntics.Model;
+using FSO.SimAntics.Utils;
 using System.IO;
-using TSO.Common.rendering.vitaboy;
-using TSO.vitaboy;
 
-namespace TSO.SimsAntics.Engine.Primitives
+namespace FSO.SimAntics.Engine.Primitives
 {
     public class VMAnimateSim : VMPrimitiveHandler
     {
@@ -36,14 +35,14 @@ namespace TSO.SimsAntics.Engine.Primitives
                 if (posture != 1 && posture != 2) posture = 3; //sit and kneel are 1 and 2, 0 is stand but in walk animations it's 3.
                 //todo: swimming??
 
-                animation = TSO.Content.Content.Get().AvatarAnimations.Get(avatar.WalkAnimations[posture] + ".anim");
+                animation = FSO.Content.Content.Get().AvatarAnimations.Get(avatar.WalkAnimations[posture] + ".anim");
                 var state = new VMAnimationState(animation, operand.PlayBackwards);
                 state.Loop = true;
                 avatar.Animations.Add(state);
 
                 if (avatar.GetSlot(0) != null) //if we're carrying something, set carry animation to default carry.
                 {
-                    avatar.CarryAnimationState = new VMAnimationState(TSO.Content.Content.Get().AvatarAnimations.Get("a2o-rarm-carry-loop.anim"), false);
+                    avatar.CarryAnimationState = new VMAnimationState(FSO.Content.Content.Get().AvatarAnimations.Get("a2o-rarm-carry-loop.anim"), false);
                 }
                 else avatar.CarryAnimationState = null;
                 return VMPrimitiveExitCode.GOTO_TRUE;
@@ -72,24 +71,32 @@ namespace TSO.SimsAntics.Engine.Primitives
                 }
                 else
                 {
-                    if (avatar.CurrentAnimationState.EndReached)
+                    var cAnim = avatar.CurrentAnimationState;
+
+                    //SPECIAL CASE: if we are ending the animation, and the number of events run < expected events
+                    //forcefully run those events, with id as their event number. (required for bath drain)
+                    if (cAnim.EndReached)
+                    {
+                        while (cAnim.EventsRun < operand.ExpectedEventCount)
+                        {
+                            cAnim.EventQueue.Add(cAnim.EventsRun++);
+                        }
+                    }
+
+                    if (cAnim.EventQueue.Count > 0) //favor events over end. do not want to miss any.
+                    {
+                        var code = cAnim.EventQueue[0];
+                        cAnim.EventQueue.RemoveAt(0);
+                        if (operand.StoreFrameInLocal)
+                            VMMemory.SetVariable(context, VMVariableScope.Local, operand.LocalEventNumber, code);
+                        else
+                            VMMemory.SetVariable(context, VMVariableScope.Parameters, 0, code);
+                        return VMPrimitiveExitCode.GOTO_FALSE;
+                    }
+                    else if (cAnim.EndReached)
                     {
                         avatar.Animations.Clear();
                         return VMPrimitiveExitCode.GOTO_TRUE;
-                    }
-                    else if (avatar.CurrentAnimationState.EventFired)
-                    {
-                        avatar.CurrentAnimationState.EventFired = false; //clear fired flag
-                        if (operand.StoreFrameInLocal)
-                        {
-                            VMMemory.SetVariable(context, VMVariableScope.Local, operand.LocalEventNumber, avatar.CurrentAnimationState.EventCode);
-                        }
-                        else
-                        {
-                            VMMemory.SetVariable(context, VMVariableScope.Parameters, 0, avatar.CurrentAnimationState.EventCode);
-                        }
-                        return VMPrimitiveExitCode.GOTO_FALSE;
-
                     }
                     else
                     {

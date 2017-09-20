@@ -9,11 +9,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework;
-using TSO.Common.rendering.framework;
-using TSO.Common.rendering.vitaboy;
-using TSO.Common.rendering.framework.model;
+using FSO.Common.Rendering.Framework;
 
-namespace TSO.vitaboy
+namespace FSO.Vitaboy
 {
     /// <summary>
     /// An animator is used to animate an avatar.
@@ -66,22 +64,13 @@ namespace TSO.vitaboy
             }
         }
 
-        public override void Update(UpdateState state)
+        public override void Update(FSO.Common.Rendering.Framework.Model.UpdateState state)
         {
             this.Update(state.Time);
         }
 
         public override void Draw(Microsoft.Xna.Framework.Graphics.GraphicsDevice device)
         {
-        }
-
-        public static AnimationStatus SilentFrameProgress(Avatar avatar, Animation animation, int frame)
-        {
-            bool completed = (frame < 0 || frame > animation.NumFrames);
-            frame = Math.Max(Math.Min(frame, animation.NumFrames), 0);
-
-            if (completed || frame + 1 > animation.NumFrames) return AnimationStatus.COMPLETED;
-            return AnimationStatus.IN_PROGRESS;
         }
 
         /// <summary>

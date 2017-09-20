@@ -8,15 +8,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.utils;
-using TSO.SimsAntics.Engine.Scopes;
-using TSO.SimsAntics.Engine.Utils;
-using TSO.SimsAntics;
-using TSO.Files.formats.iff.chunks;
-using TSO.SimsAntics.Primitives;
+using FSO.Files.Utils;
+using FSO.SimAntics.Engine.Scopes;
+using FSO.SimAntics.Engine.Utils;
+using FSO.SimAntics;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.SimAntics.Primitives;
 using System.IO;
 
-namespace TSO.SimsAntics.Engine.Primitives
+namespace FSO.SimAntics.Engine.Primitives
 {
     public class VMRunTreeByName : VMPrimitiveHandler
     {
@@ -46,19 +46,19 @@ namespace TSO.SimsAntics.Engine.Primitives
 
                 if (operand.Destination == 2)
                 {
-                    context.Thread.ExecuteSubRoutine(context, tree.bhav, tree.Owner, new VMSubRoutineOperand(context.Thread.TempRegisters));
+                    context.Thread.ExecuteSubRoutine(context, tree.bhav, context.StackObject.Object, new VMSubRoutineOperand(context.Thread.TempRegisters));
                     return VMPrimitiveExitCode.CONTINUE;
                     //push onto my stack - acts like a subroutine.
                 }
                 else if (operand.Destination == 0)
                 {
-                    return context.Caller.Thread.RunInMyStack(tree.bhav, tree.Owner, context.Thread.TempRegisters, context.StackObject)
+                    return context.Caller.Thread.RunInMyStack(tree.bhav, context.StackObject.Object, context.Thread.TempRegisters, context.StackObject)
                         ? VMPrimitiveExitCode.GOTO_TRUE : VMPrimitiveExitCode.GOTO_FALSE;
                     //run in my stack
                 }
                 else
                 {
-                    return context.StackObject.Thread.RunInMyStack(tree.bhav, tree.Owner, context.Thread.TempRegisters, context.StackObject)
+                    return context.StackObject.Thread.RunInMyStack(tree.bhav, context.StackObject.Object, context.Thread.TempRegisters, context.StackObject)
                         ? VMPrimitiveExitCode.GOTO_TRUE : VMPrimitiveExitCode.GOTO_FALSE;
                     //run in stack obj's stack
                 }

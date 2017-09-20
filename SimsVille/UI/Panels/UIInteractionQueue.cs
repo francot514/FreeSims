@@ -1,33 +1,27 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-RHY3756547. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
-
 
 using System;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TSOVille.Code.UI.Framework;
-using TSOVille.Code.UI.Framework.Parser;
-using TSOVille.Code.UI.Model;
-using TSO.Common.rendering.framework.model;
-using TSO.Common.rendering.framework.io;
-using TSOVille.Code.Utils;
-using TSO.SimsAntics.Engine;
-using TSO.SimsAntics;
-using TSOVille.LUI;
+using FSO.Client.UI.Framework;
+using FSO.Client.UI.Framework.Parser;
+using FSO.Client.UI.Model;
+using FSO.Common.Rendering.Framework.Model;
+using FSO.Common.Rendering.Framework.IO;
+using FSO.Client.Utils;
+using FSO.SimAntics.Engine;
+using FSO.SimAntics;
+using TSO.HIT;
+using FSO.SimAntics.NetPlay.Model.Commands;
+using FSO.Client.UI.Controls;
 
-
-namespace TSOVille.Code.UI.Controls
+namespace FSO.Client.UI.Panels
 {
     /// <summary>
     /// The queue display for ingame. Includes queue animations and control.
@@ -37,10 +31,12 @@ namespace TSOVille.Code.UI.Controls
 
         private List<UIIQTrackEntry> QueueItems;
         public VMEntity QueueOwner;
+        public VM vm;
         public Vector2 PieMenuClickPos = new Vector2(-1, -1);
 
-        public UIInteractionQueue(VMEntity QueueOwner)
+        public UIInteractionQueue(VMEntity QueueOwner, VM vm)
         {
+            this.vm = vm;
             this.QueueOwner = QueueOwner;
             QueueItems = new List<UIIQTrackEntry>();
         }
@@ -52,10 +48,12 @@ namespace TSOVille.Code.UI.Controls
             //detect any changes in the interaction queue.
 
             var queue = QueueOwner.Thread.Queue;
+            bool skipParentIdle;
             for (int i=0; i<QueueItems.Count; i++) {
                 int position = 0;
                 var itemui = QueueItems[i];
                 bool found = false; //is this interaction still in the queue? if not then ditch it.
+                skipParentIdle = false;
                 for (int j = 0; j < queue.Count; j++)
                 {
                     var elem = queue[j];
@@ -63,7 +61,7 @@ namespace TSOVille.Code.UI.Controls
                     {
                         found = true;
                         if (position != itemui.QueuePosition) itemui.TweenToPosition(position);
-                        if (elem.Cancelled && !itemui.Cancelled)
+                        if (elem.Cancelled && elem.Priority <= 0 && !itemui.Cancelled)
                         {
                             itemui.Cancelled = true;
                             itemui.UI.SetCancelled();
@@ -87,7 +85,8 @@ namespace TSOVille.Code.UI.Controls
                         }
                         break;
                     }
-                    if (elem.Priority != (short)VMQueuePriority.Idle) position++;
+                    if (elem.Mode != VMQueueMode.Idle && (j == 0 || elem.Mode != VMQueueMode.ParentExit) && (!skipParentIdle || elem.Mode != VMQueueMode.ParentIdle)) position++;
+                    if (elem.Mode == VMQueueMode.ParentIdle) skipParentIdle = true;
                 }
                 if (!found)
                 {
@@ -99,12 +98,13 @@ namespace TSOVille.Code.UI.Controls
 
             //now detect if there are any interactions we're not displaying and add them.
 
+            skipParentIdle = false;
             for (int i = 0; i < queue.Count; i++)
             {
                 int position = 0;
                 var elem = queue[i];
 
-                if (elem.Priority != (short)VMQueuePriority.Idle)
+                if (elem.Mode != VMQueueMode.Idle && (i == 0 || elem.Mode != VMQueueMode.ParentExit) && (!skipParentIdle || elem.Mode != VMQueueMode.ParentIdle))
                 {
                     bool found = false; //is this interaction in the queue? if not, add it
                     for (int j = 0; j < QueueItems.Count; j++)
@@ -141,6 +141,7 @@ namespace TSOVille.Code.UI.Controls
                     }
                     position++;
                 }
+                if (elem.Mode == VMQueueMode.ParentIdle) skipParentIdle = true;
             }
 
         }
@@ -154,12 +155,15 @@ namespace TSOVille.Code.UI.Controls
             {
                 if (queue[i] == itemui.Interaction)
                 {
-                    //HITVM.Get().PlaySoundEvent(UISounds.QueueDelete);
-                    if (i == 0 && !itemui.Interaction.Cancelled)
+                    HITVM.Get().PlaySoundEvent(UISounds.QueueDelete);
+                    if (!(itemui.Interaction.Cancelled && itemui.Interaction.Priority <= 0))
                     {
-                        itemui.Interaction.Cancelled = true;
+                        vm.SendCommand(new VMNetInteractionCancelCmd
+                        {
+                            ActionUID = itemui.Interaction.UID,
+                            ActorUID = QueueOwner.PersistID
+                        });
                     }
-                    else queue.RemoveAt(i);
                     break;
                 }
             }

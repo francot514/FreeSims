@@ -8,9 +8,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.formats.iff;
+using FSO.Files.Formats.IFF;
 
-namespace TSO.SimsAntics.Engine.Scopes
+namespace FSO.SimAntics.Engine.Scopes
 {
     public enum VMVariableScope {
         // See http://simantics.wikidot.com/wiki:scopes for more info.

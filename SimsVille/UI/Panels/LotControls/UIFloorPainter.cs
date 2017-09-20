@@ -1,39 +1,47 @@
-﻿using Microsoft.Xna.Framework;
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+If a copy of the MPL was not distributed with this file, You can obtain one at
+http://mozilla.org/MPL/2.0/.
+*/
+
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using tso.world;
-using tso.world.Components;
-using tso.world.Model;
-using TSO.Common.rendering.framework.model;
+using FSO.LotView;
+using FSO.LotView.Components;
+using FSO.LotView.Model;
+using FSO.Common.Rendering.Framework.Model;
+using TSO.HIT;
+using FSO.SimAntics;
+using FSO.SimAntics.Entities;
+using FSO.SimAntics.Model;
+using FSO.SimAntics.NetPlay.Model.Commands;
+using FSO.SimAntics.Utils;
+using FSO.Client.UI.Model;
+using FSO.Common;
 
-using TSO.SimsAntics;
-using TSO.SimsAntics.Entities;
-using TSO.SimsAntics.Model;
-using TSO.SimsAntics.Utils;
-using TSOVille.Code.UI.Model;
-
-namespace TSOVille.Code.UI.Panels.LotControls
+namespace FSO.Client.UI.Panels.LotControls
 {
     public class UIFloorPainter : UICustomLotControl
     {
 
         VM vm;
-        World World;
+        LotView.World World;
         UILotControl Parent;
 
         bool Drawing;
         private List<VMArchitectureCommand> Commands;
-        //int CursorDir = 0;
+        int CursorDir = 0;
 
         int StartX = -1;
         int StartY = -1;
 
         ushort Pattern;
 
-        public UIFloorPainter (VM vm, World world, UILotControl parent, List<int> parameters)
+        public UIFloorPainter (VM vm, LotView.World world, UILotControl parent, List<int> parameters)
         {
             Pattern = (ushort)parameters[0];
 
@@ -48,27 +56,34 @@ namespace TSOVille.Code.UI.Panels.LotControls
 
         public void MouseDown(UpdateState state)
         {
-            //HITVM.Get().PlaySoundEvent(UISounds.BuildDragToolDown);
+            HITVM.Get().PlaySoundEvent(UISounds.BuildDragToolDown);
             Drawing = true;
         }
 
         public void MouseUp(UpdateState state)
         {
-            //HITVM.Get().PlaySoundEvent(UISounds.BuildDragToolUp);
-            vm.Context.Architecture.RunCommands(Commands);
+            HITVM.Get().PlaySoundEvent(UISounds.BuildDragToolUp);
+
+            vm.SendCommand(new VMNetArchitectureCmd
+            {
+                Commands = new List<VMArchitectureCommand>(Commands)
+            });
+
             Commands.Clear();
             Drawing = false;
         }
 
         public void Release()
         {
+            vm.Context.Architecture.Commands.Clear();
+            vm.Context.Architecture.SignalRedraw();
         }
 
         public void Update(UpdateState state, bool scrolled)
         {
             ushort pattern = (state.KeyboardState.IsKeyDown(Keys.LeftControl)) ? (ushort)0 : Pattern;
 
-            var tilePos = World.State.WorldSpace.GetTileAtPosWithScroll(new Vector2(state.MouseState.X, state.MouseState.Y));
+            var tilePos = World.State.WorldSpace.GetTileAtPosWithScroll(new Vector2(state.MouseState.X, state.MouseState.Y) / FSOEnvironment.DPIScaleFactor);
             Point cursor = new Point((int)tilePos.X, (int)tilePos.Y);
 
             if (!Drawing && Commands.Count > 0)
@@ -76,23 +91,22 @@ namespace TSOVille.Code.UI.Panels.LotControls
                 vm.Context.Architecture.SignalRedraw();
                 Commands.Clear();
             }
-            if (state.KeyboardState.IsKeyDown(Keys.LeftShift))
+            if (state.KeyboardState.IsKeyDown(Keys.LeftShift) && pattern < 65534)
             {
                 if (Commands.Count == 0 || Commands[0].Type != VMArchitectureCommandType.FLOOR_FILL)
                 {
                     Commands.Clear();
                     vm.Context.Architecture.SignalRedraw();
+                    Commands.Add(new VMArchitectureCommand
+                    {
+                        Type = VMArchitectureCommandType.FLOOR_FILL,
+                        level = World.State.Level,
+                        pattern = pattern,
+                        style = 0,
+                        x = cursor.X,
+                        y = cursor.Y,
+                    });
                 }
-
-                Commands.Add(new VMArchitectureCommand
-                {
-                    Type = VMArchitectureCommandType.FLOOR_FILL,
-                    level = World.State.Level,
-                    pattern = pattern,
-                    style = 0,
-                    x = cursor.X,
-                    y = cursor.Y,
-                });
             } else
             {
                 if (Commands.Count > 0 && Commands[0].Type == VMArchitectureCommandType.FLOOR_FILL)
@@ -147,6 +161,29 @@ namespace TSOVille.Code.UI.Panels.LotControls
             {
                 cmds.Add(cmd);
             }
+
+            if (cmds.Count > 0)
+            {
+                var cost = vm.Context.Architecture.LastTestCost;
+                if (cost != 0)
+                {
+                    var disallowed = Parent.ActiveEntity != null && cost > Parent.ActiveEntity.TSOState.Budget.Value;
+                    state.UIState.TooltipProperties.Show = true;
+                    state.UIState.TooltipProperties.Color = disallowed ? Color.DarkRed : Color.Black;
+                    state.UIState.TooltipProperties.Opacity = 1;
+                    state.UIState.TooltipProperties.Position = new Vector2(state.MouseState.X, state.MouseState.Y);
+                    state.UIState.Tooltip = (cost < 0) ? ("-$" + (-cost)) : ("$" + cost);
+                    state.UIState.TooltipProperties.UpdateDead = false;
+
+                    if (disallowed) HITVM.Get().PlaySoundEvent(UISounds.Error);
+                }
+                else
+                {
+                    state.UIState.TooltipProperties.Show = false;
+                    state.UIState.TooltipProperties.Opacity = 0;
+                }
+            }
+
         }
     }
 }

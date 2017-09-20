@@ -1,13 +1,7 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
@@ -15,16 +9,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
-using TSOVille.Code.UI.Model;
 using System.IO;
-using TSOVille.Code.UI.Framework.Parser;
+using FSO.Client.UI.Framework.Parser;
 using Microsoft.Xna.Framework;
-using TSOVille.Code.Utils;
-using TSO.Common.rendering.framework.model;
-using TSO.Common.utils;
-using SimsHomeMaker;
+using FSO.Client.Utils;
+using FSO.Common.Rendering.Framework.Model;
+using FSO.Common.Utils;
 
-namespace TSOVille.Code.UI.Framework
+namespace FSO.Client.UI.Framework
 {
     public class UIContainer : UIElement
     {
@@ -152,7 +144,7 @@ namespace TSOVille.Code.UI.Framework
         /// <param name="uiScript"></param>
         public UIScript RenderScript(string uiScript)
         {
-            var path = Path.Combine(GlobalSettings.StartupPath, @"GameData\uiscripts\" + uiScript);
+            var path = Path.Combine(GlobalSettings.Default.StartupPath, @"gamedata/uiscripts/" + uiScript);
             var script = new UIScript(GameFacade.GraphicsDevice, this);
             script.Parse(path);
             return script;
@@ -173,6 +165,11 @@ namespace TSOVille.Code.UI.Framework
             /** If we have opacity, draw ourself to a texture so we can blend it later **/
             if (_HasOpacity)
             {
+                if (!Visible)
+                {
+                    return;
+                }
+
                 Promise<Texture2D> bufferTexture = null;
                 using (batch.WithBuffer(ref bufferTexture))
                 {
@@ -233,7 +230,10 @@ namespace TSOVille.Code.UI.Framework
             base.Update(state);
             lock (Children)
             {
-                foreach (var child in Children)
+                var chCopy = new List<UIElement>(Children);
+                //todo: why are all these locks here, and what kind of problems might that cause
+                //also find a cleaner way to allow modification of an element's children by its own children.
+                foreach (var child in chCopy)
                     child.Update(state);
             }
         }

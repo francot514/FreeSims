@@ -1,11 +1,11 @@
-﻿using tso.world;
+﻿using FSO.LotView;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TSO.SimsAntics.Model
+namespace FSO.SimAntics.Model
 {
     public class VMHeadlineRenderer
     {

@@ -9,18 +9,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Globalization;
-using TSO.SimsAntics.Engine.Utils;
-using TSO.SimsAntics.Primitives;
-using TSO.Files.formats.iff.chunks;
-using TSO.SimsAntics.Model;
+using FSO.SimAntics.Engine.Utils;
+using FSO.SimAntics.Primitives;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.SimAntics.Model;
 
-namespace TSO.SimsAntics.Engine
+namespace FSO.SimAntics.Engine
 {
     public static class VMDialogHandler
     {
         //should use a Trie for this in future, for performance reasons
         private static string[] valid = {
-            "Object", "Me", "TempXL:", "Temp:", "$", "Attribute:", "DynamicStringLocal:", "Local:", "NameLocal:", "DynamicObjectName", "\r\n"
+            "Object", "Me", "TempXL:", "Temp:", "$", "Attribute:", "DynamicStringLocal:", "Local:", "NameLocal:", "DynamicObjectName", "MoneyXL:", "Param", "\r\n"
         };
 
         public static void ShowDialog(VMStackFrame context, VMDialogOperand operand, STR source)
@@ -35,9 +35,10 @@ namespace TSO.SimsAntics.Engine
                 Title = (operand.TitleStringID == 0) ? "" : ParseDialogString(context, source.GetString(operand.TitleStringID - 1), source),
                 IconName = (operand.IconNameStringID == 0) ? "" : ParseDialogString(context, source.GetString(operand.IconNameStringID - 1), source),
 
-                Yes = (operand.YesStringID == 0) ? null : ParseDialogString(context, source.GetString(operand.YesStringID - 1), source), 
+                Yes = (operand.YesStringID == 0) ? null : ParseDialogString(context, source.GetString(operand.YesStringID - 1), source),
                 No = (operand.NoStringID == 0) ? null : ParseDialogString(context, source.GetString(operand.NoStringID - 1), source),
                 Cancel = (operand.CancelStringID == 0) ? null : ParseDialogString(context, source.GetString(operand.CancelStringID - 1), source),
+                DialogID = (context.CodeOwner.GUID << 32) | ((ulong)context.Routine.ID << 16) | context.InstructionPointer
             };
             context.VM.SignalDialog(info);
         }
@@ -56,6 +57,8 @@ namespace TSO.SimsAntics.Engine
             int state = 0;
             StringBuilder command = new StringBuilder();
             StringBuilder output = new StringBuilder();
+
+            if (input == null) return "Missing String!!!";
 
             for (int i = 0; i < input.Length; i++)
             {
@@ -138,6 +141,8 @@ namespace TSO.SimsAntics.Engine
                                     output.Append(context.Caller.ToString()); break;
                                 case "TempXL:":
                                     output.Append(VMMemory.GetBigVariable(context, Scopes.VMVariableScope.TempXL, values[0]).ToString()); break;
+                                case "MoneyXL:":
+                                    output.Append("$" + VMMemory.GetBigVariable(context, Scopes.VMVariableScope.TempXL, values[0]).ToString("##,#0")); break;
                                 case "Temp:":
                                     output.Append(VMMemory.GetBigVariable(context, Scopes.VMVariableScope.Temps, values[0]).ToString()); break;
                                 case "$":
@@ -153,7 +158,7 @@ namespace TSO.SimsAntics.Engine
                                         ushort tableID = (ushort)context.Locals[values[1]];
 
                                         {//local
-                                            if (obj.SemiGlobal != null) res = obj.SemiGlobal.Resource.Get<STR>(tableID);
+                                            if (obj.SemiGlobal != null) res = obj.SemiGlobal.Get<STR>(tableID);
                                             if (res == null) res = obj.Object.Resource.Get<STR>(tableID);
                                             if (res == null) res = context.Global.Resource.Get<STR>(tableID);
                                         }
@@ -169,10 +174,18 @@ namespace TSO.SimsAntics.Engine
                                     }
 
                                     ushort index = (ushort)context.Locals[values[0]];
-                                    if (res != null) output.Append(res.GetString(index));
+                                    if (res != null)
+                                    {
+                                        var str = res.GetString(index);
+                                        output.Append(ParseDialogString(context, str, res)); // recursive command parsing!
+                                        // this is needed for the crafting table.
+                                        // though it is also, completely insane?
+                                    }
                                     break;
                                 case "Local:":
                                     output.Append(VMMemory.GetBigVariable(context, Scopes.VMVariableScope.Local, values[0]).ToString()); break;
+                                case "Param:":
+                                    output.Append(VMMemory.GetBigVariable(context, Scopes.VMVariableScope.Parameters, values[0]).ToString()); break;
                                 case "NameLocal:":
                                     output.Append("(NameLocal)"); break;
                                 default:

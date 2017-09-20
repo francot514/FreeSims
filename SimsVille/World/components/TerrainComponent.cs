@@ -9,13 +9,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
-using TSO.Content;
+using FSO.Content;
 using Microsoft.Xna.Framework;
 using System.IO;
-using tso.world.Utils;
-using tso.world.Model;
+using FSO.LotView.Utils;
+using FSO.LotView.Model;
+using FSO.Common;
+using FSO.Common.Utils;
 
-namespace tso.world.Components
+namespace FSO.LotView.Components
 {
     public class TerrainComponent : WorldComponent
     {
@@ -28,30 +30,26 @@ namespace tso.world.Components
         private IndexBuffer IndexBuffer;
         private IndexBuffer BladeIndexBuffer;
         private VertexBuffer VertexBuffer;
-        
+
+        private LotTypes LotType;
         private Color LightGreen = new Color(80, 116, 59);
         private Color LightBrown = new Color(157, 117, 65);
         private Color DarkGreen = new Color(8, 52, 8);
         private Color DarkBrown = new Color(81, 60, 18);
         private int GrassHeight;
         private float GrassDensityScale = 1f;
+        public bool DepthMode;
 
         private Effect Effect;
-        public LotTypes LotType;
         public bool DrawGrid = false;
 
-        public TerrainComponent(Rectangle size, LotTypes lotType){
+        public TerrainComponent(Rectangle size){
             this.Size = size;
             this.Effect = WorldContent.GrassEffect;
-            LotType = lotType;
+            LotType = LotTypes.Grass; //(LotTypes)(new Random()).Next(4);
 
             UpdateLotType();
             GenerateGrassStates();
-        }
-
-        public override float PreferredDrawOrder
-        {
-            get { return 0.0f; }
         }
 
         public void UpdateLotType()
@@ -62,7 +60,13 @@ namespace tso.world.Components
             DarkGreen = LotTypeGrassInfo.DarkGreen[index];
             DarkBrown = LotTypeGrassInfo.DarkBrown[index];
             GrassHeight = LotTypeGrassInfo.Heights[index];
+            if (!FSOEnvironment.UseMRT) GrassHeight /= 2;
             GrassDensityScale = LotTypeGrassInfo.GrassDensity[index];
+        }
+
+        public override float PreferredDrawOrder
+        {
+            get { return 0.0f; }
         }
 
         public void RegenTerrain(GraphicsDevice device, WorldState world, Blueprint blueprint)
@@ -201,78 +205,91 @@ namespace tso.world.Components
         /// </summary>
         /// <param name="device"></param>
         /// <param name="world"></param>
-        public override void Draw(GraphicsDevice device, WorldState world){
+        public override void Draw(GraphicsDevice device, WorldState world) {
 
             if (VertexBuffer == null) return;
-            Effect.Parameters["LightGreen"].SetValue(LightGreen.ToVector4());
-            Effect.Parameters["DarkGreen"].SetValue(DarkGreen.ToVector4());
-            Effect.Parameters["DarkBrown"].SetValue(DarkBrown.ToVector4());
-            Effect.Parameters["LightBrown"].SetValue(LightBrown.ToVector4());
-            //Effect.Parameters["ScreenSize"].SetValue(new Vector2(device.Viewport.Width, device.Viewport.Height)/2f);
-
-            var offset = -world.WorldSpace.GetScreenOffset();
-
-            world._3D.ApplyCamera(Effect);
-            var worldmat = Matrix.Identity * Matrix.CreateTranslation(0, ((world.Zoom == WorldZoom.Far)?-5:((world.Zoom == WorldZoom.Medium)?-4:-3)) * (20 / 522f), 0);
-            Effect.Parameters["World"].SetValue(worldmat);
-
-            Effect.Parameters["DiffuseColor"].SetValue(new Vector4(world.OutsideColor.R / 255f, world.OutsideColor.G / 255f, world.OutsideColor.B / 255f, 1.0f));
-
-            device.SetVertexBuffer(VertexBuffer);
-            device.Indices = IndexBuffer;
-
-            Effect.CurrentTechnique = Effect.Techniques["DrawBase"];
-            foreach (var pass in Effect.CurrentTechnique.Passes)
+            PPXDepthEngine.RenderPPXDepth(Effect, true, (depthMode) =>
             {
-                pass.Apply();
-                device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 0, 0, NumPrimitives);
-            }
+                Effect.Parameters["LightGreen"].SetValue(LightGreen.ToVector4());
+                Effect.Parameters["DarkGreen"].SetValue(DarkGreen.ToVector4());
+                Effect.Parameters["DarkBrown"].SetValue(DarkBrown.ToVector4());
+                Effect.Parameters["LightBrown"].SetValue(LightBrown.ToVector4());
+                Effect.Parameters["ScreenSize"].SetValue(new Vector2(device.Viewport.Width, device.Viewport.Height));
+                //Effect.Parameters["depthOutMode"].SetValue(DepthMode && (!FSOEnvironment.UseMRT));
 
-            int grassScale;
-            float grassDensity;
-            switch(world.Zoom)
-            {
-                case WorldZoom.Far:
-                    grassScale = 4;
-                    grassDensity = 0.56f;
-                    break;
-                case WorldZoom.Medium:
-                    grassScale = 2;
-                    grassDensity = 0.50f;
-                    break;
-                default:
-                    grassScale = 1;
-                    grassDensity = 0.43f;
-                    break;
-            }
+                var offset = -world.WorldSpace.GetScreenOffset();
 
-            grassDensity *= GrassDensityScale;
+                world._3D.ApplyCamera(Effect);
+                var worldmat = Matrix.Identity * Matrix.CreateTranslation(0, ((world.Zoom == WorldZoom.Far) ? -5 : ((world.Zoom == WorldZoom.Medium) ? -4 : -3)) * (20 / 522f), 0);
+                Effect.Parameters["World"].SetValue(worldmat);
 
-            if (BladePrimitives > 0)
-            {
-                Effect.CurrentTechnique = Effect.Techniques["DrawBlades"];
-                int grassNum = (int)Math.Ceiling(GrassHeight / (float)grassScale);
+                Effect.Parameters["DiffuseColor"].SetValue(new Vector4(world.OutsideColor.R / 255f, world.OutsideColor.G / 255f, world.OutsideColor.B / 255f, 1.0f));
 
-                var rts = device.GetRenderTargets();
-                if (rts.Length > 1)
+                device.SetVertexBuffer(VertexBuffer);
+                device.Indices = IndexBuffer;
+
+                Effect.CurrentTechnique = Effect.Techniques["DrawBase"];
+                foreach (var pass in Effect.CurrentTechnique.Passes)
                 {
-                    device.SetRenderTarget((RenderTarget2D)rts[0].RenderTarget);
+                    pass.Apply();
+                    device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 0, 0, NumPrimitives);
                 }
-                device.Indices = BladeIndexBuffer;
-                for (int i = 0; i < grassNum; i++)
+
+                int grassScale;
+                float grassDensity;
+                switch (world.Zoom)
                 {
-                    Effect.Parameters["World"].SetValue(Matrix.Identity * Matrix.CreateTranslation(0, i * (20 / 522f) * grassScale, 0));
-                    Effect.Parameters["GrassProb"].SetValue(grassDensity * ((grassNum - (i / (2f * grassNum))) / (float)grassNum));
-                    offset += new Vector2(0, 1);
-                    Effect.Parameters["ScreenOffset"].SetValue(offset);
-                    foreach (var pass in Effect.CurrentTechnique.Passes)
+                    case WorldZoom.Far:
+                        grassScale = 4;
+                        grassDensity = 0.56f;
+                        break;
+                    case WorldZoom.Medium:
+                        grassScale = 2;
+                        grassDensity = 0.50f;
+                        break;
+                    default:
+                        grassScale = 1;
+                        grassDensity = 0.43f;
+                        break;
+                }
+
+                grassDensity *= GrassDensityScale;
+
+                if (BladePrimitives > 0)
+                {
+                    Effect.CurrentTechnique = Effect.Techniques["DrawBlades"];
+                    int grassNum = (int)Math.Ceiling(GrassHeight / (float)grassScale);
+
+                    //if (depthMode && (!FSOEnvironment.UseMRT)) return;
+                    RenderTargetBinding[] rts = null;
+                    if (FSOEnvironment.UseMRT)
                     {
-                        pass.Apply();
-                        device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 0, 0, BladePrimitives);
+                        rts = device.GetRenderTargets();
+                        if (rts.Length > 1)
+                        {
+                            device.SetRenderTarget((RenderTarget2D)rts[0].RenderTarget);
+                        }
+                    }
+                    device.Indices = BladeIndexBuffer;
+                    for (int i = 0; i < grassNum; i++)
+                    {
+                        Effect.Parameters["World"].SetValue(Matrix.Identity * Matrix.CreateTranslation(0, i * (20 / 522f) * grassScale, 0));
+                        Effect.Parameters["GrassProb"].SetValue(grassDensity * ((grassNum - (i / (2f * grassNum))) / (float)grassNum));
+                        offset += new Vector2(0, 1);
+                        Effect.Parameters["ScreenOffset"].SetValue(offset);
+
+                        foreach (var pass in Effect.CurrentTechnique.Passes)
+                        {
+                            pass.Apply();
+                            device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 0, 0, BladePrimitives);
+                        }
+                    }
+                    if (FSOEnvironment.UseMRT)
+                    {
+                        device.SetRenderTargets(rts);
                     }
                 }
-                device.SetRenderTargets(rts);
-            }
+            });
         }
     }
 }

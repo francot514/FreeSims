@@ -8,10 +8,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.HIT;
 using System.Runtime.InteropServices;
+using TSO.HIT;
 
-namespace TSO.SimsAntics.Engine
+namespace FSO.SimAntics.Engine
 {
     public class VMAmbientSound
     {

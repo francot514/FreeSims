@@ -4,13 +4,13 @@
  * http://mozilla.org/MPL/2.0/. 
  */
 
-using TSO.SimsAntics.Engine;
+using FSO.SimAntics.Engine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TSO.SimsAntics
+namespace FSO.SimAntics
 {
     public class VMInstruction
     {

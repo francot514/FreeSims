@@ -8,14 +8,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
-using TSO.SimsAntics.Engine.Utils;
-using TSO.SimsAntics.Engine.Scopes;
-using TSO.SimsAntics.Model;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
+using FSO.SimAntics.Engine.Utils;
+using FSO.SimAntics.Engine.Scopes;
+using FSO.SimAntics.Model;
 using System.IO;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMIdleForInput : VMPrimitiveHandler
     {
@@ -23,13 +23,14 @@ namespace TSO.SimsAntics.Primitives
         {
             var operand = (VMIdleForInputOperand)args;
 
-            //TODO: wrong, breaks bbq
-            if (operand.AllowPush == 1 && context.Thread.Queue.Count > 1)
-            { //if there are any more interactions, we have been interrupted
-                return VMPrimitiveExitCode.INTERRUPT;
+            //if we're main, attempt to run a queued interaction. We just idle if this fails.
+            if (operand.AllowPush == 1 && !context.ActionTree && context.Thread.AttemptPush())
+            {
+                return VMPrimitiveExitCode.CONTINUE; //control handover
+                //TODO: does this forcefully end the rest of the idle? (force a true return, must loop back to run again)
             }
 
-            if (context.Thread.Queue[0].Cancelled)
+            if (context.ActionTree && context.Thread.Queue[0].Cancelled)
             {
                 context.Caller.SetFlag(VMEntityFlags.NotifiedByIdleForInput, true);
                 return VMPrimitiveExitCode.GOTO_TRUE;
@@ -41,7 +42,7 @@ namespace TSO.SimsAntics.Primitives
                 return VMPrimitiveExitCode.GOTO_TRUE;
             }
 
-            var ticks = VMMemory.GetVariable(context, TSO.SimsAntics.Engine.Scopes.VMVariableScope.Parameters, operand.StackVarToDec);
+            var ticks = VMMemory.GetVariable(context, FSO.SimAntics.Engine.Scopes.VMVariableScope.Parameters, operand.StackVarToDec);
             ticks--;
 
             if (ticks < 0)
@@ -50,7 +51,7 @@ namespace TSO.SimsAntics.Primitives
             }
             else
             {
-                VMMemory.SetVariable(context, TSO.SimsAntics.Engine.Scopes.VMVariableScope.Parameters, operand.StackVarToDec, ticks);
+                VMMemory.SetVariable(context, FSO.SimAntics.Engine.Scopes.VMVariableScope.Parameters, operand.StackVarToDec, ticks);
                 return VMPrimitiveExitCode.CONTINUE_NEXT_TICK;
             }
         }

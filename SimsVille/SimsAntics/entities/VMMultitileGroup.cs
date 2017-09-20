@@ -8,12 +8,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using tso.world.Model;
+using FSO.LotView.Model;
 using Microsoft.Xna.Framework;
-using tso.world.Components;
-using TSO.SimsAntics.Model;
+using FSO.LotView.Components;
+using FSO.SimAntics.Model;
+using FSO.SimAntics.Marshals;
 
-namespace TSO.SimsAntics.Entities
+namespace FSO.SimAntics.Entities
 {
     /// <summary>
     /// Ties multiple entities together with a common name and set of repositioning functions.
@@ -21,9 +22,10 @@ namespace TSO.SimsAntics.Entities
     public class VMMultitileGroup
     {
         public bool MultiTile;
+        public string Name = "";
+        public int Price;
         public List<VMEntity> Objects = new List<VMEntity>();
         public List<LotTilePos> Offsets = new List<LotTilePos>();
-        public VMEntity Default;
 
         public VMEntity BaseObject
         {
@@ -48,8 +50,6 @@ namespace TSO.SimsAntics.Entities
 
         public void AddObject(VMEntity obj)
         {
-
-            Default = obj;
             AddDynamicObject(obj, 
                 new LotTilePos((short)((sbyte)(((ushort)obj.Object.OBJ.SubIndex) >> 8) * 16), 
                 (short)((sbyte)(((ushort)obj.Object.OBJ.SubIndex) & 0xFF) * 16), 
@@ -97,6 +97,10 @@ namespace TSO.SimsAntics.Entities
 
         public VMPlacementResult ChangePosition(LotTilePos pos, Direction direction, VMContext context)
         {
+
+            if (context.Architecture == null)
+                return new VMPlacementResult(VMPlacementError.Success);
+
             if (pos.Level > context.Architecture.Stories) return new VMPlacementResult(VMPlacementError.NotAllowedOnFloor);
 
             VMEntity[] OldContainers = new VMEntity[Objects.Count];
@@ -124,19 +128,9 @@ namespace TSO.SimsAntics.Entities
             Matrix rotMat = Matrix.CreateRotationZ((float)(Dir * Math.PI / 4.0));
             VMPlacementResult[] places = new VMPlacementResult[Objects.Count];
 
-            LotTilePos bOff;
-            Vector3 leadOff;
-
-            bOff = Default.Position;
-            leadOff = new Vector3(bOff.x, bOff.y, 0);
-
-            if (Objects.Count > 0)
-                 {
-            bOff = Offsets[Objects.IndexOf(BaseObject)];
-            leadOff = new Vector3(bOff.x, bOff.y, 0);
-                 }
-            
-
+            var bObj = BaseObject;
+            var bOff = Offsets[Objects.IndexOf(BaseObject)];
+            var leadOff = new Vector3(bOff.x, bOff.y, 0);
 
             //TODO: optimize so we don't have to recalculate all of this
             if (pos != LotTilePos.OUT_OF_WORLD)
@@ -264,5 +258,45 @@ namespace TSO.SimsAntics.Entities
             }
         }
 
+        #region VM Marshalling Functions
+        public virtual VMMultitileGroupMarshal Save()
+        {
+            var objs = new short[Objects.Count];
+            int i = 0;
+            foreach (var obj in Objects) objs[i++] = obj.ObjectID;
+
+            return new VMMultitileGroupMarshal
+            {
+                MultiTile = MultiTile,
+                Name = Name,
+                Price = Price,
+                Objects = objs,
+                Offsets = Offsets.ToArray()
+            };
+        }
+
+        public virtual void Load(VMMultitileGroupMarshal input, VMContext context)
+        {
+            MultiTile = input.MultiTile;
+            Name = input.Name;
+            Price = input.Price;
+            Objects = new List<VMEntity>();
+            foreach (var id in input.Objects)
+            {
+                var obj = context.VM.GetObjectById(id);
+                Objects.Add(obj);
+                obj.MultitileGroup = this;
+            }
+            foreach (var pos in input.Offsets)
+            {
+                Offsets.Add(pos);
+            }
+        }
+
+        public VMMultitileGroup(VMMultitileGroupMarshal input, VMContext context)
+        {
+            Load(input, context);
+        }
+        #endregion
     }
 }

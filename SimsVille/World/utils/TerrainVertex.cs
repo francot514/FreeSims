@@ -6,7 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace tso.world.Utils
+namespace FSO.LotView.Utils
 {
     [StructLayout(LayoutKind.Sequential)]
     public struct TerrainVertex : IVertexType

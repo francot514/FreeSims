@@ -1,13 +1,7 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
@@ -19,11 +13,10 @@ using System.Globalization;
 using Microsoft.Xna.Framework.Graphics;
 using System.Reflection;
 using Microsoft.Xna.Framework;
-using TSOVille.LUI;
-using TSOVille.Code.Utils;
-using TSOVille.Code.UI.Controls;
+using FSO.Client.Utils;
+using FSO.Client.UI.Controls;
 
-namespace TSOVille.Code.UI.Framework.Parser
+namespace FSO.Client.UI.Framework.Parser
 {
     public class UIScript
     {
@@ -166,7 +159,7 @@ namespace TSOVille.Code.UI.Framework.Parser
                 var txKey = node.Attributes["image"];
                 if (Textures.ContainsKey(txKey))
                 {
-                    btn = new UIButton(Textures[txKey.ToLower()]);
+                    btn = new UIButton(Textures[txKey.ToLowerInvariant()]);
                 }
                 else
                 {
@@ -345,12 +338,12 @@ namespace TSOVille.Code.UI.Framework.Parser
                 case UIAttributeType.Point:
                     return node.GetPoint(name);
                 case UIAttributeType.Texture:
-                    if (Textures.ContainsKey(node[name].ToLower())) return Textures[node[name].ToLower()];
+                    if (Textures.ContainsKey(node[name].ToLowerInvariant())) return Textures[node[name].ToLowerInvariant()];
                     else return null;
                 case UIAttributeType.Vector2:
                     return node.GetVector2(name);
                 case UIAttributeType.StringTable:
-                    if (Strings.ContainsKey(node[name].ToLower())) return Strings[node[name].ToLower()];
+                    if (Strings.ContainsKey(node[name].ToLowerInvariant())) return Strings[node[name].ToLowerInvariant()];
                     else return "";
                 case UIAttributeType.String:
                     return node[name];
@@ -370,7 +363,7 @@ namespace TSOVille.Code.UI.Framework.Parser
         public void DefineString(UINode node)
         {
             var stringValue = GameFacade.Strings[node["stringDir"], node["stringTable"], node["stringIndex"]];
-            Strings.Add(node.ID.ToLower(), stringValue);
+            Strings.Add(node.ID.ToLowerInvariant(), stringValue);
             WireUp(node.ID, stringValue);
         }
 
@@ -386,7 +379,7 @@ namespace TSOVille.Code.UI.Framework.Parser
             {
                 var texture = UIElement.GetTexture(assetNum);
 
-                Textures.Add(node.ID.ToLower(), texture);
+                Textures.Add(node.ID.ToLowerInvariant(), texture);
                 WireUp(node.ID, texture);
             }
             catch
@@ -402,6 +395,7 @@ namespace TSOVille.Code.UI.Framework.Parser
         /// <returns></returns>
         public string GetString(string id)
         {
+            id = id.ToLowerInvariant();
             if (Strings.ContainsKey(id)) return Strings[id];
             else return "";
         }
@@ -418,6 +412,7 @@ namespace TSOVille.Code.UI.Framework.Parser
         {
             NamedObjects.Add(id, value);
 
+            id = id.Replace("-", "");
             var prop = targetType.GetProperty(id);
             if (prop != null)
             {

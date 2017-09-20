@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TSO.SimsAntics.Model
+namespace FSO.SimAntics.Model
 {
     public enum VMOBJDVariable {
         Version1 = 0,

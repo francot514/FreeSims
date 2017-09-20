@@ -8,13 +8,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
-using TSO.Files.formats.iff.chunks;
-using TSO.Content;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.Content;
 using System.IO;
 
-namespace TSO.SimsAntics.Engine.Primitives
+namespace FSO.SimAntics.Engine.Primitives
 {
     public class VMPushInteraction : VMPrimitiveHandler
     {
@@ -33,7 +33,9 @@ namespace TSO.SimsAntics.Engine.Primitives
             switch (operand.Priority)
             {
                 case VMPushPriority.Inherited:
-                    priority = Math.Max((short)1, context.Thread.Queue[0].Priority); break;
+                    short oldPrio = 1;
+                    if (context.ActionTree) oldPrio = context.Thread.Queue[0].Priority;
+                    priority = Math.Max((short)1, oldPrio); break;
                 case VMPushPriority.Maximum:
                     priority = (short)VMQueuePriority.Maximum; break;
                 case VMPushPriority.Autonomous:
@@ -48,48 +50,15 @@ namespace TSO.SimsAntics.Engine.Primitives
                     priority = (short)VMQueuePriority.Idle; mode = VMQueueMode.Idle; break;
             }
 
-            BHAV bhav;
-            GameObject CodeOwner = null;
-            var Action = interactionSource.TreeTable.InteractionByIndex[operand.Interaction];
-            ushort ActionID = Action.ActionFunction;
+            var action = interactionSource.GetAction(operand.Interaction, context.StackObject, context.VM.Context);
+            if (action == null) return VMPrimitiveExitCode.GOTO_FALSE;
+            if (operand.UseCustomIcon) action.IconOwner = context.VM.GetObjectById((short)context.Locals[operand.IconLocation]);
+            action.Mode = mode;
+            action.Priority = priority;
+            action.Flags |= TTABFlags.MustRun;
+            if (operand.PushHeadContinuation) action.Flags |= TTABFlags.Leapfrog;
 
-            CodeOwner = interactionSource.Object;
-            if (ActionID < 4096)
-            { //global
-                bhav = null;
-                //unimp as it has to access the context to get this.
-            }
-            else if (ActionID < 8192)
-            { //local
-                bhav = interactionSource.Object.Resource.Get<BHAV>(ActionID);
-            }
-            else
-            { //semi-global
-                bhav = interactionSource.SemiGlobal.Resource.Get<BHAV>(ActionID);
-            }
-
-            VMEntity IconOwner = null;
-            if (operand.UseCustomIcon)
-            {
-                IconOwner = context.VM.GetObjectById((short)context.Locals[operand.IconLocation]);
-            }
-
-            var routine = context.VM.Assemble(bhav);
-            context.StackObject.Thread.EnqueueAction(
-                new TSO.SimsAntics.Engine.VMQueuedAction
-                {
-                    Callee = interactionSource,
-                    CodeOwner = CodeOwner,
-                    Routine = routine,
-                    Name = interactionSource.TreeTableStrings.GetString((int)Action.TTAIndex),
-                    StackObject = interactionSource,
-                    InteractionNumber = operand.Interaction,
-                    IconOwner = IconOwner,
-                    Priority = priority,
-                    Mode = mode,
-                    Flags = (TTABFlags)Action.Flags | (operand.PushHeadContinuation?TTABFlags.Leapfrog:0)
-                }
-            );
+            context.StackObject.Thread.EnqueueAction(action);
 
             return VMPrimitiveExitCode.GOTO_TRUE;
         }

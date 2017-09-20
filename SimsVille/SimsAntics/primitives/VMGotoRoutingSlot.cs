@@ -8,14 +8,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.utils;
-using TSO.SimsAntics.Engine.Utils;
-using TSO.SimsAntics.Engine.Scopes;
+using FSO.Files.Utils;
+using FSO.SimAntics.Engine.Utils;
+using FSO.SimAntics.Engine.Scopes;
 using Microsoft.Xna.Framework;
-using tso.world.Model;
+using FSO.LotView.Model;
 using System.IO;
 
-namespace TSO.SimsAntics.Engine.Primitives
+namespace FSO.SimAntics.Engine.Primitives
 {
     public class VMGotoRoutingSlot : VMPrimitiveHandler {
         public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)

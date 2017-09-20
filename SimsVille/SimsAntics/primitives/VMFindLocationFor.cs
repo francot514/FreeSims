@@ -8,26 +8,26 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
-using TSO.SimsAntics.Model;
-using tso.world.Components;
-using tso.world.Model;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
+using FSO.SimAntics.Model;
+using FSO.LotView.Components;
+using FSO.LotView.Model;
 using System.IO;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMFindLocationFor : VMPrimitiveHandler
     {
         private static LotTilePos[] DirectionVectors = {
-            LotTilePos.FromBigTile(16, 0, 0),
-            LotTilePos.FromBigTile(16, 16, 0),
-            LotTilePos.FromBigTile(0, 16, 0),
-            LotTilePos.FromBigTile(-16, 16, 0),
-            LotTilePos.FromBigTile(-16, 0, 0),
-            LotTilePos.FromBigTile(-16, -16, 0),
-            LotTilePos.FromBigTile(0, -16, 0),
-            LotTilePos.FromBigTile(16, -16, 0),
+            new LotTilePos(16, 0, 0),
+            new LotTilePos(16, 16, 0),
+            new LotTilePos(0, 16, 0),
+            new LotTilePos(-16, 16, 0),
+            new LotTilePos(-16, 0, 0),
+            new LotTilePos(-16, -16, 0),
+            new LotTilePos(0, -16, 0),
+            new LotTilePos(16, -16, 0),
         };
 
         public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
@@ -48,8 +48,13 @@ namespace TSO.SimsAntics.Primitives
                     obj.SetPosition(LotTilePos.OUT_OF_WORLD, Direction.NORTH, context.VM.Context);
                     return VMPrimitiveExitCode.GOTO_TRUE;
                 case 2:
-                    //"smoke cloud" - not sure what this does.
-                    break;
+                    //"smoke cloud" - halfway between callee and caller (is "caller" actually reference object?)
+                    var smokePos = context.Callee.Position;
+                    smokePos += context.Caller.Position;
+                    smokePos /= 2;
+                    smokePos -= new LotTilePos(8, 8, 0); //smoke is 2x2... offset to center it.
+                    return (obj.SetPosition(smokePos, Direction.NORTH, context.VM.Context).Status == VMPlacementError.Success)?
+                        VMPrimitiveExitCode.GOTO_TRUE : VMPrimitiveExitCode.GOTO_FALSE;
                 case 3:
                 case 4:
                     //along object vector
@@ -67,12 +72,12 @@ namespace TSO.SimsAntics.Primitives
             LotTilePos step = DirectionVectors[dir];
             for (int i = 0; i < 32; i++)
             {
-                if (obj.SetPosition(new LotTilePos(refObj.Position) + step * i,
+                if (obj.SetPosition(new LotTilePos(refObj.Position) + step * (i/2),
                     (Direction)(1 << (dir)), context).Status == VMPlacementError.Success)
                     return true;
-                if (i != 0)
+                if (i%2 != 0)
                 {
-                    if (obj.SetPosition(new LotTilePos(refObj.Position) - step * i,
+                    if (obj.SetPosition(new LotTilePos(refObj.Position) - step * (i/2),
                         (Direction)(1 << (dir)), context).Status == VMPlacementError.Success)
                         return true;
                 }

@@ -8,16 +8,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine.Scopes;
+using FSO.SimAntics.Engine.Scopes;
+using FSO.Vitaboy;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.Content;
+using FSO.SimAntics.Model;
+using FSO.Files.Formats.OTF;
 
-using TSO.Files.formats.iff.chunks;
-using TSO.Content;
-using TSO.SimsAntics.Model;
-using TSO.Files.formats.otf;
-using TSO.SimsAntics.Engine;
-using TSO.Common.rendering.vitaboy;
-
-namespace TSO.SimsAntics.Engine.Utils
+namespace FSO.SimAntics.Engine.Utils
 {
     public class VMMemory
     {
@@ -77,13 +75,24 @@ namespace TSO.SimsAntics.Engine.Utils
                 case VMVariableScope.StackObjectTemp: //13
                     throw new VMSimanticsException("Not implemented...", context); //accesses the stack object's thread and gets its temp...
 
-             
+                case VMVariableScope.MyMotives: //14
+                    return ((VMAvatar)context.Caller).GetMotiveData((VMMotive)data);
+
+                case VMVariableScope.StackObjectMotives: //15
+                    return ((VMAvatar)context.StackObject).GetMotiveData((VMMotive)data);
 
                 case VMVariableScope.StackObjectSlot: //16
                     var slotObj = context.StackObject.GetSlot(data);
                     return (slotObj == null)?(short)0:slotObj.ObjectID;
 
-              
+                case VMVariableScope.StackObjectMotiveByTemp: //17
+                    return ((VMAvatar)context.StackObject).GetMotiveData((VMMotive)context.Thread.TempRegisters[data]);
+
+                case VMVariableScope.MyPersonData: //18
+                    return ((VMAvatar)context.Caller).GetPersonData((VMPersonDataVariable)data);
+
+                case VMVariableScope.StackObjectPersonData: //19
+                    return ((VMAvatar)context.StackObject).GetPersonData((VMPersonDataVariable)data);
 
                 case VMVariableScope.MySlot: //20
                     var slotObj2 = context.Caller.GetSlot(data);
@@ -127,6 +136,11 @@ namespace TSO.SimsAntics.Engine.Utils
                 case VMVariableScope.TreeAdMin: //29
                     throw new VMSimanticsException("Not implemented...", context);
 
+                case VMVariableScope.MyPersonDataByTemp: //30
+                    return ((VMAvatar)context.Caller).GetPersonData((VMPersonDataVariable)(context.Thread.TempRegisters[data]));
+
+                case VMVariableScope.StackObjectPersonDataByTemp: //31
+                    return ((VMAvatar)context.StackObject).GetPersonData((VMPersonDataVariable)(context.Thread.TempRegisters[data]));
 
                 case VMVariableScope.NeighborPersonData: //32
                     throw new VMSimanticsException("Not implemented...", context);
@@ -138,8 +152,6 @@ namespace TSO.SimsAntics.Engine.Utils
                     throw new VMSimanticsException("Should not be used, but if this shows implement an empty shell to return ideal values.", context);
 
                 case VMVariableScope.StackObjectFunction: //35
-                    if (context.StackObject == null)
-                        return 0;
                     return (short)context.StackObject.EntryPoints[data].ActionFunction;
 
                 case VMVariableScope.MyTypeAttr: //36
@@ -159,7 +171,7 @@ namespace TSO.SimsAntics.Engine.Utils
                     
                 case VMVariableScope.TempXL: //42
                     //this needs a really intricate special case for specific operations.
-                    throw new VMSimanticsException("Not implemented...", context);
+                    throw new VMSimanticsException("Caller function does not support TempXL!", context);
 
                 case VMVariableScope.CityTime: //43
                     //return GetCityTime(data)
@@ -257,40 +269,6 @@ namespace TSO.SimsAntics.Engine.Utils
                 default:
                     throw new VMSimanticsException("Cannot get specified variable scope as a list.", context);
             }
-        }
-
-        public static Animation GetAnimation(VMStackFrame context, VMAnimationScope scope, ushort id)
-        {
-
-            STR animTable = null;
-
-            switch (scope)
-            {
-                case VMAnimationScope.Object:
-                    var obj = context.CodeOwner;
-                    var anitableID = obj.OBJ.AnimationTableID;
-                    if (anitableID == 0) anitableID = 129;
-                    animTable = obj.Resource.Get<STR>(anitableID);
-                    break;
-                case VMAnimationScope.Misc:
-                    animTable = context.Global.Resource.Get<STR>(156);
-                    break;
-                case VMAnimationScope.PersonStock:
-                    animTable = context.Global.Resource.Get<STR>(130);
-                    break;
-                case VMAnimationScope.Global:
-                    animTable = context.Global.Resource.Get<STR>(128);
-                    break;
-            }
-
-            if (animTable == null)
-            {
-                return null;
-            }
-
-            var animationName = animTable.GetString(id);
-            if (animationName != null) return TSO.Content.Content.Get().AvatarAnimations.Get(animationName + ".anim");
-            else return null;
         }
 
         public static int GetBigVariable(VMStackFrame context, VMVariableScope scope, short data) //used by functions which can take 32 bit integers, such as VMExpression.
@@ -443,7 +421,7 @@ namespace TSO.SimsAntics.Engine.Utils
                 case VMOBJDVariable.EatFoodTreeID:
                     return (short)objd.BHAV_EatID;
                 case VMOBJDVariable.PickupFromSlotTreeID:
-                    return (short)objd.BHAV_PickupID; //uh
+                    return (short)objd.BHAV_PickupFromSlotID; //uh
                 case VMOBJDVariable.WashDishTreeID:
                     return (short)objd.BHAV_WashDishID;
                 case VMOBJDVariable.EatingSurfaceTreeID:
@@ -643,10 +621,23 @@ namespace TSO.SimsAntics.Engine.Utils
                 case VMVariableScope.StackObjectTemp: //13
                     throw new VMSimanticsException("Not implemented...", context);
 
+                case VMVariableScope.MyMotives: //14
+                    return ((VMAvatar)context.Caller).SetMotiveData((VMMotive)data, value);
+
+                case VMVariableScope.StackObjectMotives: //15
+                    return ((VMAvatar)context.StackObject).SetMotiveData((VMMotive)data, value);
 
                 case VMVariableScope.StackObjectSlot: //16
                     throw new VMSimanticsException("Not implemented...", context);
 
+                case VMVariableScope.StackObjectMotiveByTemp: //17
+                    return ((VMAvatar)context.StackObject).SetMotiveData((VMMotive)context.Thread.TempRegisters[data], value);
+
+                case VMVariableScope.MyPersonData: //18
+                    return ((VMAvatar)context.Caller).SetPersonData((VMPersonDataVariable)data, value);
+
+                case VMVariableScope.StackObjectPersonData: //19
+                    return ((VMAvatar)context.StackObject).SetPersonData((VMPersonDataVariable)data, value);
 
                 case VMVariableScope.MySlot: //20
                     throw new VMSimanticsException("Not implemented...", context);
@@ -681,6 +672,11 @@ namespace TSO.SimsAntics.Engine.Utils
                 case VMVariableScope.TreeAdMin: //29
                     return false; //you can't set this!
 
+                case VMVariableScope.MyPersonDataByTemp: //30
+                    return ((VMAvatar)context.Caller).SetPersonData((VMPersonDataVariable)context.Thread.TempRegisters[data], value);
+
+                case VMVariableScope.StackObjectPersonDataByTemp: //31
+                    return ((VMAvatar)context.StackObject).SetPersonData((VMPersonDataVariable)context.Thread.TempRegisters[data], value);
 
                 case VMVariableScope.NeighborPersonData: //32
                     throw new VMSimanticsException("Not implemented...", context);
@@ -767,7 +763,60 @@ namespace TSO.SimsAntics.Engine.Utils
             }
         }
 
+        /// <summary>
+        /// Get an animation
+        /// </summary>
+        /// <param name="scope"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public static Animation GetAnimation(VMStackFrame context, VMAnimationScope scope, ushort id){
 
+            STR animTable = null;
+
+            switch (scope){
+                case VMAnimationScope.Object:
+                    var obj = context.CodeOwner;
+                    var anitableID = obj.OBJ.AnimationTableID;
+                    animTable = obj.Resource.Get<STR>(anitableID);
+                    if (animTable == null) animTable = obj.Resource.Get<STR>(129);
+                    break;
+                case VMAnimationScope.Misc:
+                    animTable = context.Global.Resource.Get<STR>(156);
+                    break;
+                case VMAnimationScope.PersonStock:
+                    animTable = context.Global.Resource.Get<STR>(130);
+                    break;
+                case VMAnimationScope.Global:
+                    animTable = context.Global.Resource.Get<STR>(128);
+                    break;
+            }
+
+            if (animTable == null){
+                return null;
+            }
+
+            var animationName = animTable.GetString(id);
+            if (animationName != null) return FSO.Content.Content.Get().AvatarAnimations.Get(animationName + ".anim");
+            else return null;
+        }
+
+        public static Appearance GetSuit(VMStackFrame context, VMSuitScope scope, ushort id){
+            switch (scope)
+            {
+                case VMSuitScope.Object:
+                    var suitTable = context.Callee.Object.Resource.Get<STR>(304);
+                    if (suitTable != null){
+                        var suitFile = suitTable.GetString(id) + ".apr";
+
+                        var apr = FSO.Content.Content.Get().AvatarAppearances.Get(suitFile);
+                        return apr;
+                    }
+                    return null;
+                default:
+                    return null;
+                    throw new VMSimanticsException("I dont know about this suit scope", context);
+            }
+        }
 
         public static SLOTItem GetSlot(VMStackFrame context, VMSlotScope scope, ushort data)
         {

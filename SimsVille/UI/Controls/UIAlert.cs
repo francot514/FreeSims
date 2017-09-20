@@ -1,25 +1,18 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSOVille.Code.UI.Framework;
-using TSOVille.LUI;
+using FSO.Client.UI.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 
-namespace TSOVille.Code.UI.Controls
+namespace FSO.Client.UI.Controls
 {
     /// <summary>
     /// UIAlert is a messagebox that can be displayed to the user with several different buttons.
@@ -34,8 +27,19 @@ namespace TSOVille.Code.UI.Controls
         private Vector2 IconSpace;
 
         private List<UIButton> Buttons;
-
         private UITextBox TextBox;
+
+        public string ResponseText
+        {
+            get
+            {
+                return (TextBox == null) ? null : TextBox.CurrentText;
+            }
+            set
+            {
+                if (TextBox != null) TextBox.CurrentText = value;
+            }
+        }
 
         public UIAlert(UIAlertOptions options) : base(UIDialogStyle.Standard, true)
         {
@@ -55,29 +59,39 @@ namespace TSOVille.Code.UI.Controls
             ComputeText();
 
             /** Add buttons **/
-
             Buttons = new List<UIButton>();
-            if (options.Buttons == UIAlertButtons.OK)
-                Buttons.Add(AddButton(GameFacade.Strings.GetString("142", "ok button"), UIAlertButtons.OK, true));
-            else if (options.Buttons == UIAlertButtons.OKCancel)
+
+            foreach (var button in options.Buttons)
             {
-                Buttons.Add(AddButton(GameFacade.Strings.GetString("142", "ok button"), UIAlertButtons.OK, false));
-                Buttons.Add(AddButton(GameFacade.Strings.GetString("142", "cancel button"), UIAlertButtons.Cancel, true));
-            }
-            else if (options.Buttons == UIAlertButtons.Yes)
-                Buttons.Add(AddButton(GameFacade.Strings.GetString("142", "yes button"), UIAlertButtons.Yes, true));
-            else if (options.Buttons == UIAlertButtons.No)
-                Buttons.Add(AddButton(GameFacade.Strings.GetString("142", "no button"), UIAlertButtons.No, true));
-            else if (options.Buttons == UIAlertButtons.YesNo)
-            {
-                Buttons.Add(AddButton(GameFacade.Strings.GetString("142", "yes button"), UIAlertButtons.Yes, false));
-                Buttons.Add(AddButton(GameFacade.Strings.GetString("142", "no button"), UIAlertButtons.No, true));
+                string buttonText = "";
+                if (button.Text != null) buttonText = button.Text;
+                else
+                {
+                    switch (button.Type)
+                    {
+                        case UIAlertButtonType.OK:
+                            buttonText = GameFacade.Strings.GetString("142", "ok button");
+                            break;
+                        case UIAlertButtonType.Yes:
+                            buttonText = GameFacade.Strings.GetString("142", "yes button");
+                            break;
+                        case UIAlertButtonType.No:
+                            buttonText = GameFacade.Strings.GetString("142", "no button");
+                            break;
+                        case UIAlertButtonType.Cancel:
+                            buttonText = GameFacade.Strings.GetString("142", "cancel button");
+                            break;
+                    }
+                }
+                var btnElem = AddButton(buttonText, button.Type, button.Handler == null);
+                Buttons.Add(btnElem);
+                if (button.Handler != null) btnElem.OnButtonClick += button.Handler;
             }
 
             if (options.TextEntry)
             {
-                this.TextBox = new UITextBox();
-                base.Add(this.TextBox);
+                TextBox = new UITextBox();
+                this.Add(TextBox);
             }
 
             /** Position buttons **/
@@ -88,17 +102,17 @@ namespace TSOVille.Code.UI.Controls
         {
             var w = m_Options.Width;
             var h = m_Options.Height;
-            h = Math.Max(h, Math.Max((int)IconSpace.Y, m_MessageText.BoundingBox.Height) + 74);
+            h = Math.Max(h, Math.Max((int)IconSpace.Y, m_MessageText.BoundingBox.Height) + 95);
 
-            if (this.m_Options.TextEntry)
+            if (m_Options.TextEntry)
             {
-                this.TextBox.X = 32f;
-                this.TextBox.Y = h - 0x36;
-                this.TextBox.SetSize((float)(w - 0x40), 25f);
-                h += 0x2d;
+                TextBox.X = 32;
+                TextBox.Y = h - 54;
+                TextBox.SetSize(w - 64, 25);
+                h += 45;
             }
+
             SetSize(w, h);
-            
 
             var btnX = (w - ((Buttons.Count * 100) + ((Buttons.Count - 1) * 45))) / 2;
             var btnY = h - 58;
@@ -108,8 +122,6 @@ namespace TSOVille.Code.UI.Controls
                 button.X = btnX;
                 btnX += 150;
             }
-
-            
         }
 
         public void SetIcon(Texture2D img, int width, int height)
@@ -148,7 +160,7 @@ namespace TSOVille.Code.UI.Controls
         /// <summary>
         /// Map of buttons attached to this message box.
         /// </summary>
-        public Dictionary<UIAlertButtons, UIButton> ButtonMap = new Dictionary<UIAlertButtons, UIButton>();
+        public Dictionary<UIAlertButtonType, UIButton> ButtonMap = new Dictionary<UIAlertButtonType, UIButton>();
 
         /// <summary>
         /// Adds a button to this message box.
@@ -157,7 +169,7 @@ namespace TSOVille.Code.UI.Controls
         /// <param name="type">Type of the button to be added.</param>
         /// <param name="InternalHandler">Should the button's click be handled internally?</param>
         /// <returns></returns>
-        private UIButton AddButton(string label, UIAlertButtons type, bool InternalHandler)
+        private UIButton AddButton(string label, UIAlertButtonType type, bool InternalHandler)
         {
             var btn = new UIButton();
             btn.Caption = label;
@@ -220,27 +232,36 @@ namespace TSOVille.Code.UI.Controls
         public int Width = 340;
         public int Height = -1;
         public TextAlignment Alignment = TextAlignment.Center;
-        public bool TextEntry;
-
 
         public int TextSize = 10;
 
-        public UIAlertButtons Buttons = UIAlertButtons.OK;
+        public bool TextEntry = false;
+        public UIAlertButton[] Buttons = new UIAlertButton[] { new UIAlertButton() };
     }
 
-    [Flags]
-    public enum UIAlertButtons
+    public class UIAlertButton
+    {
+        public UIAlertButtonType Type = UIAlertButtonType.OK;
+        public ButtonClickDelegate Handler = null; //if null, just use default (exit UIAlert)
+        public string Text = null; //custom text, if null then we just use cst.
+
+        public UIAlertButton() { }
+        public UIAlertButton(UIAlertButtonType type) { Type = type; }
+        public UIAlertButton(UIAlertButtonType type, ButtonClickDelegate handler) { Type = type; Handler = handler; }
+        public UIAlertButton(UIAlertButtonType type, ButtonClickDelegate handler, string text) { Type = type; Handler = handler; Text = text; }
+    }
+
+    public enum UIAlertButtonType
     {
         OK,
-        Cancel,
-        OKCancel,
         Yes,
         No,
-        YesNo
+        Cancel,
     }
 
     public class UIAlertResult
     {
-        public UIAlertButtons Button;
+        public UIAlertButtonType Button;
+        public string Text;
     }
 }

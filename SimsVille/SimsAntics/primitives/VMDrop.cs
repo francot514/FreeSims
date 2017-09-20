@@ -8,12 +8,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
-using tso.world.Model;
-using TSO.SimsAntics.Model;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
+using FSO.LotView.Model;
+using FSO.SimAntics.Model;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
 
     public class VMDrop : VMPrimitiveHandler

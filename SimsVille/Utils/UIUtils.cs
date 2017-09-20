@@ -1,28 +1,19 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSOVille.Code.UI.Framework;
-using TSOVille.Code.UI.Model;
+using FSO.Client.UI.Framework;
 using Microsoft.Xna.Framework;
-using System.Drawing;
-using TSO.Common.rendering.framework.model;
-using TSO.Common.rendering.framework.io;
-using TSO.Common.rendering.framework;
+using FSO.Common.Rendering.Framework.Model;
+using FSO.Common.Rendering.Framework.IO;
+using FSO.Client.UI;
 
-namespace TSOVille.Code.Utils
+namespace FSO.Client.Utils
 {
     public class UIUtils
     {
@@ -186,15 +177,18 @@ namespace TSOVille.Code.Utils
                 if (m_fade < 1) m_fade += 0.1f;
                 if (m_fade > 1) m_fade = 1;
 
-                GameFacade.Screens.TooltipProperties.UpdateDead = false;
-                GameFacade.Screens.TooltipProperties.Position = m_position;
-                GameFacade.Screens.TooltipProperties.Opacity = m_fade;
+                state.UIState.TooltipProperties.Show = true;
+                state.UIState.TooltipProperties.Color = Color.Black;
+                state.UIState.TooltipProperties.UpdateDead = false;
+                state.UIState.TooltipProperties.Position = m_position;
+                state.UIState.TooltipProperties.Opacity = m_fade;
+                state.UIState.Tooltip = Target.Tooltip;
                 /** fade in **/
                 if (!Target.GetBounds().Contains(pt2) || !GameFacade.Focus || !Target.WillDraw())
                 {
                     m_active = false;
-                    GameFacade.Screens.TooltipProperties.Show = false;
-                    GameFacade.Screens.TooltipProperties.Opacity = 0;
+                    state.UIState.TooltipProperties.Show = false;
+                    state.UIState.TooltipProperties.Opacity = 0;
                     m_fade = 0;
                 }
             }
@@ -203,10 +197,11 @@ namespace TSOVille.Code.Utils
                 if (Target.GetBounds().Contains(pt2) && Target.Tooltip != null && Target.WillDraw() && GameFacade.Focus)
                 {
                     m_active = true;
-                    GameFacade.Screens.TooltipProperties.Show = true;
-                    GameFacade.Screens.TooltipProperties.Opacity = 0;
-                    GameFacade.Screens.TooltipProperties.UpdateDead = false;
-                    GameFacade.Screens.Tooltip = Target.Tooltip;
+                    state.UIState.TooltipProperties.Show = true;
+                    state.UIState.TooltipProperties.Color = Color.Black;
+                    state.UIState.TooltipProperties.Opacity = 0;
+                    state.UIState.TooltipProperties.UpdateDead = false;
+                    state.UIState.Tooltip = Target.Tooltip;
                     m_fade = 0;
 
                     m_position = new Vector2(state.MouseState.X, Target.LocalPoint(new Vector2(0, 0)).Y); //at top of element
@@ -219,13 +214,5 @@ namespace TSOVille.Code.Utils
         public int MaxWidth;
         public List<string> Lines;
         public List<int> Positions;
-    }
-
-    public struct UITooltipProperties
-    {
-        public float Opacity;
-        public Vector2 Position;
-        public bool Show;
-        public bool UpdateDead;
     }
 }

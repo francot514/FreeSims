@@ -9,21 +9,24 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using tso.world;
-using tso.world.Components;
-using tso.world.Model;
-using TSO.Content;
-using TSO.Content.model;
+using FSO.LotView;
+using FSO.LotView.Components;
+using FSO.LotView.Model;
+using FSO.Content;
+using FSO.Content.Model;
+using FSO.Files.Formats.IFF.Chunks;
+using TSO.HIT;
+using FSO.SimAntics.Engine;
+using FSO.SimAntics.Entities;
+using FSO.SimAntics.Model;
+using FSO.SimAntics.Model.Routing;
+using FSO.SimAntics.Marshals.Threads;
+using FSO.SimAntics.Marshals;
+using FSO.Common.Utils;
+using FSO.SimAntics.Model.TSOPlatform;
+using FSO.SimAntics.Model.Sound;
 
-using TSO.Files.formats.iff.chunks;
-
-using TSO.SimsAntics.Engine;
-using TSO.SimsAntics.Entities;
-using TSO.SimsAntics.Model;
-using TSO.SimsAntics.Model.Routing;
-using TSO.Common.utils;
-
-namespace TSO.SimsAntics
+namespace FSO.SimAntics
 {
     public class VMEntityRTTI
     {
@@ -40,11 +43,20 @@ namespace TSO.SimsAntics
 
         public VMEntityRTTI RTTI;
         public bool GhostImage;
-
+        public VMMultitileGroup GhostOriginal; //Ignore collisions/slots from any of these objects.
 
         //own properties (for instance)
         public short ObjectID;
         public uint PersistID;
+        public VMPlatformState PlatformState;
+        public VMTSOEntityState TSOState
+        {
+            get
+            {
+                return (PlatformState != null && PlatformState is VMTSOEntityState) ? (VMTSOEntityState)PlatformState : null;
+            }
+        }
+
         public short[] ObjectData;
         public LinkedList<short> MyList = new LinkedList<short>();
         public List<VMSoundEntry> SoundThreads;
@@ -63,8 +75,6 @@ namespace TSO.SimsAntics
         public VMEntity Container;
         public short ContainerSlot;
         public bool Dead; //set when the entity is removed, threads owned by this object or with this object as callee will be cancelled/have their stack emptied.
-        public bool BadName;
-
 
         /** Persistent state variables controlled by bhavs **/
         //in TS1, NumAttributes can be 0 and it will dynamically resize as required.
@@ -87,20 +97,35 @@ namespace TSO.SimsAntics
         public Dictionary<ushort, List<short>> MeToObject;
         //todo, special system for server persistent avatars and pets
 
-        public uint DynamicSpriteFlags; /** Used to show/hide dynamic sprites **/
+        public ulong DynamicSpriteFlags; /** Used to show/hide dynamic sprites **/
+        public ulong DynamicSpriteFlags2;
         public VMObstacle Footprint;
 
         private LotTilePos _Position = new LotTilePos(LotTilePos.OUT_OF_WORLD);
         public EntityComponent WorldUI;
 
         //inferred properties (from object resource)
-        public GameGlobal SemiGlobal;
+        public GameGlobalResource SemiGlobal;
         public TTAB TreeTable;
         public TTAs TreeTableStrings;
         public Dictionary<string, VMTreeByNameTableEntry> TreeByName;
         public SLOT Slots;
         public OBJD MasterDefinition; //if this object is multitile, its master definition will be stored here.
         public OBJfFunctionEntry[] EntryPoints;  /** Entry points for specific events, eg. init, main, clean... **/
+
+        public string Name
+        {
+            get
+            {
+                if (MultitileGroup.Name != "") return MultitileGroup.Name;
+                if (this is VMAvatar) return "Sim";
+                else return this.ToString();
+            }
+            set
+            {
+                MultitileGroup.Name = value;
+            }
+        }
 
         //positioning properties
         public LotTilePos Position
@@ -109,17 +134,13 @@ namespace TSO.SimsAntics
             set
             {
                 _Position = value;
-                for (int i = 0; i < TotalSlots(); i++)
-                {
-                    var obj = GetSlot(i);
-                    if (obj != null) obj.Position = _Position; //TODO: is physical position the same as the slot offset position?
-                }
+                if (UseWorld) WorldUI.Level = Position.Level;
                 VisualPosition = new Vector3(_Position.x / 16.0f, _Position.y / 16.0f, (_Position.Level - 1) * 2.95f);
             }
         }
 
         public abstract Vector3 VisualPosition { get; set; }
-        public abstract tso.world.Model.Direction Direction { get; set; }
+        public abstract FSO.LotView.Model.Direction Direction { get; set; }
         public abstract float RadianDirection { get; set; }
 
         /// <summary>
@@ -150,12 +171,8 @@ namespace TSO.SimsAntics
             if (obj.GUID == 0xa9bb3a76) EntryPoints[17] = new OBJfFunctionEntry(); 
 
             var test = obj.Resource.List<OBJf>();
-            var GLOBChunks = obj.Resource.List<GLOB>();
-            if (GLOBChunks != null)
-            {
-                SemiGlobal = TSO.Content.Content.Get().WorldObjectGlobals.Get(GLOBChunks[0].Name);
-                Object.Resource.SemiGlobal = SemiGlobal.Resource; //used for tuning constant fetching.
-            }
+
+            SemiGlobal = obj.Resource.SemiGlobal;
 
             Slots = obj.Resource.Get<SLOT>(obj.OBJ.SlotID); //containment slots are dealt with in the avatar and object classes respectively.
 
@@ -174,28 +191,13 @@ namespace TSO.SimsAntics
             if (TreeTable != null) TreeTableStrings = obj.Resource.Get<TTAs>(obj.OBJ.TreeTableID);
             if (TreeTable == null && SemiGlobal != null)
             {
-                TreeTable = SemiGlobal.Resource.Get<TTAB>(obj.OBJ.TreeTableID); //tree not in local, try semiglobal
-                TreeTableStrings = SemiGlobal.Resource.Get<TTAs>(obj.OBJ.TreeTableID);
+                TreeTable = SemiGlobal.Get<TTAB>(obj.OBJ.TreeTableID); //tree not in local, try semiglobal
+                TreeTableStrings = SemiGlobal.Get<TTAs>(obj.OBJ.TreeTableID);
             }
             //no you cannot get global tree tables don't even ask
 
             this.Attributes = new List<short>(numAttributes);
             SetFlag(VMEntityFlags.ChairFacing, true);
-        }
-
-
-        public bool GetBadNames()
-        {
-            string name = this.ToString();
-            BadName = false;
-
-
-            if (name.Contains("Mail") || name.Contains("Window") || name.Contains("Door") || name.Contains("Lamp")
-                || name.Contains("Stair") || name.Contains("Arch") || name.Contains("Tree") || name.Contains("Portal")
-                || name.Contains("Trash") || name.Contains("Phone"))
-                BadName = true;
-
-            return BadName;
         }
 
         /// <summary>
@@ -209,7 +211,7 @@ namespace TSO.SimsAntics
             var GLOBChunks = obj.Resource.List<GLOB>();
             GameGlobal SemiGlobal = null;
 
-            if (GLOBChunks != null && GLOBChunks[0].Name != "") SemiGlobal = TSO.Content.Content.Get().WorldObjectGlobals.Get(GLOBChunks[0].Name);
+            if (GLOBChunks != null && GLOBChunks[0].Name != "") SemiGlobal = FSO.Content.Content.Get().WorldObjectGlobals.Get(GLOBChunks[0].Name);
 
             TreeTable = obj.Resource.Get<TTAB>(obj.OBJ.TreeTableID);
             if (TreeTable != null) TreeTableStrings = obj.Resource.Get<TTAs>(obj.OBJ.TreeTableID);
@@ -222,7 +224,7 @@ namespace TSO.SimsAntics
 
         public void UseSemiGlobalTTAB(string sgFile, ushort id)
         {
-            GameGlobal obj = TSO.Content.Content.Get().WorldObjectGlobals.Get(sgFile);
+            GameGlobal obj = FSO.Content.Content.Get().WorldObjectGlobals.Get(sgFile);
             if (obj == null) return;
 
             TreeTable = obj.Resource.Get<TTAB>(id);
@@ -232,10 +234,12 @@ namespace TSO.SimsAntics
         public virtual void Tick()
         {
             //decrement lockout count
+
             if (Thread != null)
             {
+                Thread.TicksThisFrame = 0;
                 Thread.Tick();
-                TickSounds();
+                if (SoundThreads.Count > 0) TickSounds();
             }
             if (Headline != null)
             {
@@ -251,7 +255,7 @@ namespace TSO.SimsAntics
                     WorldUI.Headline = HeadlineRenderer.DrawFrame(Thread.Context.World);
                 }
             }
-            if (UseWorld && Headline == null)
+            if (UseWorld && Headline == null && WorldUI.Headline != null)
             {
                 WorldUI.Headline = null;
             }
@@ -260,8 +264,62 @@ namespace TSO.SimsAntics
 
         public void TickSounds()
         {
-           
+            if (!UseWorld) return;
+            if (Thread != null)
+            {
+                var worldState = Thread.Context.World.State;
+                var worldSpace = worldState.WorldSpace;
+                var scrPos = WorldUI.GetScreenPos(worldState);
+                scrPos -= new Vector2(worldSpace.WorldPxWidth/2, worldSpace.WorldPxHeight/2);
+                for (int i = 0; i < SoundThreads.Count; i++)
+                {
+                    if (SoundThreads[i].Sound.Dead)
+                    {
+                        var old = SoundThreads[i];
+                        SoundThreads.RemoveAt(i--);
+                        if (old.Loop)
+                        {
+                            var thread = HITVM.Get().PlaySoundEvent(old.Name);
+                            if (thread != null)
+                            {
+                                var owner = this;
+                                if (!thread.AlreadyOwns(owner.ObjectID)) thread.AddOwner(owner.ObjectID);
 
+                                var entry = new VMSoundEntry()
+                                {
+                                    Sound = thread,
+                                    Pan = old.Pan,
+                                    Zoom = old.Zoom,
+                                    Loop = old.Loop,
+                                    Name = old.Name
+                                };
+                                owner.SoundThreads.Add(entry);
+                            }
+                        }
+                        continue;
+                    }
+
+                    float pan = (SoundThreads[i].Pan) ? Math.Max(-1.0f, Math.Min(1.0f, scrPos.X / worldSpace.WorldPxWidth)) : 0;
+                    float volume = (SoundThreads[i].Pan) ? 1 - (float)Math.Max(0, Math.Min(1, Math.Sqrt(scrPos.X * scrPos.X + scrPos.Y * scrPos.Y) / worldSpace.WorldPxWidth)) : 1;
+
+                    if (SoundThreads[i].Zoom) volume /= 4 - (int)worldState.Zoom;
+                    if (Position.Level > worldState.Level) volume /= 4;
+                    else if (Position.Level != worldState.Level) volume /= 2;
+
+                    SoundThreads[i].Sound.SetVolume(volume, pan);
+
+                }
+            }
+        }
+
+        public List<VMSoundTransfer> GetActiveSounds()
+        {
+            var result = new List<VMSoundTransfer>();
+            foreach (var snd in SoundThreads)
+            {
+                result.Add(new VMSoundTransfer(ObjectID, Object.OBJ.GUID, snd));
+            }
+            return result;
         }
 
         public OBJfFunctionEntry[] GenerateFunctionTable(OBJD obj)
@@ -291,7 +349,7 @@ namespace TSO.SimsAntics
             result[20].ActionFunction = obj.BHAV_PlaceSurfaceID;
             result[21].ActionFunction = obj.BHAV_DisposeID;
             result[22].ActionFunction = obj.BHAV_EatID;
-            result[23].ActionFunction = obj.BHAV_PickupID; //pickup from slot
+            result[23].ActionFunction = obj.BHAV_PickupFromSlotID; //pickup from slot
             result[24].ActionFunction = obj.BHAV_WashDishID;
             result[25].ActionFunction = obj.BHAV_EatSurfaceID;
             result[26].ActionFunction = obj.BHAV_SitID;
@@ -342,6 +400,10 @@ namespace TSO.SimsAntics
             if (this.Thread == null) return;
             this.Thread.Stack.Clear();
             this.Thread.Queue.Clear();
+            Thread.QueueDirty = true;
+            this.Thread.ActiveQueueBlock = 0;
+            this.Thread.BlockingState = null;
+            this.Thread.EODConnection = null;
 
             if (EntryPoints[3].ActionFunction != 0) ExecuteEntryPoint(3, context, true); //Reset
             if (!GhostImage) ExecuteEntryPoint(1, context, false); //Main
@@ -349,47 +411,8 @@ namespace TSO.SimsAntics
 
         public void GenerateTreeByName(VMContext context)
         {
-            TreeByName = new Dictionary<string, VMTreeByNameTableEntry>();
-
-            var bhavs = Object.Resource.List<BHAV>();
-            if (bhavs != null)
-            {
-                foreach (var bhav in bhavs)
-                {
-                    string name = bhav.ChunkLabel;
-                    for (var i = 0; i < name.Length; i++)
-                    {
-                        if (name[i] == 0)
-                        {
-                            name = name.Substring(0, i);
-                            break;
-                        }
-                    }
-                    TreeByName.Add(name, new VMTreeByNameTableEntry(bhav, Object));
-                }
-            }
-            //also add semiglobals
-
-            if (SemiGlobal != null)
-            {
-                bhavs = SemiGlobal.Resource.List<BHAV>();
-                if (bhavs != null)
-                {
-                    foreach (var bhav in bhavs)
-                    {
-                        string name = bhav.ChunkLabel;
-                        for (var i = 0; i < name.Length; i++)
-                        {
-                            if (name[i] == 0)
-                            {
-                                name = name.Substring(0, i);
-                                break;
-                            }
-                        }
-                        if (!TreeByName.ContainsKey(name)) TreeByName.Add(name, new VMTreeByNameTableEntry(bhav, Object));
-                    }
-                }
-            }
+            TreeByName = Object.Resource.TreeByName;
+                new Dictionary<string, VMTreeByNameTableEntry>();
         }
 
         public bool ExecuteEntryPoint(int entry, VMContext context, bool runImmediately)
@@ -404,6 +427,7 @@ namespace TSO.SimsAntics
 
         public bool ExecuteEntryPoint(int entry, VMContext context, bool runImmediately, VMEntity stackOBJ, short[] args)
         {
+            if (args == null) args = new short[4];
             if (entry == 11)
             {
                 //user placement, hack to do auto floor removal/placement for stairs
@@ -419,7 +443,7 @@ namespace TSO.SimsAntics
             }
 
             bool result = false;
-            if (EntryPoints[entry].ActionFunction > 255)
+            if (entry < EntryPoints.Length && EntryPoints[entry].ActionFunction > 255)
             {
                 VMSandboxRestoreState SandboxState = null;
                 if (GhostImage && runImmediately)
@@ -432,44 +456,31 @@ namespace TSO.SimsAntics
                     }
                 }
 
-                BHAV bhav;
-                GameObject CodeOwner;
                 ushort ActionID = EntryPoints[entry].ActionFunction;
-                if (ActionID < 4096)
-                { //global
-                    bhav = context.Globals.Resource.Get<BHAV>(ActionID);
-                }
-                else if (ActionID < 8192)
-                { //local
-                    bhav = Object.Resource.Get<BHAV>(ActionID);
-                }
-                else
-                { //semi-global
-                    bhav = SemiGlobal.Resource.Get<BHAV>(ActionID);
-                }
+                var tree = GetBHAVWithOwner(ActionID, context);
 
-                CodeOwner = Object;
-
-                if (bhav != null)
+                if (tree != null)
                 {
-                    var routine = context.VM.Assemble(bhav);
-                    var action = new VMQueuedAction
+                    var routine = context.VM.Assemble(tree.bhav);
+                    var frame = new VMStackFrame
                     {
+                        Caller = this,
                         Callee = this,
-                        CodeOwner = CodeOwner,
-                        /** Main function **/
-                        StackObject = stackOBJ,
+                        CodeOwner = tree.owner,
                         Routine = routine,
+                        StackObject = stackOBJ,
                         Args = args
                     };
 
                     if (runImmediately)
                     {
-                        var checkResult = VMThread.EvaluateCheck(context, this, action);
+                        var checkResult = VMThread.EvaluateCheck(context, this, frame);
                         result = (checkResult == VMPrimitiveExitCode.RETURN_TRUE);
                     }
                     else
-                        this.Thread.EnqueueAction(action);
+                    {
+                        Thread.Push(frame);
+                    }
                 }
 
                 if (GhostImage && runImmediately)
@@ -491,16 +502,14 @@ namespace TSO.SimsAntics
             if (ActionID < 4096)
             { //global
                 bhav = context.Globals.Resource.Get<BHAV>(ActionID);
-                //CodeOwner = context.Globals.Resource;
             }
             else if (ActionID < 8192)
             { //local
                 bhav = Object.Resource.Get<BHAV>(ActionID);
-
             }
             else
             { //semi-global
-                bhav = SemiGlobal.Resource.Get<BHAV>(ActionID);
+                bhav = SemiGlobal.Get<BHAV>(ActionID);
             }
 
             CodeOwner = Object;
@@ -512,16 +521,30 @@ namespace TSO.SimsAntics
 
         public bool IsDynamicSpriteFlagSet(ushort index)
         {
-            return (DynamicSpriteFlags & (0x1 << index)) > 0;
+            return (index > 63)? ((DynamicSpriteFlags2 & ((ulong)0x1 << (index-64))) > 0) :
+                (DynamicSpriteFlags & ((ulong)0x1 << index)) > 0;
         }
 
         public virtual void SetDynamicSpriteFlag(ushort index, bool set)
         {
             if (set) {
-                uint bitflag = (uint)(0x1 << index);
-                DynamicSpriteFlags = DynamicSpriteFlags | bitflag;
+                if (index > 63)
+                {
+                    ulong bitflag = ((ulong)0x1 << (index-64));
+                    DynamicSpriteFlags2 = DynamicSpriteFlags2 | bitflag;
+                } else {
+                    ulong bitflag = ((ulong)0x1 << index);
+                    DynamicSpriteFlags = DynamicSpriteFlags | bitflag;
+                }
             } else {
-                DynamicSpriteFlags = (uint)(DynamicSpriteFlags & (~(0x1 << index)));
+                if (index > 63)
+                {
+                    DynamicSpriteFlags2 = DynamicSpriteFlags2 & (~((ulong)0x1 << (index-64)));
+                }
+                else
+                {
+                    DynamicSpriteFlags = DynamicSpriteFlags & (~((ulong)0x1 << index));
+                }
             }
         }
 
@@ -548,13 +571,13 @@ namespace TSO.SimsAntics
                 case VMStackObjectVariable.Direction:
                     switch (this.Direction)
                     {
-                        case tso.world.Model.Direction.WEST:
+                        case FSO.LotView.Model.Direction.WEST:
                             return 6;
-                        case tso.world.Model.Direction.SOUTH:
+                        case FSO.LotView.Model.Direction.SOUTH:
                             return 4;
-                        case tso.world.Model.Direction.EAST:
+                        case FSO.LotView.Model.Direction.EAST:
                             return 2;
-                        case tso.world.Model.Direction.NORTH:
+                        case FSO.LotView.Model.Direction.NORTH:
                             return 0;
                         default:
                             return 0;
@@ -579,16 +602,16 @@ namespace TSO.SimsAntics
                     value = (short)(((int)value + 65536) % 8);
                     switch (value) {
                         case 6:
-                            Direction = tso.world.Model.Direction.WEST;
+                            Direction = FSO.LotView.Model.Direction.WEST;
                             return true;
                         case 4:
-                            Direction = tso.world.Model.Direction.SOUTH;
+                            Direction = FSO.LotView.Model.Direction.SOUTH;
                             return true;
                         case 2:
-                            Direction = tso.world.Model.Direction.EAST;
+                            Direction = FSO.LotView.Model.Direction.EAST;
                             return true;
                         case 0:
-                            Direction = tso.world.Model.Direction.NORTH;
+                            Direction = FSO.LotView.Model.Direction.NORTH;
                             return true;
                         default:
                             return true;
@@ -608,10 +631,23 @@ namespace TSO.SimsAntics
         // Begin Container SLOTs interface
 
         public abstract int TotalSlots();
-        public abstract void PlaceInSlot(VMEntity obj, int slot, bool cleanOld, VMContext context);
+        public abstract bool PlaceInSlot(VMEntity obj, int slot, bool cleanOld, VMContext context);
         public abstract VMEntity GetSlot(int slot);
         public abstract void ClearSlot(int slot);
         public abstract int GetSlotHeight(int slot);
+
+        public void RecurseSlotPositionChange(VMContext context, bool noEntryPoint)
+        {
+            context.UnregisterObjectPos(this);
+            var total = TotalSlots();
+            for (int i=0; i<total; i++)
+            {
+                var obj = GetSlot(i);
+                if (obj != null) obj.RecurseSlotPositionChange(context, noEntryPoint);
+            }
+            Position = Position;
+            PositionChange(context, noEntryPoint);
+        }
 
         // End Container SLOTs interface
 
@@ -620,47 +656,29 @@ namespace TSO.SimsAntics
             SetValue(VMStackObjectVariable.Room, (short)room);
         }
 
-        public List<VMPieMenuInteraction> GetPieMenu(VM vm, VMEntity caller, bool pet)
+        public List<VMPieMenuInteraction> GetPieMenu(VM vm, VMEntity caller, bool includeHidden)
         {
             var pie = new List<VMPieMenuInteraction>();
             if (TreeTable == null) return pie;
 
             for (int i = 0; i < TreeTable.Interactions.Length; i++)
             {
-                var action = TreeTable.Interactions[i];
-                var actionStrings = new List<VMPieMenuInteraction>();
+                var id = TreeTable.Interactions[i].TTAIndex;
+                var action = GetAction((int)id, caller, vm.Context);
 
-                bool CanRun = false;
-                if (action.TestFunction != 0 && (((TTABFlags)action.Flags != TTABFlags.Debug)))
-                {
+                caller.ObjectData[(int)VMStackObjectVariable.HideInteraction] = 0;
+                if (action != null) action.Flags &= ~TTABFlags.MustRun;
+                var actionStrings = caller.Thread.CheckAction(action);
+                if (caller.ObjectData[(int)VMStackObjectVariable.HideInteraction] == 1 && !includeHidden) continue;
 
-                    caller.ObjectData[(int)VMStackObjectVariable.HideInteraction] = 0;
-                    var Behavior = GetBHAVWithOwner(action.TestFunction, vm.Context);
-                    CanRun = (VMThread.EvaluateCheck(vm.Context, caller, new VMQueuedAction()
-                    {
-                        Callee = this,
-                        CodeOwner = Behavior.owner,
-                        StackObject = this,
-                        Routine = vm.Assemble(Behavior.bhav),
-                    }, actionStrings) == VMPrimitiveExitCode.RETURN_TRUE);
-                    if (caller.ObjectData[(int)VMStackObjectVariable.HideInteraction] == 1) CanRun = false;
-
-                    if (pet == true)
-                        if (action.Flags != TTABFlags.AllowDogs)
-                            CanRun = false;
-                }
-                else
-                {
-                    CanRun = true;
-                }
-
-                if (CanRun)
+                if (actionStrings != null)
                 {
                     if (actionStrings.Count > 0)
                     {
                         foreach (var actionS in actionStrings)
                         {
-                            actionS.ID = (byte)action.TTAIndex;
+                            actionS.ID = (byte)id;
+                            actionS.Entry = TreeTable.Interactions[i];
                             pie.Add(actionS);
                         }
                     }
@@ -670,8 +688,8 @@ namespace TSO.SimsAntics
                         {
                             pie.Add(new VMPieMenuInteraction()
                             {
-                                Name = TreeTableStrings.GetString((int)action.TTAIndex),
-                                ID = (byte)action.TTAIndex,
+                                Name = TreeTableStrings.GetString((int)id),
+                                ID = (byte)id,
                                 Entry = TreeTable.Interactions[i]
                             });
                         }
@@ -681,6 +699,46 @@ namespace TSO.SimsAntics
 
             return pie;
         }
+        
+        public VMQueuedAction GetAction(int interaction, VMEntity caller, VMContext context)
+        {
+            return GetAction(interaction, caller, context, null);
+        }
+
+        public VMQueuedAction GetAction(int interaction, VMEntity caller, VMContext context, short[] args)
+        {
+            if (!TreeTable.InteractionByIndex.ContainsKey((uint)interaction)) return null;
+            var Action = TreeTable.InteractionByIndex[(uint)interaction];
+
+            ushort actionID = Action.ActionFunction;
+            var aTree = GetBHAVWithOwner(actionID, context);
+            if (aTree == null) return null;
+            var aRoutine = context.VM.Assemble(aTree.bhav);
+
+            VMRoutine cRoutine = null;
+            ushort checkID = Action.TestFunction;
+            if (checkID != 0)
+            {
+                var cTree = GetBHAVWithOwner(checkID, context);
+                if (cTree != null) cRoutine = context.VM.Assemble(cTree.bhav);
+            }
+
+            return new VMQueuedAction
+            {
+                Callee = this,
+                IconOwner = this,
+                CodeOwner = aTree.owner,
+                ActionRoutine = aRoutine,
+                CheckRoutine = cRoutine,
+                Name = (TreeTableStrings==null)?"":TreeTableStrings.GetString((int)Action.TTAIndex),
+                StackObject = this,
+                Args = args,
+                InteractionNumber = interaction,
+                Priority = (short)VMQueuePriority.UserDriven,
+                Flags = Action.Flags,
+                Flags2 = Action.Flags2,
+            };
+        }
 
         public void PushUserInteraction(int interaction, VMEntity caller, VMContext context)
         {
@@ -688,30 +746,8 @@ namespace TSO.SimsAntics
         }
         public void PushUserInteraction(int interaction, VMEntity caller, VMContext context, short[] args)
         {
-            if (!TreeTable.InteractionByIndex.ContainsKey((uint)interaction)) return;
-            var Action = TreeTable.InteractionByIndex[(uint)interaction];
-            ushort ActionID = Action.ActionFunction;
-
-            var function = GetBHAVWithOwner(ActionID, context);
-            if (function == null) return;
-
-            VMEntity carriedObj = caller.GetSlot(0);
-
-            var routine = context.VM.Assemble(function.bhav);
-            caller.Thread.EnqueueAction(
-                new TSO.SimsAntics.Engine.VMQueuedAction
-                {
-                    Callee = this,
-                    CodeOwner = function.owner,
-                    Routine = routine,
-                    Name = TreeTableStrings.GetString((int)Action.TTAIndex),
-                    StackObject = this,
-                    Args = args,
-                    InteractionNumber = interaction,
-                    Priority = (short)VMQueuePriority.UserDriven,
-                    Flags = (TTABFlags)Action.Flags
-                }
-            );
+            var action = GetAction(interaction, caller, context, args);
+            if (action != null) caller.Thread.EnqueueAction(action);
         }
 
         public VMPlacementResult PositionValid(LotTilePos pos, Direction direction, VMContext context)
@@ -736,7 +772,7 @@ namespace TSO.SimsAntics
             if (floorValid != VMPlacementError.Success) return new VMPlacementResult { Status = floorValid };
 
             //we've passed the wall test, now check if we intersect any objects.
-            var valid =  context.GetObjPlace(this, pos, direction);
+            var valid = (this is VMAvatar)? context.GetAvatarPlace(this, pos, direction) : context.GetObjPlace(this, pos, direction);
             return valid;
         }
 
@@ -818,6 +854,8 @@ namespace TSO.SimsAntics
 
             if (rotPart == 0) return;
 
+            if (UseWorld) ((ObjectComponent)WorldUI).AdjacentWall = (WallSegments)rotPart;
+
             if (set) wall.OccupiedWalls |= (WallSegments)rotPart;
             else wall.OccupiedWalls &= (WallSegments)~rotPart;
 
@@ -829,8 +867,13 @@ namespace TSO.SimsAntics
             if (cleanupAll) MultitileGroup.Delete(context);
             else
             {
-              
-               
+                var threads = SoundThreads;
+
+                for (int i = 0; i < threads.Count; i++)
+                {
+                    threads[i].Sound.RemoveOwner(ObjectID);
+                }
+                threads.Clear();
 
                 PrePositionChange(context);
                 context.RemoveObjectInstance(this);
@@ -949,7 +992,100 @@ namespace TSO.SimsAntics
         public abstract Texture2D GetIcon(GraphicsDevice gd, int store);
 
 
-       
+        #region VM Marshalling Functions
+        public void SaveEnt(VMEntityMarshal target)
+        {
+            var newList = new short[MyList.Count];
+            int i = 0;
+            foreach (var item in MyList) newList[i++] = item;
+
+            var newContd = new short[Contained.Length];
+            i = 0;
+            foreach (var item in Contained) newContd[i++] = (item == null)?(short)0:item.ObjectID;
+
+            var relArry = new VMEntityRelationshipMarshal[MeToObject.Count];
+            i = 0;
+            foreach (var item in MeToObject) relArry[i++] = new VMEntityRelationshipMarshal { Target = item.Key, Values = item.Value.ToArray() };
+
+            target.ObjectID = ObjectID;
+            target.PersistID = PersistID;
+            target.PlatformState = PlatformState;
+            target.ObjectData = ObjectData;
+            target.MyList = newList;
+
+            target.Headline = (Headline == null) ? null : Headline.Save();
+
+            target.GUID = Object.OBJ.GUID;
+            target.MasterGUID = (MasterDefinition == null)?0:MasterDefinition.GUID;
+
+            target.MainParam = MainParam; //parameters passed to main on creation.
+            target.MainStackOBJ = MainStackOBJ;
+
+            target.Contained = newContd; //object ids
+            target.Container = (Container == null)?(short)0:Container.ObjectID;
+            target.ContainerSlot = ContainerSlot;
+
+            target.Attributes = Attributes.ToArray();
+            target.MeToObject = relArry;
+
+            target.DynamicSpriteFlags = DynamicSpriteFlags;
+            target.DynamicSpriteFlags2 = DynamicSpriteFlags2;
+            target.Position = _Position;
+        }
+
+        public virtual void Load(VMEntityMarshal input)
+        {
+            ObjectID = input.ObjectID;
+            PersistID = input.PersistID;
+            PlatformState = input.PlatformState;
+            ObjectData = input.ObjectData;
+            MyList = new LinkedList<short>(input.MyList);
+
+            MainParam = input.MainParam; //parameters passed to main on creation.
+            MainStackOBJ = input.MainStackOBJ;
+
+            if (input.MasterGUID != 0)
+            {
+                var masterDef = FSO.Content.Content.Get().WorldObjects.Get(input.MasterGUID);
+                MasterDefinition = masterDef.OBJ;
+                UseTreeTableOf(masterDef);
+            }
+
+            else MasterDefinition = null;
+
+            ContainerSlot = input.ContainerSlot;
+
+            Attributes = new List<short>(input.Attributes);
+            MeToObject = new Dictionary<ushort, List<short>>();
+            foreach (var obj in input.MeToObject)  MeToObject[obj.Target] = new List<short>(obj.Values);
+
+            DynamicSpriteFlags = input.DynamicSpriteFlags;
+            DynamicSpriteFlags2 = input.DynamicSpriteFlags2;
+            Position = input.Position;
+
+            if (UseWorld) WorldUI.Visible = GetValue(VMStackObjectVariable.Hidden) == 0;
+        }
+
+        public virtual void LoadCrossRef(VMEntityMarshal input, VMContext context)
+        {
+            Contained = new VMEntity[input.Contained.Length];
+            int i = 0;
+            foreach (var item in input.Contained) Contained[i++] = context.VM.GetObjectById(item);
+
+            Container = context.VM.GetObjectById(input.Container);
+            if (UseWorld && Container != null)
+            {
+                WorldUI.Container = Container.WorldUI;
+                WorldUI.ContainerSlot = ContainerSlot;
+            }
+
+            if (input.Headline != null)
+            {
+                Headline = new VMRuntimeHeadline(input.Headline, context);
+                HeadlineRenderer = context.VM.Headline.Get(Headline);
+            }
+        }
+        #endregion
     }
 
     [Flags]
@@ -1029,19 +1165,6 @@ namespace TSO.SimsAntics
         ArchitectualWindow = 1 << 14,
         ArchitectualDoor = 1 << 15
     }
-
-    public class VMTreeByNameTableEntry
-    {
-        public BHAV bhav;
-        public GameObject Owner;
-
-        public VMTreeByNameTableEntry(BHAV bhav, GameObject owner)
-        {
-            this.bhav = bhav;
-            this.Owner = owner;
-        }
-    }
-
     public class VMPieMenuInteraction
     {
         public string Name;
@@ -1050,14 +1173,5 @@ namespace TSO.SimsAntics
         public TTABInteraction Entry;
     }
 
-    public struct VMSoundEntry
-    {
-       
-        public bool Pan;
-        public bool Zoom;
-        public bool Loop;
-        public string Name;
-        public HIT.HITThread Sound;
 
-    }
 }

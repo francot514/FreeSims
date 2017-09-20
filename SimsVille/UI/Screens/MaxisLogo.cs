@@ -1,12 +1,18 @@
-﻿using System;
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+If a copy of the MPL was not distributed with this file, You can obtain one at
+http://mozilla.org/MPL/2.0/.
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Timers;
-using TSOVille.Code.UI.Framework;
-using TSOVille.Code.UI.Controls;
-using SimsHomeMaker;
+using FSO.Client.UI.Framework;
+using FSO.Client.UI.Controls;
+using FSO.Client.GameContent;
 
-namespace TSOVille.Code.UI.Screens
+namespace FSO.Client.UI.Screens
 {
     public class MaxisLogo : GameScreen
     {
@@ -20,7 +26,7 @@ namespace TSOVille.Code.UI.Screens
              * Scale the whole screen to 1024
              */
             BackgroundCtnr = new UIContainer();
-            BackgroundCtnr.ScaleX = BackgroundCtnr.ScaleY = GlobalSettings.GraphicsWidth / 640.0f;
+            BackgroundCtnr.ScaleX = BackgroundCtnr.ScaleY = GlobalSettings.Default.GraphicsWidth / 640.0f;
 
             /** Background image **/
             m_MaxisLogo = new UIImage(GetTexture((ulong)FileIDs.UIFileIDs.maxislogo));

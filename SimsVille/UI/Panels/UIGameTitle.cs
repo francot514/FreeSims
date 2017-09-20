@@ -1,28 +1,21 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSOVille.Code.UI.Framework;
+using FSO.Client.UI.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TSOVille.LUI;
-using TSOVille.Code.UI.Controls;
-using TSOVille.Code.UI.Screens;
+using FSO.Client.UI.Controls;
+using FSO.Client.UI.Screens;
+using FSO.Client.Rendering.City;
 using Microsoft.Xna.Framework;
-using SimsHomeMaker;
 
-namespace TSOVille.Code.UI.Panels
+namespace FSO.Client.UI.Panels
 {
     //in matchmaker displays title of city. in lot displays lot name.
 
@@ -54,7 +47,7 @@ namespace TSOVille.Code.UI.Panels
             var style = Label.CaptionStyle;
 
             var width = style.MeasureString(title).X;
-            var ScreenWidth = GlobalSettings.GraphicsWidth/2;
+            var ScreenWidth = GlobalSettings.Default.GraphicsWidth/2;
 
             Background.X = ScreenWidth-(width / 2 + 40);
             Background.SetSize(width + 80, 24);

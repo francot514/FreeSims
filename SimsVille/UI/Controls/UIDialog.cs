@@ -1,34 +1,31 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSOVille.Code.UI.Framework;
+using FSO.Client.UI.Framework;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework;
-using TSOVille.Code.UI.Model;
-using TSOVille.Code.UI.Framework.Parser;
-using TSO.Common.rendering.framework.io;
-using TSO.Common.rendering.framework.model;
-using SimsHomeMaker;
+using FSO.Client.UI.Model;
+using FSO.Client.UI.Framework.Parser;
+using FSO.Common.Rendering.Framework.IO;
+using FSO.Common.Rendering.Framework.Model;
+using FSO.Client.GameContent;
 
-namespace TSOVille.Code.UI.Controls
+namespace FSO.Client.UI.Controls
 {
+    [Flags]
     public enum UIDialogStyle
     {
-        Standard,
-        StandardTall
+        Standard = 0,
+        Tall = 1,
+        OK = 2,
+        Close = 4
     }
 
     /// <summary>
@@ -41,23 +38,27 @@ namespace TSOVille.Code.UI.Controls
         public TextStyle CaptionStyle = TextStyle.DefaultTitle;
         public Rectangle CaptionMargin = new Rectangle(0, 3, 0, 0);
 
+        //if dialog type does not specify these, they do not exist
+        private UIImage CloseBg;
+        private UIImage OKBg;
+        public UIButton OKButton;
+        public UIButton CloseButton;
+
         //Tolerance for how far out of the screen controls can be dragged.
         protected static int m_DragTolerance = 20;
 
         public UIDialog(UIDialogStyle style, bool draggable)
         {
-            switch (style)
+            if ((style & UIDialogStyle.Tall) > 0)
             {
-                case UIDialogStyle.Standard:
+                Background = new UIImage(GetTexture((ulong)FileIDs.UIFileIDs.dialog_backgroundtemplatetall))
+                .With9Slice(41, 41, 66, 40);
+            }
+            else
+            {
                 var tx = GetTexture((ulong)FileIDs.UIFileIDs.dialog_backgroundtemplate);
-                    Background = new UIImage(tx)
-                                    .With9Slice(41, 41, 60, 40);
-                    break;
-
-                case UIDialogStyle.StandardTall:
-                    Background = new UIImage(GetTexture((ulong)FileIDs.UIFileIDs.dialog_backgroundtemplatetall))
-                                    .With9Slice(41, 41, 66, 40);
-                    break;
+                Background = new UIImage(tx)
+                            .With9Slice(41, 41, 60, 40);
             }
 
             Background.ID = "Background";
@@ -69,6 +70,25 @@ namespace TSOVille.Code.UI.Controls
             }
 
             this.Add(Background);
+
+            if ((style & UIDialogStyle.OK) > 0)
+            {
+                OKBg = new UIImage(GetTexture((ulong)FileIDs.UIFileIDs.dialog_dwnrightcorner_wbtn));
+                OKButton = new UIButton(GetTexture((ulong)FileIDs.UIFileIDs.dialog_okcheckbtn));
+                Add(OKBg);
+                Add(OKButton);
+            }
+
+            if ((style & UIDialogStyle.Close) > 0)
+            {
+                CloseBg = new UIImage(GetTexture(((style & UIDialogStyle.Tall) > 0) ?
+                    ((ulong)FileIDs.UIFileIDs.dialog_closebtnbackgroundtall) :
+                    ((ulong)FileIDs.UIFileIDs.dialog_closebtnbackground)
+                    ));
+                CloseButton = new UIButton(GetTexture((ulong)FileIDs.UIFileIDs.dialog_closebtn));
+                Add(CloseBg);
+                Add(CloseButton);
+            }
         }
 
         public void CenterAround(UIElement element)
@@ -125,9 +145,9 @@ namespace TSOVille.Code.UI.Controls
                 /** Drag the dialog box **/
                 var position = Parent.GetMousePosition(state.MouseState);
                 
-                if((position.X - m_dragOffsetX) < (GlobalSettings.GraphicsWidth - m_DragTolerance) && (position.X - m_dragOffsetX) > 0)
+                if((position.X - m_dragOffsetX) < (GlobalSettings.Default.GraphicsWidth - m_DragTolerance) && (position.X - m_dragOffsetX) > 0)
                     this.X = position.X - m_dragOffsetX;
-                if ((position.Y - m_dragOffsetY) < (GlobalSettings.GraphicsHeight - m_DragTolerance) && (position.Y - m_dragOffsetY) > 0)
+                if ((position.Y - m_dragOffsetY) < (GlobalSettings.Default.GraphicsHeight - m_DragTolerance) && (position.Y - m_dragOffsetY) > 0)
                     this.Y = position.Y - m_dragOffsetY;
             }
         }
@@ -136,7 +156,7 @@ namespace TSOVille.Code.UI.Controls
         {
             base.Draw(batch);
 
-            if (Caption != null && CaptionStyle != null)
+            if (Visible && Caption != null && CaptionStyle != null)
             {
                 DrawLocalString(batch, Caption, Vector2.Zero, CaptionStyle, GetBounds(), TextAlignment.Top | TextAlignment.Center, CaptionMargin);
             }
@@ -150,6 +170,19 @@ namespace TSOVille.Code.UI.Controls
         public void SetSize(int width, int height)
         {
             Background.SetSize(width, height);
+
+            if (OKBg != null)
+            {
+                OKBg.Position = new Vector2(width - 53, height - 46);
+                OKButton.Position = OKBg.Position + new Vector2(10, 4);
+            }
+
+            if (CloseBg != null)
+            {
+                CloseBg.Position = new Vector2(width - 70, 0);
+                CloseButton.Position = CloseBg.Position + new Vector2(45, 10);
+            }
+
             m_Bounds = new Rectangle(0, 0, width, height);
         }
 

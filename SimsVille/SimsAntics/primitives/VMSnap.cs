@@ -8,18 +8,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
-using TSO.SimsAntics.Engine.Scopes;
-using TSO.SimsAntics.Engine.Utils;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
+using FSO.SimAntics.Engine.Scopes;
+using FSO.SimAntics.Engine.Utils;
 using Microsoft.Xna.Framework;
-using tso.world.Model;
-using TSO.Files.formats.iff.chunks;
-using TSO.SimsAntics.Model;
-using TSO.Common.utils;
+using FSO.LotView.Model;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.SimAntics.Model;
+using FSO.Common.Utils;
 using System.IO;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMSnap : VMPrimitiveHandler 
     {
@@ -37,8 +37,7 @@ namespace TSO.SimsAntics.Primitives
                     slot = VMMemory.GetSlot(context, VMSlotScope.StackVariable, operand.Index);
                     break;
                 case VMSnapSlotScope.BeContained:
-                    context.StackObject.PlaceInSlot(context.Caller, 0, true, context.VM.Context);
-                break;
+                    return (context.StackObject.PlaceInSlot(context.Caller, 0, true, context.VM.Context)) ? VMPrimitiveExitCode.GOTO_TRUE:VMPrimitiveExitCode.GOTO_FALSE;
                 case VMSnapSlotScope.InFront:
                     slot = new SLOTItem { Type = 3, Standing = 1, MinProximity = 16, Rsflags = SLOTFlags.NORTH };
                     break;
@@ -56,7 +55,7 @@ namespace TSO.SimsAntics.Primitives
                 var locations = parser.FindAvaliableLocations(obj, context.VM.Context, avatar);
                 if (slot.SnapTargetSlot > -1)
                 {
-                    context.StackObject.PlaceInSlot(context.Caller, slot.SnapTargetSlot, true, context.VM.Context);
+                    if (!context.StackObject.PlaceInSlot(context.Caller, slot.SnapTargetSlot, true, context.VM.Context)) return VMPrimitiveExitCode.GOTO_FALSE;
                     if (locations.Count > 0) avatar.RadianDirection = ((slot.Rsflags & SLOTFlags.SnapToDirection) > 0) ? locations[0].RadianDirection: avatar.RadianDirection;
                 }
                 else
@@ -75,7 +74,6 @@ namespace TSO.SimsAntics.Primitives
                     }
                 }
             }
-
             return VMPrimitiveExitCode.GOTO_TRUE; 
         }
 
@@ -92,7 +90,7 @@ namespace TSO.SimsAntics.Primitives
                 entity.SetValue(VMStackObjectVariable.PrimitiveResultID, (posChange.Object == null) ? (short)0 : posChange.Object.ObjectID);
                 return false;
             }
-           entity.RadianDirection = radDir;
+            if (entity is VMAvatar) entity.RadianDirection = radDir;
             return true;
         }
     }

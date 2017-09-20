@@ -8,11 +8,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
 using System.IO;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMStopAllSounds : VMPrimitiveHandler
     {
@@ -21,9 +21,13 @@ namespace TSO.SimsAntics.Primitives
             var operand = (VMStopAllSoundsOperand)args;
 
             var owner = (operand.Flags == 1)?context.StackObject:context.Caller;
+            if (owner == null) return VMPrimitiveExitCode.GOTO_TRUE;
             var threads = owner.SoundThreads;
 
-            
+            for (int i = 0; i < threads.Count; i++)
+            {
+                threads[i].Sound.RemoveOwner(owner.ObjectID);
+            }
             threads.Clear();
 
             return VMPrimitiveExitCode.GOTO_TRUE;

@@ -8,16 +8,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
-using TSO.Common.rendering.framework;
-using TSO.Common.rendering.framework.camera;
+using FSO.Common.Rendering.Framework;
+using FSO.Common.Rendering.Framework.Camera;
 using Microsoft.Xna.Framework;
-using tso.world.Model;
+using FSO.LotView.Model;
 using Microsoft.Xna.Framework.Graphics;
-using TSO.Common.rendering.framework.model;
-using tso.world.Components;
+using FSO.Common.Rendering.Framework.Model;
+using FSO.LotView.Components;
+using FSO.Common.Utils;
+using FSO.Common;
 
-namespace tso.world
+namespace FSO.LotView
 {
     /// <summary>
     /// Represents world (I.E lots in the game.)
@@ -67,13 +68,17 @@ namespace tso.world
              * to world objects as well as providing various
              * state settings for the world and helper functions
              */
-            State = new WorldState(layer.Device, layer.Device.Viewport.Width, layer.Device.Viewport.Height, this);
+            State = new WorldState(layer.Device, layer.Device.Viewport.Width/FSOEnvironment.DPIScaleFactor, layer.Device.Viewport.Height/FSOEnvironment.DPIScaleFactor, this);
             State.AmbientLight = new Texture2D(layer.Device, 256, 256);
-            State._3D = new tso.world.Utils._3DWorldBatch(State);
-            State._2D = new tso.world.Utils._2DWorldBatch(layer.Device, World2D.NUM_2D_BUFFERS, World2D.BUFFER_SURFACE_FORMATS, World2D.SCROLL_BUFFER);
+            State._3D = new FSO.LotView.Utils._3DWorldBatch(State);
+            State._2D = new FSO.LotView.Utils._2DWorldBatch(layer.Device, World2D.NUM_2D_BUFFERS, 
+                World2D.BUFFER_SURFACE_FORMATS, World2D.FORMAT_ALWAYS_DEPTHSTENCIL, World2D.SCROLL_BUFFER);
             State._2D.AmbientLight = State.AmbientLight;
 
-            base.Camera = (ICamera)State.Camera;
+            PPXDepthEngine.InitGD(layer.Device);
+            if (FSOEnvironment.SoftwareDepth) PPXDepthEngine.InitScreenTargets(layer.Device);
+
+            base.Camera = State.Camera;
 
             HasInitGPU = true;
             HasInit = HasInitGPU & HasInitBlueprint;
@@ -235,6 +240,7 @@ namespace tso.world
                 if (scrollVector != Vector2.Zero)
                 {
                     State.CenterTile += scrollVector * new Vector2(0.0625f, 0.0625f);
+                    State.ScrollAnchor = null;
                 }
             }
 
@@ -283,7 +289,15 @@ namespace tso.world
         public override void Update(UpdateState state)
         {
             base.Update(state);
-            /** Check for mouse scrolling **/
+
+            if (State.ScrollAnchor != null)
+            {
+                var pelvisCenter = State.ScrollAnchor.GetPelvisPosition();
+                State.CenterTile = new Vector2(pelvisCenter.X, pelvisCenter.Y);
+                if (State.Level != State.ScrollAnchor.Level) State.Level = State.ScrollAnchor.Level;
+
+                State.CenterTile -= (State.ScrollAnchor.Level - 1) * State.WorldSpace.GetTileFromScreen(new Vector2(0, 230)) / (1 << (3 - (int)State.Zoom));
+            }
         }
 
         /// <summary>
@@ -295,14 +309,34 @@ namespace tso.world
             base.PreDraw(device);
             if (HasInit == false) { return; }
 
+            if (Blueprint != null)
+            {
+                foreach (var ent in Blueprint.Objects)
+                {
+                    ent.Update(null, State);
+                }
+            }
+
             //For all the tiles in the dirty list, re-render them
+            //PPXDepthEngine.SetPPXTarget(null, null, true);
             State._2D.Begin(this.State.Camera);
             _2DWorld.PreDraw(device, State);
+            device.SetRenderTarget(null);
             State._2D.End();
 
             State._3D.Begin(device);
-            //_3DWorld.PreDraw(device, State);
+            _3DWorld.PreDraw(device, State);
             State._3D.End();
+
+            if (FSOEnvironment.SoftwareDepth)
+            {
+
+                PPXDepthEngine.SetPPXTarget(null, null, true);
+                InternalDraw(device);
+                device.SetRenderTarget(null);
+            }
+
+            return;
         }
 
         /// <summary>
@@ -312,20 +346,36 @@ namespace tso.world
         public override void Draw(GraphicsDevice device){
             if (HasInit == false) { return; }
 
+            if (FSOEnvironment.SoftwareDepth)
+            {
+                PPXDepthEngine.DrawBackbuffer();
+                return;
+            }
+
+            InternalDraw(device);
+        }
+
+        private void InternalDraw(GraphicsDevice device)
+        {
+            State._2D.OutputDepth = true;
+
             State._3D.Begin(device);
             State._2D.Begin(this.State.Camera);
 
             var pxOffset = -State.WorldSpace.GetScreenOffset();
             State._2D.ResetMatrices(device.Viewport.Width, device.Viewport.Height);
-            //_3DWorld.DrawBefore2D(device, State);
-            
+            _3DWorld.DrawBefore2D(device, State);
+
             _2DWorld.Draw(device, State);
+
             State._2D.Pause();
             State._2D.Resume();
+
             _3DWorld.DrawAfter2D(device, State);
             State._2D.SetScroll(pxOffset);
             State._2D.End();
             State._3D.End();
+            State._2D.OutputDepth = false;
         }
 
         /// <summary>
@@ -353,12 +403,5 @@ namespace tso.world
             State._2D.Begin(this.State.Camera);
             return _2DWorld.GetObjectThumb(objects, positions, gd, State);
         }
-
-        public Texture2D GetLotThumb(GraphicsDevice gd)
-        {
-            State._2D.Begin(this.State.Camera);
-            return _2DWorld.GetLotThumb(gd, State);
-        }
-
     }
 }

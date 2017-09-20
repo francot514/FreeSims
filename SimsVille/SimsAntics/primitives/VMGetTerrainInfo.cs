@@ -1,13 +1,13 @@
-﻿using TSO.Files.utils;
-using tso.world.Model;
-using TSO.SimsAntics.Engine;
+﻿using FSO.Files.Utils;
+using FSO.LotView.Model;
+using FSO.SimAntics.Engine;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMGetTerrainInfo : VMPrimitiveHandler
     {
@@ -18,11 +18,10 @@ namespace TSO.SimsAntics.Primitives
 
             if (obj.Position == LotTilePos.OUT_OF_WORLD) return VMPrimitiveExitCode.GOTO_FALSE;
 
-            for (int i=0; i<5; i++)
+            for (int i = 0; i < 5; i++)
             {
                 if (operand.Unknown[i] != 0) { }
             }
-            
 
             //TODO: all.
 

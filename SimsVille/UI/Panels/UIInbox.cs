@@ -1,13 +1,7 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+﻿/*
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file, You can obtain one at
 http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
 */
 
 using System;
@@ -15,14 +9,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
-using TSOVille.LUI;
-using TSOVille.Code.UI.Controls;
-using TSOVille.Code.UI.Framework;
-using TSOVille.Code.UI.Model;
-using TSOVille.Code.UI.Screens;
-using TSOVille.Code.Utils;
+using FSO.Client.UI.Controls;
+using FSO.Client.UI.Framework;
+using FSO.Client.UI.Model;
+using FSO.Client.UI.Screens;
+using FSO.Client.Utils;
+using FSO.Client.UI.Framework.Parser;
 
-namespace TSOVille.Code.UI.Panels
+namespace FSO.Client.UI.Panels
 {
     public class UIInbox : UIContainer
     {
@@ -33,12 +27,10 @@ namespace TSOVille.Code.UI.Panels
         public UIButton CloseButton { get; set; }
         public UIButton MessageButton { get; set; }
         private UIInboxDropdown Dropdown;
-        
 
         public UIInbox()
         {
             var script = this.RenderScript("messageinbox.uis");
-
 
             Background = new UIImage(backgroundImage);
             this.AddAt(0, Background);
@@ -55,7 +47,7 @@ namespace TSOVille.Code.UI.Panels
             var msgStyleProperty = script.Create<UIListBoxTextStyle>("PropertyMessageColors", InboxListBox.FontStyle);
             var msgStyleNeighborhood = script.Create<UIListBoxTextStyle>("NeighborhoodMessageColors", InboxListBox.FontStyle);
 
-            var item = new UIListBoxItem("idk", "!", "", "||", "", "21:21 - 4/2/2014", "", "The Sims", "", "Please stop remaking our game");
+            var item = new UIListBoxItem("idk", "!", "", "||", "", "21:21 - 4/2/2014", "", "The Sims Online", "", "Please stop remaking our game");
             item.CustomStyle = msgStyleSim;
 
             InboxListBox.Items.Add(item);
@@ -78,7 +70,7 @@ namespace TSOVille.Code.UI.Panels
 
                 //TODO: UIMessageType should be changed to Compose when later on to send letters
                 //      instead of IMs.
-                //GameFacade.MessageController.PassMessage(Author, null);
+                GameFacade.MessageController.PassMessage(Author, null);
             }
         }
 
@@ -87,8 +79,8 @@ namespace TSOVille.Code.UI.Panels
         /// </summary>
         private void Close(UIElement button)
         {
-            //var screen = (CoreGameScreen)Parent;
-            //screen.CloseInbox();
+            var screen = (CoreGameScreen)Parent;
+            screen.CloseInbox();
         }
     }
 
@@ -106,15 +98,12 @@ namespace TSOVille.Code.UI.Panels
         public UIListBox MenuListBox { get; set; }
 
         public UIImage Background;
-
         public bool open;
 
-        TSOVille.Code.UI.Framework.Parser.UIScript Script;
+        UIScript Script;
 
         public UIInboxDropdown()
         {
-
-            
             Script = this.RenderScript("messageinboxmenu.uis");
             Background = new UIImage(backgroundCollapsedImage);
             this.AddAt(0, Background);
@@ -144,7 +133,13 @@ namespace TSOVille.Code.UI.Panels
                 Background.SetSize(backgroundExpandedImage.Width, backgroundExpandedImage.Height);
                 UIListBoxTextStyle Style = Script.Create<UIListBoxTextStyle>("SimMessageColors", MenuListBox.FontStyle);
 
-                
+                //TODO: This should eventually be made to show only a player's friends.
+                foreach (UISim Avatar in Network.NetworkFacade.AvatarsInSession)
+                {
+                    UIListBoxItem AvatarItem = new UIListBoxItem(Avatar.GUID, Avatar.Name);
+                    AvatarItem.CustomStyle = Style;
+                    MenuListBox.Items.Add(AvatarItem);
+                }
             }
 
             open = !open;

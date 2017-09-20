@@ -8,15 +8,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.SimsAntics.Engine;
-using TSO.Files.utils;
-using TSO.SimsAntics.Engine.Scopes;
-using TSO.SimsAntics.Engine.Utils;
-using TSO.Files.formats.iff.chunks;
+using FSO.SimAntics.Engine;
+using FSO.Files.Utils;
+using FSO.SimAntics.Engine.Scopes;
+using FSO.SimAntics.Engine.Utils;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.Vitaboy;
 using System.IO;
-using TSO.SimAntics.Model;
 
-namespace TSO.SimsAntics.Primitives
+namespace FSO.SimAntics.Primitives
 {
     public class VMChangeSuitOrAccessory : VMPrimitiveHandler {
         public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
@@ -27,7 +27,7 @@ namespace TSO.SimsAntics.Primitives
 
             if ((operand.Flags & VMChangeSuitOrAccessoryFlags.Update) == VMChangeSuitOrAccessoryFlags.Update)
             { //update default outfit with outfit in stringset 304 with index in temp 0
-                avatar.DefaultSuits.Daywear = new VMOutfitReference(Convert.ToUInt64(context.Callee.Object.Resource.Get<STR>(304).GetString((context.Thread.TempRegisters[0])), 16));
+                avatar.DefaultSuits.Daywear = Convert.ToUInt64(context.Callee.Object.Resource.Get<STR>(304).GetString((context.Thread.TempRegisters[0])), 16);
                 avatar.BodyOutfit = avatar.DefaultSuits.Daywear;
             } 
             else 
@@ -41,7 +41,7 @@ namespace TSO.SimsAntics.Primitives
                 if (suit is string)
                 {
                     var suitFile = (string)suit;
-                    var apr = TSO.Content.Content.Get().AvatarAppearances.Get(suitFile);
+                    var apr = FSO.Content.Content.Get().AvatarAppearances.Get(suitFile);
                     if ((operand.Flags & VMChangeSuitOrAccessoryFlags.Remove) == VMChangeSuitOrAccessoryFlags.Remove)
                     {
                         avatar.BoundAppearances.Remove(suitFile);
@@ -56,7 +56,7 @@ namespace TSO.SimsAntics.Primitives
                 {
                     var oft = (ulong)suit;
                     avatar.SetPersonData(Model.VMPersonDataVariable.CurrentOutfit, operand.SuitData);
-                    avatar.BodyOutfit = new VMOutfitReference(oft);
+                    avatar.BodyOutfit = oft;
                 }
             }
 

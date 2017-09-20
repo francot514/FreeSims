@@ -8,10 +8,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.formats.iff.chunks;
-using TSO.SimsAntics.Primitives;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.SimAntics.Primitives;
 
-namespace TSO.SimsAntics.Engine
+namespace FSO.SimAntics.Engine
 {
     public class VMTranslator
     {

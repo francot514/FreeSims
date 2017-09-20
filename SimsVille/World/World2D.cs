@@ -9,17 +9,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
-using tso.world.Model;
+using FSO.LotView.Model;
 using Microsoft.Xna.Framework;
-using tso.common.utils;
-using TSO.Common.rendering.framework;
-using tso.world.Components;
+using FSO.Common.Utils;
+using FSO.Common.Rendering.Framework;
+using FSO.LotView.Components;
 using System.IO;
-using tso.world.Utils;
-using TSOVille.Code.Utils;
-using TSO.Common.utils;
+using FSO.LotView.Utils;
 
-namespace tso.world
+namespace FSO.LotView
 {
     /// <summary>
     /// Handles rendering the 2D world
@@ -32,36 +30,72 @@ namespace tso.world
 
             /** Static Object Buffers **/
             SurfaceFormat.Color,
-            /** Depth buffer must be single surface format for precision reasons **/
-            SurfaceFormat.Single,
+            SurfaceFormat.Color, //depth, using a 24-bit packed format
 
             /** Terrain Color **/
             SurfaceFormat.Color,
 
             /** Object ID buffer **/
-            SurfaceFormat.Single,
-
-            /** Archetecture buffers **/
             SurfaceFormat.Color,
-            SurfaceFormat.Single,
+
+            /** Floor buffers **/
+            SurfaceFormat.Color,
+            SurfaceFormat.Color, //depth
 
             /** Terrain Depth **/
             SurfaceFormat.Color,
-            /** Lot Thumbnail Buffer **/
-	        SurfaceFormat.Color
 
+            /** Wall buffers **/
+            SurfaceFormat.Color,
+            SurfaceFormat.Color, //depth
+
+            //Thumbnail depth
+            SurfaceFormat.Color,
         };
 
-        public static readonly int NUM_2D_BUFFERS = 9;
+        public static bool[] FORMAT_ALWAYS_DEPTHSTENCIL = new bool[] {
+            /** Thumbnail buffer **/
+            true,
+
+            /** Static Object Buffers **/
+            true,
+            false, //depth, using a 24-bit packed format
+
+            /** Terrain Color **/
+            true,
+
+            /** Object ID buffer **/
+            true,
+
+            /** Floor buffers **/
+            true,
+            false, //depth
+
+            /** Terrain Depth **/
+            false,
+
+            /** Wall buffers **/
+            true,
+            false, //depth
+
+            //Thumbnail depth
+            false,
+        };
+
+        public static readonly int NUM_2D_BUFFERS = 11;
         public static readonly int BUFFER_THUMB = 0; //used for drawing thumbnails
         public static readonly int BUFFER_STATIC_OBJECTS_PIXEL = 1;
         public static readonly int BUFFER_STATIC_OBJECTS_DEPTH = 2;
         public static readonly int BUFFER_STATIC_TERRAIN = 3;
         public static readonly int BUFFER_OBJID = 4;
-        public static readonly int BUFFER_ARCHETECTURE_PIXEL = 5;
-        public static readonly int BUFFER_ARCHETECTURE_DEPTH = 6;
+        public static readonly int BUFFER_FLOOR_PIXEL = 5;
+        public static readonly int BUFFER_FLOOR_DEPTH = 6;
         public static readonly int BUFFER_STATIC_TERRAIN_DEPTH = 7;
-        public static readonly int BUFFER_LOTTHUMB = 8;
+
+        public static readonly int BUFFER_WALL_PIXEL = 8;
+        public static readonly int BUFFER_WALL_DEPTH = 9;
+        public static readonly int BUFFER_THUMB_DEPTH = 10;
+
 
         public static readonly int SCROLL_BUFFER = 512; //resolution to add to render size for scroll reasons
 
@@ -69,11 +103,13 @@ namespace tso.world
         private Blueprint Blueprint;
         private Dictionary<WorldComponent, WorldObjectRenderInfo> RenderInfo = new Dictionary<WorldComponent, WorldObjectRenderInfo>();
 
-        private List<_2DDrawGroup> StaticObjectsCache = new List<_2DDrawGroup>();
+        private List<_2DDrawBuffer> StaticObjectsCache = new List<_2DDrawBuffer>();
         private ScrollBuffer StaticObjects;
 
-        private List<_2DDrawGroup> StaticArchCache = new List<_2DDrawGroup>();
-        private ScrollBuffer StaticArch;
+        private List<_2DDrawBuffer> StaticFloorCache = new List<_2DDrawBuffer>();
+        private List<_2DDrawBuffer> StaticWallCache = new List<_2DDrawBuffer>();
+        private ScrollBuffer StaticFloor;
+        private ScrollBuffer StaticWall;
 
         private int TicksSinceLight = 0;
 
@@ -105,7 +141,7 @@ namespace tso.world
             var _2d = state._2D;
             Promise<Texture2D> bufferTexture = null;
 
-            var worldBounds = new Rectangle((-pxOffset).ToPoint(), new Point(1, 1));
+            var worldBounds = new Rectangle((int)(-pxOffset).X, (int)(-pxOffset).Y, 1, 1);
 
             state.TempDraw = true;
             state._2D.OBJIDMode = true;
@@ -124,7 +160,7 @@ namespace tso.world
 
                                 var oPx = state.WorldSpace.GetScreenFromTile(tilePosition);
                                 obj.ValidateSprite(state);
-                                var offBound = new Rectangle(obj.Bounding.Location + oPx.ToPoint(), obj.Bounding.Size);
+                                var offBound = new Rectangle(obj.Bounding.Location.X + (int)oPx.X, obj.Bounding.Location.Y + (int)oPx.Y, obj.Bounding.Width, obj.Bounding.Height);
                                 if (!offBound.Intersects(worldBounds)) continue;
 
                                 var renderInfo = GetRenderInfo(obj);
@@ -136,7 +172,12 @@ namespace tso.world
                     }
 
                     state._3D.Begin(gd);
-                    
+                    foreach (var avatar in Blueprint.Avatars)
+                    {
+                        _2d.OffsetPixel(state.WorldSpace.GetScreenFromTile(avatar.Position));
+                        _2d.OffsetTile(avatar.Position);
+                        avatar.Draw(gd, state);
+                    }
                     state._3D.End();
                 }
                 
@@ -147,9 +188,10 @@ namespace tso.world
             state.CenterTile = oldCenter;
 
             var tex = bufferTexture.Get();
-            Single[] data = new float[1];
-            tex.GetData<Single>(data);
-            return (short)Math.Round(data[0]*65535f);
+            Color[] data = new Color[1];
+            tex.GetData<Color>(data);
+            var f = Vector3.Dot(new Vector3(data[0].R / 255.0f, data[0].G / 255.0f, data[0].B / 255.0f), new Vector3(1.0f, 1/255.0f, 1/65025.0f));
+            return (short)Math.Round(f*65535f);
         }
 
         /// <summary>
@@ -180,9 +222,10 @@ namespace tso.world
 
             var _2d = state._2D;
             Promise<Texture2D> bufferTexture = null;
+            Promise<Texture2D> depthTexture = null;
             state._2D.OBJIDMode = false;
             Rectangle bounds = new Rectangle();
-            using (var buffer = state._2D.WithBuffer(BUFFER_THUMB, ref bufferTexture))
+            using (var buffer = state._2D.WithBuffer(BUFFER_THUMB, ref bufferTexture, BUFFER_THUMB_DEPTH, ref depthTexture))
             {
                 _2d.SetScroll(new Vector2());
                 while (buffer.NextPass())
@@ -234,79 +277,6 @@ namespace tso.world
         }
 
         /// <summary>
-        /// Gets the current lot's thumbnail.
-        /// </summary>
-        /// <param name="objects">The object components to draw.</param>
-        /// <param name="gd">GraphicsDevice instance.</param>
-        /// <param name="state">WorldState instance.</param>
-        /// <returns>Object's ID if the object was found at the given position.</returns>
-        public Texture2D GetLotThumb(GraphicsDevice gd, WorldState state)
-        {
-            var oldZoom = state.Zoom;
-            var oldRotation = state.Rotation;
-            var oldLevel = state.Level;
-
-            //full invalidation because we must recalculate all object sprites. slow but necessary!
-            state.Zoom = WorldZoom.Far;
-            state.Rotation = oldRotation;
-            state.Level = Blueprint.Stories;
-            state.WorldSpace.Invalidate();
-            state.InvalidateCamera();
-
-            var oldCenter = state.CenterTile;
-            state.CenterTile = new Vector2(Blueprint.Width / 2, Blueprint.Height / 2);
-            var pxOffset = -state.WorldSpace.GetScreenOffset();
-            //pxOffset -= new Vector2(2304 - state.WorldSpace.WorldPxWidth, 2304 - state.WorldSpace.WorldPxHeight) / 2;
-            state.TempDraw = true;
-
-            var _2d = state._2D;
-            _2d.AmbientLight = TextureGenerator.GetPxWhite(gd);
-            Promise<Texture2D> bufferTexture = null;
-            state._2D.OBJIDMode = false;
-            using (var buffer = state._2D.WithBuffer(BUFFER_LOTTHUMB, ref bufferTexture))
-            {
-                _2d.SetScroll(pxOffset);
-                while (buffer.NextPass())
-                {
-                    _2d.Pause();
-                    _2d.Resume();
-                    Blueprint.Terrain.Draw(gd, state);
-                    //Blueprint.FloorComp.DrawBound = new Rectangle(6, 6, Blueprint.Width - 13, Blueprint.Height - 13);
-                    Blueprint.FloorComp.Draw(gd, state);
-                    Blueprint.FloorComp.DrawBound = null;
-                    Blueprint.WallComp.Draw(gd, state);
-                    _2d.Pause();
-
-                    _2d.Resume();
-                    foreach (var obj in Blueprint.Objects)
-                    {
-                        var renderInfo = GetRenderInfo(obj);
-                        var tilePosition = obj.Position;
-                        _2d.OffsetPixel(state.WorldSpace.GetScreenFromTile(tilePosition));
-                        _2d.OffsetTile(tilePosition);
-                        obj.Draw(gd, state);
-                    }
-                    //Blueprint.RoofComp.Draw(gd, state);
-
-                }
-            }
-
-            //return things to normal
-            _2d.AmbientLight = state.AmbientLight;
-            state.WorldSpace.Invalidate();
-            state.InvalidateCamera();
-            state.TempDraw = false;
-            state.CenterTile = oldCenter;
-
-            state.Zoom = oldZoom;
-            state.Rotation = oldRotation;
-            state.Level = oldLevel;
-
-            var tex = bufferTexture.Get();
-            return TextureUtils.Decimate(tex, gd, 4);
-        }
-
-        /// <summary>
         /// Prep work before screen is painted
         /// </summary>
         /// <param name="gd"></param>
@@ -328,9 +298,12 @@ namespace tso.world
              */
 
             var redrawStaticObjects = false;
-            var redrawWalls = false;
+            var redrawFloor = false;
+            var redrawWall = false;
 
             var recacheWalls = false;
+            var recacheFloors = false;
+            var recacheTerrain = false;
             var recacheObjects = false;
 
             if (TicksSinceLight++ > 60 * 4) damage.Add(new BlueprintDamage(BlueprintDamageType.LIGHTING_CHANGED));
@@ -344,18 +317,20 @@ namespace tso.world
                     case BlueprintDamageType.LEVEL_CHANGED:
                         recacheObjects = true;
                         recacheWalls = true;
-                        redrawWalls = true;
-                        redrawStaticObjects = true;
+                        recacheFloors = true;
+                        recacheTerrain = true;
                         break;
                     case BlueprintDamageType.SCROLL:
                         if (StaticObjects == null || StaticObjects.PxOffset != GetScrollIncrement(pxOffset))
                         {
-                            redrawWalls = true;
+                            redrawFloor = true;
+                            redrawWall = true;
                             redrawStaticObjects = true;
                         }
                         break;
                     case BlueprintDamageType.LIGHTING_CHANGED:
-                        redrawWalls = true;
+                        redrawFloor = true;
+                        redrawWall = true;
                         redrawStaticObjects = true;
 
                         Blueprint.GenerateRoomLights();
@@ -368,35 +343,45 @@ namespace tso.world
                         /** Redraw if its in static layer **/
                         info = GetRenderInfo(item.Component);
                         if (info.Layer == WorldObjectRenderLayer.STATIC){
-                            redrawStaticObjects = true;
                             recacheObjects = true;
+                            info.Layer = WorldObjectRenderLayer.DYNAMIC;
                         }
+                        if (item.Component is ObjectComponent) ((ObjectComponent)item.Component).DynamicCounter = 0;
                         break;
                     case BlueprintDamageType.OBJECT_GRAPHIC_CHANGE:
                         /** Redraw if its in static layer **/
                         info = GetRenderInfo(item.Component);
                         if (info.Layer == WorldObjectRenderLayer.STATIC){
-                            redrawStaticObjects = true;
                             recacheObjects = true;
                             info.Layer = WorldObjectRenderLayer.DYNAMIC;
                         }
+                        if (item.Component is ObjectComponent) ((ObjectComponent)item.Component).DynamicCounter = 0;
                         break;
                     case BlueprintDamageType.OBJECT_RETURN_TO_STATIC:
                         info = GetRenderInfo(item.Component);
                         if (info.Layer == WorldObjectRenderLayer.DYNAMIC)
                         {
-                            redrawStaticObjects = true;
                             recacheObjects = true;
                             info.Layer = WorldObjectRenderLayer.STATIC;
                         }
                         break;
                     case BlueprintDamageType.WALL_CUT_CHANGED:
-                    case BlueprintDamageType.FLOOR_CHANGED:
-                    case BlueprintDamageType.WALL_CHANGED:
-                        redrawWalls = true;
                         recacheWalls = true;
                         break;
+                    case BlueprintDamageType.ROOF_STYLE_CHANGED:
+                        Blueprint.RoofComp.StyleDirty = true;
+                        break;
+                    case BlueprintDamageType.FLOOR_CHANGED:
+                    case BlueprintDamageType.WALL_CHANGED:
+                        recacheTerrain = true;
+                        recacheFloors = true;
+                        recacheWalls = true;
+                        Blueprint.RoofComp.ShapeDirty = true;
+                        break;
                 }
+                if (recacheFloors || recacheTerrain) redrawFloor = true;
+                if (recacheWalls) redrawWall = true;
+                if (recacheObjects) redrawStaticObjects = true;
             }
             damage.Clear();
 
@@ -409,32 +394,58 @@ namespace tso.world
 
             pxOffset = newOff;
 
+            if (recacheTerrain)
+                Blueprint.Terrain.RegenTerrain(gd, state, Blueprint);
+
             if (recacheWalls)
             {
                 _2d.Pause();
                 _2d.Resume(); //clear the sprite buffer before we begin drawing what we're going to cache
-                Blueprint.Terrain.RegenTerrain(gd, state, Blueprint);
-                Blueprint.FloorComp.Draw(gd, state);
                 Blueprint.WallComp.Draw(gd, state);
-                StaticArchCache.Clear();
-                _2d.End(StaticArchCache, true);
+                ClearDrawBuffer(StaticWallCache);
+                _2d.End(StaticWallCache, true);
             }
 
-            if (redrawWalls)
+            if (recacheFloors)
+            {
+                _2d.Pause();
+                _2d.Resume(); //clear the sprite buffer before we begin drawing what we're going to cache
+                Blueprint.FloorComp.Draw(gd, state);
+                ClearDrawBuffer(StaticFloorCache);
+                _2d.End(StaticFloorCache, true);
+            }
+
+            if (redrawFloor)
             {
                 /** Draw archetecture to a texture **/
                 Promise<Texture2D> bufferTexture = null;
                 Promise<Texture2D> depthTexture = null;
-                using (var buffer = state._2D.WithBuffer(BUFFER_ARCHETECTURE_PIXEL, ref bufferTexture, BUFFER_ARCHETECTURE_DEPTH, ref depthTexture))
+                using (var buffer = state._2D.WithBuffer(BUFFER_FLOOR_PIXEL, ref bufferTexture, BUFFER_FLOOR_DEPTH, ref depthTexture))
                 {
                     _2d.SetScroll(pxOffset);
                     while (buffer.NextPass())
                     {
-                        _2d.RenderCache(StaticArchCache);
+                        _2d.RenderCache(StaticFloorCache);
+                        Blueprint.Terrain.DepthMode = _2d.OutputDepth;
                         Blueprint.Terrain.Draw(gd, state);
                     }
                 }
-                StaticArch = new ScrollBuffer(bufferTexture.Get(), depthTexture.Get(), pxOffset, new Vector3(tileOffset, 0));
+                StaticFloor = new ScrollBuffer(bufferTexture.Get(), depthTexture.Get(), pxOffset, new Vector3(tileOffset, 0));
+            }
+
+            if (redrawWall)
+            {
+                Promise<Texture2D> bufferTexture = null;
+                Promise<Texture2D> depthTexture = null;
+                using (var buffer = state._2D.WithBuffer(BUFFER_WALL_PIXEL, ref bufferTexture, BUFFER_WALL_DEPTH, ref depthTexture))
+                {
+                    _2d.SetScroll(pxOffset);
+                    while (buffer.NextPass())
+                    {
+                        _2d.RenderCache(StaticWallCache);
+                    }
+                }
+                StaticWall = new ScrollBuffer(bufferTexture.Get(), depthTexture.Get(), pxOffset, new Vector3(tileOffset, 0));
             }
 
             if (recacheObjects)
@@ -454,9 +465,8 @@ namespace tso.world
                         _2d.SetObjID(obj.ObjectID);
                         obj.Draw(gd, state);
                     }
-
                 }
-                StaticObjectsCache.Clear();
+                ClearDrawBuffer(StaticObjectsCache);
                 _2d.End(StaticObjectsCache, true);
             }
 
@@ -472,7 +482,6 @@ namespace tso.world
                         _2d.RenderCache(StaticObjectsCache);
                     }
                 }
-
                 StaticObjects = new ScrollBuffer(bufferTexture.Get(), depthTexture.Get(), pxOffset, new Vector3(tileOffset, 0));
             }
             state.CenterTile = oldCenter; //revert to our real scroll position
@@ -499,10 +508,25 @@ namespace tso.world
 
             var pxOffset = -state.WorldSpace.GetScreenOffset();
             var tileOffset = state.CenterTile;
-            if (StaticArch != null)
-                _2d.DrawScrollBuffer(StaticArch, pxOffset, new Vector3(tileOffset, 0), state);
+            _2d.Begin(state.Camera);
+            if (StaticFloor != null)
+            {
+                _2d.DrawScrollBuffer(StaticFloor, pxOffset, new Vector3(tileOffset, 0), state);
+                _2d.Pause();
+                _2d.Resume();
+            }
+            if (StaticWall != null)
+            {
+                _2d.DrawScrollBuffer(StaticWall, pxOffset, new Vector3(tileOffset, 0), state);
+                _2d.Pause();
+                _2d.Resume();
+            }
             if (StaticObjects != null)
+            {
                 _2d.DrawScrollBuffer(StaticObjects, pxOffset, new Vector3(tileOffset, 0), state);
+                _2d.Pause();
+                _2d.Resume();
+            }
 
             _2d.End();
             _2d.Begin(state.Camera);
@@ -516,7 +540,7 @@ namespace tso.world
             var size = new Vector2(state.WorldSpace.WorldPxWidth, state.WorldSpace.WorldPxHeight);
             var mainBd = state.WorldSpace.GetScreenFromTile(state.CenterTile);
             var diff = pxOffset - mainBd;
-            var worldBounds = new Rectangle((pxOffset).ToPoint(), size.ToPoint());
+            var worldBounds = new Rectangle((int)pxOffset.X, (int)pxOffset.Y, (int)size.X, (int)size.Y);
 
             foreach (var obj in Blueprint.Objects)
             {
@@ -527,7 +551,7 @@ namespace tso.world
                     var tilePosition = obj.Position;
                     var oPx = state.WorldSpace.GetScreenFromTile(tilePosition);
                     obj.ValidateSprite(state);
-                    var offBound = new Rectangle(obj.Bounding.Location + oPx.ToPoint(), obj.Bounding.Size);
+                    var offBound = new Rectangle(obj.Bounding.Location.X + (int)oPx.X, obj.Bounding.Location.Y + (int)oPx.Y, obj.Bounding.Width, obj.Bounding.Height);
                     if (!offBound.Intersects(worldBounds)) continue;
                     _2d.OffsetPixel(oPx);
                     _2d.OffsetTile(tilePosition);
@@ -535,6 +559,12 @@ namespace tso.world
                     obj.Draw(gd, state);
                 }
             }
+        }
+
+        public void ClearDrawBuffer(List<_2DDrawBuffer> buf)
+        {
+            foreach (var b in buf) b.Dispose();
+            buf.Clear();
         }
     }
 

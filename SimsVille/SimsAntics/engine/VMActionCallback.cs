@@ -8,10 +8,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.formats.iff.chunks;
-using TSO.Content;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.Content;
+using FSO.SimAntics.Marshals.Threads;
 
-namespace TSO.SimsAntics.Engine
+namespace FSO.SimAntics.Engine
 {
     public class VMActionCallback
     {
@@ -19,13 +20,14 @@ namespace TSO.SimsAntics.Engine
 
         //type 1 variables
         private VMEntity Target;
-        private byte Interaction;
+        private short Interaction;
         private bool SetParam;
         private VM vm;
         private VMEntity StackObject;
         private VMEntity Caller;
+        private bool IsTree; //true if we're calling a tree instead of an interaction number
 
-        public VMActionCallback(VM vm, byte interactionNumber, VMEntity target, VMEntity stackObj, VMEntity caller, bool paramAsObjectID) //type 1: interaction callback
+        public VMActionCallback(VM vm, short interactionNumber, VMEntity target, VMEntity stackObj, VMEntity caller, bool paramAsObjectID, bool isTree) //type 1: interaction callback
         {
             this.type = 1;
             this.Target = target;
@@ -34,6 +36,7 @@ namespace TSO.SimsAntics.Engine
             this.StackObject = stackObj;
             this.vm = vm;
             this.Caller = caller;
+            this.IsTree = isTree;
         }
 
         //type 2 will be function callback.
@@ -42,8 +45,21 @@ namespace TSO.SimsAntics.Engine
             if (type == 1) {
                 BHAV bhav;
                 GameObject CodeOwner = null;
-                var Action = Target.TreeTable.InteractionByIndex[Interaction];
-                ushort ActionID = Action.ActionFunction;
+                ushort ActionID;
+                TTABFlags ActionFlags;
+                string ActionName = "";
+                if (IsTree)
+                {
+                    ActionFlags = TTABFlags.Leapfrog;
+                    ActionID = (ushort)Interaction;
+                }
+                else
+                {
+                    var Action = Target.TreeTable.InteractionByIndex[(byte)Interaction];
+                    ActionID = Action.ActionFunction;
+                    ActionFlags = Action.Flags;
+                    ActionName = Target.TreeTableStrings.GetString((int)Action.TTAIndex);
+                }
 
                 if (ActionID < 4096)
                 { //global
@@ -53,13 +69,13 @@ namespace TSO.SimsAntics.Engine
                 else if (ActionID < 8192)
                 { //local
                     bhav = Target.Object.Resource.Get<BHAV>(ActionID);
-                    
                 }
                 else
                 { //semi-global
-                    bhav = Target.SemiGlobal.Resource.Get<BHAV>(ActionID);
-                    //CodeOwner = Target.SemiGlobal.Resource;
+                    bhav = Target.SemiGlobal.Get<BHAV>(ActionID);
                 }
+                if (bhav == null) return; //???
+                if (IsTree) ActionName = bhav.ChunkLabel;
 
                 CodeOwner = Target.Object;
                 var routine = vm.Assemble(bhav);
@@ -67,21 +83,52 @@ namespace TSO.SimsAntics.Engine
                 if (SetParam) args[0] = cbOwner.ObjectID;
 
                 Caller.Thread.EnqueueAction(
-                    new TSO.SimsAntics.Engine.VMQueuedAction
+                    new FSO.SimAntics.Engine.VMQueuedAction
                     {
                         Callee = Target,
                         CodeOwner = CodeOwner,
-                        Routine = routine,
-                        Name = Target.TreeTableStrings.GetString((int)Action.TTAIndex),
+                        ActionRoutine = routine,
+                        Name = ActionName,
                         StackObject = this.StackObject,
                         Args = args,
                         InteractionNumber = Interaction,
                         Priority = (short)VMQueuePriority.Maximum, //not sure if this is meant to be the case!
-                        Flags = (TTABFlags)Action.Flags
+                        Flags = ActionFlags
                     }
                 );
             }
         }
 
+        #region VM Marshalling Functions
+        public VMActionCallbackMarshal Save()
+        {
+            return new VMActionCallbackMarshal
+            {
+                Type = type,
+                Target = (Target == null) ? (short)0 : Target.ObjectID,
+                Interaction = Interaction,
+                SetParam = SetParam,
+                StackObject = (StackObject == null) ? (short)0 : StackObject.ObjectID,
+                Caller = (Caller == null) ? (short)0 : Caller.ObjectID,
+                IsTree = IsTree
+            };
+        }
+
+        public void Load(VMActionCallbackMarshal input, VMContext context)
+        {
+            type = input.Type;
+            Target = context.VM.GetObjectById(input.Target);
+            Interaction = input.Interaction;
+            SetParam = input.SetParam;
+            StackObject = context.VM.GetObjectById(input.StackObject);
+            Caller = context.VM.GetObjectById(input.Caller);
+            IsTree = input.IsTree;
+        }
+
+        public VMActionCallback(VMActionCallbackMarshal input, VMContext context)
+        {
+            Load(input, context);
+        }
+        #endregion
     }
 }

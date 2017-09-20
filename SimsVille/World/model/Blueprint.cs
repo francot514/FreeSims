@@ -8,14 +8,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using tso.world.Components;
-using tso.world.Utils;
+using FSO.LotView.Components;
+using FSO.LotView.Utils;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
+using tso.world.Components;
+using tso.world.Model;
 
-
-
-namespace tso.world.Model
+namespace FSO.LotView.Model
 {
     /// <summary>
     /// Holds all the objects that exist in the world for rendering
@@ -28,52 +28,47 @@ namespace tso.world.Model
         public int Width;
         public int Height;
         public sbyte Stories = 5;
-        public bool JobLot;
-        public LotTypes LotType;
+
         /// <summary>
         /// Only read these arrays, do not modify them!
         /// </summary>
         public WallTile[][] Walls;
         public List<int>[] WallsAt;
         public WallComponent WallComp;
-        
-        public FloorTile[][] Floors;
-        public FloorComponent FloorComp;
         public RoofComponent RoofComp;
 
-        public List<Room> Rooms;
-
+        public FloorTile[][] Floors;
+        public FloorComponent FloorComp;
 
         public bool[][] Supported; //directly the VM's copy at all times. DO NOT MODIFY.
 
         public List<ObjectComponent> Objects = new List<ObjectComponent>();
         public List<AvatarComponent> Avatars = new List<AvatarComponent>();
         public TerrainComponent Terrain;
-        
+
         /// <summary>
         /// Walls Cutaway sections. Remember to manage these correctly - i.e remove when you're finished with them!
         /// </summary>
         /// 
-        public List<Rectangle> Cutaway = new List<Rectangle>();
-        
+        public bool[] Cutaway;
+
         public Color OutsideColor = Color.White;
         public RoomLighting[] Light = new RoomLighting[0];
         public uint[][] RoomMap;
+        public List<Room> Rooms = new List<Room>();
 
         public Color[] RoomColors;
 
         public Blueprint(int width, int height){
             this.Width = width;
             this.Height = height;
-            JobLot = false;
-            Rooms = new List<Room>();
-            
+
             var numTiles = width * height;
             this.WallComp = new WallComponent();
             WallComp.blueprint = this;
             this.FloorComp = new FloorComponent();
             FloorComp.blueprint = this;
-            RoofComp = new RoofComponent(this);
+            this.RoofComp = new RoofComponent(this);
             RoomColors = new Color[65536];
             this.WallsAt = new List<int>[Stories];
             this.Walls = new WallTile[Stories][];
@@ -88,6 +83,7 @@ namespace tso.world.Model
 
                 this.Floors[i] = new FloorTile[numTiles];
             }
+            this.Cutaway = new bool[numTiles];
         }
 
         public void GenerateRoomLights()
@@ -112,7 +108,14 @@ namespace tso.world.Model
             RoomColors[65535] = Color.White;
         }
 
+        public void AddAvatar(AvatarComponent avatar){
+            this.Avatars.Add(avatar);
+        }
 
+        public void RemoveAvatar(AvatarComponent avatar)
+        {
+            this.Avatars.Remove(avatar);
+        }
 
         public void SignalWallChange()
         {
@@ -160,16 +163,6 @@ namespace tso.world.Model
         {
             Damage.Add(new BlueprintDamage(BlueprintDamageType.OBJECT_MOVE, component.TileX, component.TileY, component.Level) { Component = component });
             Objects.Remove(component);
-        }
-
-        public void AddAvatar(AvatarComponent avatar)
-        {
-            this.Avatars.Add(avatar);
-        }
-
-        public void RemoveAvatar(AvatarComponent avatar)
-        {
-            this.Avatars.Remove(avatar);
         }
 
         private ushort GetOffset(int tileX, int tileY){

@@ -8,10 +8,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.formats.iff;
-using TSO.Files.formats.iff.chunks;
+using FSO.Files.Formats.IFF;
+using FSO.Files.Formats.IFF.Chunks;
 
-namespace TSO.SimsAntics
+namespace FSO.SimAntics
 {
     public class VMRoutine
     {
