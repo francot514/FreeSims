@@ -1,14 +1,8 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
@@ -17,7 +11,7 @@ using System.Text;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 
-namespace TSOVille.Code.Utils
+namespace FSO.Common.Utils
 {
     public class TextureUtils
     {
@@ -101,55 +95,32 @@ namespace TSOVille.Code.Utils
             }
         }
 
-        public static Texture2D Decimate(Texture2D Texture, GraphicsDevice gd, int factor)
-        {
-            var size = Texture.Width * Texture.Height * 4;
-            byte[] buffer = new byte[size];
-
-            Texture.GetData(buffer);
-
-            var newWidth = Texture.Width / factor;
-            var newHeight = Texture.Height / factor;
-            var target = new byte[newWidth * newHeight * 4];
-
-            for (int y = 0; y < Texture.Height; y += factor)
-            {
-                for (int x = 0; x < Texture.Width; x += factor)
-                {
-                    for (int c = 0; c < 4; c++)
-                    {
-                        int avg = 0;
-                        int total = 0;
-                        for (int yo = y; yo < y + factor && yo < Texture.Height; yo++)
-                        {
-                            for (int xo = x; xo < x + factor && xo < Texture.Width; xo++)
-                            {
-                                avg += (int)buffer[(yo * Texture.Width + xo) * 4 + c];
-                                total++;
-                            }
-                        }
-
-                        avg /= total;
-                        if (avg > 0) { }
-                        target[((y / factor) * newWidth + (x / factor)) * 4 + c] = (byte)avg;
-                    }
-                }
-            }
-
-            var outTex = new Texture2D(gd, newWidth, newHeight);
-            outTex.SetData(target);
-            return outTex;
-        }
-
         public static Texture2D Clip(GraphicsDevice gd, Texture2D texture, Rectangle source)
         {
             var newTexture = new Texture2D(gd, source.Width, source.Height);
-
             var size = source.Width * source.Height;
             uint[] buffer = GetBuffer(size);
-            texture.GetData(0, source, buffer, 0, size);
+            if (FSOEnvironment.SoftwareDepth)
+            {
+                //opengl es does not like this
+                var texBuf = GetBuffer(texture.Width * texture.Height);
+                texture.GetData(texBuf);
+                var destOff = 0;
+                for (int y=source.Y; y<source.Bottom; y++)
+                {
+                    int offset = y * texture.Width + source.X;
+                    for (int x = 0; x < source.Width; x++)
+                    {
+                        buffer[destOff++] = texBuf[offset++];
+                    }
+                }
+            }
+            else
+            {
+                texture.GetData(0, source, buffer, 0, size);
+            }
 
-            newTexture.SetData(buffer, 0, size);
+            newTexture.SetData(buffer);
             return newTexture;
         }
 
@@ -233,7 +204,7 @@ namespace TSOVille.Code.Utils
             var ColorTo = Color.Transparent.PackedValue;
             
             var size = Texture.Width * Texture.Height;
-            uint[] buffer = SINGLE_THREADED_TEXTURE_BUFFER;
+            uint[] buffer = new uint[size];
 
             Texture.GetData<uint>(buffer);
 

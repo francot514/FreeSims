@@ -9,10 +9,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using TSO.Common.utils;
-using TSO.Files.utils;
+using FSO.Common.Utils;
+using FSO.Files.Utils;
 
-namespace TSO.Common.rendering.vitaboy
+namespace FSO.Vitaboy
 {
     /// <summary>
     /// Bindings points to meshes and appearances.
@@ -24,17 +24,9 @@ namespace TSO.Common.rendering.vitaboy
         public uint MeshFileID;
         public uint MeshTypeID;
 
-        public string MeshName; //bmd
-        public string TextureName;
-
         public uint TextureGroupID;
         public uint TextureFileID;
         public uint TextureTypeID;
-
-        public Binding TS1Copy()
-        {
-            return new Binding() { MeshName = this.MeshName, TextureName = this.TextureName };
-        }
 
         /// <summary>
         /// Reads a binding from a stream.

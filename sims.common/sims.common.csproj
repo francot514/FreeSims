@@ -55,6 +55,7 @@
     <Reference Include="MonoGame.Framework, Version=3.1.2.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\SimsVille\Dependencies\MonoGame.Framework.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="OpenTK, Version=1.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -76,19 +77,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="content\ContentID.cs" />
-    <Compile Include="content\IContentProvider.cs" />
-    <Compile Include="content\IContentReference.cs" />
+    <Compile Include="Content\ContentID.cs" />
+    <Compile Include="Content\IContent.cs" />
+    <Compile Include="Content\IContentProvider.cs" />
+    <Compile Include="Content\IContentReference.cs" />
+    <Compile Include="FSOEnvironment.cs" />
+    <Compile Include="IniConfig.cs" />
     <Compile Include="Log.cs" />
+    <Compile Include="Model\IntersectRectSet.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="rendering\framework\3DAbstract.cs" />
     <Compile Include="rendering\framework\3DComponent.cs" />
     <Compile Include="rendering\framework\3DLayer.cs" />
     <Compile Include="rendering\framework\3DScene.cs" />
+    <Compile Include="rendering\framework\3DTargetScene.cs" />
     <Compile Include="rendering\framework\camera\BasicCamera.cs" />
     <Compile Include="rendering\framework\camera\ICamera.cs" />
     <Compile Include="rendering\framework\camera\ManualCamera.cs" />
     <Compile Include="rendering\framework\camera\OrthographicCamera.cs" />
-    <Compile Include="rendering\framework\3DTargetScene.cs" />
     <Compile Include="rendering\framework\CursorManager.cs" />
     <Compile Include="rendering\framework\Game.cs" />
     <Compile Include="rendering\framework\GameScreen.cs" />
@@ -98,40 +104,31 @@
     <Compile Include="rendering\framework\io\IFocusableUI.cs" />
     <Compile Include="rendering\framework\io\InputManager.cs" />
     <Compile Include="rendering\framework\io\MouseEvent.cs" />
+    <Compile Include="rendering\framework\model\UIState.cs" />
     <Compile Include="rendering\framework\model\UpdateState.cs" />
     <Compile Include="rendering\framework\shapes\3DCube.cs" />
     <Compile Include="rendering\framework\UpdateHookDelegate.cs" />
-    <Compile Include="rendering\framework\winforms\GraphicsDeviceControl.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="rendering\framework\winforms\GraphicsDeviceService.cs" />
-    <Compile Include="rendering\framework\winforms\ServiceContainer.cs" />
-    <Compile Include="rendering\framework\winforms\WinFormsGameWindow.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="rendering\framework\3DAbstract.cs" />
     <Compile Include="rendering\vitaboy\Animation.cs" />
     <Compile Include="rendering\vitaboy\Appearance.cs" />
-    <Compile Include="rendering\vitaboy\BCF.cs" />
+    <Compile Include="rendering\vitaboy\AppearanceType.cs" />
     <Compile Include="rendering\vitaboy\Binding.cs" />
     <Compile Include="rendering\vitaboy\BlendData.cs" />
     <Compile Include="rendering\vitaboy\Bone.cs" />
-    <Compile Include="rendering\vitaboy\CFP.cs" />
+    <Compile Include="rendering\vitaboy\BoneBinding.cs" />
     <Compile Include="rendering\vitaboy\Collection.cs" />
     <Compile Include="rendering\vitaboy\HandGroup.cs" />
     <Compile Include="rendering\vitaboy\Mesh.cs" />
     <Compile Include="rendering\vitaboy\MeshVertex.cs" />
     <Compile Include="rendering\vitaboy\Outfit.cs" />
     <Compile Include="rendering\vitaboy\PurchasableOutfit.cs" />
-    <Compile Include="rendering\vitaboy\ShadowVertex.cs" />
     <Compile Include="rendering\vitaboy\Skeleton.cs" />
     <Compile Include="rendering\vitaboy\VitaboyVertex.cs" />
     <Compile Include="utils\DirectionUtils.cs" />
     <Compile Include="utils\FileUtils.cs" />
     <Compile Include="utils\HTMLPrinter.cs" />
     <Compile Include="utils\IffPrinter.cs" />
+    <Compile Include="utils\PPXDepthEngine.cs" />
     <Compile Include="utils\Promise.cs" />
-    <Compile Include="utils\RenderUtils.cs" />
     <Compile Include="utils\TextureGenerator.cs" />
     <Compile Include="utils\TextureUtils.cs" />
   </ItemGroup>

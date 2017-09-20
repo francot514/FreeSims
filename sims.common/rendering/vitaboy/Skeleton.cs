@@ -9,11 +9,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using FSO.Common.Utils;
 using Microsoft.Xna.Framework;
-using TSO.Common.utils;
-using TSO.Files.utils;
+using FSO.Files.Utils;
 
-namespace TSO.Common.rendering.vitaboy
+namespace FSO.Vitaboy
 {
     /// <summary>
     /// Skeletons specify the network of bones that can be moved by an animation to bend 
@@ -64,14 +64,11 @@ namespace TSO.Common.rendering.vitaboy
         /// Reads a skeleton from a stream.
         /// </summary>
         /// <param name="stream">A Stream instance holding a skeleton.</param>
-        public void Read(Stream stream, bool bcf)
+        public void Read(Stream stream)
         {
-            using (var io = IoBuffer.FromStream(stream, bcf ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN))
+            using (var io = IoBuffer.FromStream(stream))
             {
-                if (!bcf)
-                {
-                    var version = io.ReadUInt32();
-                }
+                var version = io.ReadUInt32();
                 Name = io.ReadPascalString();
 
                 var boneCount = io.ReadInt16();
@@ -79,12 +76,7 @@ namespace TSO.Common.rendering.vitaboy
                 Bones = new Bone[boneCount];
                 for (var i = 0; i < boneCount; i++)
                 {
-                    Bone bone = ReadBone(io, bcf);
-                    if (bone == null)
-                    {
-                        i--;
-                        continue;
-                    }
+                    Bone bone = ReadBone(io);
                     bone.Index = i;
                     Bones[i] = bone;
                 }
@@ -104,15 +96,14 @@ namespace TSO.Common.rendering.vitaboy
         /// </summary>
         /// <param name="reader">An IOBuffer instance used to read from a stream holding a skeleton.</param>
         /// <returns>A Bone instance.</returns>
-        private Bone ReadBone(IoBuffer reader, bool bcf)
+        private Bone ReadBone(IoBuffer reader)
         {
             var bone = new Bone();
-            if (!bcf) bone.Unknown = reader.ReadInt32();
+            bone.Unknown = reader.ReadInt32();
             bone.Name = reader.ReadPascalString();
             bone.ParentName = reader.ReadPascalString();
-            bone.HasProps = bcf || reader.ReadByte() > 0;
-            if (bcf && bone.Name == "") return null;
-            if (bone.HasProps)
+            bone.HasProps = reader.ReadByte();
+            if (bone.HasProps != 0)
             {
                 var propertyCount = reader.ReadInt32();
                 var property = new PropertyListItem();

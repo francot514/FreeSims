@@ -6,16 +6,17 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using TSO.Files.FAR1;
 using System.IO;
-using TSO.Files.formats.iff;
-using TSO.Files.formats.iff.chunks;
+using FSO.Files.Formats.IFF;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.Files.FAR1;
+
 
 namespace sims.debug
 {
     public partial class Form1 : Form
     {
-        private FAR1Archive Far;
+
         private string Userpath, Famdir, Housedir;
 
         public Form1()
@@ -138,7 +139,7 @@ namespace sims.debug
             foreach(FileInfo file in dir.GetFiles())
                 if (file.Extension == ".iff")
                {
-               var iff = new Iff(path + "/" + file.Name);
+               var iff = new IffFile(path + "/" + file.Name);
                ulong FileID = 0;
 
 
@@ -194,8 +195,8 @@ namespace sims.debug
            foreach(FileInfo file in dir.GetFiles())
                if (file.Extension == ".iff")
                {
-               var iff = new Iff(path + "/" + file.Name);
-               ulong FileID = 0;
+                   var iff = new IffFile(path + "/" + file.Name);
+                    ulong FileID = 0;
 
 
                foreach (OBJD obj in iff.List<OBJD>())
@@ -278,7 +279,7 @@ namespace sims.debug
         {
 
             List<FarEntry> Resource = new List<FarEntry>();
-            FAR1Archive Archive = new FAR1Archive("UIGraphics.far", 0);
+            FAR1Archive Archive = new FAR1Archive("UIGraphics.far");
                     //m_Archives.Add(path, Archive);
              Resource = Archive.GetAllFarEntries();
 

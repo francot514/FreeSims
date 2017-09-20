@@ -1,13 +1,12 @@
-﻿using System;
+﻿using FSO.Common.Rendering.Framework.Camera;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Common.rendering.framework.camera;
-using Microsoft.Xna.Framework.Graphics;
-using TSO.Common.rendering.framework.model;
-using Microsoft.Xna.Framework;
 
-namespace TSO.Common.rendering.framework
+namespace FSO.Common.Rendering.Framework
 {
     public class _3DTargetScene : _3DScene
     {
@@ -15,8 +14,7 @@ namespace TSO.Common.rendering.framework
         private GraphicsDevice Device;
         private int Multisample = 0;
         public _3DTargetScene(GraphicsDevice device, ICamera camera, Point size, int multisample) : this(device, size, multisample) { Camera = camera; }
-        public _3DTargetScene(GraphicsDevice device, Point size, int multisample)
-            : base(device)
+        public _3DTargetScene(GraphicsDevice device, Point size, int multisample) : base(device)
         {
             Device = device;
             Multisample = multisample;
@@ -34,11 +32,10 @@ namespace TSO.Common.rendering.framework
             var oldTargets = device.GetRenderTargets();
             device.SetRenderTarget(Target);
             device.Clear(Color.Transparent);
+            device.DepthStencilState = DepthStencilState.Default;
             Camera.ProjectionDirty();
             base.Draw(device);
             device.SetRenderTargets(oldTargets);
         }
-
-
     }
 }

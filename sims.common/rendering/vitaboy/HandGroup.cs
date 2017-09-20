@@ -8,10 +8,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using TSO.Files.utils;
-using TSO.Common.content;
+using FSO.Files.Utils;
+using FSO.Common.Content;
 
-namespace TSO.Common.rendering.vitaboy
+namespace FSO.Vitaboy
 {
     /// <summary>
     /// Hand groups collect together the various hand gesture appearances of the game. 
@@ -20,7 +20,6 @@ namespace TSO.Common.rendering.vitaboy
     public class HandGroup
     {
         private uint m_Version;
-        public bool TS1HandSet;
         public HandSet LightSkin = new HandSet();
         public HandSet MediumSkin = new HandSet();
         public HandSet DarkSkin = new HandSet();
@@ -109,8 +108,6 @@ namespace TSO.Common.rendering.vitaboy
     {
         public uint FileID;
         public uint TypeID;
-        public string Name;
-        public string TexName;
 
         public ContentID ID
         {

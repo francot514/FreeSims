@@ -9,19 +9,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using TSO.Common.utils;
-using TSO.Files.utils;
-using TSO.Common.content;
+using FSO.Common.Utils;
+using FSO.Files.Utils;
+using FSO.Common.Content;
 
-namespace TSO.Common.rendering.vitaboy
+namespace FSO.Vitaboy
 {
     /// <summary>
     /// Represents an appearance for a model.
     /// </summary>
     public class Appearance
     {
-        public string Name;
-
         public uint ThumbnailTypeID;
         public uint ThumbnailFileID;
         public AppearanceBinding[] Bindings;
@@ -34,34 +32,6 @@ namespace TSO.Common.rendering.vitaboy
             get
             {
                 return new ContentID(ThumbnailTypeID, ThumbnailFileID);
-            }
-        }
-
-        public void ReadBCF(Stream stream)
-        {
-            using (var io = IoBuffer.FromStream(stream, ByteOrder.LITTLE_ENDIAN))
-            {
-                Name = io.ReadPascalString();
-                var type = io.ReadInt32();
-                var zero = io.ReadInt32();
-
-                var numBindings = io.ReadUInt32();
-                Bindings = new AppearanceBinding[numBindings];
-
-                for (var i = 0; i < numBindings; i++)
-                {
-                    //bindings are included verbatim here.
-                    var bnd = new Binding();
-                    bnd.Bone = io.ReadPascalString();
-                    bnd.MeshName = io.ReadPascalString();
-                    io.ReadInt32();
-                    io.ReadInt32();
-
-                    Bindings[i] = new AppearanceBinding
-                    {
-                        RealBinding = bnd
-                    };
-                }
             }
         }
 
@@ -100,14 +70,5 @@ namespace TSO.Common.rendering.vitaboy
     {
         public uint TypeID;
         public uint FileID;
-        public Binding RealBinding;
     }
-
-    public enum AppearanceType
-    {
-        Light = 0,
-        Medium = 1,
-        Dark = 2
-    }
-
 }

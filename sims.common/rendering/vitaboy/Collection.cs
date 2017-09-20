@@ -9,9 +9,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using TSO.Files.utils;
+using FSO.Files.Utils;
 
-namespace TSO.Common.rendering.vitaboy
+namespace FSO.Vitaboy
 {
     /// <summary>
     /// Collections provide a packaged list of purchasable outfits.

@@ -9,13 +9,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using TSO.Common.utils;
+using FSO.Common.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TSO.Files.utils;
-using TSO.Common.rendering.framework;
+using FSO.Files.Utils;
+using FSO.Common.Rendering.Framework;
+using FSO.Vitaboy.Model;
 
-namespace TSO.Common.rendering.vitaboy
+
+namespace FSO.Vitaboy
 {
     /// <summary>
     /// 3D Mesh.
@@ -37,9 +39,6 @@ namespace TSO.Common.rendering.vitaboy
         private DynamicVertexBuffer GPUVertexBuffer;
         private IndexBuffer GPUIndexBuffer;
         private bool Prepared = false;
-
-        public string SkinName;
-        public string TextureName;
 
         public Mesh()
         {
@@ -156,25 +155,18 @@ namespace TSO.Common.rendering.vitaboy
             if (!GPUMode) StoreOnGPU(gd);
             gd.Indices = GPUIndexBuffer;
             gd.SetVertexBuffer(GPUVertexBuffer);
-            gd.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 0, 0,NumPrimitives);
+            gd.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0,0, 0, 0, NumPrimitives);
         }
 
         /// <summary>
         /// Reads a mesh from a stream.
         /// </summary>
-        /// <param name="stream">A Stream instance holding a mesh.</param> <param name="bmf">If this stream contains a .bmf file (rather than TSO .mesh).</param>
-        public void Read(Stream stream, bool bmf)
+        /// <param name="stream">A Stream instance holding a mesh.</param>
+        public void Read(Stream stream)
         {
-            using (var io = IoBuffer.FromStream(stream, bmf?ByteOrder.LITTLE_ENDIAN:ByteOrder.BIG_ENDIAN))
+            using (var io = IoBuffer.FromStream(stream))
             {
-                if (bmf)
-                {
-                    SkinName = io.ReadPascalString();
-                    TextureName = io.ReadPascalString();
-                } else
-                {
-                    var version = io.ReadInt32();
-                }
+                var version = io.ReadInt32();
                 var boneCount = io.ReadInt32();
                 var boneNames = new string[boneCount];
                 for (var i = 0; i < boneCount; i++){
@@ -206,7 +198,7 @@ namespace TSO.Common.rendering.vitaboy
                         BlendVertexCount = io.ReadInt32()
                     };
 
-                    BoneBindings[i].BoneName = boneNames[Math.Min(boneNames.Length-1, BoneBindings[i].BoneIndex)];
+                    BoneBindings[i].BoneName = boneNames[BoneBindings[i].BoneIndex];
                 }
 
 

@@ -1,14 +1,8 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
@@ -16,10 +10,10 @@ using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Input;
 using System.Runtime.InteropServices;
-using TSO.Common.rendering.framework.io;
-using TSO.Common.rendering.framework.model;
+using FSO.Common.Rendering.Framework.Model;
+using System.Threading;
 
-namespace TSOVille.Code.UI.Framework
+namespace FSO.Common.Rendering.Framework.IO
 {
     /// <summary>
     /// Manages input for the game.
@@ -45,6 +39,11 @@ namespace TSOVille.Code.UI.Framework
             }
         }
 
+        public IFocusableUI GetFocus()
+        {
+            return LastFocus;
+        }
+
         [DllImport("user32.dll")]
         static extern int MapVirtualKey(uint uCode, uint uMapType);
 
@@ -56,127 +55,137 @@ namespace TSOVille.Code.UI.Framework
         public KeyboardInputResult ApplyKeyboardInput(StringBuilder m_SBuilder, UpdateState state, int cursorIndex, int cursorEndIndex, bool allowInput)
         {
             var PressedKeys = state.KeyboardState.GetPressedKeys();
-            if (PressedKeys.Length == 0) { return null; }
+            int charCount = 0;
+            if (state.FrameTextInput == null) charCount = 0;
+            else charCount = state.FrameTextInput.Count;
+
+            if (PressedKeys.Length + charCount == 0) { return null; }
+            //bit of a legacy thing going on here
+            //we support both "pressed keys" and the keyboard event system.
+            //todo: clean up a bit
 
             var didChange = false;
             var result = new KeyboardInputResult();
-
-
+            
             var m_CurrentKeyState = state.KeyboardState;
             var m_OldKeyState = state.PreviousKeyboardState;
 
+
             result.ShiftDown = PressedKeys.Contains(Keys.LeftShift) || PressedKeys.Contains(Keys.RightShift);
-            result.CapsDown = System.Windows.Forms.Control.IsKeyLocked(System.Windows.Forms.Keys.CapsLock);
-            result.NumLockDown = System.Windows.Forms.Control.IsKeyLocked(System.Windows.Forms.Keys.NumLock);
+			result.CapsDown = state.KeyboardState.IsKeyDown(Keys.CapsLock);
+			result.NumLockDown = state.KeyboardState.IsKeyDown(Keys.NumLock);
             result.CtrlDown = PressedKeys.Contains(Keys.LeftControl) || PressedKeys.Contains(Keys.RightControl);
 
-            for (int j = 0; j < state.NewKeys.Count; j++)
+            for (int j = 0; j < state.NewKeys.Count + charCount; j++)
             {
-                var key = state.NewKeys[j];
+                var key = (j<state.NewKeys.Count)?state.NewKeys[j]:Keys.None;
+                bool processChar = true;
 
-                if (key == Keys.Back || key == Keys.Delete)
+                if (key != Keys.None)
                 {
-                    if (m_SBuilder.Length > 0)
+                    processChar = false;
+                    if (key == Keys.Back || key == Keys.Delete)
                     {
-                        /**
-                         * Delete previous character or delete selection
-                         */
-                        if (cursorEndIndex == -1 && result.CtrlDown)
+                        if (m_SBuilder.Length > 0)
                         {
-                            /** Delete up until the previous whitespace char **/
-                            int newEndIndex = cursorIndex;
-                            if (newEndIndex == -1)
+                            /**
+                             * Delete previous character or delete selection
+                             */
+                            if (cursorEndIndex == -1 && result.CtrlDown)
                             {
-                                newEndIndex = m_SBuilder.Length - 1;
-                            }
-                            while (newEndIndex >= 0)
-                            {
-                                if (Char.IsWhiteSpace(m_SBuilder[newEndIndex]))
+                                /** Delete up until the previous whitespace char **/
+                                int newEndIndex = cursorIndex;
+                                if (newEndIndex == -1)
                                 {
-                                    /** Keep the whitespace char **/
-                                    newEndIndex++;
-                                    break;
+                                    newEndIndex = m_SBuilder.Length - 1;
                                 }
-                                newEndIndex--;
+                                while (newEndIndex >= 0)
+                                {
+                                    if (Char.IsWhiteSpace(m_SBuilder[newEndIndex]))
+                                    {
+                                        /** Keep the whitespace char **/
+                                        newEndIndex++;
+                                        break;
+                                    }
+                                    newEndIndex--;
+                                }
+                                cursorEndIndex = newEndIndex;
                             }
-                            cursorEndIndex = newEndIndex;
+
+                            if (cursorEndIndex == -1)
+                            {
+                                /** Previous character **/
+                                var index = cursorIndex == -1 ? m_SBuilder.Length : cursorIndex;
+                                if ((key == Keys.Back) && (index > 0))
+                                {
+                                    var numToDelete = 1;
+                                    if (index > 1 && m_SBuilder[index - 1] == '\n' && m_SBuilder[index - 2] == '\r')
+                                    {
+                                        numToDelete = 2;
+                                    }
+
+
+                                    m_SBuilder.Remove(index - numToDelete, numToDelete);
+                                    result.NumDeletes += numToDelete;
+
+                                    if (cursorIndex != -1)
+                                    {
+                                        cursorIndex -= numToDelete;
+                                    }
+                                }
+                                else if ((key == Keys.Delete) && (index < m_SBuilder.Length))
+                                {
+                                    /** Guys, delete removes the next character, not the last!! **/
+                                    var numToDelete = 1;
+                                    if ((index < m_SBuilder.Length - 1) && m_SBuilder[index] == '\r' && m_SBuilder[index + 1] == '\n')
+                                    {
+                                        numToDelete = 2;
+                                    }
+
+                                    m_SBuilder.Remove(index, numToDelete);
+                                    result.NumDeletes += numToDelete;
+                                }
+                            }
+                            else
+                            {
+                                DeleteSelectedText(m_SBuilder, ref cursorIndex, ref cursorEndIndex, ref didChange, result);
+                            }
+                            result.SelectionChanged = true;
+                            didChange = true;
                         }
-
-                        if (cursorEndIndex == -1)
-                        {
-                            /** Previous character **/
-                            var index = cursorIndex == -1 ? m_SBuilder.Length : cursorIndex;
-                            if ((key == Keys.Back) && (index > 0))
-                            {
-                                var numToDelete = 1;
-                                if (index > 1 && m_SBuilder[index-1] == '\n' && m_SBuilder[index - 2] == '\r')
-                                {
-                                    numToDelete = 2;
-                                }
-
-
-                                m_SBuilder.Remove(index - numToDelete, numToDelete);
-                                result.NumDeletes += numToDelete;
-
-                                if (cursorIndex != -1)
-                                {
-                                    cursorIndex -= numToDelete;
-                                }
-                            }
-                            else if ((key == Keys.Delete) && (index < m_SBuilder.Length))
-                            {
-                                /** Guys, delete removes the next character, not the last!! **/
-                                var numToDelete = 1;
-                                if ((index < m_SBuilder.Length - 1) && m_SBuilder[index] == '\r' && m_SBuilder[index + 1] == '\n')
-                                {
-                                    numToDelete = 2;
-                                }
-
-                                m_SBuilder.Remove(index, numToDelete);
-                                result.NumDeletes += numToDelete;
-                            }
-                        }
-                        else
-                        {
-                            DeleteSelectedText(m_SBuilder, ref cursorIndex, ref cursorEndIndex, ref didChange, result);
-                        }
-                        result.SelectionChanged = true;
-                        didChange = true;
                     }
-                }
-                else if (key == Keys.Enter)
-                {
-                    if (allowInput)
+                    else if (key == Keys.Enter)
                     {
-                        /** Line break **/
-                        if (cursorEndIndex != -1)
+                        if (allowInput)
                         {
-                            /** Delete selected text **/
-                            DeleteSelectedText(m_SBuilder, ref cursorIndex, ref cursorEndIndex, ref didChange, result);
-                        }
+                            /** Line break **/
+                            if (cursorEndIndex != -1)
+                            {
+                                /** Delete selected text **/
+                                DeleteSelectedText(m_SBuilder, ref cursorIndex, ref cursorEndIndex, ref didChange, result);
+                            }
 
-                        if (cursorIndex == -1)
-                        {
-                            m_SBuilder.Append("\r\n");
+                            if (cursorIndex == -1)
+                            {
+                                m_SBuilder.Append("\r\n");
+                            }
+                            else
+                            {
+                                m_SBuilder.Insert(cursorIndex, "\r\n");
+                                cursorIndex += 2;
+                            }
+                            result.NumInsertions += 2;
+                            didChange = true;
+                            result.EnterPressed = true;
                         }
-                        else
-                        {
-                            m_SBuilder.Insert(cursorIndex, "\r\n");
-                            cursorIndex += 2;
-                        }
-                        result.NumInsertions += 2;
-                        didChange = true;
-                        result.EnterPressed = true;
                     }
-                }
-                else if (key == Keys.Tab)
-                {
-                    result.TabPressed = true;
-                }
-                else
-                {
-                    if (result.CtrlDown)
+                    else if (key == Keys.Tab)
                     {
+                        result.TabPressed = true;
+                    }
+                    else if (result.CtrlDown)
+                    {
+                        if (key != Keys.LeftControl) { }
                         switch (key)
                         {
                             case Keys.A:
@@ -189,14 +198,20 @@ namespace TSOVille.Code.UI.Framework
                             case Keys.C:
                             case Keys.X:
                                 /** Copy text to clipboard **/
-                                if (cursorEndIndex != -1)
+                                if (cursorEndIndex > 0)
                                 {
                                     var selectionStart = Math.Max(0, cursorIndex);
                                     var selectionEnd = cursorEndIndex;
                                     GetSelectionRange(ref selectionStart, ref selectionEnd);
 
                                     var str = m_SBuilder.ToString().Substring(selectionStart, selectionEnd - selectionStart);
-                                    System.Windows.Forms.Clipboard.SetText((str == null) ? " " : str);
+
+                                    var copyThread = new Thread(x =>
+                                    {
+                                        //System.Windows.Forms.Clipboard.SetText((String.IsNullOrEmpty(str)) ? " " : str);
+                                    });
+                                    copyThread.SetApartmentState(ApartmentState.STA);
+                                    copyThread.Start();
 
                                     if (key == Keys.X)
                                     {
@@ -207,7 +222,17 @@ namespace TSOVille.Code.UI.Framework
 
                             case Keys.V:
                                 /** Paste text in **/
-                                var clipboardText = System.Windows.Forms.Clipboard.GetText(System.Windows.Forms.TextDataFormat.Text);
+                                var wait = new AutoResetEvent(false);
+                                string clipboardText = "";
+                                var clipThread = new Thread(x =>
+                                {
+                                    //clipboardText = System.Windows.Forms.Clipboard.GetText(System.Windows.Forms.TextDataFormat.Text);
+                                    wait.Set();
+                                });
+                                clipThread.SetApartmentState(ApartmentState.STA);
+                                clipThread.Start();
+                                wait.WaitOne();
+                                
                                 if (clipboardText != null)
                                 {
                                     /** TODO: Cleanup the clipboard text to make sure its valid **/
@@ -232,13 +257,20 @@ namespace TSOVille.Code.UI.Framework
                                     didChange = true;
                                 }
                                 break;
+                            }
+                        } else {
+                            processChar = true;
                         }
-                        continue;
                     }
 
-                    char value = TranslateChar(key, result.ShiftDown, result.CapsDown, result.NumLockDown);
+                if (processChar)
+                {
+                    char value;
+                    if (j >= state.NewKeys.Count) value = state.FrameTextInput[j - state.NewKeys.Count];
+                    else if (state.FrameTextInput != null) continue;
+                    else value = TranslateChar(key, result.ShiftDown, result.CapsDown, result.NumLockDown);
                     /** For now we dont support tabs in text **/
-                    if (value != '\0' && value != '\t')
+                    if (value != '\0' && value != '\t' && value != '\b' && value != '\r')
                     {
                         if (allowInput)
                         {
@@ -266,7 +298,6 @@ namespace TSOVille.Code.UI.Framework
                         result.UnhandledKeys.Add(key);
                     }
                 }
-
             }
 
             result.SelectionStart = cursorIndex;

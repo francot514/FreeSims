@@ -1,14 +1,8 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
@@ -16,10 +10,9 @@ using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using TSO.Common.rendering.framework.io;
-using TSOVille.Code.UI.Framework;
+using FSO.Common.Rendering.Framework.IO;
 
-namespace TSO.Common.rendering.framework.model
+namespace FSO.Common.Rendering.Framework.Model
 {
     /// <summary>
     /// Contains common information used in the update loop
@@ -29,10 +22,12 @@ namespace TSO.Common.rendering.framework.model
         public GameTime Time;
         public MouseState MouseState;
         public KeyboardState KeyboardState;
+        public UIState UIState = new UIState();
         public InputManager InputManager;
         public bool TouchMode;
 
         public KeyboardState PreviousKeyboardState;
+        public List<char> FrameTextInput;
 
         /** A Place to keep shared variables, clears every update cycle **/
         public Dictionary<string, object> SharedData = new Dictionary<string, object>();
@@ -88,7 +83,6 @@ namespace TSO.Common.rendering.framework.model
                     }
                     else
                     {
-                        if (KeyDownTime.Count > 0)
                         /** How long has it been down? **/
                         if (now - KeyDownTime[key] > 9000000)
                         {

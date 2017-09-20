@@ -1,15 +1,21 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Windows.Forms;
+//using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.ComponentModel;
 using Microsoft.Xna.Framework;
 using System.IO;
 
-namespace TSO.Common.rendering.framework
+namespace FSO.Common.Rendering.Framework
 {
     public enum CursorType
     {
@@ -35,32 +41,29 @@ namespace TSO.Common.rendering.framework
     {
         public static CursorManager INSTANCE;
 
-        private Dictionary<CursorType, Cursor> m_CursorMap;
+        //private Dictionary<CursorType, Cursor> m_CursorMap;
         private GameWindow Window;
         public CursorType CurrentCursor = CursorType.Normal;
 
         public CursorManager(GameWindow window)
         {
             INSTANCE = this;
+            //m_CursorMap = new Dictionary<CursorType, Cursor>();
             this.Window = window;
         }
 
         public void SetCursor(CursorType type)
         {
-            if (type == CurrentCursor) { return; }
-
+            /*
             if (m_CursorMap.ContainsKey(type))
             {
                 CurrentCursor = type;
-                
-                //Form winForm = (Form)Form.FromHandle(this.Window.Handle);
-                //winForm.Cursor = m_CursorMap[type];
-            }
+                if (type != CursorType.Normal) Cursor.Current = m_CursorMap[type];
+            }*/
         }
 
         public void Init(string basepath)
         {
-            m_CursorMap = new Dictionary<CursorType, Cursor>();
 
             var map = new Dictionary<CursorType, string>(){
                 {CursorType.Normal, "arrow.cur"},
@@ -79,16 +82,18 @@ namespace TSO.Common.rendering.framework
             };
 
             foreach(var item in map){
+				/*
                 m_CursorMap.Add(item.Key,
                     LoadCustomCursor(
                         Path.Combine(basepath, @"uigraphics\shared\cursors\" + item.Value)
                     ));
+                    */
             }
         }
 
 
 
-        private static Cursor LoadCustomCursor(string path)
+        /*private static Cursor LoadCustomCursor(string path)
         {
             IntPtr hCurs = LoadCursorFromFile(path);
             if (hCurs == IntPtr.Zero) throw new Win32Exception();
@@ -100,5 +105,6 @@ namespace TSO.Common.rendering.framework
         }
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         private static extern IntPtr LoadCursorFromFile(string path);
+        */
     }
 }

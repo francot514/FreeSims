@@ -1,14 +1,8 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-RHY3756547. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
@@ -16,23 +10,23 @@ using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
-using TSOVille.Code.Utils;
 
-namespace tso.common.utils
+namespace FSO.Common.Utils
 {
     public class TextureGenerator //a fun class for cpu generating textures
     {
+        private static Texture2D PxWhite;
         private static Texture2D PieButtonImg;
 
         private static Texture2D InteractionInactive;
-        private static Texture2D PxWhite;
         private static Texture2D InteractionActive;
         private static Texture2D CatalogInactive;
         private static Texture2D CatalogActive;
+        private static Texture2D CatalogDisabled;
         private static Texture2D PieBG;
         private static Texture2D[] WallZBuffer;
         private static Texture2D[] AirTiles;
-        private static Texture2D MotiveArrow;
+        private static Texture2D MotiveArrow; //actually a diamond, clip to get required direction
 
         public static Texture2D GetPxWhite(GraphicsDevice gd)
         {
@@ -64,29 +58,16 @@ namespace tso.common.utils
             return CatalogInactive;
         }
 
+        public static Texture2D GetCatalogDisabled(GraphicsDevice gd)
+        {
+            if (CatalogDisabled == null) CatalogDisabled = GenerateCatalogIconBorder(gd, new Color(255, 0, 0), new Color(56, 88, 120));
+            return CatalogDisabled;
+        }
+
         public static Texture2D GetCatalogActive(GraphicsDevice gd)
         {
             if (CatalogActive == null) CatalogActive = GenerateCatalogIconBorder(gd, new Color(140, 170, 206), new Color(189, 215, 247));
             return CatalogActive;
-        }
-
-        public static Texture2D GetMotiveArrow(GraphicsDevice gd, Color highlight, Color bg)
-        {
-            if (MotiveArrow == null)
-            {
-                MotiveArrow = new Texture2D(gd, 5, 5);
-                Color[] data = new Color[5 * 5];
-                var size = new Vector2(5, 5);
-
-                FillRect(data, size, new Rectangle(2, 0, 1, 1), Color.White);
-                FillRect(data, size, new Rectangle(1, 1, 3, 1), Color.White);
-                FillRect(data, size, new Rectangle(0, 2, 5, 1), Color.White);
-                FillRect(data, size, new Rectangle(1, 3, 3, 1), Color.White);
-                FillRect(data, size, new Rectangle(2, 4, 1, 1), Color.White);
-
-                MotiveArrow.SetData<Color>(data);
-            }
-            return MotiveArrow;
         }
 
         public static Texture2D GetPieBG(GraphicsDevice gd)
@@ -109,8 +90,26 @@ namespace tso.common.utils
             return PieBG;
         }
 
-        public static float FLAT_Z_INC = 1.525f;
+        public static Texture2D GetMotiveArrow(GraphicsDevice gd, Color highlight, Color bg)
+        {
+            if (MotiveArrow == null)
+            {
+                MotiveArrow = new Texture2D(gd, 5, 5);
+                Color[] data = new Color[5 * 5];
+                var size = new Vector2(5, 5);
 
+                FillRect(data, size, new Rectangle(2, 0, 1, 1), Color.White);
+                FillRect(data, size, new Rectangle(1, 1, 3, 1), Color.White);
+                FillRect(data, size, new Rectangle(0, 2, 5, 1), Color.White);
+                FillRect(data, size, new Rectangle(1, 3, 3, 1), Color.White);
+                FillRect(data, size, new Rectangle(2, 4, 1, 1), Color.White);
+
+                MotiveArrow.SetData<Color>(data);
+            }
+            return MotiveArrow;
+        }
+
+        public static float FLAT_Z_INC = 1.525f;
         public static float[][] WallZBufferConfig = new float[][] {
             // format: width, height, startIntensity, Xdiff, Ydiff
 
@@ -191,7 +190,7 @@ namespace tso.common.utils
                         for (int x = 0; x < width; x++)
                         {
                             byte zCol = (byte)Math.Round(Math.Min(255, xInt));
-                            data[offset++] = new Color(zCol, zCol, zCol, 255);
+                            data[offset++] = new Color(zCol, zCol, zCol, zCol);
                             xInt += config[3];
                         }
                         yInt += config[4];

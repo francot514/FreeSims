@@ -1,9 +1,15 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TSO.Common.content
+namespace FSO.Common.Content
 {
     /// <summary>
     /// Represents the ID of a content resource.
@@ -13,7 +19,9 @@ namespace TSO.Common.content
     {
         public uint TypeID;
         public uint FileID;
-        public string Name;
+        private long v;
+
+
         /// <summary>
         /// Creates a new ContentID instance.
         /// </summary>
@@ -23,11 +31,6 @@ namespace TSO.Common.content
         {
             this.TypeID = typeID;
             this.FileID = fileID;
-        }
-
-        public ContentID(string name)
-        {
-            this.Name = name;
         }
 
         public ContentID(long v)

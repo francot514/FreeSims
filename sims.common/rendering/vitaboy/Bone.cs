@@ -10,7 +10,7 @@ using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework;
 
-namespace TSO.Common.rendering.vitaboy
+namespace FSO.Vitaboy
 {
     /// <summary>
     /// Bones are used to animate characters. They hold rotation and translation data.
@@ -21,7 +21,7 @@ namespace TSO.Common.rendering.vitaboy
         public string Name;
         public string ParentName;
 
-        public bool HasProps;
+        public byte HasProps;
         public List<PropertyListItem> Properties = new List<PropertyListItem>();
 
         public Vector3 Translation;
@@ -74,16 +74,4 @@ namespace TSO.Common.rendering.vitaboy
     {
         public List<KeyValuePair<string, string>> KeyPairs = new List<KeyValuePair<string, string>>();
     }
-
-
-    public class BoneBinding
-    {
-        public string BoneName;
-        public int BoneIndex;
-        public int FirstRealVertex;
-        public int RealVertexCount;
-        public int FirstBlendVertex;
-        public int BlendVertexCount;
-    }
-
 }

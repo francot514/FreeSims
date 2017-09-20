@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace TSO.Common.rendering.vitaboy
+namespace FSO.Vitaboy.Model
 {
     [StructLayout(LayoutKind.Sequential)]
     public struct VitaboyVertex : IVertexType
