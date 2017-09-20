@@ -1,13 +1,20 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.FAR3;
+using FSO.Files.FAR3;
 using System.IO;
 using System.Text.RegularExpressions;
-using TSO.Common.content;
+using FSO.Common.Content;
+using FSO.Files.Utils;
 
-namespace TSO.Content.framework
+namespace FSO.Content.Framework
 {
     /// <summary>
     /// Content provider based on the contents of
@@ -80,15 +87,17 @@ namespace TSO.Content.framework
         /// <returns>A file.</returns>
         public T Get(ulong ID)
         {
-            lock (Cache)
+            return ResolveById(ID);
+        }
+
+        protected virtual T ResolveById(ulong id)
+        {
+            Far3ProviderEntry<T> entry = null;
+            if (EntriesById.TryGetValue(id, out entry))
             {
-                var entry = EntriesById[ID];
-                if (entry != null)
-                {
-                    return Get(entry);
-                }
-                return default(T);
+                return Get(entry);
             }
+            return default(T);
         }
 
         /// <summary>
@@ -103,7 +112,7 @@ namespace TSO.Content.framework
 
                 Far3ProviderEntry<T> entry;
 
-                if (EntriesByName.TryGetValue(Filename.ToLower(), out entry))
+                if (EntriesByName.TryGetValue(Filename.ToLowerInvariant(), out entry))
                 {
                     return Get(entry);
                 }
@@ -130,6 +139,7 @@ namespace TSO.Content.framework
                 using (var stream = new MemoryStream(data, false))
                 {
                     T result = this.Codec.Decode(stream);
+                    if (result is IFileInfoUtilizer) ((IFileInfoUtilizer)result).SetFilename(Entry.FarEntry.Filename);
                     this.Cache.Add(Entry.ID, result);
                     return result;
                 }
@@ -151,7 +161,7 @@ namespace TSO.Content.framework
                     List<string> FarFiles = new List<string>();
                     foreach (var File in ContentManager.AllFiles)
                     {
-                        if (FarFilePattern.IsMatch(File))
+                        if (FarFilePattern.IsMatch(File.Replace('\\', '/')))
                         {
                             FarFiles.Add(File);
                         }
@@ -179,7 +189,7 @@ namespace TSO.Content.framework
                         EntriesById.Add(referenceItem.ID, referenceItem);
                         if (entry.Filename != null)
                         {
-                            EntriesByName.Add(entry.Filename.ToLower(), referenceItem);
+                            EntriesByName[entry.Filename.ToLowerInvariant()] = referenceItem;
                         }
                     }
                 }

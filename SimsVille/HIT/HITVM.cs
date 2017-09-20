@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TSO.HIT.model;
-using TSO.Files.HIT;
-using TSO.Content;
+using FSO.Content;
 using System.IO;
+using FSO.Files.HIT;
 
 namespace TSO.HIT
 {
@@ -42,7 +42,7 @@ namespace TSO.HIT
 
         public HITVM()
         {
-            var content = TSO.Content.Content.Get();
+            var content = FSO.Content.Content.Get();
             Events = new Dictionary<string, HITEventRegistration>();
 
             newmain = LoadHitGroup(content.GetPath("sounddata/newmain.hit"), content.GetPath("sounddata/eventlist.txt"), content.GetPath("sounddata/newmain.hsm"));
@@ -86,7 +86,7 @@ namespace TSO.HIT
                     Events.Add(entry.Name, new HITEventRegistration()
                     {
                         Name = entry.Name,
-                        EventType = (TSO.Files.HIT.HITEvents)entry.EventType,
+                        EventType = (FSO.Files.HIT.HITEvents)entry.EventType,
                         TrackID = entry.TrackID,
                         ResGroup = group
                     });
@@ -146,7 +146,7 @@ namespace TSO.HIT
                 else return ActiveEvents[evt]; //an event of this type is already alive - here, take it.
             }
 
-            var content = TSO.Content.Content.Get();
+            var content = FSO.Content.Content.Get();
             if (Events.ContainsKey(evt))
             {
                 var evtent = Events[evt];

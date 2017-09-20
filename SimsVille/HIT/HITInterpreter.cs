@@ -15,7 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TSO.HIT;
-using TSO.Files.HIT;
+using FSO.Files.HIT;
 
 namespace TSO.HIT
 {

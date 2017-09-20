@@ -1,14 +1,21 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.FAR3;
+using FSO.Files.FAR3;
 using System.IO;
 using System.Text.RegularExpressions;
-using TSO.Common.content;
-using TSO.Files.FAR1;
+using FSO.Common.Content;
+using FSO.Files.FAR1;
+using FSO.Files.Utils;
 
-namespace TSO.Content.framework
+namespace FSO.Content.Framework
 {
     /// <summary>
     /// Content provider based on the contents of
@@ -18,7 +25,6 @@ namespace TSO.Content.framework
     {
         protected Content ContentManager;
         protected Dictionary<string, Far1ProviderEntry<T>> EntriesByName;
-        protected Dictionary<string, List<Far1ProviderEntry<T>>> EntriesOfType; 
 
         protected IContentCodec<T> Codec;
         protected Dictionary<string, T> Cache;
@@ -51,7 +57,6 @@ namespace TSO.Content.framework
             this.FarFilePattern = farFilePattern;
         }
 
-
         /// <summary>
         /// Gets an archive based on its TypeID and FileID.
         /// </summary>
@@ -77,7 +82,7 @@ namespace TSO.Content.framework
         /// Gets an archive based on its filename.
         /// </summary>
         /// <param name="Filename">The name of the archive to get.</param>
-        /// <returns>A FAR1 archive.</returns>
+        /// <returns>A FAR3 archive.</returns>
         public T Get(string filename)
         {
             if (!EntriesByName.ContainsKey(filename))
@@ -127,18 +132,11 @@ namespace TSO.Content.framework
                 using (var stream = new MemoryStream(data, false))
                 {
                     T result = this.Codec.Decode(stream);
+                    if (result is IFileInfoUtilizer) ((IFileInfoUtilizer)result).SetFilename(entry.FarEntry.Filename);
                     this.Cache.Add(entry.FarEntry.Filename, result);
                     return result;
                 }
             }
-        }
-
-
-        public List<Far1ProviderEntry<T>> GetEntriesForExtension(string ext)
-        {
-            List<Far1ProviderEntry<T>> result = null;
-            if (EntriesOfType.TryGetValue(ext, out result)) return result;
-            return null;
         }
 
         public T ThrowawayGet(Far1ProviderEntry<T> entry)
@@ -153,18 +151,17 @@ namespace TSO.Content.framework
 
         #region IContentProvider<T> Members
 
-        public void Init(int variant)
+        public void Init()
         {
             Cache = new Dictionary<string, T>();
             EntriesByName = new Dictionary<string, Far1ProviderEntry<T>>();
-            EntriesOfType = new Dictionary<string, List<Far1ProviderEntry<T>>>();
 
             if (FarFilePattern != null)
             {
                 List<string> farFiles = new List<string>();
                 foreach (var file in ContentManager.AllFiles)
                 {
-                    if (FarFilePattern.IsMatch(file))
+                    if (FarFilePattern.IsMatch(file.Replace('\\', '/')))
                     {
                         farFiles.Add(file);
                     }
@@ -172,10 +169,8 @@ namespace TSO.Content.framework
                 FarFiles = farFiles.ToArray();
             }
 
-            foreach (var farPath in FarFiles)                
-            if (File.Exists(farPath))
-            {
-                var archive = new FAR1Archive(ContentManager.GetPath(farPath), variant);
+            foreach (var farPath in FarFiles){
+                var archive = new FAR1Archive(ContentManager.GetPath(farPath));
                 var entries = archive.GetAllFarEntries();
 
                 foreach (var entry in entries)
@@ -192,16 +187,6 @@ namespace TSO.Content.framework
                             System.Diagnostics.Debug.WriteLine("Duplicate! " + entry.Filename);
                         }
                         EntriesByName[entry.Filename] = referenceItem;
-
-                        var ext = Path.GetExtension(entry.Filename).ToLowerInvariant();
-                        List<Far1ProviderEntry<T>> group = null;
-                        if (!EntriesOfType.TryGetValue(ext, out group))
-                        {
-                            group = new List<Far1ProviderEntry<T>>();
-                            EntriesOfType[ext] = group;
-                        }
-                        group.Add(referenceItem);
-
                     }
                 }
             }

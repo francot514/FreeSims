@@ -15,8 +15,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
-using TSO.Files.HIT;
 using Microsoft.Xna.Framework.Audio;
+using FSO.Files.HIT;
 
 namespace TSO.HIT
 {
@@ -70,7 +70,7 @@ namespace TSO.HIT
 
         public Stack<int> Stack;
 
-        private TSO.Content.Audio audContent;
+        private FSO.Content.Audio audContent;
 
         public bool Tick() //true if continue, false if kill
         {
@@ -160,7 +160,7 @@ namespace TSO.HIT
             Owners = new List<int>();
 
             Stack = new Stack<int>();
-            audContent = Content.Content.Get().Audio;
+            audContent = FSO.Content.Content.Get().Audio;
         }
 
         public HITThread(uint TrackID)
@@ -169,7 +169,7 @@ namespace TSO.HIT
             Notes = new List<HITNoteEntry>();
             NotesByChannel = new Dictionary<SoundEffectInstance, HITNoteEntry>();
 
-            audContent = Content.Content.Get().Audio;
+            audContent = FSO.Content.Content.Get().Audio;
             SetTrack(TrackID);
 
             Patch = ActiveTrack.SoundID;

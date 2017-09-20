@@ -1,17 +1,23 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using TSO.Files.FAR3;
+using FSO.Files.FAR3;
 using Microsoft.Xna.Framework.Graphics;
-using TSO.Common.content;
-using TSO.Files;
-using SimsHomeMaker.ContentManager;
-using TSOVille.Code.UI.Model;
-using TSO.Common.rendering.vitaboy;
+using FSO.Common.Content;
+using FSO.Files;
+using FSO.Files.Formats.IFF;
+using System.Threading;
+using FSO.Common;
 
-namespace TSO.Content
+namespace FSO.Content
 {
     /// <summary>
     /// Content is a singleton responsible for loading data.
@@ -34,6 +40,8 @@ namespace TSO.Content
         public string[] AllFiles;
         private GraphicsDevice Device;
 
+        public ChangeManager Changes;
+
         /// <summary>
         /// Creates a new instance of Content.
         /// </summary>
@@ -44,25 +52,31 @@ namespace TSO.Content
             this.BasePath = basePath;
             this.Device = device;
 
-            UIGraphics = new UIGraphicsProvider(this, Device);
-            Audio = new Audio(this);
- 
+            Changes = new ChangeManager();
+
+            UIGraphics = new UIGraphicsProvider(this);
+            AvatarMeshes = new AvatarMeshProvider(this, Device);
+            AvatarBindings = new AvatarBindingProvider(this);
+            AvatarTextures = new AvatarTextureProvider(this, Device);
+            AvatarSkeletons = new AvatarSkeletonProvider(this);
+            AvatarAppearances = new AvatarAppearanceProvider(this);
+            AvatarOutfits = new AvatarOutfitProvider(this);
+            AvatarAnimations = new AvatarAnimationProvider(this);
+            AvatarPurchasables = new AvatarPurchasables(this);
+            AvatarHandgroups = new HandgroupProvider(this, Device);
+            AvatarCollections = new AvatarCollectionsProvider(this);
+            AvatarThumbnails = new AvatarThumbnailProvider(this, Device);
+
+
             WorldObjects = new WorldObjectProvider(this);
             WorldFloors = new WorldFloorProvider(this);
             WorldWalls = new WorldWallProvider(this);
             WorldObjectGlobals = new WorldGlobalProvider(this);
-            WorldRoofs = new WorldRoofProvider(this, device);
+            WorldCatalog = new WorldObjectCatalog();
+            WorldRoofs = new WorldRoofProvider(this);
 
-            SimsProvider = new TS1Provider(this, device);
-            AvatarTextures = new TexturesProvider(SimsProvider);
-            AvatarMeshes = new MeshesProvider(SimsProvider);
-
-            BCFGlobal = new TS1BCFProvider(this, SimsProvider);
-            AvatarAnimations = new TS1BCFAnimationProvider(BCFGlobal);
-            AvatarSkeletons = new TS1BCFSkeletonProvider(BCFGlobal);
-            AvatarAppearances = new TS1BCFAppearanceProvider(BCFGlobal);
-
-            GlobalTuning = new Tuning(Path.Combine(basePath, "Content\\tuning.dat"));
+            Audio = new Audio(this);
+            GlobalTuning = new Tuning(Path.Combine(basePath, "tuning.dat"));
 
             Init();
         }
@@ -72,10 +86,11 @@ namespace TSO.Content
         /// </summary>
         public void InitWorld()
         {
-            WorldObjects.Init();
+            WorldObjects.Init((Device != null));
             WorldObjectGlobals.Init();
             WorldWalls.Init();
             WorldFloors.Init();
+            WorldCatalog.Init(this);
             WorldRoofs.Init();
         }
 
@@ -89,11 +104,21 @@ namespace TSO.Content
             _ScanFiles(BasePath, allFiles);
             AllFiles = allFiles.ToArray();
 
+            PIFFRegistry.Init(Path.Combine(FSOEnvironment.ContentDir, "Patch/"));
             Archives = new Dictionary<string, FAR3Archive>();
             UIGraphics.Init();
-            ((TexturesProvider)AvatarTextures).Init();
-            ((MeshesProvider)AvatarMeshes).Init();
-
+            AvatarMeshes.Init();
+            AvatarBindings.Init();
+            AvatarTextures.Init();
+            AvatarSkeletons.Init();
+            AvatarAppearances.Init();
+            AvatarOutfits.Init();
+            AvatarAnimations.Init();
+            Audio.Init();
+            AvatarPurchasables.Init();
+            AvatarCollections.Init();
+            AvatarHandgroups.Init();
+            AvatarThumbnails.Init();
 
             InitWorld();
         }
@@ -105,7 +130,7 @@ namespace TSO.Content
         /// <param name="fileList">The list of files to scan for.</param>
         private void _ScanFiles(string dir, List<string> fileList)
         {
-            var fullPath = this.GetPath(dir);
+            var fullPath = dir;
             var files = Directory.GetFiles(fullPath);
             foreach (var file in files)
             {
@@ -153,6 +178,8 @@ namespace TSO.Content
                 return new MemoryStream(bytes, false);
             }
 
+            if (path.EndsWith(".bmp") || path.EndsWith(".png") || path.EndsWith(".tga")) path = "uigraphics/" + path;
+
             return File.OpenRead(GetPath(path));
         }
 
@@ -161,22 +188,28 @@ namespace TSO.Content
         public WorldGlobalProvider WorldObjectGlobals;
         public WorldFloorProvider WorldFloors;
         public WorldWallProvider WorldWalls;
+        public WorldObjectCatalog WorldCatalog;
         public WorldRoofProvider WorldRoofs;
+
         public UIGraphicsProvider UIGraphics;
-
-        /** Avatar **/
-        public IContentProvider<Skeleton> AvatarSkeletons;
-        public IContentProvider<Appearance> AvatarAppearances;
-        public IContentProvider<Animation> AvatarAnimations;
-        public IContentProvider<ITextureRef> AvatarTextures;
-        public IContentProvider<Mesh> AvatarMeshes;
-        public TS1Provider SimsProvider;
-        public TS1BCFProvider BCFGlobal;
-
-
-        public Audio Audio;
-        public Tuning GlobalTuning;
- 
         
+        /** Avatar **/
+        public AvatarMeshProvider AvatarMeshes;
+        public AvatarBindingProvider AvatarBindings;
+        public AvatarTextureProvider AvatarTextures;
+        public AvatarSkeletonProvider AvatarSkeletons;
+        public AvatarAppearanceProvider AvatarAppearances;
+        public AvatarOutfitProvider AvatarOutfits;
+        public AvatarAnimationProvider AvatarAnimations;
+        public AvatarPurchasables AvatarPurchasables;
+        public HandgroupProvider AvatarHandgroups;
+        public AvatarCollectionsProvider AvatarCollections;
+        public AvatarThumbnailProvider AvatarThumbnails;
+
+        /** Audio **/
+        public Audio Audio;
+
+        /** GlobalTuning **/
+        public Tuning GlobalTuning;
     }
 }

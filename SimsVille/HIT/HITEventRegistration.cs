@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using TSO.Files.HIT;
+using FSO.Files.HIT;
 
 namespace TSO.HIT.model
 {

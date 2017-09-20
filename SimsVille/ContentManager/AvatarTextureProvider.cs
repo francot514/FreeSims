@@ -1,26 +1,29 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using FSO.Content.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using FSO.Content.Codecs;
 using System.Text.RegularExpressions;
-using TSO.Content.framework;
-using TSOVille.Code.UI.Model;
+using FSO.Content.Model;
 
-
-namespace TSO.Content
+namespace FSO.Content
 {
-
-       public class TexturesProvider : TS1SubProvider<ITextureRef>
-       {
-           public TexturesProvider(TS1Provider baseProvider)
-               : base(baseProvider, ".bmp")
-           {
-           }
-
-           public override ITextureRef Get(string name)
-           {
-               return base.Get(name.Replace(".jpg", "").ToLowerInvariant() + ".bmp");
-           }
-       }
-
+    /// <summary>
+    /// Provides access to texture (*.jpg) data in FAR3 archives.
+    /// </summary>
+    public class AvatarTextureProvider : FAR3Provider<ITextureRef>
+    {
+        public AvatarTextureProvider(Content contentManager, GraphicsDevice device)
+            : base(contentManager, new TextureCodec(), new Regex(".*/textures/.*\\.dat"))
+        {
+        }
+    }
 }

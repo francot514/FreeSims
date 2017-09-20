@@ -1,21 +1,26 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
-using TSO.Content.framework;
+using FSO.Content.Framework;
 using System.IO;
-using TSO.Common.utils;
-using TSOVille.Code.Utils;
+using FSO.Common.Utils;
+using FSO.Content.Model;
 
-namespace TSO.Content.codecs
+namespace FSO.Content.Codecs
 {
     /// <summary>
     /// Codec for textures (*.jpg).
     /// </summary>
-    public class TextureCodec : IContentCodec<Texture2D>
+    public class TextureCodec : IContentCodec<ITextureRef>
     {
-        private GraphicsDevice Device;
         private bool Mask = false;
         private uint[] MaskColors = null;
 
@@ -23,9 +28,8 @@ namespace TSO.Content.codecs
         /// Creates a new instance of TextureCodec.
         /// </summary>
         /// <param name="device">A GraphicsDevice instance.</param>
-        public TextureCodec(GraphicsDevice device)
+        public TextureCodec()
         {
-            this.Device = device;
         }
 
         /// <summary>
@@ -33,34 +37,27 @@ namespace TSO.Content.codecs
         /// </summary>
         /// <param name="device">A GraphicsDevice instance.</param>
         /// <param name="maskColors">A list of masking colors to use for this texture.</param>
-        public TextureCodec(GraphicsDevice device, uint[] maskColors)
+        public TextureCodec(uint[] maskColors)
         {
-            this.Device = device;
             this.Mask = true;
             this.MaskColors = maskColors;
         }
 
         #region IContentCodec<Texture2D> Members
 
-        public Texture2D Decode(System.IO.Stream stream)
+        public ITextureRef Decode(System.IO.Stream stream)
         {
-            /**
-             * This may not be the right way to get the texture to load as ARGB but it works :S
-             */
-            Texture2D texture = null;
-            if(Mask)
-            {
-                stream.Seek(0, SeekOrigin.Begin);
-                texture = Texture2D.FromStream(Device, stream);
+            byte[] data = new byte[stream.Length];
+            stream.Read(data, 0, data.Length);
 
-                TextureUtils.ManualTextureMaskSingleThreaded(ref texture, MaskColors);
+            if (Mask == false)
+            {
+                return new InMemoryTextureRef(data);
             }
             else
             {
-                texture = Texture2D.FromStream(Device, stream);
+                return new InMemoryTextureRefWithMask(data, MaskColors);
             }
-
-            return texture;
         }
 
         #endregion

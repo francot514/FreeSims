@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.HIT;
 using System.Runtime.InteropServices;
-using TSO.Files.XA;
 using Microsoft.Xna.Framework.Audio;
 using System.IO;
+using FSO.Files.HIT;
+using FSO.Files.XA;
 
 namespace TSO.HIT
 {

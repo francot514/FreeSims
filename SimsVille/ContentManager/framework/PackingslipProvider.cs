@@ -1,12 +1,18 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Xml;
 using System.IO;
-using TSO.Common.content;
+using FSO.Common.Content;
 
-namespace TSO.Content.framework
+namespace FSO.Content.Framework
 {
     /// <summary>
     /// Content provider based on a packingslip manifest file.
@@ -45,11 +51,6 @@ namespace TSO.Content.framework
             return Get(fileIDLong | type);
         }
 
-
-        public T Get(string name)
-        {
-            throw new NotImplementedException();
-        }
         /// <summary>
         /// Get an asset by its ID.
         /// </summary>
@@ -64,8 +65,7 @@ namespace TSO.Content.framework
                     return Cache[id];
                 }
 
-                //var item = Entries[id];
-                var item = (Entries.ContainsKey(id)) ? Entries[id] : null;
+                var item = (Entries.ContainsKey(id))?Entries[id]:null;
                 if(item == null)
                 {
                     return default(T);
@@ -99,7 +99,7 @@ namespace TSO.Content.framework
                 ulong FileID = Convert.ToUInt64(asset.Attributes["assetID"].Value, 16);
                 Entries.Add(FileID, new PackingslipEntry<T>(this) {
                     ID = FileID,
-                    FilePath = asset.Attributes["key"].Value
+                    FilePath = asset.Attributes["key"].Value.Replace('\\', '/')
                 });
             }
         }

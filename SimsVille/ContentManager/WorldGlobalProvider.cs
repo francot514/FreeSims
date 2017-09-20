@@ -1,18 +1,24 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Content.framework;
-using TSO.Common.content;
+using FSO.Content.Framework;
+using FSO.Common.Content;
 using System.Xml;
-using TSO.Content.codecs;
+using FSO.Content.Codecs;
 using System.Text.RegularExpressions;
 using System.IO;
-using TSO.Files.formats.iff;
-using TSO.Files.formats.iff.chunks;
-using TSO.Files.formats.otf;
+using FSO.Files.Formats.IFF;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.Files.Formats.OTF;
 
-namespace TSO.Content
+namespace FSO.Content
 {
     /// <summary>
     /// Provides access to global (*.otf, *.iff) data in FAR3 archives.
@@ -20,10 +26,7 @@ namespace TSO.Content
     public class WorldGlobalProvider
     {
         private Dictionary<string, GameGlobal> Cache; //indexed by lowercase filename, minus directory and extension.
-        public FAR1Provider<Iff> GlobalIffs;
         private Content ContentManager;
-        private Dictionary<ulong, GameObjectReference> Entries;
-
 
         public WorldGlobalProvider(Content contentManager)
         {
@@ -36,15 +39,6 @@ namespace TSO.Content
         public void Init()
         {
             Cache = new Dictionary<string, GameGlobal>();
-
-            GlobalIffs = new FAR1Provider<Iff>(ContentManager, new IffCodec(), "GameData\\Global\\Global.far");
-
-            GlobalIffs.Init(0);
-
-
-            Entries = new Dictionary<ulong, GameObjectReference>();
-
-
         }
 
         /// <summary>
@@ -54,6 +48,7 @@ namespace TSO.Content
         /// <returns>A GameGlobal instance containing the resource.</returns>
         public GameGlobal Get(string filename)
         {
+            filename = filename.ToLowerInvariant();
             lock (Cache)
             {
                 if (Cache.ContainsKey(filename))
@@ -61,14 +56,19 @@ namespace TSO.Content
                     return Cache[filename];
                 }
 
-                
-
                 //if we can't load this let it throw an exception...
                 //probably sanity check this when we add user objects.
-                var iff = this.GlobalIffs.Get(filename + ".iff");
-                //var iff = new Iff(Path.Combine(Content.Get().BasePath, "GameData\\Global\\" + filename + ".iff")); 
-                
-                var resource = new GameGlobalResource(iff);
+                var iff = new IffFile(Path.Combine(Content.Get().BasePath, "objectdata/globals/" + filename + ".iff")); 
+                OTFFile otf = null;
+                try
+                {
+                    otf = new OTFFile(Path.Combine(Content.Get().BasePath, "objectdata/globals/" + filename + ".otf"));
+                }
+                catch (IOException)
+                {
+                    //if we can't load an otf, it probably doesn't exist.
+                }
+                var resource = new GameGlobalResource(iff, otf);
 
                 var item = new GameGlobal
                 {
@@ -92,18 +92,18 @@ namespace TSO.Content
     /// </summary>
     public class GameGlobalResource : GameIffResource
     {
-        public Iff Iff;
-        public OTF Tuning;
+        public IffFile Iff;
+        public OTFFile Tuning;
 
-        public override Iff MainIff
+        public override IffFile MainIff
         {
             get { return Iff; }
         }
 
-        public GameGlobalResource(Iff iff)
+        public GameGlobalResource(IffFile iff, OTFFile tuning)
         {
             this.Iff = iff;
-            //this.Tuning = tuning;
+            this.Tuning = tuning;
         }
 
         public override T Get<T>(ushort id)

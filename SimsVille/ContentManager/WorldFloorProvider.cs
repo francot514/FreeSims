@@ -1,19 +1,26 @@
-﻿using System;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Common.content;
-using TSO.Content.model;
-using TSO.Files.formats.iff;
-using TSO.Files.formats.iff.chunks;
-using TSO.Files.FAR1;
+using FSO.Common.Content;
+using FSO.Content.Model;
+using FSO.Files.Formats.IFF;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.Files.FAR1;
 using System.IO;
-using TSO.Content.framework;
+using FSO.Content.Framework;
 using System.Text.RegularExpressions;
-using TSO.Content.codecs;
+using FSO.Content.Codecs;
 using Microsoft.Xna.Framework.Graphics;
+using FSO.Common.Utils;
 
-namespace TSO.Content
+namespace FSO.Content
 {
     /// <summary>
     /// Provides access to floor (*.flr) data in FAR3 archives.
@@ -24,9 +31,9 @@ namespace TSO.Content
         private Dictionary<ushort, Floor> ById;
 
         public Dictionary<ushort, FloorReference> Entries;
-        public FAR1Provider<Iff> Floors;
+        public FAR1Provider<IffFile> Floors;
 
-        private Iff FloorGlobals;
+        private IffFile FloorGlobals;
         public int NumFloors;
 
         public WorldFloorProvider(Content contentManager)
@@ -43,17 +50,17 @@ namespace TSO.Content
             this.Entries = new Dictionary<ushort, FloorReference>();
             this.ById = new Dictionary<ushort, Floor>();
 
-            var floorGlobalsPath = ContentManager.GetPath("GameData/floors.iff");
-            var floorGlobals = new Iff(floorGlobalsPath);
+            var floorGlobalsPath = ContentManager.GetPath("objectdata/globals/floors.iff");
+            var floorGlobals = new IffFile(floorGlobalsPath);
             FloorGlobals = floorGlobals;
 
-            var buildGlobalsPath = ContentManager.GetPath("GameData/Build.iff");
-            var buildGlobals = new Iff(buildGlobalsPath); //todo: centralize?
+            var buildGlobalsPath = ContentManager.GetPath("objectdata/globals/build.iff");
+            var buildGlobals = new IffFile(buildGlobalsPath); //todo: centralize?
 
             /** There is a small handful of floors in a global file for some reason **/
             ushort floorID = 1;
-            var floorStrs = buildGlobals.Get<STR>(130);
-            for (ushort i = 1; i < 28; i++)
+            var floorStrs = buildGlobals.Get<STR>(0x83);
+            for (ushort i = 1; i < (floorStrs.Length/3); i++)
             {
                 var far = floorGlobals.Get<SPR2>(i);
                 var medium = floorGlobals.Get<SPR2>((ushort)(i + 256));
@@ -80,7 +87,7 @@ namespace TSO.Content
                 floorID++;
             }
 
-            var waterStrs = buildGlobals.Get<STR>(133);
+            var waterStrs = buildGlobals.Get<STR>(0x85);
             //add pools for catalog logic
             Entries.Add(65535, new FloorReference(this)
             {
@@ -91,10 +98,53 @@ namespace TSO.Content
                 Name = waterStrs.GetString(1),
                 Description = waterStrs.GetString(2)
             });
-            
+
+            floorID = 256;
+
+            var archives = new string[]
+            {
+                "housedata/floors/floors.far",
+                "housedata/floors2/floors2.far",
+                "housedata/floors3/floors3.far",
+                "housedata/floors4/floors4.far"
+            };
+
+            for (var i = 0; i < archives.Length; i++)
+            {
+                var archivePath = ContentManager.GetPath(archives[i]);
+                var archive = new FAR1Archive(archivePath);
+                var entries = archive.GetAllEntries();
+
+                foreach (var entry in entries)
+                {
+                    var iff = new IffFile();
+                    var bytes = archive.GetEntry(entry);
+                    using(var stream = new MemoryStream(bytes))
+                    {
+                        iff.Read(stream);
+                    }
+
+
+                    var catStrings = iff.Get<STR>(0);
+
+                    Entries.Add(floorID, new FloorReference(this)
+                    {
+                        ID = floorID,
+                        FileName = entry.Key,
+
+                        Name = catStrings.GetString(0),
+                        Price = int.Parse(catStrings.GetString(1)),
+                        Description = catStrings.GetString(2)
+                    });
+
+                    floorID++;
+                }
+                archive.Close();
+            }
+
             NumFloors = floorID;
-            this.Floors = new FAR1Provider<Iff>(ContentManager, new IffCodec(), new Regex(".*\\\\floors.*\\.far"));
-            Floors.Init(2);
+            this.Floors = new FAR1Provider<IffFile>(ContentManager, new IffCodec(), new Regex(".*/floors.*\\.far"));
+            Floors.Init();
         }
 
         private void AddFloor(Floor floor)
@@ -105,11 +155,15 @@ namespace TSO.Content
 
         public Texture2D GetFloorThumb(ushort id, GraphicsDevice device)
         {
-            if (id < 28)
+            if (id < 256)
             {
-                return ById[id].Near.Frames[0].GetTexture(device);
+                return TextureUtils.Copy(device, ById[id].Near.Frames[0].GetTexture(device));
+            } else if (id == 65535)
+            {
+                
+                return TextureUtils.Copy(device, FloorGlobals.Get<SPR2>(0x420).Frames[0].GetTexture(device));
             }
-            else return null;
+            else return this.Floors.ThrowawayGet(Entries[(ushort)id].FileName).Get<SPR2>(513).Frames[0].GetTexture(device);
         }
 
         public SPR2 GetGlobalSPR(ushort id)
@@ -118,14 +172,6 @@ namespace TSO.Content
         }
 
         #region IContentProvider<Floor> Members
-
-
-        public Floor Get(string id)
-        {
-
-
-            return new Floor();
-        }
 
         public Floor Get(ulong id)
         {
@@ -137,7 +183,7 @@ namespace TSO.Content
             {
                 //get from iff
                 if (!Entries.ContainsKey((ushort)id)) return null;
-                Iff iff = this.Floors.Get(Entries[(ushort)id].FileName);
+                IffFile iff = this.Floors.Get(Entries[(ushort)id].FileName);
                 if (iff == null) return null;
 
                 var far = iff.Get<SPR2>(1);
