@@ -1,19 +1,15 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSO LoginServer.
-
-The Initial Developer of the Original Code is
-Mats 'Afr0' Vederhus. All Rights Reserved.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
 
-namespace TSO.Files.FAR1
+namespace FSO.Files.FAR1
 {
     /// <summary>
     /// A FAR1 (File Archive v1) archive.
@@ -23,10 +19,9 @@ namespace TSO.Files.FAR1
         private string m_Path;
         private BinaryReader m_Reader;
 
-        private int Variant;
         private uint m_ManifestOffset;
         private uint m_NumFiles;
-        public List<FarEntry> m_Entries = new List<FarEntry>();
+        private List<FarEntry> m_Entries = new List<FarEntry>();
 
         /// <summary>
         /// The offset into the archive of the manifest.
@@ -48,10 +43,9 @@ namespace TSO.Files.FAR1
         /// Creates a new FAR1Archive instance from a path.
         /// </summary>
         /// <param name="Path">The path to the archive.</param>
-        public FAR1Archive(string Path, int variant)
+        public FAR1Archive(string Path)
         {
             m_Path = Path;
-            Variant = variant;
             m_Reader = new BinaryReader(File.Open(Path, FileMode.Open, FileAccess.Read, FileShare.Read));
 
             //Magic number - An 8-byte string (not null-terminated), consisting of the ASCII characters "FAR!byAZ"
@@ -77,22 +71,11 @@ namespace TSO.Files.FAR1
                 Entry.DataLength = m_Reader.ReadInt32();
                 Entry.DataLength2 = m_Reader.ReadInt32();
                 Entry.DataOffset = m_Reader.ReadInt32();
-                if (Variant == 0)
-                    Entry.FilenameLength = m_Reader.ReadInt32();
-                else
-                    Entry.FilenameLength = m_Reader.ReadInt16();
+                Entry.FilenameLength = m_Reader.ReadInt16();
                 Entry.Filename = Encoding.ASCII.GetString(m_Reader.ReadBytes(Entry.FilenameLength));
 
-               
                 m_Entries.Add(Entry);
             }
-
-            foreach (var entry in m_Entries)
-                if (entry.DataLength != 0)
-                    {
-                        m_Reader.BaseStream.Seek((long)entry.DataOffset, SeekOrigin.Begin);
-                        entry.Data = m_Reader.ReadBytes(entry.DataLength);
-                    }
         }
 
         /// <summary>

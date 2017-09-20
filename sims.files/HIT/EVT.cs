@@ -1,21 +1,15 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the SimsLib.
-
-The Initial Developer of the Original Code is
-RHY3756547. All Rights Reserved.
-
-Contributor(s):
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
 
-namespace TSO.Files.HIT
+namespace FSO.Files.HIT
 {
     /// <summary>
     /// EVT is a CSV format that defines a list of events for HIT to listen for.
@@ -56,7 +50,7 @@ namespace TSO.Files.HIT
                 string[] Values = Lines[i].Split(',');
 
                 var Entry = new EVTEntry();
-                Entry.Name = Values[0].ToLower();
+                Entry.Name = Values[0].ToLowerInvariant();
                 Entry.EventType = ParseHexString(Values[1]);
                 Entry.TrackID = ParseHexString(Values[2]);
                 Entry.Unknown = ParseHexString(Values[3]);
@@ -72,7 +66,7 @@ namespace TSO.Files.HIT
         private uint ParseHexString(string input)
         {
             bool IsHex = false;
-            input = input.ToLower();
+            input = input.ToLowerInvariant();
 
             if (input == "") return 0;
             if (input.StartsWith("0x"))

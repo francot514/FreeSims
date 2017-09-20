@@ -1,14 +1,8 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-Rhys Simpson. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
@@ -16,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 
-namespace TSO.Files.HIT
+namespace FSO.Files.HIT
 {
     public class HSM
     {
@@ -54,7 +48,7 @@ namespace TSO.Files.HIT
                 string line = io.ReadLine();
                 string[] Values = line.Split(' ');
 
-                var name = Values[0].ToLower();
+                var name = Values[0].ToLowerInvariant();
                 if (!Constants.ContainsKey(name)) Constants.Add(name, Convert.ToInt32(Values[1])); //the repeats are just labels for locations (usually called gotit)
             }
 

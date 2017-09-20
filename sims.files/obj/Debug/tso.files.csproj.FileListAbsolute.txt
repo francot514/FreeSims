@@ -1,0 +1,73 @@
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\obj\Debug\tso.files.csprojResolveAssemblyReference.cache
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\TSO.Files.dll.config
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\TSO.Files.dll
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\TSO.Files.pdb
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\MonoGame.Framework.dll
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\OpenTK.dll
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\TargaImage.dll
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\SharpDX.dll
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\SharpDX.Direct3D11.dll
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\SharpDX.XAudio2.dll
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\Microsoft.Xna.Framework.dll
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\SharpDX.DXGI.dll
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\TargaImage.pdb
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\MonoGame.Framework.xml
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\SharpDX.xml
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\SharpDX.Direct3D11.xml
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\SharpDX.XAudio2.xml
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\Microsoft.Xna.Framework.xml
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\SharpDX.DXGI.xml
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\obj\Debug\TSO.Files.dll
+C:\Users\Usuario\Documents\GitHub\Project-Dollhouse-Custom\TSOClient\tso.files\obj\Debug\TSO.Files.pdb
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\TSO.Files.dll.config
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\TSO.Files.dll
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\TSO.Files.pdb
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\MonoGame.Framework.dll
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\OpenTK.dll
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\TargaImage.dll
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\SharpDX.dll
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\SharpDX.Direct3D11.dll
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\SharpDX.XAudio2.dll
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\Microsoft.Xna.Framework.dll
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\SharpDX.DXGI.dll
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\TargaImage.pdb
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\MonoGame.Framework.xml
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\SharpDX.xml
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\SharpDX.Direct3D11.xml
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\SharpDX.XAudio2.xml
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\Microsoft.Xna.Framework.xml
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\bin\Debug\SharpDX.DXGI.xml
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\obj\Debug\tso.files.csprojResolveAssemblyReference.cache
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\obj\Debug\TSO.Files.dll
+C:\Users\Usuario\Documents\Xamarin\Project-Dollhouse-Custom\TSOClient\tso.files\obj\Debug\TSO.Files.pdb
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-SimsVille\SimsVilleRoleplay\tso.files\obj\Debug\tso.files.csprojResolveAssemblyReference.cache
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-SimsVille\SimsVilleRoleplay\tso.files\obj\Debug\TSO.Files.dll
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\obj\Debug\tso.files.csprojResolveAssemblyReference.cache
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\obj\Debug\TSO.Files.dll
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\TSO.Files.dll.config
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\TSO.Files.dll
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\TSO.Files.pdb
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\OpenTK.dll
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\TargaImage.dll
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\MonoGame.Framework.xml
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\obj\Debug\TSO.Files.pdb
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\TSO.Files.dll.config
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\TSO.Files.dll
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\TSO.Files.pdb
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\MonoGame.Framework.dll
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\OpenTK.dll
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\TargaImage.dll
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\SharpDX.dll
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\SharpDX.Direct3D11.dll
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\SharpDX.XAudio2.dll
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\Microsoft.Xna.Framework.dll
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\SharpDX.DXGI.dll
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\MonoGame.Framework.xml
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\SharpDX.xml
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\SharpDX.Direct3D11.xml
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\SharpDX.XAudio2.xml
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\Microsoft.Xna.Framework.xml
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\bin\Debug\SharpDX.DXGI.xml
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\obj\Debug\tso.files.csprojResolveAssemblyReference.cache
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\obj\Debug\TSO.Files.dll
+C:\Users\Usuario\Documents\Xamarin\Projects\Project-TSOVille\TSOVilleRoleplay\tso.files\obj\Debug\TSO.Files.pdb

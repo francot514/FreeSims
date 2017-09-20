@@ -1,23 +1,17 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using TSO.Files;
+using FSO.Files;
 
-namespace TSO.Files.utils
+namespace FSO.Files.Utils
 {
     /// <summary>
     /// The order to read bytes in.
@@ -75,6 +69,24 @@ namespace TSO.Files.utils
         public void Seek(SeekOrigin origin, long offset)
         {
             Reader.BaseStream.Seek(offset, origin);
+        }
+
+        /// <summary>
+        /// Reads a variable length unsigned integer from the current stream.
+        /// </summary>
+        /// <returns>A uint.</returns>
+        public uint ReadVarLen()
+        {
+            uint result = 0;
+            int shift = 0;
+            byte read = 0x80;
+            while ((read&0x80) > 0)
+            {
+                read = ReadByte();
+                result |= (uint)((read & 0x7F) << shift);
+                shift += 7;
+            }
+            return result;
         }
 
         /// <summary>
@@ -221,6 +233,18 @@ namespace TSO.Files.utils
                 sb.Append(ch);
             }
             return sb.ToString();
+        }
+
+        public string ReadNullTerminatedUTF8()
+        {
+            var sb = new List<byte>();
+            while (true)
+            {
+                var b = Reader.ReadByte();
+                if (b == 0) break;
+                sb.Add(b);
+            }
+            return Encoding.UTF8.GetString(sb.ToArray());
         }
 
         /// <summary>

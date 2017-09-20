@@ -1,0 +1,36 @@
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\SimsHomeMaker\sims.files\bin\Debug\Simslib.dll.config
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\SimsHomeMaker\sims.files\bin\Debug\Simslib.dll
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\SimsHomeMaker\sims.files\bin\Debug\Simslib.pdb
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\SimsHomeMaker\sims.files\bin\Debug\OpenTK.dll
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\SimsHomeMaker\sims.files\bin\Debug\MonoGame.Framework.xml
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\SimsHomeMaker\sims.files\bin\Debug\TargaImage.pdb
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\SimsHomeMaker\sims.files\obj\Debug\sims.files.csprojResolveAssemblyReference.cache
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\SimsHomeMaker\sims.files\obj\Debug\Simslib.dll
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\SimsHomeMaker\sims.files\obj\Debug\Simslib.pdb
+D:\Visual Studio 2010 Backup\SimsHomeMaker\sims.files\bin\Debug\Simslib.dll.config
+D:\Visual Studio 2010 Backup\SimsHomeMaker\sims.files\bin\Debug\Simslib.dll
+D:\Visual Studio 2010 Backup\SimsHomeMaker\sims.files\bin\Debug\Simslib.pdb
+D:\Visual Studio 2010 Backup\SimsHomeMaker\sims.files\bin\Debug\OpenTK.dll
+D:\Visual Studio 2010 Backup\SimsHomeMaker\sims.files\bin\Debug\MonoGame.Framework.xml
+D:\Visual Studio 2010 Backup\SimsHomeMaker\sims.files\bin\Debug\TargaImage.pdb
+D:\Visual Studio 2010 Backup\SimsHomeMaker\sims.files\obj\Debug\sims.files.csprojResolveAssemblyReference.cache
+D:\Visual Studio 2010 Backup\SimsHomeMaker\sims.files\obj\Debug\Simslib.dll
+D:\Visual Studio 2010 Backup\SimsHomeMaker\sims.files\obj\Debug\Simslib.pdb
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-SimsVille\sims.files\bin\Debug\Simslib.dll.config
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-SimsVille\sims.files\bin\Debug\Simslib.dll
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-SimsVille\sims.files\bin\Debug\Simslib.pdb
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-SimsVille\sims.files\bin\Debug\OpenTK.dll
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-SimsVille\sims.files\obj\Debug\sims.files.csprojResolveAssemblyReference.cache
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-SimsVille\sims.files\obj\Debug\Simslib.dll
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-SimsVille\sims.files\obj\Debug\Simslib.pdb
+D:\Visual Studio 2010 Backup\Project-SimsVille\sims.files\bin\Debug\Simslib.dll.config
+D:\Visual Studio 2010 Backup\Project-SimsVille\sims.files\bin\Debug\Simslib.dll
+D:\Visual Studio 2010 Backup\Project-SimsVille\sims.files\bin\Debug\Simslib.pdb
+D:\Visual Studio 2010 Backup\Project-SimsVille\sims.files\bin\Debug\OpenTK.dll
+D:\Visual Studio 2010 Backup\Project-SimsVille\sims.files\obj\Debug\sims.files.csprojResolveAssemblyReference.cache
+D:\Visual Studio 2010 Backup\Project-SimsVille\sims.files\obj\Debug\Simslib.dll
+D:\Visual Studio 2010 Backup\Project-SimsVille\sims.files\obj\Debug\Simslib.pdb
+D:\Visual Studio 2010 Backup\Project-SimsVille\sims.files\bin\Debug\MonoGame.Framework.dll
+D:\Visual Studio 2010 Backup\Project-SimsVille\sims.files\bin\Debug\TargaImage.dll
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-SimsVille\sims.files\bin\Debug\MonoGame.Framework.dll
+C:\Users\Usuario\Documents\Visual Studio 2010\Projects\Project-SimsVille\sims.files\bin\Debug\TargaImage.dll
