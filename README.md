@@ -1,6 +1,6 @@
 # Project Sims Ville
 
-Sims Ville is intended to be an open source recreation of Sims 1, it still requieres the game files for the basic usage, the main purpose is to allow users have an expanded engine with better gameplay experience and new features.
+Project Sims Ville is intended to be an open source engie recreation of The Sims 1, it still requieres the game files for the basic usage, the main purpose is to allow users have an expanded engine with better gameplay experience and new features.
 
 ##-The Basics.
 
@@ -8,11 +8,14 @@ Each user create a Sim, and add him to neighborhood, also the user can have thei
 
 ##-Prerequisites
 
-    OpenGL for Windows or Linux
+   
+    -Windows
     MonoGame: 3.4 or higher
-    Tao.SDL
-	OpenAL
-
+    OpenTK 1.1
+    
+    -Linux
+    OpenGL 3.0
+    SDL2 
 
 ##-License
 
