@@ -52,6 +52,16 @@ namespace FSO.LotView.Utils
         private int LastWidth;
         private int LastHeight;
         private int ScrollBuffer;
+
+        public float PreciseZoom;
+        private float ScreenWidth;
+        private float ScreenHeight;
+
+        private int NumBuffers;
+
+        private SurfaceFormat[] SurfaceFormats;
+        private bool[] AlwaysDS;
+
         public void SetScroll(Vector2 scroll)
         {
             Scroll = scroll;
@@ -107,8 +117,59 @@ namespace FSO.LotView.Utils
                     (alwaysDS[i] || (!FSOEnvironment.UseMRT && !FSOEnvironment.SoftwareDepth))?DepthFormat.Depth24Stencil8:DepthFormat.None)
                 );
             }
+
+            ScrollBuffer = scrollBuffer;
+            NumBuffers = numBuffers;
+            SurfaceFormats = surfaceFormats;
+            AlwaysDS = alwaysDS;
+
         }
-        
+
+        public void GenBuffers(int bwidth, int bheight)
+        {
+            foreach (var buffer in Buffers)
+            {
+                buffer.Dispose();
+            }
+            Buffers.Clear();
+
+            ResetMatrices(bwidth, bheight);
+
+            ScreenWidth = bwidth;
+            ScreenHeight = bheight;
+
+            for (var i = 0; i < NumBuffers; i++)
+            {
+
+                int width = bwidth + ScrollBuffer;
+                int height = bheight + ScrollBuffer;
+
+                switch (i)
+                {
+                    case 2: //World2D.BUFFER_OBJID
+                        width = 1;
+                        height = 1;
+                        break;
+                    case 3: //World2D.BUFFER_THUMB
+                    case 4:
+                        width = 1024;
+                        height = 1024;
+                        break;
+                    case 5:
+                        width = 576;
+                        height = 576;
+                        break;
+                }
+
+                if (NumBuffers == 2) width = height = 1024; //special case, thumb only. 
+                var depthformat = FSOEnvironment.SoftwareDepth ? DepthFormat.Depth24Stencil8 : DepthFormat.Depth24; //stencil is used for software depth
+                Buffers.Add(
+                    PPXDepthEngine.CreateRenderTarget(Device, 1, 0, SurfaceFormats[i], width, height,
+                    (AlwaysDS[i] || (!FSOEnvironment.UseMRT && !FSOEnvironment.SoftwareDepth)) ? depthformat : DepthFormat.None)
+                );
+            }
+        }
+
         public _2DSprite NewSprite(_2DBatchRenderMode mode)
         {
             if (SpriteIndex >= SpritePool.Count)

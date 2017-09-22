@@ -49,7 +49,7 @@ namespace FSO.Client.UI.Screens
         private bool Connecting;
         private UILoginProgress ConnectingDialog;
         private Queue<SimConnectStateChange> StateChanges;
-
+        private UIMouseEventRef MouseHitAreaEventRef = null;
         //private Terrain CityRenderer; //city view
 
         public UILotControl LotController; //world, lotcontrol and vm will be null if we aren't in a lot.
@@ -201,6 +201,7 @@ namespace FSO.Client.UI.Screens
             };
             VMDebug.OnButtonClick += new ButtonClickDelegate(VMDebug_OnButtonClick);
             this.Add(VMDebug);*/
+            //InitializeMouse();
 
             SaveHouseButton = new UIButton()
             {
@@ -260,6 +261,35 @@ namespace FSO.Client.UI.Screens
             */
 
             ZoomLevel = 5; //screen always starts at far zoom, city visible.
+        }
+
+        private void InitializeMouse()
+        {
+            /** City Scene **/
+            UIContainer mouseHitArea = new UIContainer();
+            MouseHitAreaEventRef = mouseHitArea.ListenForMouse(new Rectangle(0, 0, ScreenWidth, ScreenHeight), new UIMouseEvent(MouseHandler));
+            AddAt(0, mouseHitArea);
+        }
+
+        public override void GameResized()
+        {
+            base.GameResized();
+            Title.SetTitle(Title.Label.Caption);
+            ucp.Y = ScreenHeight - 210;
+            gizmo.X = ScreenWidth - 430;
+            gizmo.Y = ScreenHeight - 230;
+            //MessageTray.X = ScreenWidth - 70;
+
+            //if (World != null)
+               // World.GameResized();
+            var oldPanel = ucp.CurrentPanel;
+            ucp.SetPanel(-1);
+            ucp.SetPanel(oldPanel);
+            if (MouseHitAreaEventRef != null)
+            {
+                MouseHitAreaEventRef.Region = new Rectangle(0, 0, ScreenWidth, ScreenHeight);
+            }
+
         }
 
         #region Network handlers
@@ -470,10 +500,10 @@ namespace FSO.Client.UI.Screens
             vm.SendCommand(new VMNetSimJoinCmd
             {
                 ActorUID = simID,
-                HeadID = GlobalSettings.Default.DebugHead,
-                BodyID = GlobalSettings.Default.DebugBody,
-                SkinTone = (byte)GlobalSettings.Default.DebugSkin,
-                Gender = !GlobalSettings.Default.DebugGender,
+                HeadID = GlobalSettings.Default.LastHead,
+                BodyID = GlobalSettings.Default.LastBody,
+                SkinTone = (byte)GlobalSettings.Default.LastSkin,
+                Gender = !GlobalSettings.Default.LastGender,
                 Name = GlobalSettings.Default.LastUser
             });
 

@@ -8,7 +8,7 @@
     <ProjectGuid>{FBCDEE0E-D16A-4FFC-B118-5744C0A59B44}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SimsVille</RootNamespace>
+    <RootNamespace>FSO.Client</RootNamespace>
     <AssemblyName>SimsVille</AssemblyName>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -487,7 +487,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
+    <None Include="app.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="UI\Framework\Parser\UIScript.egt" />
     <None Include="UI\Framework\Parser\UIScript.grm" />
   </ItemGroup>

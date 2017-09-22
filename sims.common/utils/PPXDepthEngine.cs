@@ -34,9 +34,23 @@ namespace FSO.Common.Utils
             Backbuffer = CreateRenderTarget(gd, 1, 0, SurfaceFormat.Color, gd.Viewport.Width / scale, gd.Viewport.Height / scale, DepthFormat.Depth24Stencil8);
         }
 
+        public static void InitScreenTargets()
+        {
+            if (BackbufferDepth != null) BackbufferDepth.Dispose();
+            if (Backbuffer != null) Backbuffer.Dispose();
+            var scale = FSOEnvironment.DPIScaleFactor;
+            BackbufferDepth = CreateRenderTarget(GD, 1, 0, SurfaceFormat.Color, GD.Viewport.Width / scale, GD.Viewport.Height / scale, DepthFormat.None);
+            Backbuffer = CreateRenderTarget(GD, 1, 0, SurfaceFormat.Color, GD.Viewport.Width / scale, GD.Viewport.Height / scale, DepthFormat.Depth24Stencil8);
+        }
+
         private static RenderTarget2D ActiveColor;
         private static RenderTarget2D ActiveDepth;
         private static int StencilValue;
+
+        public static Point GetWidthHeight()
+        {
+            return new Point(Backbuffer.Width, Backbuffer.Height);
+        }
 
         public static void SetPPXTarget(RenderTarget2D color, RenderTarget2D depth, bool clear)
         {

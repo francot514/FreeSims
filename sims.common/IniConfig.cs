@@ -26,6 +26,8 @@ namespace FSO.Common
                     if (prop.PropertyType != typeof(string))
                         prop.SetValue(this, Convert.ChangeType(value, prop.PropertyType), null);
                     else prop.SetValue(this,value,null);
+                    DefaultValues[key] = value;
+
                 }
                 catch (Exception) { }
             }
@@ -40,10 +42,10 @@ namespace FSO.Common
         public void Load()
         {
             //assume default values for all unset properties
-            foreach (var pair in DefaultValues)
-            {
-                SetValue(pair.Key, pair.Value);
-            }
+            //foreach (var pair in DefaultValues)
+           // {
+              //  SetValue(pair.Key, pair.Value);
+           // }
 
             if (!File.Exists(ActivePath))
             {
@@ -72,12 +74,14 @@ namespace FSO.Common
                 using (var stream = new StreamWriter(File.Open(ActivePath, FileMode.Create, FileAccess.Write)))
                 {
                     stream.WriteLine("# FreeSO Settings File. Properties are self explanatory.");
-                    var props = this.GetType().GetProperties();
-                    foreach (var prop in props)
-                    {
-                        if (prop.Name == "Default" || prop.Name == "DefaultValues") continue;
-                        stream.WriteLine(prop.Name + "=" + prop.GetValue(((this).ToString()),null));
-                    }
+                    //var props = this.GetType().GetProperties();
+                    //foreach (var prop in props)
+                    //{
+                        //if (prop.Name == "Default" || prop.Name == "DefaultValues") continue;
+                       // stream.WriteLine(prop.Name + "=" + prop.GetValue(((this).ToString()),null));
+                    //}
+                    foreach (var value in DefaultValues)
+                        stream.WriteLine(value.Key + "=" + value.Value);
                 }
             }
             catch (Exception) { }

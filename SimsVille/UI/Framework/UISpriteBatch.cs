@@ -41,6 +41,9 @@ namespace FSO.Client.UI.Framework
             }
 
             base.GraphicsDevice.DeviceReset += new EventHandler<EventArgs>(gd_DeviceReset);
+
+            AllBuffers = new List<RenderTarget2D>(Buffers);
+
         }
 
         public UISpriteBatch(GraphicsDevice gd, int numBuffers) : this(gd, numBuffers, gd.Viewport.Width, gd.Viewport.Height, 0) { }
@@ -91,6 +94,8 @@ namespace FSO.Client.UI.Framework
          * being added to the main batch. E.g. to do alpha blending
          */
         private List<RenderTarget2D> Buffers = new List<RenderTarget2D>();
+        private List<RenderTarget2D> AllBuffers = new List<RenderTarget2D>();
+
 
         public void UIBegin(BlendState blendMode, SpriteSortMode sortMode)
         {
@@ -136,6 +141,29 @@ namespace FSO.Client.UI.Framework
                 this,
                 promise
             );
+        }
+
+        public void ResizeBuffer(int width, int height)
+        {
+            _Width = width;
+            _Height = height;
+
+            var numBuffers = AllBuffers.Count;
+            foreach (var buf in AllBuffers)
+            {
+                buf.Dispose();
+            }
+
+            Buffers.Clear();
+            AllBuffers.Clear();
+            for (var i = 0; i < numBuffers; i++)
+            {
+                Buffers.Add(
+                    PPXDepthEngine.CreateRenderTarget(base.GraphicsDevice, 1, 0, SurfaceFormat.Color,
+                    Width, Height, DepthFormat.None)
+                );
+            }
+            AllBuffers = new List<RenderTarget2D>(Buffers);
         }
     }
 

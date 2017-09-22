@@ -132,6 +132,17 @@ namespace FSO.LotView
             Blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.LEVEL_CHANGED));
         }
 
+         public void GameResized()
+        {
+            PPXDepthEngine.InitScreenTargets();
+            var newSize = PPXDepthEngine.GetWidthHeight();
+            State._2D.GenBuffers(newSize.X, newSize.Y);
+            State.SetDimensions(newSize.ToVector2());
+
+            if (Blueprint != null)
+                Blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.ZOOM));
+        }
+
         public bool TestScroll(UpdateState state)
         {
             var mouse = state.MouseState;

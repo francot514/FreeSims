@@ -238,6 +238,18 @@ namespace FSO.Client.UI.Framework
             }
         }
 
+        public override void GameResized()
+        {
+            base.GameResized();
+            lock (Children)
+            {
+                var chCopy = new List<UIElement>(Children);
+                //
+                foreach (var child in chCopy)
+                    child.GameResized();
+            }
+        }
+
         public void SendToBack(params UIElement[] elements)
         {
             lock (Children)

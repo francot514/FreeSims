@@ -122,11 +122,8 @@ namespace FSO.Client.UI.Panels
             this.Add(Queue);
 
             ObjectHolder = new UIObjectHolder(vm, World, this);
-            QueryPanel = new UIQueryPanel(World);
-            QueryPanel.OnSellBackClicked += ObjectHolder.SellBack;
-            QueryPanel.X = 0;
-            QueryPanel.Y = -114;
-            //this.Add(QueryPanel);
+
+            SetupQuery();
 
             ChatPanel = new UIChatPanel(vm, this);
             this.Add(ChatPanel);
@@ -159,6 +156,39 @@ namespace FSO.Client.UI.Panels
             return vm.LotName + " - " + vm.Entities.Count(x => x is VMAvatar && x.PersistID != 0);
         }
 
+        public override void GameResized()
+        {
+            base.GameResized();
+            MouseEvt.Region.Width = GlobalSettings.Default.GraphicsWidth;
+            MouseEvt.Region.Height = GlobalSettings.Default.GraphicsHeight;
+
+            SetupQuery();
+        }
+
+        public void SetupQuery()
+        {
+            UIContainer parent = null;         
+
+            QueryPanel = new UIQueryPanel(World);
+
+            if (QueryPanel.Parent != null && QueryPanel.Parent.Parent != null)
+            {
+                parent = QueryPanel.Parent;
+            }
+
+            QueryPanel.OnSellBackClicked += ObjectHolder.SellBack;
+            //QueryPanel.OnInventoryClicked += ObjectHolder.MoveToInventory;
+            //QueryPanel.OnAsyncBuyClicked += ObjectHolder.AsyncBuy;
+            //QueryPanel.OnAsyncSaleClicked += ObjectHolder.AsyncSale;
+            //QueryPanel.OnAsyncPriceClicked += ObjectHolder.AsyncSale;
+            //QueryPanel.OnAsyncSaleCancelClicked += ObjectHolder.AsyncCancelSale;
+            QueryPanel.X = 0;
+            QueryPanel.Y = -114;
+
+            if (parent != null) parent.Add(QueryPanel);
+        }
+
+        
         void vm_OnDialog(FSO.SimAntics.Model.VMDialogInfo info)
         {
             if (info != null && ((info.DialogID == LastDialogID && info.DialogID != 0 && info.Block)

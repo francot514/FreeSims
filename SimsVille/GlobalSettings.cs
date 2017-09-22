@@ -50,17 +50,18 @@ namespace FSO.Client
             { "GraphicsHeight", "768"},
             { "LastUser", ""},
             { "SkipIntro", "true"},
-            { "DebugHead", "0"},
-            { "DebugBody", "0"},
-            { "DebugGender", "true"},
-            { "DebugSkin", "0"},
-            { "LanguageCode", "1"},
+            { "LastHead", "0"},
+            { "LastBody", "0"},
+            { "LastGender", "true"},
+            { "LastSkin", "0"},
+            { "Language", "1"},
         };
         public override Dictionary<string, string> DefaultValues
         {
             get { return _DefaultValues; }
             set { _DefaultValues = value; }
         }
+
 
         public bool ShowHints { get; set; }
         public string CurrentLang { get; set; }
@@ -86,10 +87,10 @@ namespace FSO.Client
         public int GraphicsHeight { get; set; }
         public string LastUser { get; set; }
         public bool SkipIntro { get; set; }
-        public ulong DebugHead { get; set; }
-        public ulong DebugBody { get; set; }
-        public bool DebugGender { get; set; }
-        public int DebugSkin { get; set; }
-        public byte LanguageCode { get; set; }
+        public ulong LastHead { get; set; }
+        public ulong LastBody { get; set; }
+        public bool LastGender { get; set; }
+        public int LastSkin { get; set; }
+        public byte Language { get; set; }
     }
 }

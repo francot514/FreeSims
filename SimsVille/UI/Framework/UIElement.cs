@@ -887,7 +887,12 @@ namespace FSO.Client.UI.Framework
             new Color(0xFF, 0x01, 0xFF, 0xFF).PackedValue
         };
 
-        
+        public virtual void GameResized()
+        {
+
+        }
+
+
         public static Texture2D StoreTexture(ulong id, ContentResource assetData)
         {
             return StoreTexture(id, assetData, true, false);

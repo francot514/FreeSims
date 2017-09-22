@@ -90,7 +90,7 @@ namespace FSO.Client.UI.Panels
         public UILabel MoneyText { get; set; }
 
         private UIDestroyablePanel Panel;
-        private int CurrentPanel;
+        public int CurrentPanel;
 
         private uint OldMoney;
         private int MoneyHighlightFrames;

@@ -49,6 +49,8 @@ namespace FSO.Client.UI.Screens
 
         private UICollectionViewer m_HeadSkinBrowser;
         private UICollectionViewer m_BodySkinBrowser;
+
+        private UIImage Background;
         
         /** Data **/
         private Collection MaleHeads;
@@ -122,6 +124,8 @@ namespace FSO.Client.UI.Screens
 
             /** Backgrounds **/
             var bg = new UIImage(BackgroundImage).With9Slice(128,128, 84, 84);
+            Background = bg;
+
             this.AddAt(0, bg);
             bg.SetSize(GlobalSettings.Default.GraphicsWidth, GlobalSettings.Default.GraphicsHeight);
             bg.Position = new Vector2((GlobalSettings.Default.GraphicsWidth - 1024) / -2, (GlobalSettings.Default.GraphicsHeight - 768) / -2);
@@ -159,7 +163,7 @@ namespace FSO.Client.UI.Screens
              * Init state
              */
 
-            if (GlobalSettings.Default.DebugGender)
+            if (GlobalSettings.Default.LastGender)
             {
                 Gender = Gender.Male;
                 MaleButton.Selected = true;
@@ -172,7 +176,7 @@ namespace FSO.Client.UI.Screens
                 FemaleButton.Selected = true;
             }
 
-            AppearanceType = (AppearanceType)GlobalSettings.Default.DebugSkin;
+            AppearanceType = (AppearanceType)GlobalSettings.Default.LastSkin;
 
             SkinLightButton.Selected = false;
             SkinMediumButton.Selected = false;
@@ -190,7 +194,7 @@ namespace FSO.Client.UI.Screens
 
             RefreshCollections();
 
-            SearchCollectionForInitID(GlobalSettings.Default.DebugHead, GlobalSettings.Default.DebugBody);
+            SearchCollectionForInitID(GlobalSettings.Default.LastHead, GlobalSettings.Default.LastBody);
             
 
             NetworkFacade.Controller.OnCharacterCreationProgress += new OnCharacterCreationProgressDelegate(Controller_OnCharacterCreationStatus);
@@ -263,39 +267,26 @@ namespace FSO.Client.UI.Screens
             sim.Handgroup = Content.Content.Get().AvatarOutfits.Get(bodyPurchasable.OutfitID);
             sim.Avatar.Appearance = this.AppearanceType;
 
-            GlobalSettings.Default.DebugBody = sim.BodyOutfitID;
-            GlobalSettings.Default.DebugHead = sim.HeadOutfitID;
+            GlobalSettings.Default.LastBody = sim.BodyOutfitID;
+            GlobalSettings.Default.LastHead = sim.HeadOutfitID;
             GlobalSettings.Default.LastUser = sim.Name;
-            GlobalSettings.Default.DebugGender = (Gender == Gender.Male);
-            GlobalSettings.Default.DebugSkin = (int)this.AppearanceType;
+            GlobalSettings.Default.LastGender = (Gender == Gender.Male);
+            GlobalSettings.Default.LastSkin = (int)this.AppearanceType;
 
             GlobalSettings.Default.Save();
 
             GameFacade.Controller.ShowLotDebug();
 
-            /*
-            PlayerAccount.CurrentlyActiveSim = sim;
 
-            if (NetworkFacade.Avatars.Count <= 3)
-            {
-                lock(NetworkFacade.Avatars)
-                    NetworkFacade.Avatars.Add(sim);
-            }
-            else
-            {
-                UIAlertOptions Options = new UIAlertOptions();
-                Options.Message = "You've already created three characters!";
-                Options.Title = "Too Many Avatars";
-                Options.Buttons = UIAlertButtons.OK;
-                UI.Framework.UIScreen.ShowAlert(Options, true);
+        }
 
-                return;
-            }
 
-            //DateTime.Now.ToString() requires extremely specific formatting.
-            UIPacketSenders.SendCharacterCreate(sim, DateTime.Now.ToString("yyyy.MM.dd hh:mm:ss", 
-                CultureInfo.InvariantCulture));
-                */
+        public override void GameResized()
+        {
+            base.GameResized();
+            Position = new Vector2((GlobalSettings.Default.GraphicsWidth - 1024) / 2, (GlobalSettings.Default.GraphicsHeight - 768) / 2) * FSOEnvironment.DPIScaleFactor;
+            Background.SetSize(GlobalSettings.Default.GraphicsWidth, GlobalSettings.Default.GraphicsHeight);
+            Background.Position = new Vector2((GlobalSettings.Default.GraphicsWidth - 1024) / -2, (GlobalSettings.Default.GraphicsHeight - 768) / -2);
         }
 
         private void HeadSkinBrowser_OnChange(UIElement element)

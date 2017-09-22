@@ -56,12 +56,16 @@ namespace FSO.Client
 
             if (path != null)
             {
+
+                GlobalSettings.Default.Load();
+
                 FSOEnvironment.ContentDir = "Content/";
                 FSOEnvironment.GFXContentDir = "Content/" + (useDX ? "DX/" : "OGL/");
                 FSOEnvironment.Linux = linux;
                 FSOEnvironment.DirectX = useDX;
-                if (GlobalSettings.Default.LanguageCode == 0) GlobalSettings.Default.LanguageCode = 1;
-                Files.Formats.IFF.Chunks.STR.DefaultLangCode = (Files.Formats.IFF.Chunks.STRLangCode)GlobalSettings.Default.LanguageCode;
+                if (GlobalSettings.Default.Language == 0) 
+                GlobalSettings.Default.Language = 1;
+                Files.Formats.IFF.Chunks.STR.DefaultLangCode = (Files.Formats.IFF.Chunks.STRLangCode)GlobalSettings.Default.Language;
 
                 GlobalSettings.Default.StartupPath = path;
                 string DocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Sims Ville";

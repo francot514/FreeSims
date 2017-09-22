@@ -228,6 +228,11 @@ namespace FSO.Client.UI.Panels
             ClearSelected();
         }
 
+        public void AsyncSale(UIElement button)
+        {
+           
+        }
+
         public void Update(UpdateState state, bool scrolled)
         {
             if (ShowTooltip) state.UIState.TooltipProperties.UpdateDead = false;

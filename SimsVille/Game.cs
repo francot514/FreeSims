@@ -29,6 +29,7 @@ namespace FSO.Client
         public UILayer uiLayer;
         public _3DLayer SceneMgr;
         public SpriteFont Font, BigFont;
+        public bool WindowChange = false;
 
 		public TSOGame() : base()
         {
@@ -38,7 +39,7 @@ namespace FSO.Client
             
             Graphics.PreferredBackBufferWidth = GlobalSettings.Default.GraphicsWidth;
             Graphics.PreferredBackBufferHeight = GlobalSettings.Default.GraphicsHeight;
-
+            
            // Graphics.HardwareModeSwitch = false;
             Graphics.ApplyChanges();
 
@@ -48,6 +49,26 @@ namespace FSO.Client
             //Log.UseSensibleDefaults();
         }
 
+        void Window_ClientSizeChanged(object sender, EventArgs e)
+        {
+            if (WindowChange || !GlobalSettings.Default.Windowed) return;
+            if (Window.ClientBounds.Width == 0 || Window.ClientBounds.Height == 0) return;
+            WindowChange = true;
+            var width = Math.Max(1, Window.ClientBounds.Width);
+            var height = Math.Max(1, Window.ClientBounds.Height);
+            Graphics.PreferredBackBufferWidth = width;
+            Graphics.PreferredBackBufferHeight = height;
+            Graphics.ApplyChanges();
+
+            GlobalSettings.Default.GraphicsWidth = width;
+            GlobalSettings.Default.GraphicsHeight = height;
+
+            WindowChange = false;
+            if (uiLayer.CurrentUIScreen == null) return;
+
+            uiLayer.SpriteBatch.ResizeBuffer(GlobalSettings.Default.GraphicsWidth, GlobalSettings.Default.GraphicsHeight);
+            uiLayer.CurrentUIScreen.GameResized();
+        }
         /// <summary>
         /// Allows the game to perform any initialization it needs to before starting to run.
         /// This is where it can query for any required services and load any non-graphic
@@ -104,6 +125,9 @@ namespace FSO.Client
 
             this.IsMouseVisible = true;
             this.IsFixedTimeStep = true;
+            this.Window.AllowUserResizing = true;
+
+            this.Window.ClientSizeChanged += new EventHandler<EventArgs>(Window_ClientSizeChanged);
 
             WorldContent.Init(this.Services, Content.RootDirectory);
             if (!FSOEnvironment.SoftwareKeyboard) AddTextInput();
