@@ -58,6 +58,8 @@ namespace FSO.Files.Formats.IFF
         public static List<IffFile> GetPIFFs(string srcFile)
         {
             List<IffFile> result = null;
+
+            if (PIFFsByName != null)
             PIFFsByName.TryGetValue(srcFile, out result);
             return result;
         }

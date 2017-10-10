@@ -21,12 +21,16 @@ namespace FSO.Vitaboy
     public class Animation
     {
         public string Name;
+        public string XSkillName;
         public float Duration;
         public float Distance;
         public byte IsMoving;
         public Vector3[] Translations;
         public Quaternion[] Rotations;
         public AnimationMotion[] Motions;
+
+        public uint TranslationCount;
+        public uint RotationCount;
 
         /// <summary>
         /// Total number of frames in this animation.
@@ -48,35 +52,53 @@ namespace FSO.Vitaboy
         /// Reads an animation from a stream.
         /// </summary>
         /// <param name="stream">The Stream instance to read from.</param>
-        public void Read(Stream stream)
+        public void Read(Stream stream, bool bcf)
         {
-            using (var io = IoBuffer.FromStream(stream))
+            using (var io = IoBuffer.FromStream(stream, bcf ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN))
             {
                 var version = io.ReadUInt32();
-                Name = io.ReadLongPascalString();
+
+                if (bcf)
+                {
+                    Name = io.ReadPascalString();
+                    XSkillName = io.ReadPascalString();
+                }
+                else
+                    Name = io.ReadLongPascalString();
+
                 Duration = io.ReadFloat();
                 Distance = io.ReadFloat();
                 IsMoving = io.ReadByte();
 
-                var translationCount = io.ReadUInt32();
-                Translations = new Vector3[translationCount];
-                for (var i = 0; i < translationCount; i++){
-                    Translations[i] = new Vector3 {
-                        X = -io.ReadFloat(),
-                        Y = io.ReadFloat(),
-                        Z = io.ReadFloat()
-                    };
+                TranslationCount = io.ReadUInt32();
+                if (!bcf)
+                {
+                    Translations = new Vector3[TranslationCount];
+                    for (var i = 0; i < TranslationCount; i++)
+                    {
+                        Translations[i] = new Vector3
+                        {
+                            X = -io.ReadFloat(),
+                            Y = io.ReadFloat(),
+                            Z = io.ReadFloat()
+                        };
+                    }
                 }
 
-                var rotationCount = io.ReadUInt32();
-                Rotations = new Quaternion[rotationCount];
-                for (var i = 0; i < rotationCount; i++){
-                    Rotations[i] = new Quaternion {
-                        X = io.ReadFloat(),
-                        Y = -io.ReadFloat(),
-                        Z = -io.ReadFloat(),
-                        W = -io.ReadFloat()
-                    };
+                RotationCount = io.ReadUInt32();
+                if (!bcf)
+                {
+                    Rotations = new Quaternion[RotationCount];
+                    for (var i = 0; i < RotationCount; i++)
+                    {
+                        Rotations[i] = new Quaternion
+                        {
+                            X = io.ReadFloat(),
+                            Y = -io.ReadFloat(),
+                            Z = -io.ReadFloat(),
+                            W = -io.ReadFloat()
+                        };
+                    }
                 }
 
                 var motionCount = io.ReadUInt32();

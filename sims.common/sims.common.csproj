@@ -111,10 +111,12 @@
     <Compile Include="rendering\vitaboy\Animation.cs" />
     <Compile Include="rendering\vitaboy\Appearance.cs" />
     <Compile Include="rendering\vitaboy\AppearanceType.cs" />
+    <Compile Include="rendering\vitaboy\BCF.cs" />
     <Compile Include="rendering\vitaboy\Binding.cs" />
     <Compile Include="rendering\vitaboy\BlendData.cs" />
     <Compile Include="rendering\vitaboy\Bone.cs" />
     <Compile Include="rendering\vitaboy\BoneBinding.cs" />
+    <Compile Include="rendering\vitaboy\CFP.cs" />
     <Compile Include="rendering\vitaboy\Collection.cs" />
     <Compile Include="rendering\vitaboy\HandGroup.cs" />
     <Compile Include="rendering\vitaboy\Mesh.cs" />

@@ -108,6 +108,8 @@ namespace FSO.Vitaboy
     {
         public uint FileID;
         public uint TypeID;
+        public string Name;
+        public string TexName;
 
         public ContentID ID
         {

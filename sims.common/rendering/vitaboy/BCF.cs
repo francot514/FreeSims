@@ -1,12 +1,12 @@
-﻿using System;
+﻿using FSO.Files.Utils;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TSO.Files.utils;
 
-namespace TSO.Common.rendering.vitaboy
+namespace FSO.Vitaboy
 {
     public class BCF
     {

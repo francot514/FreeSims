@@ -10,6 +10,7 @@ namespace FSO.Common
         public static string ContentDir = "Content/";
         public static string UserDir = "Content/";
         public static string GFXContentDir = "Content/OGL";
+        public static string SimsCompleteDir = "";
         public static bool DirectX = false;
         public static bool Linux = false;
         public static bool UseMRT = true;

@@ -8,11 +8,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 
 namespace FSO.Common.Content
 {
-    public interface IContentReference <T>
+    public interface IContentReference<T>
     {
         T Get();
+    }
+
+    public interface IContentReference
+    {
+        object GetGeneric();
+        object GetThrowawayGeneric();
     }
 }

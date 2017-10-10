@@ -1,13 +1,13 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FSO.Files.Utils;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TSO.Files.utils;
 
-namespace TSO.Common.rendering.vitaboy
+namespace FSO.Vitaboy
 {
     /// <summary>
     /// Compressed Floating Point
@@ -52,7 +52,7 @@ namespace TSO.Common.rendering.vitaboy
                     ReadNFloats(io, anim.Rotations.Count(), (i, w) => anim.Rotations[i].W = -w);
                 }
             }
-            Data = null;
+            //Data = null;
         }
 
         public static void ReadNFloats(IoBuffer io, int floats, Action<int, float> output)

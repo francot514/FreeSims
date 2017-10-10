@@ -20,6 +20,7 @@ namespace FSO.Common.Content
         public uint TypeID;
         public uint FileID;
         private long v;
+        public string FileName;
 
 
         /// <summary>
@@ -31,6 +32,11 @@ namespace FSO.Common.Content
         {
             this.TypeID = typeID;
             this.FileID = fileID;
+        }
+
+        public ContentID(string name)
+        {
+            this.FileName = name;
         }
 
         public ContentID(long v)
