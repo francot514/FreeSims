@@ -191,7 +191,7 @@ namespace FSO.Content
             for (var i = 0; i < archives.Length; i++)
             {
                 var archivePath = ContentManager.GetPath(archives[i]);
-                var archive = new FAR1Archive(archivePath);
+                var archive = new FAR1Archive(archivePath,true);
                 var entries = archive.GetAllEntries();
 
                 foreach (var entry in entries)

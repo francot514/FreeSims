@@ -73,7 +73,7 @@ namespace FSO.Vitaboy
                 return;
             }
 
-            var add = AddAppearance(apr);
+            var add = AddAppearance(apr, null);
             Accessories.Add(apr, add);
         }
 
@@ -108,15 +108,21 @@ namespace FSO.Vitaboy
         /// </summary>
         /// <param name="appearance">The Appearance instance to add.</param>
         /// <returns>An AvatarAppearanceInstance instance.</returns>
-        protected AvatarAppearanceInstance AddAppearance(Appearance appearance)
+        protected AvatarAppearanceInstance AddAppearance(Appearance appearance, string texOverride)
         {
             var result = new AvatarAppearanceInstance();
             result.Bindings = new List<AvatarBindingInstance>();
 
+            int i = 0;
             foreach (var bindingReference in appearance.Bindings)
             {
-                var binding = FSO.Content.Content.Get().AvatarBindings.Get(bindingReference.TypeID, bindingReference.FileID);
+                var binding = bindingReference.RealBinding ?? FSO.Content.Content.Get().AvatarBindings.Get(bindingReference.TypeID, bindingReference.FileID);
                 if (binding == null) { continue; }
+                if ((i++ == 0) && texOverride != null)
+                {
+                    binding = binding.TS1Copy();
+                    binding.TextureName = texOverride;
+                }
                 result.Bindings.Add(AddBinding(binding));
             }
 
@@ -147,18 +153,22 @@ namespace FSO.Vitaboy
             var instance = new AvatarBindingInstance();
             instance.Mesh = content.AvatarMeshes.Get(binding.MeshTypeID, binding.MeshFileID);
 
-            /*if (instance.Mesh != null)
+            if (binding.MeshName != null)
             {
-                //We make a copy so we can modify it, most of the variables
-                //are kept as pointers because we only change a few locals
-                //per sim, the rest are global
-                instance.Mesh = instance.Mesh.Clone();
-            }*/
-
-            if (binding.TextureFileID > 0 && binding.TextureFileID != 4992)
+                instance.Mesh = content.AvatarMeshes.Get(binding.MeshName);
+                instance.Texture = content.AvatarTextures.Get(binding.TextureName ?? instance.Mesh.TextureName);
+            }
+            else
             {
+                instance.Mesh = content.AvatarMeshes.Get(binding.MeshTypeID, binding.MeshFileID);
                 instance.Texture = content.AvatarTextures.Get(binding.TextureTypeID, binding.TextureFileID);
             }
+            
+            if (instance.Mesh == null)
+                instance.Mesh =  content.TS1AvatarMeshes.Get(binding.MeshTypeID, binding.MeshFileID);
+
+            if (instance.Texture == null)
+                instance.Texture = content.TS1AvatarTextures.Get(binding.TextureFileID);
 
             instance.Mesh.Prepare(Skeleton.RootBone);
 

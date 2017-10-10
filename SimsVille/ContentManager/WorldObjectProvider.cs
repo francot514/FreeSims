@@ -47,26 +47,22 @@ namespace FSO.Content
         /// </summary>
         public void Init(bool withSprites)
         {
+            List<string>FarFiles = new List<string>();
+            List<string> SpriteFiles = new List<string>();
+
             WithSprites = withSprites;
-            Iffs = new FAR1Provider<IffFile>(ContentManager, new IffCodec(), "objectdata/objects/objiff.far");
-            
-            TuningTables = new FAR1Provider<OTFFile>(ContentManager, new OTFCodec(), new Regex(".*/objotf.*\\.far"));
 
-            Iffs.Init();
-            TuningTables.Init();
+            for (int i = 1; i <= 9; i++)
+                SpriteFiles.Add("objectdata/objects/objspf" + i + ".far");
 
-            if (withSprites)
-            {
-                Sprites = new FAR1Provider<IffFile>(ContentManager, new IffCodec(), new Regex(".*/objspf.*\\.far"));
-                Sprites.Init();
-            }
+            FarFiles.Add("objectdata/objects/objiff.far");
 
             /** Load packingslip **/
             Entries = new Dictionary<ulong, GameObjectReference>();
             Cache = new ConcurrentDictionary<ulong, GameObject>();
 
             var packingslip = new XmlDocument();
-            packingslip.Load(ContentManager.GetPath("packingslips/objecttable.xml"));
+            packingslip.Load("Content/objects.xml");
             var objectInfos = packingslip.GetElementsByTagName("I");
 
             foreach (XmlNode objectInfo in objectInfos)
@@ -79,40 +75,256 @@ namespace FSO.Content
                     Source = GameObjectSource.Far,
                     Name = objectInfo.Attributes["o"].Value,
                     Group = Convert.ToInt16(objectInfo.Attributes["m"].Value),
-                    SubIndex = Convert.ToInt16(objectInfo.Attributes["i"].Value)
+                    SubIndex = Convert.ToInt16(objectInfo.Attributes["i"].Value),
+                    EpObject = false
                 });
             }
 
-            //init local objects, piff clones
-
-            //Directory.CreateDirectory(Path.Combine(FSOEnvironment.ContentDir, "Objects"));
-            if (Directory.Exists(Path.Combine(FSOEnvironment.ContentDir, "Objects")))
+            if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/ExpansionPack"))
             {
-            
-            string[] paths = Directory.GetFiles(Path.Combine(FSOEnvironment.ContentDir, "Objects"), "*.iff", SearchOption.AllDirectories);
-            for (int i = 0; i < paths.Length; i++)
-            {
-                string entry = paths[i];
-                string filename = Path.GetFileName(entry);
-                IffFile iffFile = new IffFile(entry);
 
-                var objs = iffFile.List<OBJD>();
-                foreach (var obj in objs)
+                string EpFile = FSOEnvironment.SimsCompleteDir + "/ExpansionPack/ExpansionPack.far";
+                FarFiles.Add(EpFile);
+                SpriteFiles.Add(EpFile);
+
+
+
+                var ep1objects = new XmlDocument();
+                ep1objects.Load("Content/ep1.xml");
+                var objectInfos1 = ep1objects.GetElementsByTagName("P");
+
+                foreach (XmlNode objectInfo in objectInfos1)
                 {
-                    Entries.Add(obj.GUID, new GameObjectReference(this)
+                    ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
+
+                    if (!Entries.ContainsKey(FileID))
+                        Entries.Add(FileID, new GameObjectReference(this)
+                        {
+                            ID = FileID,
+                            FileName = objectInfo.Attributes["n"].Value,
+                            Source = GameObjectSource.Far,
+                            Group = Convert.ToInt16(objectInfo.Attributes["m"].Value),
+                            SubIndex = Convert.ToInt16(objectInfo.Attributes["i"].Value),
+                            EpObject = true
+
+                        });
+                }
+
+            }
+
+            if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/ExpansionPack2"))
+            {
+
+                string Ep2File = FSOEnvironment.SimsCompleteDir + "/ExpansionPack2/ExpansionPack2.far";
+                FarFiles.Add(Ep2File);
+                SpriteFiles.Add(Ep2File);
+
+
+
+                var ep2objects = new XmlDocument();
+                ep2objects.Load("Content/ep2.xml");
+                var objectInfos2 = ep2objects.GetElementsByTagName("P");
+
+                foreach (XmlNode objectInfo in objectInfos2)
+                {
+                    ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
+
+                    if (!Entries.ContainsKey(FileID))
+                        Entries.Add(FileID, new GameObjectReference(this)
+                        {
+                            ID = FileID,
+                            FileName = objectInfo.Attributes["n"].Value,
+                            Source = GameObjectSource.Far,
+                            Group = Convert.ToInt16(objectInfo.Attributes["m"].Value),
+                            SubIndex = Convert.ToInt16(objectInfo.Attributes["i"].Value),
+                            EpObject = true
+
+                        });
+                }
+
+            }
+
+            if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/ExpansionPack3"))
+            {
+
+                string Ep3File = FSOEnvironment.SimsCompleteDir + "/ExpansionPack3/ExpansionPack3.far";
+                FarFiles.Add(Ep3File);
+                SpriteFiles.Add(Ep3File);
+
+
+
+                var ep3objects = new XmlDocument();
+                ep3objects.Load("Content/ep3.xml");
+                var objectInfos3 = ep3objects.GetElementsByTagName("P");
+
+                foreach (XmlNode objectInfo in objectInfos3)
+                {
+                    ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
+
+                    if (!Entries.ContainsKey(FileID))
+                        Entries.Add(FileID, new GameObjectReference(this)
+                        {
+                            ID = FileID,
+                            FileName = objectInfo.Attributes["n"].Value,
+                            Source = GameObjectSource.Far,
+                            Group = Convert.ToInt16(objectInfo.Attributes["m"].Value),
+                            SubIndex = Convert.ToInt16(objectInfo.Attributes["i"].Value),
+                            EpObject = true
+
+                        });
+                }
+
+            }
+
+
+            if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/ExpansionPack4"))
+            {
+
+                string Ep4File = FSOEnvironment.SimsCompleteDir + "/ExpansionPack4/ExpansionPack4.far";
+                FarFiles.Add(Ep4File);
+                SpriteFiles.Add(Ep4File);
+
+              
+
+                var ep4objects = new XmlDocument();
+                ep4objects.Load("Content/ep4.xml");
+                var objectInfos4 = ep4objects.GetElementsByTagName("P");
+
+                foreach (XmlNode objectInfo in objectInfos4)
+                {
+                    ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
+
+                    if (!Entries.ContainsKey(FileID))
+                    Entries.Add(FileID, new GameObjectReference(this)
                     {
-                        ID = obj.GUID,
-                        FileName = entry,
-                        Source = GameObjectSource.Standalone,
-                        Name = obj.ChunkLabel,
-                        Group = (short)obj.MasterID,
-                        SubIndex = obj.SubIndex
+                        ID = FileID,
+                        FileName = objectInfo.Attributes["n"].Value,
+                        Source = GameObjectSource.Far,
+                        Group = Convert.ToInt16(objectInfo.Attributes["m"].Value),
+                        SubIndex = Convert.ToInt16(objectInfo.Attributes["i"].Value),
+                        EpObject = true
+                        
                     });
                 }
+
+            }
+
+            if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/ExpansionPack5"))
+            {
+
+                string Ep5File = FSOEnvironment.SimsCompleteDir + "/ExpansionPack5/ExpansionPack5.far";
+                FarFiles.Add(Ep5File);
+                SpriteFiles.Add(Ep5File);
+
+
+
+                var ep5objects = new XmlDocument();
+                ep5objects.Load("Content/ep5.xml");
+                var objectInfos5 = ep5objects.GetElementsByTagName("P");
+
+                foreach (XmlNode objectInfo in objectInfos5)
+                {
+                    ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
+
+                    if (!Entries.ContainsKey(FileID))
+                        Entries.Add(FileID, new GameObjectReference(this)
+                        {
+                            ID = FileID,
+                            FileName = objectInfo.Attributes["n"].Value,
+                            Source = GameObjectSource.Far,
+                            Group = Convert.ToInt16(objectInfo.Attributes["m"].Value),
+                            SubIndex = Convert.ToInt16(objectInfo.Attributes["i"].Value),
+                            EpObject = true
+
+                        });
+                }
+
             }
 
 
+            if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/ExpansionPack6"))
+            {
+
+                string Ep6File = FSOEnvironment.SimsCompleteDir + "/ExpansionPack6/ExpansionPack6.far";
+                FarFiles.Add(Ep6File);
+                SpriteFiles.Add(Ep6File);
+
+
+
+                var ep6objects = new XmlDocument();
+                ep6objects.Load("Content/ep6.xml");
+                var objectInfos6 = ep6objects.GetElementsByTagName("P");
+
+                foreach (XmlNode objectInfo in objectInfos6)
+                {
+                    ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
+
+                    if (!Entries.ContainsKey(FileID))
+                        Entries.Add(FileID, new GameObjectReference(this)
+                        {
+                            ID = FileID,
+                            FileName = objectInfo.Attributes["n"].Value,
+                            Source = GameObjectSource.Far,
+                            Group = Convert.ToInt16(objectInfo.Attributes["m"].Value),
+                            SubIndex = Convert.ToInt16(objectInfo.Attributes["i"].Value),
+                            EpObject = true
+
+                        });
+                }
+
             }
+
+            if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/ExpansionPack7"))
+            {
+
+                string Ep7File = FSOEnvironment.SimsCompleteDir + "/ExpansionPack7/ExpansionPack7.far";
+                FarFiles.Add(Ep7File);
+                SpriteFiles.Add(Ep7File);
+
+
+
+                var ep7objects = new XmlDocument();
+                ep7objects.Load("Content/ep7.xml");
+                var objectInfos7 = ep7objects.GetElementsByTagName("P");
+
+                foreach (XmlNode objectInfo in objectInfos7)
+                {
+                    ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
+
+                    if (!Entries.ContainsKey(FileID))
+                        Entries.Add(FileID, new GameObjectReference(this)
+                        {
+                            ID = FileID,
+                            FileName = objectInfo.Attributes["n"].Value,
+                            Source = GameObjectSource.Far,
+                            Group = Convert.ToInt16(objectInfo.Attributes["m"].Value),
+                            SubIndex = Convert.ToInt16(objectInfo.Attributes["i"].Value),
+                            EpObject = true
+
+                        });
+                }
+
+            }
+
+            StreamWriter writer = new StreamWriter("entries.txt");
+
+            foreach (var entry in Entries)
+                writer.WriteLine(entry.Key.ToString("X") + "-" + entry.Value.FileName);
+            writer.Close();
+
+            Iffs = new FAR1Provider<IffFile>(ContentManager, new IffCodec(), FarFiles.ToArray());
+
+            TuningTables = new FAR1Provider<OTFFile>(ContentManager, new OTFCodec(), new Regex(".*/objotf.*\\.far"));
+
+            Iffs.Init();
+            TuningTables.Init();
+
+            if (withSprites)
+            {
+                Sprites = new FAR1Provider<IffFile>(ContentManager, new IffCodec(), SpriteFiles.ToArray());
+                Sprites.Init();
+            }
+
         }
 
         private Dictionary<string, GameObjectResource> ProcessedFiles = new Dictionary<string, GameObjectResource>();
@@ -143,7 +355,7 @@ namespace FSO.Content
                         Entries.TryGetValue(id, out reference);
                         if (reference == null)
                         {
-                            Console.WriteLine("Failed to get Object ID: " + id.ToString() + " (no resource)");
+                            //Console.WriteLine("Failed to get Object ID: " + id.ToString() + " (no resource)");
                             return null;
                         }
                         lock (ProcessedFiles)
@@ -164,7 +376,13 @@ namespace FSO.Content
                         {
                             iff = this.Iffs.Get(reference.FileName + ".iff");
                             iff.RuntimeInfo.Path = reference.FileName;
-                            if (WithSprites) sprites = this.Sprites.Get(reference.FileName + ".spf");
+                            if (WithSprites)
+                                if (reference.EpObject)
+                                    sprites = this.Sprites.Get(reference.FileName + ".iff");
+                                else
+                                    sprites = this.Sprites.Get(reference.FileName + ".spf");
+                            
+
                             tuning = this.TuningTables.Get(reference.FileName + ".otf");
                         }
                         else
@@ -204,7 +422,7 @@ namespace FSO.Content
                     //0x3BAA9787
                     if (!Cache.ContainsKey(id))
                     {
-                        Console.WriteLine("Failed to get Object ID: " + id.ToString() + " from resource " + resource.Name);
+                       // Console.WriteLine("Failed to get Object ID: " + id.ToString() + " from resource " + resource.Name);
                         return null;
                     }
                     return Cache[id];
@@ -325,6 +543,7 @@ namespace FSO.Content
         public string Name;
         public short Group;
         public short SubIndex;
+        public bool EpObject;
 
         private WorldObjectProvider Provider;
 

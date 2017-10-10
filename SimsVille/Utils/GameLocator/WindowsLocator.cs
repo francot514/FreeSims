@@ -36,7 +36,29 @@ namespace FSO.Client.Utils.GameLocator
         }
 
 
+        public string FindTheSimsComplete()
+        {
+            //string Software = "";
 
+            using (var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32))
+            {
+                //Find the path to The Sims 1 on the user's system.
+                RegistryKey softwareKey = hklm.OpenSubKey("SOFTWARE");
+
+
+                if (Array.Exists(softwareKey.GetSubKeyNames(), delegate(string s) { return s.Equals("Maxis", StringComparison.InvariantCultureIgnoreCase); }))
+                {
+                    RegistryKey maxisKey = softwareKey.OpenSubKey("Maxis");
+                    if (Array.Exists(maxisKey.GetSubKeyNames(), delegate(string s) { return s.Equals("The Sims", StringComparison.InvariantCultureIgnoreCase); }))
+                    {
+                        RegistryKey ts1Key = maxisKey.OpenSubKey("The Sims");
+                        string installDir = (string)ts1Key.GetValue("InstallPath");
+                        return installDir;
+                    }
+                }
+            }
+            return @"C:\Program Files\Maxis\The Sims\";
+        }
 
 
         private static bool is64BitProcess = (IntPtr.Size == 8);

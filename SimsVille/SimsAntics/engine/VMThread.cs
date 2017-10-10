@@ -217,7 +217,7 @@ namespace FSO.SimAntics.Engine
 
             if (BlockingState != null) BlockingState.WaitTime++;
             if (DialogCooldown > 0) DialogCooldown--;
-#if !THROW_SIMANTICS
+#if RELEASE
             try {
 #endif
                 if (!Entity.Dead)
@@ -255,7 +255,7 @@ namespace FSO.SimAntics.Engine
                         ContinueExecution = true;
                         while (ContinueExecution)
                         {
-                            if (TicksThisFrame++ > MAX_LOOP_COUNT) throw new Exception("Thread entered infinite loop! ( >"+MAX_LOOP_COUNT+" primitives)");
+                            if (TicksThisFrame++ > MAX_LOOP_COUNT) Entity.Delete(true,Context);
                             ContinueExecution = false;
                             NextInstruction();
                         }
@@ -266,7 +266,7 @@ namespace FSO.SimAntics.Engine
                     }
                 }
 
-#if !THROW_SIMANTICS
+#if RELEASE
             } catch (Exception e) {
                 if (Stack.Count == 0) return; //???
                 var context = Stack[Stack.Count - 1];

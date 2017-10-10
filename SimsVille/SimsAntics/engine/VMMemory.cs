@@ -42,8 +42,12 @@ namespace FSO.SimAntics.Engine.Utils
                     return context.Caller.GetValue((VMStackObjectVariable)data);
 
                 case VMVariableScope.StackObject: //4
-                    return context.StackObject.GetValue((VMStackObjectVariable)data);
+                    if (context.StackObject != null)
+                    {
 
+                        return context.StackObject.GetValue((VMStackObjectVariable)data);
+                    }
+                    return 0; 
                 case VMVariableScope.TargetObject: //5
                     throw new VMSimanticsException("Target Object is Deprecated!", context);
 
@@ -76,24 +80,36 @@ namespace FSO.SimAntics.Engine.Utils
                     throw new VMSimanticsException("Not implemented...", context); //accesses the stack object's thread and gets its temp...
 
                 case VMVariableScope.MyMotives: //14
-                    return ((VMAvatar)context.Caller).GetMotiveData((VMMotive)data);
-
+                    if (context.StackObject != null && context.StackObject is VMAvatar)
+                    {
+                        return ((VMAvatar)context.Caller).GetMotiveData((VMMotive)data);
+                    }
+                    return 0; 
                 case VMVariableScope.StackObjectMotives: //15
-                    return ((VMAvatar)context.StackObject).GetMotiveData((VMMotive)data);
-
+                    if (context.StackObject != null && context.StackObject is VMAvatar)
+                    {
+                        return ((VMAvatar)context.StackObject).GetMotiveData((VMMotive)data);
+                    }
+                    return 0; 
                 case VMVariableScope.StackObjectSlot: //16
                     var slotObj = context.StackObject.GetSlot(data);
                     return (slotObj == null)?(short)0:slotObj.ObjectID;
 
                 case VMVariableScope.StackObjectMotiveByTemp: //17
-                    return ((VMAvatar)context.StackObject).GetMotiveData((VMMotive)context.Thread.TempRegisters[data]);
-
+                    if (context.StackObject != null)
+                    {
+                        return ((VMAvatar)context.StackObject).GetMotiveData((VMMotive)context.Thread.TempRegisters[data]);
+                    }
+                    return 0; 
                 case VMVariableScope.MyPersonData: //18
                     return ((VMAvatar)context.Caller).GetPersonData((VMPersonDataVariable)data);
 
                 case VMVariableScope.StackObjectPersonData: //19
-                    return ((VMAvatar)context.StackObject).GetPersonData((VMPersonDataVariable)data);
-
+                    if (context.StackObject != null && context.StackObject is VMAvatar)
+                    {
+                        return ((VMAvatar)context.StackObject).GetPersonData((VMPersonDataVariable)data);
+                    }
+                    return 0; 
                 case VMVariableScope.MySlot: //20
                     var slotObj2 = context.Caller.GetSlot(data);
                     return (slotObj2 == null) ? (short)0 : slotObj2.ObjectID;

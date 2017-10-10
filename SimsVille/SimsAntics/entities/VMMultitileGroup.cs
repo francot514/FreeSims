@@ -13,6 +13,8 @@ using Microsoft.Xna.Framework;
 using FSO.LotView.Components;
 using FSO.SimAntics.Model;
 using FSO.SimAntics.Marshals;
+using FSO.SimAntics.Engine;
+using FSO.SimAntics.Primitives;
 
 namespace FSO.SimAntics.Entities
 {
@@ -128,6 +130,9 @@ namespace FSO.SimAntics.Entities
             Matrix rotMat = Matrix.CreateRotationZ((float)(Dir * Math.PI / 4.0));
             VMPlacementResult[] places = new VMPlacementResult[Objects.Count];
 
+            if (Objects.Count > 0)
+            {
+
             var bObj = BaseObject;
             var bOff = Offsets[Objects.IndexOf(BaseObject)];
             var leadOff = new Vector3(bOff.x, bOff.y, 0);
@@ -174,6 +179,13 @@ namespace FSO.SimAntics.Entities
                 sub.SetIndivPosition(offPos, direction, context, places[i]);
             }
             for (int i = 0; i < Objects.Count(); i++) Objects[i].PositionChange(context, false);
+
+
+            return new VMPlacementResult(VMPlacementError.Success);
+
+            }
+
+
             return new VMPlacementResult(VMPlacementError.Success);
         }
 

@@ -71,6 +71,7 @@ namespace FSO.Client.UI.Panels.LotControls
                 }
             } catch (Exception e)
             {
+                e = new Exception();
                 response += "Bad command.";
             }
             vm.SignalChatEvent(new VMChatEvent(0, VMChatEventType.Generic, response));

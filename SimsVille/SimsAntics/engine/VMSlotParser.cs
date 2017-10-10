@@ -110,7 +110,7 @@ namespace FSO.SimAntics.Engine
 
             if ((Flags & SLOTFlags.SnapToDirection) > 0)
             { //snap to the specified direction, on the specified point.
-                double baseRot;
+               // double baseRot;
                 if (Slot.Facing > SLOTFacing.FaceAwayFromObject)
                 {
                     // bit of a legacy thing here. Facing field did not use to exist,

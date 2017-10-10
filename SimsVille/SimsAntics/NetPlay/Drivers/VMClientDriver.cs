@@ -219,7 +219,8 @@ namespace FSO.SimAntics.NetPlay.Drivers
                         tick.Deserialize(reader);
                     }
                 } catch (Exception e)
-                { 
+                {
+                    e = new Exception();
                     client.Disconnect();
                     return;
                 }

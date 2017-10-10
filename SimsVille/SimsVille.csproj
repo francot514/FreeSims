@@ -75,6 +75,10 @@
     <Compile Include="ContentManager\model\TextureRef.cs" />
     <Compile Include="ContentManager\model\Wall.cs" />
     <Compile Include="ContentManager\model\WallStyle.cs" />
+    <Compile Include="ContentManager\other\TS1AvatarTextureProvider.cs" />
+    <Compile Include="ContentManager\other\TS1BCFProvider.cs" />
+    <Compile Include="ContentManager\other\TS1BMFProvider.cs" />
+    <Compile Include="ContentManager\other\TS1Provider.cs" />
     <Compile Include="ContentManager\ResAction.cs" />
     <Compile Include="ContentManager\UIGraphicsProvider.cs" />
     <Compile Include="ContentManager\WorldFloorProvider.cs" />
@@ -94,6 +98,7 @@
     <Compile Include="GameContent\FNV.cs" />
     <Compile Include="GameContent\HandgroupsFileIDs.cs" />
     <Compile Include="GameContent\MeshFileIDs.cs" />
+    <Compile Include="GameContent\AvatarOutfitsFileIDs.cs" />
     <Compile Include="GameContent\OutfitsFileIDs.cs" />
     <Compile Include="GameContent\PurchasablesFileIDs.cs" />
     <Compile Include="GameContent\TextureFileIDs.cs" />

@@ -939,9 +939,8 @@ namespace FSO.Client.UI.Framework
             {
                 return Content.Content.Get().UIGraphics.Get(id).Get(GameFacade.GraphicsDevice);
             }
-            catch (Exception e)
-            {
-            }
+            catch
+            { }
             //TODO: darren wants to return null here. that might break some existing code
             return new Texture2D(GameFacade.GraphicsDevice, 1, 1);
         }

@@ -59,6 +59,10 @@ namespace FSO.Client
 
                 GlobalSettings.Default.Load();
 
+
+                var simspath = gameLocator.FindTheSimsComplete();
+
+                FSOEnvironment.SimsCompleteDir = simspath;
                 FSOEnvironment.ContentDir = "Content/";
                 FSOEnvironment.GFXContentDir = "Content/" + (useDX ? "DX/" : "OGL/");
                 FSOEnvironment.Linux = linux;

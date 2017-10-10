@@ -23,7 +23,7 @@ namespace FSO.Content.Codecs
         public Animation Decode(System.IO.Stream stream)
         {
             var ani = new Animation();
-            ani.Read(stream);
+            ani.Read(stream, false);
             return ani;
         }
 

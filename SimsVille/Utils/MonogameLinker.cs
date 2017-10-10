@@ -54,6 +54,7 @@ namespace FSO.Client.Utils
                 AssemblyDir = monogameDir;
             } catch (Exception e)
             {
+                e = new Exception();
                 //MessageBox.Show("Unable to link Monogame. Continuing... ("+e.ToString()+")");
             }
 

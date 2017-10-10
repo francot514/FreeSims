@@ -25,6 +25,7 @@ namespace FSO.Content.Framework
     {
         protected Content ContentManager;
         protected Dictionary<string, Far1ProviderEntry<T>> EntriesByName;
+        protected Dictionary<string, List<Far1ProviderEntry<T>>> EntriesOfType; 
 
         protected IContentCodec<T> Codec;
         protected Dictionary<string, T> Cache;
@@ -149,12 +150,23 @@ namespace FSO.Content.Framework
             }
         }
 
+        public List<Far1ProviderEntry<T>> GetEntriesForExtension(string ext)
+        {
+            List<Far1ProviderEntry<T>> result = null;
+            if (EntriesOfType.TryGetValue(ext, out result)) return result;
+            return null;
+        }
+
         #region IContentProvider<T> Members
 
         public void Init()
         {
+
+            bool Epfile = true;
+
             Cache = new Dictionary<string, T>();
             EntriesByName = new Dictionary<string, Far1ProviderEntry<T>>();
+            EntriesOfType = new Dictionary<string, List<Far1ProviderEntry<T>>>();
 
             if (FarFilePattern != null)
             {
@@ -170,7 +182,11 @@ namespace FSO.Content.Framework
             }
 
             foreach (var farPath in FarFiles){
-                var archive = new FAR1Archive(ContentManager.GetPath(farPath));
+             
+                if (farPath.Contains("Expansion") || farPath.Contains("Global"))
+                    Epfile = false;
+
+                var archive = new FAR1Archive(ContentManager.GetPath(farPath),Epfile);
                 var entries = archive.GetAllFarEntries();
 
                 foreach (var entry in entries)
@@ -182,11 +198,19 @@ namespace FSO.Content.Framework
                     };
                     if (entry.Filename != null)
                     {
+                        var ext = Path.GetExtension(entry.Filename).ToLowerInvariant();
                         if (EntriesByName.ContainsKey(entry.Filename))
                         {
                             System.Diagnostics.Debug.WriteLine("Duplicate! " + entry.Filename);
                         }
                         EntriesByName[entry.Filename] = referenceItem;
+                        List<Far1ProviderEntry<T>> group = null;
+                        if (!EntriesOfType.TryGetValue(ext, out group))
+                        {
+                            group = new List<Far1ProviderEntry<T>>();
+                            EntriesOfType[ext] = group;
+                        }
+                        group.Add(referenceItem);
                     }
                 }
             }

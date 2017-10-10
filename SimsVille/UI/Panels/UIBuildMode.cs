@@ -289,6 +289,7 @@ namespace FSO.Client.UI.Panels
             else
             {
                 BuyItem = vm.Context.CreateObjectInstance(item.GUID, LotTilePos.OUT_OF_WORLD, Direction.NORTH, true);
+                if (BuyItem != null)
                 QueryPanel.SetInfo(LotController.vm, BuyItem.Objects[0], false);
                 QueryPanel.Mode = 1;
                 QueryPanel.Tab = 0;

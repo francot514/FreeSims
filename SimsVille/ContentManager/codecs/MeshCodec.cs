@@ -24,7 +24,7 @@ namespace FSO.Content.Codecs
         public Mesh Decode(System.IO.Stream stream)
         {
             var mesh = new Mesh();
-            mesh.Read(stream);
+            mesh.Read(stream, false);
             return mesh;
         }
 

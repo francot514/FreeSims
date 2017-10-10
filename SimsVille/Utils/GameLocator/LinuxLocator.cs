@@ -11,5 +11,11 @@ namespace FSO.Client.Utils.GameLocator
         {
             return "game/TSOClient/";
         }
+
+        public string FindTheSimsComplete()
+        {
+            return "game/The Sims/";
+        }
+
     }
 }

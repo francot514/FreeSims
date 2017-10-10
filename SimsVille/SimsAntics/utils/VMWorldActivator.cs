@@ -111,9 +111,12 @@ namespace FSO.SimAntics.Utils
             return (VMAvatar)VM.Context.CreateObjectInstance(VMAvatar.TEMPLATE_PERSON, LotTilePos.OUT_OF_WORLD, Direction.NORTH).Objects[0];
         }
 
-        public VMEntity CreateObject(XmlHouseDataObject obj){
+        public void CreateObject(XmlHouseDataObject obj){
             LotTilePos pos = (obj.Level == 0) ? LotTilePos.OUT_OF_WORLD : LotTilePos.FromBigTile((short)obj.X, (short)obj.Y, (sbyte)obj.Level);
-            var nobj = VM.Context.CreateObjectInstance(obj.GUIDInt, pos, obj.Direction).Objects[0];
+            
+            var mojb = VM.Context.CreateObjectInstance(obj.GUIDInt, pos, obj.Direction);
+
+            var nobj = mojb.Objects[0];
 
             if (obj.Group != 0)
             {
@@ -125,7 +128,7 @@ namespace FSO.SimAntics.Utils
 
             for (int i = 0; i < nobj.MultitileGroup.Objects.Count; i++) nobj.MultitileGroup.Objects[i].ExecuteEntryPoint(11, VM.Context, true);
 
-            return nobj;
+            //return nobj;
             
         }
 

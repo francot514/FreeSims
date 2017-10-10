@@ -394,7 +394,7 @@ namespace FSO.Client.UI.Panels
         public void LiveModeUpdate(UpdateState state, bool scrolled)
         {
 
-            if (MouseIsOn && ActiveEntity != null)
+            if (MouseIsOn && !RMBScroll &&  ActiveEntity != null)
             {
 
                 if (state.MouseState.X != OldMX || state.MouseState.Y != OldMY)

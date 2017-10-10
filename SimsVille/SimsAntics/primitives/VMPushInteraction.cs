@@ -50,6 +50,7 @@ namespace FSO.SimAntics.Engine.Primitives
                     priority = (short)VMQueuePriority.Idle; mode = VMQueueMode.Idle; break;
             }
 
+            if (interactionSource == null) return VMPrimitiveExitCode.GOTO_FALSE;
             var action = interactionSource.GetAction(operand.Interaction, context.StackObject, context.VM.Context);
             if (action == null) return VMPrimitiveExitCode.GOTO_FALSE;
             if (operand.UseCustomIcon) action.IconOwner = context.VM.GetObjectById((short)context.Locals[operand.IconLocation]);
@@ -58,7 +59,8 @@ namespace FSO.SimAntics.Engine.Primitives
             action.Flags |= TTABFlags.MustRun;
             if (operand.PushHeadContinuation) action.Flags |= TTABFlags.Leapfrog;
 
-            context.StackObject.Thread.EnqueueAction(action);
+            if (context.StackObject != null)
+                context.StackObject.Thread.EnqueueAction(action);
 
             return VMPrimitiveExitCode.GOTO_TRUE;
         }

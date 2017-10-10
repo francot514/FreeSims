@@ -8,5 +8,6 @@ namespace FSO.Client.Utils.GameLocator
     interface ILocator
     {
         string FindTheSimsOnline();
+        string FindTheSimsComplete();
     }
 }

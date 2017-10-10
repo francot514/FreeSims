@@ -16,6 +16,8 @@ using FSO.Files;
 using FSO.Files.Formats.IFF;
 using System.Threading;
 using FSO.Common;
+using FSO.Content.Framework;
+using FSO.Content.TS1;
 
 namespace FSO.Content
 {
@@ -67,6 +69,9 @@ namespace FSO.Content
             AvatarCollections = new AvatarCollectionsProvider(this);
             AvatarThumbnails = new AvatarThumbnailProvider(this, Device);
 
+            TS1Global = new TS1Provider(this);
+            TS1AvatarTextures = new TS1AvatarTextureProvider(TS1Global);
+            TS1AvatarMeshes = new TS1BMFProvider(TS1Global);
 
             WorldObjects = new WorldObjectProvider(this);
             WorldFloors = new WorldFloorProvider(this);
@@ -119,6 +124,10 @@ namespace FSO.Content
             AvatarCollections.Init();
             AvatarHandgroups.Init();
             AvatarThumbnails.Init();
+
+            TS1Global.Init();
+            TS1AvatarTextures.Init();
+            TS1AvatarMeshes.Init();
 
             InitWorld();
         }
@@ -205,6 +214,10 @@ namespace FSO.Content
         public HandgroupProvider AvatarHandgroups;
         public AvatarCollectionsProvider AvatarCollections;
         public AvatarThumbnailProvider AvatarThumbnails;
+
+        public TS1Provider TS1Global;
+        public TS1AvatarTextureProvider TS1AvatarTextures;
+        public TS1BMFProvider TS1AvatarMeshes;
 
         /** Audio **/
         public Audio Audio;

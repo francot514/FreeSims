@@ -18,7 +18,7 @@ namespace FSO.Content.Codecs
         public Skeleton Decode(System.IO.Stream stream)
         {
             var result = new Skeleton();
-            result.Read(stream);
+            result.Read(stream, false);
             return result;
         }
 

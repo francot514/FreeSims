@@ -286,7 +286,7 @@ namespace FSO.Client.UI.Panels
 
         public override void Update(UpdateState state)
         {
-            if (true)
+            if (this != null)
             {
                 if (Active)
                 {
@@ -309,9 +309,12 @@ namespace FSO.Client.UI.Panels
             }
             else
             {
-                Opacity = 1;
+               
                 if (Active) 
                     Visible = true;
+
+                Opacity = 1;
+
             }
             base.Update(state);
         }

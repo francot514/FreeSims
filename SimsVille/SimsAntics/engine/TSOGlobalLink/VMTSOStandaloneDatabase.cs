@@ -55,7 +55,7 @@ namespace FSO.SimAntics.Engine.TSOGlobalLink
             {
                 File.Copy(Path.Combine(FSOEnvironment.UserDir, "stubdb.fsodb"), Path.Combine(FSOEnvironment.UserDir, "stubdb_backup.fsodb"), true);
             }
-            catch (Exception e) { }
+            catch { }
             using (var writer = new BinaryWriter(File.Open(Path.Combine(FSOEnvironment.UserDir, "stubdb.fsodb"), FileMode.Create))) SerializeInto(writer);
         }
 

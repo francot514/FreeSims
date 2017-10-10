@@ -27,6 +27,7 @@ using FSO.SimAntics.Model.TSOPlatform;
 using FSO.SimAntics.Model.Sound;
 using FSO.SimAntics.Engine;
 using FSO.SimAntics.Primitives;
+using FSO.Client.GameContent;
 
 namespace FSO.SimAntics
 {
@@ -222,13 +223,16 @@ namespace FSO.SimAntics
                 else if (type == "dog") AvatarType = VMAvatarType.Dog;
             }
 
+
+
             switch (AvatarType)
             {
                 case VMAvatarType.Adult:
                     Avatar = new SimAvatar(FSO.Content.Content.Get().AvatarSkeletons.Get("adult.skel"));
-                    Avatar.Head = FSO.Content.Content.Get().AvatarOutfits.Get(0x000003a00000000D); //default to bob newbie, why not
-                    Avatar.Body = FSO.Content.Content.Get().AvatarOutfits.Get("mab002_slob.oft");
+                    Avatar.Head = FSO.Content.Content.Get().AvatarOutfits.Get(SetAvatarRandomOutfit(1));
+                    Avatar.Body = FSO.Content.Content.Get().AvatarOutfits.Get(SetAvatarRandomOutfit(0));
                     Avatar.Handgroup = Avatar.Body;
+
                     break;
                 case VMAvatarType.Cat:
                     var skel = FSO.Content.Content.Get().AvatarSkeletons.Get("cat.skel");
@@ -245,10 +249,15 @@ namespace FSO.SimAntics
         public void SetAvatarBodyStrings(STR data, VMContext context) {
             if (data == null) return;
 
+            var body = data.GetString(1);
+            var randBody = data.GetString(10);
+
+            var gender = data.GetString(12);
+            var genVar = (int)VMPersonDataVariable.Gender;
+
             try
             {
-                var body = data.GetString(1);
-                var randBody = data.GetString(10);
+                
 
                 if (randBody != "")
                 {
@@ -279,9 +288,7 @@ namespace FSO.SimAntics
             {
                 //head or body invalid, resort to default.
             }
-
-            var gender = data.GetString(12);
-            var genVar = (int)VMPersonDataVariable.Gender;
+         
 
             if (gender.Equals("male", StringComparison.InvariantCultureIgnoreCase)) PersonData[genVar] = 0;
             else if (gender.Equals("female", StringComparison.InvariantCultureIgnoreCase)) PersonData[genVar] = 1;
@@ -304,6 +311,50 @@ namespace FSO.SimAntics
             else if (skinTone.Equals("med", StringComparison.InvariantCultureIgnoreCase)) SkinTone = AppearanceType.Medium;
             else if (skinTone.Equals("drk", StringComparison.InvariantCultureIgnoreCase)) SkinTone = AppearanceType.Dark;
         }
+
+        public ulong SetAvatarRandomOutfit(int Type)
+        {
+            ulong id = 0x3A00000000D;
+
+            Random rnd = new Random();
+
+            var value = rnd.Next(1, 4);
+
+            if (Type == 1)
+            {
+                switch (value)
+                {
+                    case 1: id = 0x3A10000000D;
+                        break;
+                    case 2: id = 0x3A20000000D;
+                        break;
+                    case 3: id = 0x1C50000000D;
+                        break;
+                    case 4: id = 0x1C60000000D;
+                        break;
+                }
+            }
+            else
+            {
+
+                switch (value)
+                {
+                    case 1: id = 0x25B0000000D;
+                        break;
+                    case 2: id = 0x2600000000D;
+                        break;
+                    case 3: id = 0x50000000D;
+                        break;
+                    case 4: id = 0x70000000D;
+                        break;
+
+                }
+
+            }
+
+            return id;
+        }
+
 
         public void InitBodyData(VMContext context)
         {

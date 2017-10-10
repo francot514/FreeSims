@@ -136,6 +136,8 @@ namespace FSO.Vitaboy
 
                 FSO.Vitaboy.HandSet HSet = null;
 
+                string LeftTex = null, RightTex = null;
+
                 switch (m_Appearance)
                 {
                     case AppearanceType.Light:
@@ -153,12 +155,15 @@ namespace FSO.Vitaboy
                 {
                     case SimHandGesture.Idle:
                         LeftID = HSet.LeftHand.Idle.ID;
+                        LeftTex = HSet.LeftHand.Idle.TexName;
                         break;
                     case SimHandGesture.Fist:
                         LeftID = HSet.LeftHand.Fist.ID;
+                        LeftTex = HSet.LeftHand.Idle.TexName;
                         break;
                     case SimHandGesture.Pointing:
                         LeftID = HSet.LeftHand.Pointing.ID;
+                        LeftTex = HSet.LeftHand.Idle.TexName;
                         break;
                 }
 
@@ -166,12 +171,15 @@ namespace FSO.Vitaboy
                 {
                     case SimHandGesture.Idle:
                         RightID = HSet.RightHand.Idle.ID;
+                        RightTex = HSet.RightHand.Idle.TexName;
                         break;
                     case SimHandGesture.Fist:
                         RightID = HSet.RightHand.Fist.ID;
+                        RightTex = HSet.RightHand.Idle.TexName;
                         break;
                     case SimHandGesture.Pointing:
                         RightID = HSet.RightHand.Pointing.ID;
+                        RightTex = HSet.RightHand.Idle.TexName;
                         break;
                 }
 
@@ -179,9 +187,9 @@ namespace FSO.Vitaboy
                 Appearance RightApr = FSO.Content.Content.Get().AvatarAppearances.Get(RightID);
 
                 if (LeftApr != null)
-                    m_LeftHandInstance = base.AddAppearance(LeftApr);
+                    m_LeftHandInstance = base.AddAppearance(LeftApr, LeftTex);
                 if(RightApr != null)
-                    m_RightHandInstance = base.AddAppearance(RightApr);
+                    m_RightHandInstance = base.AddAppearance(RightApr, RightTex);
             }
         }
 
@@ -199,7 +207,7 @@ namespace FSO.Vitaboy
                 var Appearance = FSO.Content.Content.Get().AvatarAppearances.Get(AppearanceID);
                 if (Appearance != null)
                 {
-                    m_HeadInstance = base.AddAppearance(Appearance);
+                    m_HeadInstance = base.AddAppearance(Appearance, m_Head.TS1TextureID);
                 }
             }
         }
@@ -238,7 +246,7 @@ namespace FSO.Vitaboy
                 var Appearance = FSO.Content.Content.Get().AvatarAppearances.Get(AppearanceID);
                 if (Appearance != null)
                 {
-                    m_BodyInstance = base.AddAppearance(Appearance);
+                    m_BodyInstance = base.AddAppearance(Appearance, m_Body.TS1TextureID);
                 }
             }
         }

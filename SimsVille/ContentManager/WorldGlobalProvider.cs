@@ -17,6 +17,7 @@ using System.IO;
 using FSO.Files.Formats.IFF;
 using FSO.Files.Formats.IFF.Chunks;
 using FSO.Files.Formats.OTF;
+using FSO.Common;
 
 namespace FSO.Content
 {
@@ -27,6 +28,8 @@ namespace FSO.Content
     {
         private Dictionary<string, GameGlobal> Cache; //indexed by lowercase filename, minus directory and extension.
         private Content ContentManager;
+        public FAR1Provider<IffFile> GlobalIffs;
+
 
         public WorldGlobalProvider(Content contentManager)
         {
@@ -39,6 +42,20 @@ namespace FSO.Content
         public void Init()
         {
             Cache = new Dictionary<string, GameGlobal>();
+
+            List<string> GlobalFiles = new List<string>();
+       
+            if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/Global"))
+                {
+
+                    GlobalFiles.Add(FSOEnvironment.SimsCompleteDir + "/Global/Global.far");
+
+                    GlobalIffs = new FAR1Provider<IffFile>(ContentManager, new IffCodec(), GlobalFiles.ToArray());
+
+                    GlobalIffs.Init();
+
+
+                }
         }
 
         /// <summary>
@@ -48,6 +65,9 @@ namespace FSO.Content
         /// <returns>A GameGlobal instance containing the resource.</returns>
         public GameGlobal Get(string filename)
         {
+            string filepath;
+            IffFile iff = null;
+
             filename = filename.ToLowerInvariant();
             lock (Cache)
             {
@@ -56,9 +76,18 @@ namespace FSO.Content
                     return Cache[filename];
                 }
 
+
+                filepath = Path.Combine(Content.Get().BasePath, "objectdata/globals/" + filename + ".iff");
+
                 //if we can't load this let it throw an exception...
                 //probably sanity check this when we add user objects.
-                var iff = new IffFile(Path.Combine(Content.Get().BasePath, "objectdata/globals/" + filename + ".iff")); 
+                if (File.Exists(filepath))
+                    iff = new IffFile(filepath);
+               
+
+                if (GlobalIffs != null)
+                    iff = this.GlobalIffs.Get(filename + ".iff");
+
                 OTFFile otf = null;
                 try
                 {
@@ -129,7 +158,10 @@ namespace FSO.Content
 
         public override List<T> List<T>()
         {
+            if (Iff != null)
             return this.Iff.List<T>();
+
+            return new List<T>();
         }
     }
 }

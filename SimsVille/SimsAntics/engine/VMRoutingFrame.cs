@@ -205,7 +205,7 @@ namespace FSO.SimAntics.Engine
             Rooms = new Stack<VMRoomPortal>();
 
             LotTilePos dest;
-            if (Slot != null)
+            if (Slot != null && Target != null)
             {
                 //take destination pos from object. Estimate room closeness using distance to object, not destination.
                 dest = Target.Position;
