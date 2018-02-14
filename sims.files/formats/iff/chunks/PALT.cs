@@ -1,25 +1,19 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using TSO.Files.utils;
+using FSO.Files.Utils;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 
-namespace TSO.Files.formats.iff.chunks
+namespace FSO.Files.Formats.IFF.Chunks
 {
     /// <summary>
     /// This chunk type holds a color palette.
@@ -40,13 +34,14 @@ namespace TSO.Files.formats.iff.chunks
         }
 
         public Color[] Colors;
+        public int References = 0;
 
         /// <summary>
         /// Reads a PALT chunk from a stream.
         /// </summary>
         /// <param name="iff">An Iff instance.</param>
         /// <param name="stream">A Stream object holding a PALT chunk.</param>
-        public override void Read(Iff iff, Stream stream)
+        public override void Read(IffFile iff, Stream stream)
         {
             using (var io = IoBuffer.FromStream(stream, ByteOrder.LITTLE_ENDIAN))
             {
@@ -63,6 +58,33 @@ namespace TSO.Files.formats.iff.chunks
                     Colors[i] = new Color(r, g, b);
                 }
             }
+        }
+
+        public override bool Write(IffFile iff, Stream stream)
+        {
+            using (var io = IoWriter.FromStream(stream, ByteOrder.LITTLE_ENDIAN))
+            {
+                io.WriteUInt32(0);
+                io.WriteUInt32((uint)Colors.Length);
+                io.WriteBytes(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 });
+                foreach (var col in Colors)
+                {
+                    io.WriteByte(col.R);
+                    io.WriteByte(col.G);
+                    io.WriteByte(col.B);
+                }
+                return true;
+            }
+        }
+
+        public bool PalMatch(Color[] data)
+        {
+            for (var i=0; i<Colors.Length; i++)
+            {
+                if (i >= data.Length) return true;
+                if (data[i].A != 0 && data[i] != Colors[i]) return false;
+            }
+            return true;
         }
     }
 }

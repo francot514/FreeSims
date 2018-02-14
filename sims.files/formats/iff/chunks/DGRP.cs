@@ -1,24 +1,18 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using TSO.Files.utils;
+using FSO.Files.Utils;
 using Microsoft.Xna.Framework;
 
-namespace TSO.Files.formats.iff.chunks
+namespace FSO.Files.Formats.IFF.Chunks
 {
     /// <summary>
     /// This chunk type collects SPR# and SPR2 resources into a "drawing group" which 
@@ -29,7 +23,7 @@ namespace TSO.Files.formats.iff.chunks
     /// </summary>
     public class DGRP : IffChunk
     {
-        public DGRPImage[] Images { get; internal set; }
+        public DGRPImage[] Images { get; set; }
 
         /// <summary>
         /// Gets a DGRPImage instance from this DGRP instance.
@@ -64,7 +58,7 @@ namespace TSO.Files.formats.iff.chunks
         /// </summary>
         /// <param name="iff">An Iff instance.</param>
         /// <param name="stream">A Stream instance holding a DGRP chunk.</param>
-        public override void Read(Iff iff, Stream stream)
+        public override void Read(IffFile iff, Stream stream)
         {
             using (var io = IoBuffer.FromStream(stream, ByteOrder.LITTLE_ENDIAN))
             {
@@ -79,6 +73,21 @@ namespace TSO.Files.formats.iff.chunks
                     Images[i] = image;
                 }
             }
+        }
+
+        public override bool Write(IffFile iff, Stream stream)
+        {
+            using (var io = IoWriter.FromStream(stream, ByteOrder.LITTLE_ENDIAN))
+            {
+                io.WriteUInt16(20004);
+                io.WriteUInt32((uint)Images.Length);
+
+                foreach (var img in Images)
+                {
+                    img.Write(io);
+                }
+            }
+            return true;
         }
     }
 
@@ -123,6 +132,17 @@ namespace TSO.Files.formats.iff.chunks
                 this.Sprites[i] = sprite;
             }
         }
+
+        public void Write(IoWriter io)
+        {
+            io.WriteUInt32(Direction);
+            io.WriteUInt32(Zoom);
+            io.WriteUInt32((uint)Sprites.Length);
+            foreach (var spr in Sprites)
+            {
+                spr.Write(io);
+            }
+        }
     }
 
     [Flags]
@@ -145,7 +165,13 @@ namespace TSO.Files.formats.iff.chunks
         public Vector2 SpriteOffset;
         public Vector3 ObjectOffset;
 
-        public bool Flip;
+        public bool Flip {
+            get { return (Flags & DGRPSpriteFlags.Flip) > 0; }
+            set {
+                Flags = Flags & (~DGRPSpriteFlags.Flip);
+                if (value) Flags |= DGRPSpriteFlags.Flip;
+            }
+        }
 
         public DGRPSprite(DGRP parent)
         {
@@ -172,7 +198,7 @@ namespace TSO.Files.formats.iff.chunks
                 SpriteOffset.X = io.ReadInt16();
                 SpriteOffset.Y = io.ReadInt16();
 
-                if(version == 20001)
+                if (version == 20001)
                 {
                     ObjectOffset.Z = io.ReadFloat();
                 }
@@ -191,8 +217,18 @@ namespace TSO.Files.formats.iff.chunks
                     ObjectOffset.Y = io.ReadFloat();
                 }
             }
+        }
 
-            this.Flip = (Flags & DGRPSpriteFlags.Flip) == DGRPSpriteFlags.Flip;
+        public void Write(IoWriter io)
+        {
+            io.WriteUInt32(SpriteID);
+            io.WriteUInt32(SpriteFrameIndex);
+            io.WriteInt32((int)SpriteOffset.X);
+            io.WriteInt32((int)SpriteOffset.Y);
+            io.WriteFloat(ObjectOffset.Z);
+            io.WriteUInt32((uint)Flags);
+            io.WriteFloat(ObjectOffset.X);
+            io.WriteFloat(ObjectOffset.Y);
         }
 
         /// <summary>

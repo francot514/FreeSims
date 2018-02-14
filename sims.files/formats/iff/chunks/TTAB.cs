@@ -1,23 +1,17 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using TSO.Files.utils;
+using FSO.Files.Utils;
 
-namespace TSO.Files.formats.iff.chunks
+namespace FSO.Files.Formats.IFF.Chunks
 {
     /// <summary>
     /// This chunk type defines a list of interactions for an object and assigns a BHAV subroutine 
@@ -26,8 +20,8 @@ namespace TSO.Files.formats.iff.chunks
     /// </summary>
     public class TTAB : IffChunk
     {
-        public TTABInteraction[] Interactions;
-        public Dictionary<uint, TTABInteraction> InteractionByIndex;
+        public TTABInteraction[] Interactions = new TTABInteraction[0];
+        public Dictionary<uint, TTABInteraction> InteractionByIndex = new Dictionary<uint, TTABInteraction>();
 
         public static float[] AttenuationValues = {
             0, //custom
@@ -42,13 +36,13 @@ namespace TSO.Files.formats.iff.chunks
         /// </summary>
         /// <param name="iff">An Iff instance.</param>
         /// <param name="stream">A Stream object holding a TTAB chunk.</param>
-        public override void Read(Iff iff, Stream stream)
+        public override void Read(IffFile iff, Stream stream)
         {
             using (var io = IoBuffer.FromStream(stream, ByteOrder.LITTLE_ENDIAN))
             {
+                InteractionByIndex.Clear();
                 Interactions = new TTABInteraction[io.ReadUInt16()];
                 if (Interactions.Length == 0) return; //no interactions, don't bother reading remainder.
-                InteractionByIndex = new Dictionary<uint, TTABInteraction>();
                 var version = io.ReadUInt16();
                 IOProxy iop;
                 if (version != 9 && version != 10) iop = new TTABNormal(io);
@@ -61,7 +55,7 @@ namespace TSO.Files.formats.iff.chunks
                 for (int i = 0; i < Interactions.Length; i++)
                 {
                     var result = new TTABInteraction();
-                    result.ActionFunction = iop.ReadUInt16();
+                    result.ActionFunction = iop.ReadUInt16();   
                     result.TestFunction = iop.ReadUInt16();
                     result.MotiveEntries = new TTABMotiveEntry[iop.ReadUInt32()];
                     result.Flags = (TTABFlags)iop.ReadUInt32();
@@ -78,11 +72,69 @@ namespace TSO.Files.formats.iff.chunks
                         if (version > 6) motive.PersonalityModifier = iop.ReadUInt16();
                         result.MotiveEntries[j] = motive;
                     }
-                    if (version > 9) result.Flags2 = (TSOFlags)iop.ReadUInt32();
+                    if (version > 9)
+                    {
+                        result.Flags2 = (TSOFlags)iop.ReadUInt32();
+                    }
                     Interactions[i] = result;
                     InteractionByIndex.Add(result.TTAIndex, result);
                 }
             }
+        }
+
+        public override bool Write(IffFile iff, Stream stream)
+        {
+            using (var io = IoWriter.FromStream(stream, ByteOrder.LITTLE_ENDIAN))
+            {
+                io.WriteUInt16((ushort)Interactions.Length);
+                io.WriteUInt16(8); //version. don't save to high version cause we can't write out using the complex io proxy.
+                for (int i = 0; i < Interactions.Length; i++)
+                {
+                    var action = Interactions[i];
+                    io.WriteUInt16(action.ActionFunction);
+                    io.WriteUInt16(action.TestFunction);
+                    io.WriteUInt32((uint)action.MotiveEntries.Length);
+                    io.WriteUInt32((uint)action.Flags);
+                    io.WriteUInt32(action.TTAIndex);
+                    io.WriteUInt32(action.AttenuationCode);
+                    io.WriteFloat(action.AttenuationValue);
+                    io.WriteUInt32(action.AutonomyThreshold);
+                    io.WriteInt32(action.JoiningIndex);
+                    for (int j=0; j < action.MotiveEntries.Length; j++)
+                    {
+                        var mot = action.MotiveEntries[j];
+                        io.WriteInt16(mot.EffectRangeMinimum);
+                        io.WriteInt16(mot.EffectRangeMaximum);
+                        io.WriteUInt16(mot.PersonalityModifier);
+                    }
+                    //TODO: write out TSOFlags
+                }
+            }
+            return true;
+        }
+
+        public void InsertInteraction(TTABInteraction action, int index)
+        {
+            var newInt = new TTABInteraction[Interactions.Length + 1];
+            if (index == -1) index = 0;
+            Array.Copy(Interactions, newInt, index); //copy before strings
+            newInt[index] = action;
+            Array.Copy(Interactions, index, newInt, index + 1, (Interactions.Length - index));
+            Interactions = newInt;
+
+            if (!InteractionByIndex.ContainsKey(action.TTAIndex)) InteractionByIndex.Add(action.TTAIndex, action);
+        }
+
+        public void DeleteInteraction(int index)
+        {
+            var action = Interactions[index];
+            var newInt = new TTABInteraction[Interactions.Length - 1];
+            if (index == -1) index = 0;
+            Array.Copy(Interactions, newInt, index); //copy before strings
+            Array.Copy(Interactions, index + 1, newInt, index, (Interactions.Length - (index + 1)));
+            Interactions = newInt;
+
+            if (InteractionByIndex.ContainsKey(action.TTAIndex)) InteractionByIndex.Remove(action.TTAIndex);
         }
     }
 
@@ -205,7 +257,7 @@ namespace TSO.Files.formats.iff.chunks
     /// <summary>
     /// Represents an interaction in a TTAB chunk.
     /// </summary>
-    public struct TTABInteraction
+    public class TTABInteraction
     {
         public ushort ActionFunction;
         public ushort TestFunction;
@@ -216,7 +268,7 @@ namespace TSO.Files.formats.iff.chunks
         public float AttenuationValue;
         public uint AutonomyThreshold;
         public int JoiningIndex;
-        public TSOFlags Flags2;
+        public TSOFlags Flags2 = (TSOFlags)0x1f; //allow a lot of things
 
         public InteractionMaskFlags MaskFlags {
             get {
@@ -225,7 +277,7 @@ namespace TSO.Files.formats.iff.chunks
             set
             {
                 Flags = (TTABFlags)(((int)Flags & 0xFFFF) | ((int)value << 16));
-             }
+            }
         }
 
         //ALLOW
@@ -282,8 +334,7 @@ namespace TSO.Files.formats.iff.chunks
             set { Flags &= ~(TTABFlags.Debug); if (value) Flags |= TTABFlags.Debug; }
         }
 
-        public bool Leapfrog
-        {
+        public bool Leapfrog {
             get { return (Flags & TTABFlags.Leapfrog) > 0; }
             set { Flags &= ~(TTABFlags.Leapfrog); if (value) Flags |= TTABFlags.Leapfrog; }
         }
@@ -330,7 +381,6 @@ namespace TSO.Files.formats.iff.chunks
             set { MaskFlags &= ~(InteractionMaskFlags.AvailableWhenDead); if (value) MaskFlags |= InteractionMaskFlags.AvailableWhenDead; }
         }
     }
-    
 
     /// <summary>
     /// Represents a motive entry in a TTAB chunk.
@@ -344,17 +394,17 @@ namespace TSO.Files.formats.iff.chunks
 
     public enum TTABFlags
     {
-        AllowVisitors = 1,
-        Joinable = 1 << 1,
-        RunImmediately = 1 << 2,
-        AllowConsecutive = 1 << 3,
+        AllowVisitors = 1, //COVERED, TODO for no TSOFlags? (default to only roomies, unless this flag set)
+        Joinable = 1 << 1, //TODO
+        RunImmediately = 1 << 2, //COVERED
+        AllowConsecutive = 1 << 3, //TODO
 
-        Debug = 1 << 7,
-        AutoFirstSelect = 1 << 8,
-        Leapfrog = 1 << 9,
-        MustRun = 1 << 10,
-        AllowDogs = 1 << 11,
-        AllowCats = 1 << 12,
+        Debug = 1 << 7, //COVERED: only available to roomies for now
+        AutoFirstSelect = 1 << 8, //TODO (autonomus first select?)
+        Leapfrog = 1 << 9, //COVERED
+        MustRun = 1 << 10, //TODO (where would this NOT run?)
+        AllowDogs = 1 << 11, //COVERED
+        AllowCats = 1 << 12, //COVERED
 
         TSOAvailableCarrying = 1 << 16, //COVERED
         TSOIsRepair = 1 << 17, //TODO (only available when wear = 0)
@@ -364,14 +414,14 @@ namespace TSO.Files.formats.iff.chunks
 
     public enum TSOFlags
     {
-        AllowNonRoomie = 1,
-        AllowObjectOwner = 1 << 1,
-        AllowRoommates = 1 << 2,
-        AllowFriends = 1 << 3,
-        AllowVisitors = 1 << 4,
-        AllowGhost = 1 << 5,
-        UnderParentalControl = 1 << 6,
-        AllowCSRs = 1 << 7
+        NonEmpty = 1, //if this is the only flag set, flags aren't empty intentionally. force Owner, Roommates, Friends to on
+        AllowObjectOwner = 1 << 1, //COVERED
+        AllowRoommates = 1 << 2, //COVERED
+        AllowFriends = 1 << 3, //TODO
+        AllowVisitors = 1 << 4, //COVERED
+        AllowGhost = 1 << 5, //COVERED
+        UnderParentalControl = 1 << 6, //TODO: interactions always available
+        AllowCSRs = 1 << 7 //COVERED: only available to admins
     }
 
     public enum InteractionMaskFlags

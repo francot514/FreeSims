@@ -1,32 +1,27 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
-using TSO.Files.utils;
+using FSO.Files.Utils;
 using System.IO;
 using Microsoft.Xna.Framework;
+using System.Runtime.InteropServices;
 
-namespace TSO.Files.formats.iff.chunks
+namespace FSO.Files.Formats.IFF.Chunks
 {
     /// <summary>
     /// This chunk type holds a number of paletted sprites that may have z-buffer and/or alpha channels.
     /// </summary>
     public class SPR2 : IffChunk
     {
-        public SPR2Frame[] Frames;
+        public SPR2Frame[] Frames = new SPR2Frame[0];
         public uint DefaultPaletteID;
 
         /// <summary>
@@ -34,7 +29,7 @@ namespace TSO.Files.formats.iff.chunks
         /// </summary>
         /// <param name="iff">An Iff instance.</param>
         /// <param name="stream">A Stream object holding a SPR2 chunk.</param>
-        public override void Read(Iff iff, Stream stream)
+        public override void Read(IffFile iff, Stream stream)
         {
             using (var io = IoBuffer.FromStream(stream, ByteOrder.LITTLE_ENDIAN))
             {
@@ -57,7 +52,9 @@ namespace TSO.Files.formats.iff.chunks
                         var frame = new SPR2Frame(this);
                         io.Seek(SeekOrigin.Begin, offsetTable[i]);
 
-                        frame.Read(version, io);
+                        var guessedSize = ((i + 1 < offsetTable.Length) ? offsetTable[i + 1] : (uint)stream.Length) - offsetTable[i];
+
+                        frame.Read(version, io, guessedSize);
                         Frames[i] = frame;
                     }
                 }
@@ -70,10 +67,39 @@ namespace TSO.Files.formats.iff.chunks
                     for (var i = 0; i < spriteCount; i++)
                     {
                         var frame = new SPR2Frame(this);
-                        frame.Read(version, io);
+                        frame.Read(version, io, 0);
                         Frames[i] = frame;
                     }
                 }
+            }
+        }
+
+        public override bool Write(IffFile iff, Stream stream)
+        {
+            using (var io = IoWriter.FromStream(stream, ByteOrder.LITTLE_ENDIAN))
+            {
+                io.WriteUInt32(1001);
+                io.WriteUInt32(DefaultPaletteID);
+                if (Frames == null) io.WriteUInt32(0);
+                else
+                {
+                    io.WriteUInt32((uint)Frames.Length);
+                    foreach (var frame in Frames)
+                    {
+                        frame.Write(io);
+                    }
+                }
+                return true;
+            }
+        }
+
+        public override void Dispose()
+        {
+            if (Frames == null) return;
+            foreach (var frame in Frames)
+            {
+                var palette = ChunkParent.Get<PALT>(frame.PaletteID);
+                if (palette != null) palette.References--;
             }
         }
     }
@@ -83,9 +109,10 @@ namespace TSO.Files.formats.iff.chunks
     /// </summary>
     public class SPR2Frame : ITextureProvider, IWorldTextureProvider
     {
-        private Color[] PixelData;
+        public Color[] PixelData;
         private byte[] AlphaData;
-        private byte[] ZBufferData;
+        public byte[] ZBufferData;
+        public byte[] PalData;
 
         private Texture2D ZCache;
         private Texture2D PixelCache;
@@ -93,11 +120,13 @@ namespace TSO.Files.formats.iff.chunks
         public int Width { get; internal set; }
         public int Height { get; internal set; }
         public uint Flags { get; internal set; }
-        public ushort PaletteID { get; internal set; }
+        public ushort PaletteID { get; set; }
         public ushort TransparentColorIndex { get; internal set; }
         public Vector2 Position { get; internal set; }
         
         private SPR2 Parent;
+        private uint Version;
+        private byte[] ToDecode;
 
         public SPR2Frame(SPR2 parent)
         {
@@ -105,24 +134,34 @@ namespace TSO.Files.formats.iff.chunks
         }
 
         /// <summary>
-        /// Reads a BMP chunk from a stream.
+        /// Reads a SPR2 chunk from a stream.
         /// </summary>
         /// <param name="version">Version of the SPR2 that this frame belongs to.</param>
         /// <param name="stream">A IOBuffer object used to read a SPR2 chunk.</param>
-        public void Read(uint version, IoBuffer io)
+        public void Read(uint version, IoBuffer io, uint guessedSize)
         {
+            Version = version;
             if (version == 1001)
             {
                 var spriteVersion = io.ReadUInt32();
                 var spriteSize = io.ReadUInt32();
+                if (IffFile.RETAIN_CHUNK_DATA) ReadDeferred(1001, io);
+                else ToDecode = io.ReadBytes(spriteSize);
+            } else
+            {
+                if (IffFile.RETAIN_CHUNK_DATA) ReadDeferred(1000, io);
+                else ToDecode = io.ReadBytes(guessedSize);
             }
+        }
 
+        public void ReadDeferred(uint version, IoBuffer io)
+        {
             this.Width = io.ReadUInt16();
             this.Height = io.ReadUInt16();
             this.Flags = io.ReadUInt32();
-            io.ReadUInt16();
+            this.PaletteID = io.ReadUInt16();
 
-            if (this.PaletteID == 0 || this.PaletteID == 0xA3A3)
+            if (version == 1000 || this.PaletteID == 0 || this.PaletteID == 0xA3A3)
             {
                 this.PaletteID = (ushort)Parent.DefaultPaletteID;
             }
@@ -134,6 +173,40 @@ namespace TSO.Files.formats.iff.chunks
             this.Position = new Vector2(x, y);
 
             this.Decode(io);
+        }
+
+        public void DecodeIfRequired()
+        {
+            if (ToDecode != null)
+            {
+                using (IoBuffer buf = IoBuffer.FromStream(new MemoryStream(ToDecode), ByteOrder.LITTLE_ENDIAN))
+                {
+                    ReadDeferred(Version, buf);
+                }
+
+                ToDecode = null;
+            }
+        }
+
+        public void Write(IoWriter io)
+        {
+            using (var sprStream = new MemoryStream())
+            {
+                var sprIO = IoWriter.FromStream(sprStream, ByteOrder.LITTLE_ENDIAN);
+                sprIO.WriteUInt16((ushort)Width);
+                sprIO.WriteUInt16((ushort)Height);
+                sprIO.WriteUInt32(Flags);
+                sprIO.WriteUInt16(PaletteID);
+                sprIO.WriteUInt16(TransparentColorIndex);
+                sprIO.WriteUInt16((ushort)Position.Y);
+                sprIO.WriteUInt16((ushort)Position.X);
+                SPR2FrameEncoder.WriteFrame(this, sprIO);
+
+                var data = sprStream.ToArray();
+                io.WriteUInt32(1001);
+                io.WriteUInt32((uint)data.Length);
+                io.WriteBytes(data);
+            }
         }
 
         /// <summary>
@@ -152,6 +225,7 @@ namespace TSO.Files.formats.iff.chunks
             var numPixels = this.Width * this.Height;
             if (hasPixels){
                 this.PixelData = new Color[numPixels];
+                this.PalData = new byte[numPixels];
             }
             if (hasZBuffer){
                 this.ZBufferData = new byte[numPixels];
@@ -161,7 +235,10 @@ namespace TSO.Files.formats.iff.chunks
             }
 
             var palette = Parent.ChunkParent.Get<PALT>(this.PaletteID);
+            if (palette == null) palette = new PALT() { Colors = new Color[256] };
+            palette.References++;
             var transparentPixel = palette.Colors[TransparentColorIndex];
+            transparentPixel.A = 0;
 
             while (!endmarker)
             {
@@ -199,18 +276,15 @@ namespace TSO.Files.formats.iff.chunks
                                         var pxColor = palette.Colors[pxValue];
                                         if (pxWithAlpha)
                                         {
-                                            pxColor.A = (byte)(io.ReadByte() * 8.2258064516129032258064516129032);
+                                            var alpha = io.ReadByte();
+                                            pxColor.A = (byte)(alpha * 8.2258064516129032258064516129032);
                                             bytes--;
                                         }
-                                        else
-                                        {
-                                            if (pxColor.PackedValue == transparentPixel.PackedValue)
-                                            {
-                                                pxColor.A = 0;
-                                            }
-                                        }
+                                        //this mode draws the transparent colour as solid for some reason.
+                                        //fixes backdrop theater
                                         var offset = (y * Width) + x;
                                         this.PixelData[offset] = pxColor;
+                                        this.PalData[offset] = pxValue;
                                         this.ZBufferData[offset] = zValue;
                                         x++;
                                     }
@@ -228,6 +302,7 @@ namespace TSO.Files.formats.iff.chunks
                                     {
                                         var offset = (y * Width) + x;
                                         this.PixelData[offset] = transparentPixel;
+                                        this.PalData[offset] = (byte)TransparentColorIndex;
                                         this.PixelData[offset].A = 0;
                                         if (hasZBuffer){
                                             this.ZBufferData[offset] = 255;
@@ -243,12 +318,15 @@ namespace TSO.Files.formats.iff.chunks
                                         var offset = (y * Width) + x;
                                         var pxColor = palette.Colors[pxIndex];
                                         byte z = 0;
-                                        if (pxColor.PackedValue == transparentPixel.PackedValue)
+
+                                        //not sure if this should happen
+                                        /*if (pxIndex == TransparentColorIndex)
                                         {
                                             pxColor.A = 0;
                                             z = 255;
-                                        }
+                                        }*/
                                         this.PixelData[offset] = pxColor;
+                                        this.PalData[offset] = pxIndex;
                                         if (hasZBuffer)
                                         {
                                             this.ZBufferData[offset] = z;
@@ -286,6 +364,7 @@ namespace TSO.Files.formats.iff.chunks
                                 if (hasPixels) 
                                 {
                                     this.PixelData[offset] = transparentPixel;
+                                    this.PalData[offset] = (byte)TransparentColorIndex;
                                 }
                                 if (hasAlpha)
                                 {
@@ -335,6 +414,7 @@ namespace TSO.Files.formats.iff.chunks
         /// <returns>A Texture2D instance holding the texture data.</returns>
         public Texture2D GetTexture(GraphicsDevice device)
         {
+            DecodeIfRequired();
             if (PixelCache == null)
             {
                 if (this.Width == 0 || this.Height == 0)
@@ -343,6 +423,7 @@ namespace TSO.Files.formats.iff.chunks
                 }
                 PixelCache = new Texture2D(device, this.Width, this.Height);
                 PixelCache.SetData<Color>(this.PixelData);
+                if (!IffFile.RETAIN_CHUNK_DATA) PixelData = null;
             }
             return PixelCache;
         }
@@ -354,14 +435,16 @@ namespace TSO.Files.formats.iff.chunks
         /// <returns>A Texture2D instance holding the texture data.</returns>
         public Texture2D GetZTexture(GraphicsDevice device)
         {
+            DecodeIfRequired();
             if (ZCache == null)
             {
-                if (this.Width == 0 || this.Height == 0)
+                if (ZBufferData == null || this.Width == 0 || this.Height == 0)
                 {
                     return null;
                 }
                 ZCache = new Texture2D(device, this.Width, this.Height, false, SurfaceFormat.Alpha8);
                 ZCache.SetData<byte>(this.ZBufferData);
+                if (!IffFile.RETAIN_CHUNK_DATA) ZBufferData = null;
             }
             return ZCache;
         }
@@ -374,12 +457,44 @@ namespace TSO.Files.formats.iff.chunks
             {
                 Pixel = this.GetTexture(device)
             };
-            if (this.ZBufferData != null){
-                result.ZBuffer = this.GetZTexture(device);
-            }
+            result.ZBuffer = this.GetZTexture(device);
             return result;
         }
 
         #endregion
+
+        public Color[] SetData(Color[] px, byte[] zpx, Rectangle rect)
+        {
+            PixelCache = null; //can't exactly dispose this.. it's likely still in use!
+            ZCache = null;
+            PixelData = px;
+            ZBufferData = zpx;
+            Position = new Vector2(rect.X, rect.Y);
+
+            Width = rect.Width;
+            Height = rect.Height;
+            Flags = 7;
+            TransparentColorIndex = 255;
+
+			var colors = SPR2FrameEncoder.QuantizeFrame(this, out PalData);
+
+            var palt = new Color[256];
+            int i = 0;
+            foreach (var c in colors)
+                palt[i++] = new Color(c.R, c.G, c.B, 255);
+
+            return palt;
+        }
+
+        public void SetPalt(PALT p)
+        {
+            if (this.PaletteID != 0)
+            {
+                var old = Parent.ChunkParent.Get<PALT>(this.PaletteID);
+                if (old != null) old.References--;
+            }
+            PaletteID = p.ChunkID;
+            p.References++;
+        }
     }
 }

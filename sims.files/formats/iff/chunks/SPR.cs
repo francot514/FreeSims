@@ -1,25 +1,19 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using TSO.Files.utils;
+using FSO.Files.Utils;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 
-namespace TSO.Files.formats.iff.chunks
+namespace FSO.Files.Formats.IFF.Chunks
 {
     /// <summary>
     /// This chunk type holds a number of paletted sprites that share a common color palette and lack z-buffers and 
@@ -30,13 +24,15 @@ namespace TSO.Files.formats.iff.chunks
     {
         public List<SPRFrame> Frames { get; internal set; }
         public ushort PaletteID;
+        private List<uint> Offsets;
+        public ByteOrder ByteOrd;
 
         /// <summary>
         /// Reads a SPR chunk from a stream.
         /// </summary>
         /// <param name="iff">An Iff instance.</param>
         /// <param name="stream">A Stream object holding a SPR chunk.</param>
-        public override void Read(Iff iff, Stream stream)
+        public override void Read(IffFile iff, Stream stream)
         {
             using (var io = IoBuffer.FromStream(stream, ByteOrder.LITTLE_ENDIAN))
             {
@@ -47,12 +43,13 @@ namespace TSO.Files.formats.iff.chunks
                 if (version1 == 0)
                 {
                     io.ByteOrder = ByteOrder.BIG_ENDIAN;
-                    version = version2;
+                    version = (uint)(((version2|0xFF00)>>8) | ((version2&0xFF)<<8));
                 }
                 else
                 {
                     version = version1;
                 }
+                ByteOrd = io.ByteOrder;
 
                 var spriteCount = io.ReadUInt32();
                 PaletteID = (ushort)io.ReadUInt32();
@@ -65,10 +62,13 @@ namespace TSO.Files.formats.iff.chunks
                     {
                         offsetTable.Add(io.ReadUInt32());
                     }
+                    Offsets = offsetTable;
                     for (var i = 0; i < spriteCount; i++)
                     {
                         var frame = new SPRFrame(this);
-                        frame.Read(version, io);
+                        io.Seek(SeekOrigin.Begin, offsetTable[i]);
+                        var guessedSize = ((i + 1 < offsetTable.Count) ? offsetTable[i + 1] : (uint)stream.Length) - offsetTable[i];
+                        frame.Read(version, io, guessedSize);
                         Frames.Add(frame);
                     }
                 }
@@ -77,7 +77,7 @@ namespace TSO.Files.formats.iff.chunks
                     while (io.HasMore)
                     {
                         var frame = new SPRFrame(this);
-                        frame.Read(version, io);
+                        frame.Read(version, io, 0);
                         Frames.Add(frame);
                     }
                 }
@@ -95,6 +95,7 @@ namespace TSO.Files.formats.iff.chunks
         public uint Version;
         private SPR Parent;
         private Texture2D PixelCache;
+        private byte[] ToDecode;
 
         /// <summary>
         /// Constructs a new SPRFrame instance.
@@ -110,24 +111,46 @@ namespace TSO.Files.formats.iff.chunks
         /// </summary>
         /// <param name="iff">An Iff instance.</param>
         /// <param name="stream">A Stream object holding a SPRFrame.</param>
-        public void Read(uint version, IoBuffer io)
+        public void Read(uint version, IoBuffer io, uint guessedSize)
         {
             if (version == 1001)
             {
                 var spriteFersion = io.ReadUInt32();
+
                 var size = io.ReadUInt32();
                 this.Version = spriteFersion;
+
+                if (IffFile.RETAIN_CHUNK_DATA) ReadDeferred(1001, io);
+                else ToDecode = io.ReadBytes(size);
             }
             else
             {
                 this.Version = version;
+                if (IffFile.RETAIN_CHUNK_DATA) ReadDeferred(1000, io);
+                else ToDecode = io.ReadBytes(guessedSize);
             }
+        }
 
+        public void ReadDeferred(uint version, IoBuffer io)
+        {
             var reserved = io.ReadUInt32();
             var height = io.ReadUInt16();
             var width = io.ReadUInt16();
             this.Init(width, height);
             this.Decode(io);
+        }
+
+        public void DecodeIfRequired()
+        {
+            if (ToDecode != null)
+            {
+                using (IoBuffer buf = IoBuffer.FromStream(new MemoryStream(ToDecode), Parent.ByteOrd))
+                {
+                    ReadDeferred(Version, buf);
+                }
+
+                ToDecode = null;
+            }
         }
 
         /// <summary>
@@ -237,10 +260,13 @@ namespace TSO.Files.formats.iff.chunks
 
         public Texture2D GetTexture(GraphicsDevice device)
         {
+            DecodeIfRequired();
             if (PixelCache == null)
             {
-                PixelCache = new Texture2D(device, this.Width, this.Height);
-                PixelCache.SetData<Color>(this.Data);
+                PixelCache = new Texture2D(device, Math.Max(1,Width), Math.Max(1,Height));
+                if (Width*Height > 0) PixelCache.SetData<Color>(this.Data);
+                else PixelCache.SetData<Color>(new Color[] { Color.Transparent });
+                if (!IffFile.RETAIN_CHUNK_DATA) Data = null;
             }
             return PixelCache;
         }

@@ -1,23 +1,17 @@
-﻿/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at
-http://mozilla.org/MPL/2.0/.
-
-The Original Code is the TSOVille.
-
-The Initial Developer of the Original Code is
-ddfczm. All Rights Reserved.
-
-Contributor(s): ______________________________________.
-*/
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at
+ * http://mozilla.org/MPL/2.0/. 
+ */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TSO.Files.utils;
+using FSO.Files.Utils;
 using Microsoft.Xna.Framework;
 
-namespace TSO.Files.formats.iff.chunks
+namespace FSO.Files.Formats.IFF.Chunks
 {
     /// <summary>
     /// This format isn't documented on the wiki! Thanks, Darren!
@@ -40,7 +34,7 @@ namespace TSO.Files.formats.iff.chunks
 
         public Dictionary<ushort, List<SLOTItem>> Slots;
 
-        public override void Read(Iff iff, System.IO.Stream stream)
+        public override void Read(IffFile iff, System.IO.Stream stream)
         {
             using (var io = IoBuffer.FromStream(stream, ByteOrder.LITTLE_ENDIAN)){
                 var zero = io.ReadUInt32();
@@ -57,8 +51,6 @@ namespace TSO.Files.formats.iff.chunks
                  * The span for version 9 is 66. 
                  * The span for version 10 is 70.  **/
                 for (var i = 0; i < numSlots; i++){
-                    io.Mark();
-
                     var item = new SLOTItem();
                     item.Type = io.ReadUInt16();
                     item.Offset = new Vector3(
@@ -72,7 +64,6 @@ namespace TSO.Files.formats.iff.chunks
                     var ground = io.ReadInt32();
                     var rsflags = io.ReadInt32();
                     var snaptargetslot = io.ReadInt32();
-                    var minproximity = io.ReadInt32();
 
                     //bonuses (0 means never)
                     item.Standing = standing; //score bonus for standing destinations
@@ -81,22 +72,21 @@ namespace TSO.Files.formats.iff.chunks
 
                     item.Rsflags = (SLOTFlags)rsflags;
                     item.SnapTargetSlot = snaptargetslot;
-                    item.MinProximity = minproximity;
 
                     if (version >= 6)
                     {
+                        var minproximity = io.ReadInt32();
                         var maxproximity = io.ReadInt32();
                         var optimalproximity = io.ReadInt32();
                         var i9 = io.ReadInt32();
                         var i10 = io.ReadInt32();
-                        
 
+                        item.MinProximity = minproximity;
                         item.MaxProximity = maxproximity;
                         item.OptimalProximity = optimalproximity;
                     }
 
-                    if (version <= 9)
-                    {
+                    if (version <= 9) {
                         item.MinProximity *= 16;
                         item.MaxProximity *= 16;
                         item.OptimalProximity *= 16;
@@ -162,10 +152,10 @@ namespace TSO.Files.formats.iff.chunks
         public SLOTFlags Rsflags;
         public int SnapTargetSlot = -1;
         public int MinProximity;
-        public int MaxProximity = -1;
-        public int OptimalProximity = -1;
+        public int MaxProximity = 0;
+        public int OptimalProximity = 0;
         public float Gradient;
-        public SLOTFacing Facing = SLOTFacing.FaceAnywhere;
+        public SLOTFacing Facing = SLOTFacing.FaceTowardsObject;
         public int Resolution = 16;
         public int Height;
     }
