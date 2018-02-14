@@ -7,13 +7,14 @@ using System.Collections;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using TSO.Common.rendering.framework;
-using TSO.Common.rendering.framework.model;
-using TSOVille.Code;
-using TSOVille.Code.UI.Framework;
-using TSOVille.Code.Utils;
-using TSOVille.Code.UI.Screens;
-using TSOVille.Code.UI.Controls;
+using FSO.Common.Rendering.Framework;
+using FSO.Common.Rendering.Framework.Model;
+using FSO.Client;
+using FSO.Client.UI.Screens;
+using FSO.Client.UI.Controls;
+using FSO.Client.UI.Framework;
+using FSO.Client.Utils;
+using FSO.Client.Rendering.City;
 
 
 
@@ -207,7 +208,7 @@ namespace SimsVille.UI.Model
                                  //{ m_LotCost.ToString(), CurrentUIScr.ucp.MoneyText.Caption });
 
                                  AlertCoords.Message = m_SelTile[0].ToString() + " " + m_SelTile[1].ToString();
-                                 AlertCoords.Buttons = UIAlertButtons.YesNo;
+                            
 
                                  foreach (LotTileEntry Lot in m_HousesData.LotTileData)
                                      if (Lot.x == m_SelTile[0] && Lot.y == m_SelTile[1])
@@ -222,7 +223,7 @@ namespace SimsVille.UI.Model
                                      //{ m_LotCost.ToString(), CurrentUIScr.ucp.MoneyText.Caption });
 
                                      AlertOptions.Message = m_CurrentLot.x.ToString() + " " + m_CurrentLot.y.ToString();
-                                     AlertOptions.Buttons = UIAlertButtons.YesNo;
+                                     //AlertOptions.Buttons = UIAlertButtons.YesNo;
 
                                      
 

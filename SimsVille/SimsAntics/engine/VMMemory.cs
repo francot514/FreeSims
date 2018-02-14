@@ -638,7 +638,10 @@ namespace FSO.SimAntics.Engine.Utils
                     throw new VMSimanticsException("Not implemented...", context);
 
                 case VMVariableScope.MyMotives: //14
-                    return ((VMAvatar)context.Caller).SetMotiveData((VMMotive)data, value);
+                    if (context.Caller is VMAvatar)
+                        return ((VMAvatar)context.Caller).SetMotiveData((VMMotive)data, value);
+
+                    return false;
 
                 case VMVariableScope.StackObjectMotives: //15
                     return ((VMAvatar)context.StackObject).SetMotiveData((VMMotive)data, value);

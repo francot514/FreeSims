@@ -15,10 +15,11 @@ using System.Threading;
 using System.Diagnostics;
 using FSO.Client.UI.Controls;
 using FSO.Client.Network.Events;
-using FSO.Client.Rendering.City;
 using GonzoNet;
 using ProtocolAbstractionLibraryD;
 using LogThis;
+using SimsVille.UI.Model;
+using FSO.Client.Rendering.City;
 
 namespace FSO.Client.Network
 {
@@ -36,7 +37,7 @@ namespace FSO.Client.Network
     public delegate void OnCityTokenDelegate(CityInfo SelectedCity);
     public delegate void OnCityTransferProgressDelegate(CityTransferStatus e);
     public delegate void OnCharacterRetirementDelegate(string GUID);
-    public delegate void OnPlayerJoinedDelegate(FSO.Client.Rendering.City.LotTileEntry TileEntry);
+    public delegate void OnPlayerJoinedDelegate(LotTileEntry TileEntry);
     public delegate void OnPlayerAlreadyOnlineDelegate();
     public delegate void OnNewTimeOfDayDelegate(DateTime TimeOfDay);
     public delegate void OnLotCostDelegate(LotTileEntry Entry);

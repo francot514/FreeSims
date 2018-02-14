@@ -28,12 +28,16 @@ using FSO.SimAntics.Model.Sound;
 using FSO.SimAntics.Engine;
 using FSO.SimAntics.Primitives;
 using FSO.Client.GameContent;
+using tso.world.Model;
 
 namespace FSO.SimAntics
 {
     public class VMAvatar : VMEntity
     {
         public static uint TEMPLATE_PERSON = 0x7FD96B54;
+        public static uint NPC_MAID = 0xC61931DC;
+        public static uint NPC_GARDENER = 0xD62B91B4;
+        public static uint DOG_TEMPLATE = 0x5F0C674C;
 
         public SimAvatar Avatar;
 
@@ -355,6 +359,53 @@ namespace FSO.SimAntics
             return id;
         }
 
+        public void SetAvatarData(XmlCharacter charInfo)
+        {
+
+
+            if (charInfo != null)
+            {
+                PersistID = Convert.ToUInt16(charInfo.Id);
+                AppearanceType type;
+                Enum.TryParse(charInfo.Appearance, out type);
+
+                var headPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Head, 16));
+                var bodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Body, 16));
+
+                Name = charInfo.Name;
+                SkinTone = type;
+                AvatarType = VMAvatarType.Adult;
+
+                var Gender = charInfo.Gender;
+                if (Gender == "Male")
+                    SetPersonData(VMPersonDataVariable.Gender, 0);
+                else if (Gender == "Female")
+                    SetPersonData(VMPersonDataVariable.Gender, 1);
+
+                Avatar.Head = Content.Content.Get().AvatarOutfits.Get(headPurchasable.OutfitID);
+                Avatar.Body = Content.Content.Get().AvatarOutfits.Get(bodyPurchasable.OutfitID);
+                Avatar.Handgroup = Avatar.Body;
+            }
+            else
+            {
+
+                Avatar.Head = Content.Content.Get().AvatarOutfits.Get("mah010_baldbeard01.oft"); //default to bob newbie, why not
+                Avatar.Body = Content.Content.Get().AvatarOutfits.Get("mab002_slob.oft");
+                Avatar.Handgroup = Avatar.Body;
+
+            }
+
+            SetMotiveData(VMMotive.Bladder, 100);
+            SetMotiveData(VMMotive.Hygiene, 100);
+            SetMotiveData(VMMotive.Hunger, 100);
+            SetMotiveData(VMMotive.Social, 100);
+            SetMotiveData(VMMotive.Comfort, 100);
+            SetMotiveData(VMMotive.Energy, 100);
+            SetMotiveData(VMMotive.Fun, 100);
+
+
+
+        }
 
         public void InitBodyData(VMContext context)
         {
@@ -918,7 +969,9 @@ namespace FSO.SimAntics
             foreach (var aprN in BoundAppearances)
             {
                 var apr = FSO.Content.Content.Get().AvatarAppearances.Get(aprN);
-                Avatar.AddAccessory(apr);
+
+                if (apr != null)
+                    Avatar.AddAccessory(apr);
             }
 
             SkinTone = input.SkinTone;

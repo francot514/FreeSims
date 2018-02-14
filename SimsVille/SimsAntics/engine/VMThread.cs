@@ -425,7 +425,9 @@ namespace FSO.SimAntics.Engine
 
             VMPrimitiveHandler handler = primitive.GetHandler();
             var result = handler.Execute(frame, instruction.Operand);
-            HandleResult(frame, instruction, result);
+
+            if (result != null)
+                HandleResult(frame, instruction, result);
         }
 
         private void HandleResult(VMStackFrame frame, VMInstruction instruction, VMPrimitiveExitCode result)

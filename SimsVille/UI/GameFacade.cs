@@ -21,6 +21,7 @@ using FSO.Client.GameContent;
 using FSO.Client.UI;
 using Microsoft.Xna.Framework;
 using FSO.Client.Rendering.City;
+using SimsVille.UI.Model;
 
 namespace FSO.Client
 {
@@ -51,7 +52,7 @@ namespace FSO.Client
 
         //Entries received from city server, see UIPacketHandlers.OnCityTokenResponse()
         public static CityDataRetriever CDataRetriever = new CityDataRetriever();
-
+        public static HouseDataRetriever HousesDataRetriever;
         /// <summary>
         /// Place where the game can store cached values, e.g. pre modified textures to improve
         /// 2nd load speed, etc.
@@ -61,6 +62,10 @@ namespace FSO.Client
 
         public static void Init()
         {
+
+            HousesDataRetriever = new HouseDataRetriever(GraphicsDevice);
+            HousesDataRetriever.GetCityLots();
+
         }
 
         /**

@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using tso.world.Model;
-using TSO.SimsAntics.Engine;
-using TSO.Files.formats.iff.chunks;
-using TSO.SimsAntics.Model;
+using FSO.SimAntics;
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.LotView.Model;
+using FSO.Content;
+using FSO.SimAntics.Engine;
 
     namespace TSO.SimsAntics
     {
@@ -85,7 +86,7 @@ using TSO.SimsAntics.Model;
                     var interaction = TreeTableSelected.Interactions[id];
                     var ActionID = interaction.ActionFunction;
                     BHAV bhav;
-                    TSO.Content.GameIffResource CodeOwner;
+                    GameIffResource CodeOwner;
 
                     if (ActionID < 4096)
                     { //global
@@ -99,8 +100,8 @@ using TSO.SimsAntics.Model;
                     }
                     else
                     { //semi-global
-                        bhav = target.SemiGlobal.Resource.Get<BHAV>(ActionID);
-                        CodeOwner = target.SemiGlobal.Resource;
+                        bhav = target.SemiGlobal.Get<BHAV>(ActionID);
+                        CodeOwner = target.SemiGlobal;
                     }
 
                    
@@ -109,12 +110,13 @@ using TSO.SimsAntics.Model;
                     {
                         avatar.Thread.EnqueueAction(new VMQueuedAction()
                         {
-                            Routine = VM.Assemble(bhav),
+                            ActionRoutine = VM.Assemble(bhav),
                             Callee = target,
                             StackObject = target,
                             CodeOwner = target.Object,
                             InteractionNumber = (int)interaction.TTAIndex, //interactions are referenced by their tta index
-                            Priority = (short)VMQueuePriority.UserDriven
+                            Priority = (short)VMQueuePriority.UserDriven,
+                            
                         });
                     }
 
@@ -157,10 +159,10 @@ using TSO.SimsAntics.Model;
 
                 for (int i = 0; i <= Entities.Count - 1; i++)
 
-                    if (Entities[i].Object.GUID == VMAvatar.TEMPLATE_PERSON)
+                    if (Entities[i].Object.GUID == VMAvatar.TEMPLATE_PERSON && Entities[i].Thread.Queue.Count > 0)
                     {
 
-                        if (Entities[i].Thread.Queue.Count <= 2 || Entities[i].Thread.Queue[0].Priority == (short)VMQueuePriority.Idle)
+                        if (Entities[i].Thread.Queue.Count <= 2 && Entities[i].Thread.Queue[0].Priority == (short)VMQueuePriority.Idle)
                             RunAction(Entities[i]);
                     }
 

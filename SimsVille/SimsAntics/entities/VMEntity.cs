@@ -75,6 +75,7 @@ namespace FSO.SimAntics
         public VMEntity Container;
         public short ContainerSlot;
         public bool Dead; //set when the entity is removed, threads owned by this object or with this object as callee will be cancelled/have their stack emptied.
+        public bool BadName;
 
         /** Persistent state variables controlled by bhavs **/
         //in TS1, NumAttributes can be 0 and it will dynamically resize as required.
@@ -125,6 +126,20 @@ namespace FSO.SimAntics
             {
                 MultitileGroup.Name = value;
             }
+        }
+
+        public bool GetBadNames()
+        {
+            string name = this.ToString();
+            BadName = false;
+
+
+            if (name.Contains("Mail") || name.Contains("Window") || name.Contains("Door") || name.Contains("Lamp")
+                || name.Contains("Stair") || name.Contains("Arch") || name.Contains("Tree") || name.Contains("Portal")
+                || name.Contains("Trash") || name.Contains("Phone"))
+                BadName = true;
+
+            return BadName;
         }
 
         //positioning properties

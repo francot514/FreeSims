@@ -111,6 +111,12 @@ namespace FSO.SimAntics.Utils
             return (VMAvatar)VM.Context.CreateObjectInstance(VMAvatar.TEMPLATE_PERSON, LotTilePos.OUT_OF_WORLD, Direction.NORTH).Objects[0];
         }
 
+
+        public VMAvatar CreateAvatar(uint guid)
+        {
+            return (VMAvatar)VM.Context.CreateObjectInstance(guid, LotTilePos.OUT_OF_WORLD, Direction.NORTH).Objects[0];
+        }
+
         public void CreateObject(XmlHouseDataObject obj){
             LotTilePos pos = (obj.Level == 0) ? LotTilePos.OUT_OF_WORLD : LotTilePos.FromBigTile((short)obj.X, (short)obj.Y, (sbyte)obj.Level);
             

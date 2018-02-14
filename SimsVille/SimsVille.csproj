@@ -298,6 +298,7 @@
     <Compile Include="SimsAntics\utils\VMWorldActivator.cs" />
     <Compile Include="SimsAntics\utils\VMWorldExporter.cs" />
     <Compile Include="SimsAntics\VM.cs" />
+    <Compile Include="SimsAntics\VMAI.cs" />
     <Compile Include="SimsAntics\VMArchitecture.cs" />
     <Compile Include="SimsAntics\VMClock.cs" />
     <Compile Include="SimsAntics\VMContext.cs" />
@@ -348,6 +349,8 @@
     <Compile Include="UI\Framework\UITween.cs" />
     <Compile Include="UI\GameController.cs" />
     <Compile Include="UI\GameFacade.cs" />
+    <Compile Include="UI\Model\HouseDataRetriever.cs" />
+    <Compile Include="UI\Model\Neighborhood.cs" />
     <Compile Include="UI\Model\SlicedTextureRef.cs" />
     <Compile Include="UI\Model\UIElementState.cs" />
     <Compile Include="UI\Model\UIMusic.cs" />
@@ -435,6 +438,8 @@
     <Compile Include="World\Model\WallTile.cs" />
     <Compile Include="World\Model\WorldRotation.cs" />
     <Compile Include="World\Model\WorldZoom.cs" />
+    <Compile Include="World\Model\XmlCharacter.cs" />
+    <Compile Include="World\Model\XmlCity.cs" />
     <Compile Include="World\Model\XmlHouse.cs" />
     <Compile Include="World\utils\DGRPRenderer.cs" />
     <Compile Include="World\utils\IsometricTileIterator.cs" />

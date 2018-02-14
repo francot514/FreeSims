@@ -115,7 +115,9 @@ namespace FSO.Client.UI.Panels
         {
             var xmlHouses = new List<UIXMLLotEntry>();
 
-            string[] paths = Directory.GetFiles(Path.Combine(GlobalSettings.Default.DocumentsPath,"Houses/"), "*.xml", SearchOption.AllDirectories);
+            string[] paths = Directory.GetFiles("Content/Houses/", "*.xml", SearchOption.AllDirectories);
+
+            
             for (int i = 0; i < paths.Length; i++)
             {
                 string entry = paths[i];
@@ -123,13 +125,6 @@ namespace FSO.Client.UI.Panels
                 xmlHouses.Add(new UIXMLLotEntry { Filename = filename, Path = entry });
             }
 
-            paths = Directory.GetFiles(Path.Combine(GlobalSettings.Default.StartupPath, @"housedata/"), "*_00.xml", SearchOption.AllDirectories);
-            for (int i=0; i<paths.Length; i++)
-            {
-                string entry = paths[i];
-                string filename = Path.GetFileName(entry);
-                xmlHouses.Add(new UIXMLLotEntry { Filename = filename, Path = entry });
-            }
 
             Top100ResultList.Items = xmlHouses.Select(x => new UIListBoxItem(x, x.Filename)).ToList();
         }

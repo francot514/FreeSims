@@ -28,6 +28,8 @@ using FSO.SimAntics.Model.Sound;
 using FSO.SimAntics.NetPlay.EODs;
 using FSO.SimAntics.NetPlay.Drivers;
 using FSO.SimAntics.NetPlay.Model.Commands;
+using FSO.SimAntics.Utils;
+using TSO.SimsAntics;
 
 namespace FSO.SimAntics
 {
@@ -56,7 +58,9 @@ namespace FSO.SimAntics
         private const long TickInterval = 33 * TimeSpan.TicksPerMillisecond;
 
         public VMContext Context { get; internal set; }
-
+        public VMWorldActivator Activator;
+        public VMFreeWill FreeWill;
+        public List<VMAvatar> Visitors = new List<VMAvatar>();
         public List<VMEntity> Entities = new List<VMEntity>();
         public short[] GlobalState;
         public VMPlatformState PlatformState;
@@ -108,6 +112,7 @@ namespace FSO.SimAntics
             this.Context = context;
             this.Driver = driver;
             Headline = headline;
+            FreeWill = new VMFreeWill(this);
             OnBHAVChange += VM_OnBHAVChange;
         }
 
@@ -227,11 +232,18 @@ namespace FSO.SimAntics
                 BHAVDirty = false;
             }
 
+            //Tick for the Free Will control
+            if (Context.Blueprint != null)
+                FreeWill.Tick();
+
             lock (Driver)
             {
                 if (Driver.Tick(this)) //returns true the first time we catch up to the state.
                     Ready = true;
             }
+
+
+
         }
 
         public void InternalTick()

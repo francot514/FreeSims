@@ -18,8 +18,8 @@ using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.IO;
-using TSO.Files;
 using tso.world.Model;
+using FSO.Client.Rendering.City;
 
 namespace SimsVille.UI.Model
 {
@@ -51,7 +51,7 @@ namespace SimsVille.UI.Model
 
              if (CityData.Lots.Count > 0) 
             foreach (LotTileEntry lotentry in LotTileData)
-                HousesImages.Add(RetrieveHouseGFX(lotentry.id, lotentry.name));
+                HousesImages.Add(RetrieveHouseGFX(lotentry.lotid, lotentry.name));
 
         }
 
@@ -76,24 +76,5 @@ namespace SimsVille.UI.Model
     }
 
 
-    public class LotTileEntry
-    {
-        public int id;
-        public short x;
-        public short y;
-        public byte flags; //bit 0 = online, bit 1 = spotlight, bit 2 = locked, bit 3 = occupied
-        public int cost;
-        public string name;
-
-        public LotTileEntry(int Lotid, string Name, short X, short Y, byte Flags, int Cost)
-        {
-            this.id = Lotid;
-            this.x = X;
-            this.y = Y;
-            this.flags = Flags;
-            this.cost = Cost;
-            this.name = Name;
-        }
-    }
 
 }

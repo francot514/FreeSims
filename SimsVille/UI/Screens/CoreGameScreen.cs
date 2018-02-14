@@ -12,7 +12,6 @@ using System.Diagnostics;
 using FSO.Client.UI.Framework;
 using FSO.Client.UI.Panels;
 using FSO.Client.UI.Model;
-using FSO.Client.Rendering.City;
 using Microsoft.Xna.Framework;
 using FSO.Client.Utils;
 using FSO.Common.Rendering.Framework.Model;
@@ -33,6 +32,9 @@ using FSO.Client.UI.Controls;
 using FSO.Client.UI.Panels.WorldUI;
 using FSO.SimAntics.Engine.TSOTransaction;
 using FSO.Common;
+using SimsVille.UI.Model;
+using FSO.Client.Rendering.City;
+using tso.world.Model;
 
 namespace FSO.Client.UI.Screens
 {
@@ -44,13 +46,17 @@ namespace FSO.Client.UI.Screens
         public UIGameTitle Title;
         private UIButton SaveHouseButton;
         private string[] CityMusic;
-        private String city;
+        private String city, lotName;
+
+        private string[] CharacterInfos;
+        public List<XmlCharacter> Characters;
+
 
         private bool Connecting;
         private UILoginProgress ConnectingDialog;
         private Queue<SimConnectStateChange> StateChanges;
         private UIMouseEventRef MouseHitAreaEventRef = null;
-        //private Terrain CityRenderer; //city view
+        private Neighborhood CityRenderer; //city view
 
         public UILotControl LotController; //world, lotcontrol and vm will be null if we aren't in a lot.
         private LotView.World World;
@@ -83,6 +89,7 @@ namespace FSO.Client.UI.Screens
                         {
                             HITVM.Get().PlaySoundEvent(UIMusic.None);
                             gizmo.Visible = false;
+                            CityRenderer.Visible = false;
                             LotController.Visible = true;
                             World.Visible = true;
                             ucp.SetMode(UIUCP.UCPMode.LotMode);
@@ -97,7 +104,12 @@ namespace FSO.Client.UI.Screens
                         Title.SetTitle(city);                  
 
                         if (m_ZoomLevel < 4)
-                        { //coming from lot view... snap zoom % to 0 or 1
+                        {   
+                            //coming from lot view... snap zoom % to 0 or 1
+                            CityRenderer.m_ZoomProgress = (value == 4) ? 1 : 0;
+                            //PlayBackgroundMusic(CityMusic); //play the city music as well
+                            CityRenderer.Visible = true;
+
                             HITVM.Get().PlaySoundEvent(UIMusic.Map); //play the city music as well
                             gizmo.Visible = true;
                             if (World != null)
@@ -108,7 +120,9 @@ namespace FSO.Client.UI.Screens
                             ucp.SetMode(UIUCP.UCPMode.CityMode);
                         }
                         m_ZoomLevel = value;
-                    
+
+                        CityRenderer.m_Zoomed = (value == 4);
+
                 }
                 ucp.UpdateZoomButton();
             }
@@ -171,7 +185,6 @@ namespace FSO.Client.UI.Screens
             /** City Scene **/
             ListenForMouse(new Rectangle(0, 0, ScreenWidth, ScreenHeight), new UIMouseEvent(MouseHandler));
 
-           // CityRenderer = new Terrain(GameFacade.Game.GraphicsDevice); //The Terrain class implements the ThreeDAbstract interface so that it can be treated as a scene but manage its own drawing and updates.
 
             city = "Queen Margaret's";
             if (PlayerAccount.CurrentlyActiveSim != null)
@@ -203,6 +216,10 @@ namespace FSO.Client.UI.Screens
             this.Add(VMDebug);*/
             //InitializeMouse();
 
+            Characters = new List<XmlCharacter>();
+            CharacterInfos = new string[9];
+
+
             SaveHouseButton = new UIButton()
             {
                 Caption = "Save House",
@@ -212,6 +229,7 @@ namespace FSO.Client.UI.Screens
             };
             SaveHouseButton.OnButtonClick += new ButtonClickDelegate(SaveHouseButton_OnButtonClick);
             this.Add(SaveHouseButton);
+            SaveHouseButton.Visible = false;
 
             ucp = new UIUCP(this);
             ucp.Y = ScreenHeight - 210;
@@ -238,29 +256,20 @@ namespace FSO.Client.UI.Screens
             NetworkFacade.Controller.OnNewTimeOfDay += new OnNewTimeOfDayDelegate(Controller_OnNewTimeOfDay);
             NetworkFacade.Controller.OnPlayerJoined += new OnPlayerJoinedDelegate(Controller_OnPlayerJoined);
 
-            //THIS IS KEPT HERE AS A DOCUMENTATION OF THE MESSAGE PASSING API FOR NOW.
-            /*
-            MessageAuthor Author = new MessageAuthor();
-            Author.Author = "Whats His Face";
-            Author.GUID = Guid.NewGuid().ToString();
 
-            GameFacade.MessageController.PassMessage(Author, "you suck");
-            GameFacade.MessageController.PassMessage(Author, "no rly");
-            GameFacade.MessageController.PassMessage(Author, "jk im just testing message recieving please love me");
+            CityRenderer = new Neighborhood(GameFacade.Game.GraphicsDevice);
+            CityRenderer.LoadContent();
 
-            Author.Author = "yer maw";
-            Author.GUID = Guid.NewGuid().ToString();
+            CityRenderer.Initialize(GameFacade.HousesDataRetriever);
 
-            GameFacade.MessageController.PassMessage(Author, "dont let whats his face get to you");
-            GameFacade.MessageController.PassMessage(Author, "i will always love you");
 
-            Author.Author = "M.O.M.I";
-            Author.GUID = Guid.NewGuid().ToString();
+            CityRenderer.SetTimeOfDay(0.5);
 
-            GameFacade.MessageController.PassEmail(Author, "Ban Notice", "You have been banned for playing too well. \r\n\r\nWe don't know why you still have access to the game, but it's probably related to you playing the game pretty well. \r\n\r\nPlease stop immediately.\r\n\r\n - M.O.M.I. (this is just a test message btw, you're not actually banned)");
-            */
+            GameFacade.Scenes.Add(CityRenderer);
 
-            ZoomLevel = 5; //screen always starts at far zoom, city visible.
+            ZoomLevel = 4; //Nhood view.
+
+            
         }
 
         private void InitializeMouse()
@@ -345,6 +354,10 @@ namespace FSO.Client.UI.Screens
             }
 
             if (vm != null) vm.Update();
+
+            if (!Visible)
+                CityRenderer.Visible = false;
+
         }
 
         public void CleanupLastWorld()
@@ -360,6 +373,7 @@ namespace FSO.Client.UI.Screens
                 threads.Clear();
             }
             vm.CloseNet(VMCloseNetReason.LeaveLot);
+            
             GameFacade.Scenes.Remove(World);
             this.Remove(LotController);
             ucp.SetPanel(-1);
@@ -430,6 +444,10 @@ namespace FSO.Client.UI.Screens
         {
             if (Connecting) return;
 
+            lotName = path;
+
+            SaveHouseButton.Visible = true;
+
             if (vm != null) CleanupLastWorld();
 
             World = new LotView.World(GameFacade.Game.GraphicsDevice);
@@ -465,7 +483,7 @@ namespace FSO.Client.UI.Screens
                 string filename = Path.GetFileName(path);
                 try
                 {
-                    using (var file = new BinaryReader(File.OpenRead(Path.Combine(FSOEnvironment.UserDir, "LocalHouse/")+filename.Substring(0, filename.Length-4)+".fsov")))
+                    using (var file = new BinaryReader(File.OpenRead(Path.Combine(FSOEnvironment.UserDir, "Houses/")+filename.Substring(0, filename.Length-4)+".fsov")))
                     {
                         var marshal = new SimAntics.Marshals.VMMarshal();
                         marshal.Deserialize(file);
@@ -510,17 +528,22 @@ namespace FSO.Client.UI.Screens
             LotController = new UILotControl(vm, World);
             this.AddAt(0, LotController);
 
-            vm.Context.Clock.Hours = 10;
+            vm.Context.Clock.Hours = 8;
             if (m_ZoomLevel > 3)
             {
                 World.Visible = false;
                 LotController.Visible = false;
             }
 
+            var activator = new VMWorldActivator(vm, World);
+
             if (host)
             {
                 ZoomLevel = 1;
                 ucp.SetInLot(true);
+
+
+
             } else
             {
                 ZoomLevel = Math.Max(ZoomLevel, 4);
@@ -567,10 +590,13 @@ namespace FSO.Client.UI.Screens
             if (vm == null) return;
             
             var exporter = new VMWorldExporter();
-            exporter.SaveHouse(vm, GameFacade.GameFilePath("housedata/blueprints/house_00.xml"));
+            exporter.SaveHouse(vm, lotName);
             var marshal = vm.Save();
-            Directory.CreateDirectory(Path.Combine(FSOEnvironment.UserDir, "LocalHouse/"));
-            using (var output = new FileStream(Path.Combine(FSOEnvironment.UserDir, "LocalHouse/house_00.fsov"), FileMode.Create))
+
+            if (!Directory.Exists(Path.Combine(FSOEnvironment.UserDir, "Houses/")))
+                Directory.CreateDirectory(Path.Combine(FSOEnvironment.UserDir, "Houses/"));
+
+            using (var output = new FileStream(Path.Combine(FSOEnvironment.UserDir, "Houses/house_00.fsov"), FileMode.Create))
             {
                 marshal.SerializeInto(new BinaryWriter(output));
             }
