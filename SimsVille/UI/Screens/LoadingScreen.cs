@@ -144,7 +144,7 @@ namespace FSO.Client.UI.Screens
                     {
                         /** No more labels to show! Preload must be complete :) **/
                         CheckProgressTimer.Stop();
-                        GameFacade.Controller.ShowPersonCreation(new ProtocolAbstractionLibraryD.CityInfo(false));
+                        GameFacade.Controller.ShowLotDebug();
                     }
                 }
             }

@@ -91,9 +91,13 @@
     <Compile Include="formats\iff\chunks\BMP.cs" />
     <Compile Include="formats\iff\chunks\CTSS.cs" />
     <Compile Include="formats\iff\chunks\DGRP.cs" />
+    <Compile Include="formats\iff\chunks\FAMI.cs" />
+    <Compile Include="formats\iff\chunks\FAMs.cs" />
     <Compile Include="formats\iff\chunks\FWAV.cs" />
     <Compile Include="formats\iff\chunks\GLOB.cs" />
     <Compile Include="formats\iff\chunks\ISPR.cs" />
+    <Compile Include="formats\iff\chunks\NBRS.cs" />
+    <Compile Include="formats\iff\chunks\NGBH.cs" />
     <Compile Include="formats\iff\chunks\OBJD.cs" />
     <Compile Include="formats\iff\chunks\OBJf.cs" />
     <Compile Include="formats\iff\chunks\PALT.cs" />
@@ -106,6 +110,8 @@
     <Compile Include="formats\iff\chunks\TPRP.cs" />
     <Compile Include="formats\iff\chunks\TTAB.cs" />
     <Compile Include="formats\iff\chunks\TTAs.cs" />
+    <Compile Include="formats\iff\chunks\TTAT.cs" />
+    <Compile Include="formats\iff\IffFieldEncode.cs" />
     <Compile Include="formats\iff\IffFile.cs" />
     <Compile Include="formats\iff\IffRuntimeInfo.cs" />
     <Compile Include="formats\iff\PIFFRegistry.cs" />

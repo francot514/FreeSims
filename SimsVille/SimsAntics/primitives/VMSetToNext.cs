@@ -136,16 +136,22 @@ namespace FSO.SimAntics.Primitives
                                 found = (temp.GetType() == typeof(VMGameObject));
                                 break;
                             case VMSetToNextSearchType.NeighborId:
-                                throw new VMSimanticsException("Not implemented!", context);
+                                //var next = Content.Content.Get().TS1Neighborhood.SetToNext(targetValue);
+                                //if (next < 0) return VMPrimitiveExitCode.GOTO_FALSE;
+                                //VMMemory.SetVariable(context, operand.TargetOwner, operand.TargetData, 0);
+                                    return VMPrimitiveExitCode.GOTO_TRUE;
                             case VMSetToNextSearchType.ObjectWithCategoryEqualToSP0:
                                 found = (temp.Object.OBJ.FunctionFlags == context.Args[0]); //I'm assuming that means "Stack parameter 0", that category means function and that it needs to be exactly the same (no subsets)
                                 break;
                             case VMSetToNextSearchType.NeighborOfType:
-                                throw new VMSimanticsException("Not implemented!", context);
+                                //var nexta = Content.Content.Get().TS1Neighborhood.SetToNext(targetValue, operand.GUID);
+                                //if (nexta < 0) return VMPrimitiveExitCode.GOTO_FALSE;
+                                //VMMemory.SetVariable(context, operand.TargetOwner, operand.TargetData, 0);
+                                    return VMPrimitiveExitCode.GOTO_TRUE;
                             case VMSetToNextSearchType.Career:
-                                throw new VMSimanticsException("Not implemented!", context);
+                                return VMPrimitiveExitCode.GOTO_TRUE;
                             case VMSetToNextSearchType.ClosestHouse:
-                                throw new VMSimanticsException("Not implemented!", context);
+                                return VMPrimitiveExitCode.GOTO_TRUE;
                             default:
                                 //set to next object, or cached search.
                                 found = true; break;

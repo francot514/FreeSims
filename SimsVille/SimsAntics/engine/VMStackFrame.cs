@@ -42,7 +42,8 @@ namespace FSO.SimAntics.Engine
 
         /** If true, this stack frame is not a subroutine. Return with a continue. **/
         public bool DiscardResult;
-        
+
+        private short _StackObjectID;
         /** Indicates that the current stack frame is part of an action tree.
          ** Set by "idle for input, allow push", when an interaction is selected.
          ** Used to stop recursive interactions, is only false when within "main".
@@ -91,6 +92,7 @@ namespace FSO.SimAntics.Engine
                 return StackObject.Object.Resource;
             }
         }
+
 
         public GameGlobal Global
         {

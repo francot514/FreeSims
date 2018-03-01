@@ -242,12 +242,15 @@ namespace FSO.Client.UI.Screens
 
         private void CancelButton_OnButtonClick(UIElement button)
         {
-            //GameFacade.Controller.ShowPersonSelection();
+            Visible = false;
+            
+            GameFacade.Screens.RemoveCurrent();
+            GameFacade.Screens.AddScreen(new CoreGameScreen());
         }
 
         private void AcceptButton_OnButtonClick(UIElement button)
         {
-            var sim = new UISim(Guid.NewGuid(), false);
+            var sim = new UISim("", false);
 
             sim.Name = NameTextEdit.CurrentText;
             sim.Sex = System.Enum.GetName(typeof(Gender), Gender);

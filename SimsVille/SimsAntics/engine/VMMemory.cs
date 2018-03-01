@@ -159,7 +159,10 @@ namespace FSO.SimAntics.Engine.Utils
                     return ((VMAvatar)context.StackObject).GetPersonData((VMPersonDataVariable)(context.Thread.TempRegisters[data]));
 
                 case VMVariableScope.NeighborPersonData: //32
-                    throw new VMSimanticsException("Not implemented...", context);
+                    //Neighbour neighbour = Content.Content.Get().TS1Neighborhood.GetNeighborByID(context.Caller.ObjectID);
+
+                    //return (neighbour != null) ? neighbour.PersonData.ElementAt(data) : (short)0;
+                    return 0;
 
                 case VMVariableScope.JobData: //33 jobdata(temp0, temp1), used a few times to test if a person is at work but that isn't relevant for tso...
                     throw new VMSimanticsException("Should not be used, but if this shows implement an empty shell to return ideal values.", context);

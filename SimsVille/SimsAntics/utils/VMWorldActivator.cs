@@ -15,6 +15,8 @@ using FSO.Content;
 using Microsoft.Xna.Framework;
 using FSO.Files.Formats.IFF.Chunks;
 using FSO.SimAntics.Model;
+using tso.world.Model;
+using FSO.SimAntics.Primitives;
 
 namespace FSO.SimAntics.Utils
 {
@@ -112,9 +114,25 @@ namespace FSO.SimAntics.Utils
         }
 
 
-        public VMAvatar CreateAvatar(uint guid)
+        public VMAvatar CreateAvatar(uint guid, XmlCharacter xml, bool visitor, short id)
         {
-            return (VMAvatar)VM.Context.CreateObjectInstance(guid, LotTilePos.OUT_OF_WORLD, Direction.NORTH).Objects[0];
+
+            VMAvatar avatar = (VMAvatar)VM.Context.CreateObjectInstance(guid, LotTilePos.OUT_OF_WORLD, Direction.NORTH).Objects[0];
+            avatar.Visitor = visitor;
+            var mailbox = VM.Entities.First(x => (x.Object.OBJ.GUID == 0xEF121974 || x.Object.OBJ.GUID == 0x1D95C9B0));
+
+
+            avatar.SetAvatarData(xml);
+
+            LotTilePos pos = mailbox.Position;
+            pos.x = (short)(mailbox.Position.x + 1);
+            pos.y = (short)( mailbox.Position.y + id);
+
+            avatar.SetPosition(pos, Direction.WEST, VM.Context);
+            //VMFindLocationFor.FindLocationFor(avatar, mailbox, VM.Context);
+                       
+
+            return avatar;
         }
 
         public void CreateObject(XmlHouseDataObject obj){

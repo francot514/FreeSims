@@ -35,6 +35,7 @@ namespace FSO.SimAntics
     public class VMAvatar : VMEntity
     {
         public static uint TEMPLATE_PERSON = 0x7FD96B54;
+        public static uint TEMPLATE_NPC = 0x7FD96B56;
         public static uint NPC_MAID = 0xC61931DC;
         public static uint NPC_GARDENER = 0xD62B91B4;
         public static uint DOG_TEMPLATE = 0x5F0C674C;
@@ -66,7 +67,7 @@ namespace FSO.SimAntics
 
         public int MessageTimeout;
         public Vector3 Velocity; //used for 60 fps walking animation
-
+        public bool Visitor;
         private VMMotiveChange[] MotiveChanges = new VMMotiveChange[16];
         private VMAvatarMotiveDecay MotiveDecay;
         private short[] PersonData = new short[100];
@@ -193,7 +194,7 @@ namespace FSO.SimAntics
         {
             PlatformState = new VMTSOAvatarState(); //todo: ts1 switch
             BodyStrings = Object.Resource.Get<STR>(Object.OBJ.BodyStringID);
-
+            Visitor = false;
             SetAvatarType(BodyStrings);
             SkinTone = AppearanceType.Light;
 
@@ -395,14 +396,10 @@ namespace FSO.SimAntics
 
             }
 
-            SetMotiveData(VMMotive.Bladder, 100);
-            SetMotiveData(VMMotive.Hygiene, 100);
-            SetMotiveData(VMMotive.Hunger, 100);
-            SetMotiveData(VMMotive.Social, 100);
-            SetMotiveData(VMMotive.Comfort, 100);
-            SetMotiveData(VMMotive.Energy, 100);
-            SetMotiveData(VMMotive.Fun, 100);
-
+            for (int i = 0; i < MotiveData.Length; i++)
+            {
+                MotiveData[i] = 75;
+            }
 
 
         }

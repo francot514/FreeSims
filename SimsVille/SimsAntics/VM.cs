@@ -60,7 +60,7 @@ namespace FSO.SimAntics
         public VMContext Context { get; internal set; }
         public VMWorldActivator Activator;
         public VMFreeWill FreeWill;
-        public List<VMAvatar> Visitors = new List<VMAvatar>();
+
         public List<VMEntity> Entities = new List<VMEntity>();
         public short[] GlobalState;
         public VMPlatformState PlatformState;
@@ -234,7 +234,7 @@ namespace FSO.SimAntics
 
             //Tick for the Free Will control
             if (Context.Blueprint != null)
-                FreeWill.Tick();
+                FreeWill.Tick(this);
 
             lock (Driver)
             {

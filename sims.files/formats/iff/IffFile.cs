@@ -48,6 +48,8 @@ namespace FSO.Files.Formats.IFF
             {"TTAs", typeof(TTAs)},
             {"FWAV", typeof(FWAV)},
             {"BMP_", typeof(BMP)},
+            {"NBRS", typeof(NBRS)},
+            {"NGBH", typeof(NGBH)},
             {"PIFF", typeof(PIFF) }
         };
 

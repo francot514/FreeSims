@@ -45,6 +45,7 @@ namespace FSO.Client.UI.Screens
         public UIInbox Inbox;
         public UIGameTitle Title;
         private UIButton SaveHouseButton;
+        private UIButton CreateChar;
         private string[] CityMusic;
         private String city, lotName;
 
@@ -230,6 +231,17 @@ namespace FSO.Client.UI.Screens
             SaveHouseButton.OnButtonClick += new ButtonClickDelegate(SaveHouseButton_OnButtonClick);
             this.Add(SaveHouseButton);
             SaveHouseButton.Visible = false;
+
+            CreateChar = new UIButton()
+            {
+                Caption = "Create Sim",
+                Y = 10,
+                Width = 100,
+                X = GlobalSettings.Default.GraphicsWidth - 110
+            };
+            CreateChar.OnButtonClick += new ButtonClickDelegate(CreateChar_OnButtonClick);
+            CreateChar.Visible = true;
+            this.Add(CreateChar);
 
             ucp = new UIUCP(this);
             ucp.Y = ScreenHeight - 210;
@@ -447,6 +459,7 @@ namespace FSO.Client.UI.Screens
             lotName = path;
 
             SaveHouseButton.Visible = true;
+            CreateChar.Visible = false;
 
             if (vm != null) CleanupLastWorld();
 
@@ -528,7 +541,7 @@ namespace FSO.Client.UI.Screens
             LotController = new UILotControl(vm, World);
             this.AddAt(0, LotController);
 
-            vm.Context.Clock.Hours = 8;
+            vm.Context.Clock.Hours = 10;
             if (m_ZoomLevel > 3)
             {
                 World.Visible = false;
@@ -585,6 +598,20 @@ namespace FSO.Client.UI.Screens
 
         }
 
+        private void CreateChar_OnButtonClick(UIElement button)
+        {
+
+            if (CityRenderer != null)
+            {
+                Visible = false;
+                CityRenderer.Visible = false;
+
+                GameFacade.Controller.ShowPersonCreation(new ProtocolAbstractionLibraryD.CityInfo(false));
+
+            }
+
+        }
+
         private void SaveHouseButton_OnButtonClick(UIElement button)
         {
             if (vm == null) return;
@@ -595,6 +622,7 @@ namespace FSO.Client.UI.Screens
 
             if (!Directory.Exists(Path.Combine(FSOEnvironment.UserDir, "Houses/")))
                 Directory.CreateDirectory(Path.Combine(FSOEnvironment.UserDir, "Houses/"));
+
 
             using (var output = new FileStream(Path.Combine(FSOEnvironment.UserDir, "Houses/house_00.fsov"), FileMode.Create))
             {

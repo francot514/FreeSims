@@ -138,7 +138,7 @@ namespace FSO.Files.Formats.IFF.Chunks
         }
     }
 
-    abstract class IOProxy
+    public abstract class IOProxy
     {
         public abstract ushort ReadUInt16();
         public abstract short ReadInt16();

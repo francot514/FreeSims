@@ -45,7 +45,7 @@ namespace FSO.Client.UI.Controls
 
         private int m_CharacterID;
 
-        protected Guid m_GUID;
+        protected string m_GUID;
         protected string m_Timestamp;
         protected string m_Name;
         protected string m_Sex;
@@ -179,13 +179,13 @@ namespace FSO.Client.UI.Controls
         /// <param name="GUID">The GUID to assign to this sim.</param>
         public void AssignGUID(string GUID)
         {
-            m_GUID = new Guid(GUID);
+            m_GUID = GUID;
         }
 
         /// <summary>
         /// A Sim's GUID, created by the client and stored in the DB.
         /// </summary>
-        public Guid GUID
+        public string GUID
         {
             get { return m_GUID; }
         }
@@ -272,7 +272,7 @@ namespace FSO.Client.UI.Controls
         public UISim(string GUID)
         {
             if (GUID != "")
-                this.m_GUID = new Guid(GUID);
+                this.m_GUID = GUID;
             UISimInit();
             GameFacade.Scenes.AddExternal(Scene);
         }
@@ -280,26 +280,12 @@ namespace FSO.Client.UI.Controls
         public UISim(string GUID, bool AddScene)
         {
             if ((GUID != "") && (GUID != "\0"))
-                this.m_GUID = new Guid(GUID);
+                this.m_GUID = GUID;
             UISimInit();
             if (AddScene)
                 GameFacade.Scenes.AddExternal(Scene);
         }
 
-        public UISim(Guid GUID)
-        {
-            this.m_GUID = GUID;
-            UISimInit();
-            GameFacade.Scenes.AddExternal(Scene);
-        }
-
-        public UISim(Guid GUID, bool AddScene)
-        {
-            this.m_GUID = GUID;
-            UISimInit();
-            if (AddScene)
-                GameFacade.Scenes.AddExternal(Scene);
-        }
 
         private void GraphicsDevice_DeviceReset(object sender, EventArgs e)
         {

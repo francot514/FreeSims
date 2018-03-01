@@ -15,6 +15,7 @@ using FSO.SimAntics.Engine;
             public VM VM;
             public List<VMEntity> Objects;
             public List<VMEntity> Entities;
+            public List<VMAvatar> Visitors;
             private VMEntity Target;
             private TTAB TreeTableSelected;
             private List<string> interactionList;
@@ -25,13 +26,22 @@ using FSO.SimAntics.Engine;
             {
 
                 VM = vm;
-                Entities = VM.Entities;
+                Entities = vm.Entities;
                 Objects = new List<VMEntity>();
+                Visitors = new List<VMAvatar>();
+
+                foreach (VMEntity ent in Entities)
+                    if (((VMAvatar)(ent)).Visitor)
+                        Visitors.Add((VMAvatar)ent);
 
             }
 
-            public void CheckForUsableObjects()
+            public void CheckForUsableObjects(VM vm)
             {
+
+                Visitors.Clear();
+                Entities = vm.Entities;
+
 
                 if (Entities.Count > 0)
                     foreach (var ent in Entities)
@@ -42,6 +52,13 @@ using FSO.SimAntics.Engine;
 
                         
                     }
+
+
+                foreach (VMEntity ent in Entities)
+                    if (ent is VMAvatar)
+                        Visitors.Add((VMAvatar)ent);
+
+
             }
 
 
@@ -150,27 +167,19 @@ using FSO.SimAntics.Engine;
 
             }
 
-            public void Tick()
+            public void Tick(VM vm)
             {
 
                 Objects.Clear();
 
-                CheckForUsableObjects();
+                CheckForUsableObjects(vm);
 
-                for (int i = 0; i <= Entities.Count - 1; i++)
+                for (int i = 0; i < Visitors.Count; i++)
 
-                    if (Entities[i].Object.GUID == VMAvatar.TEMPLATE_PERSON && Entities[i].Thread.Queue.Count > 0)
+                    if (Visitors[i].Visitor && (Visitors[i].Thread.Queue.Count < 2 ||
+                        Visitors[i].Thread.Queue[0].Priority == (short)VMQueuePriority.Idle))
                     {
-
-                        if (Entities[i].Thread.Queue.Count <= 2 && Entities[i].Thread.Queue[0].Priority == (short)VMQueuePriority.Idle)
-                            RunAction(Entities[i]);
-                    }
-
-                    else if (Entities[i].Object.GUID == VMAvatar.DOG_TEMPLATE && Entities[i].Thread.Queue.Count > 0)
-                    {
-                        if (Entities[i].Thread.Queue.Count <= 2 || Entities[i].Thread.Queue[0].Priority == (short)VMQueuePriority.Idle)
-                            RunAction(Entities[i]);
-
+                            RunAction(Visitors[i]);
                     }
 
             }

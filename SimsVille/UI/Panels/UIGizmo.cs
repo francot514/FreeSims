@@ -18,6 +18,8 @@ using FSO.Client.UI.Screens;
 using FSO.Common.Rendering.Framework.Model;
 using FSO.Client.Network;
 using FSO.Common;
+using tso.world.Model;
+using FSO.Vitaboy;
 
 namespace FSO.Client.UI.Panels
 {
@@ -50,11 +52,14 @@ namespace FSO.Client.UI.Panels
         public UITextEdit SearchText { get; set; }
         public UILabel NoSearchResultsText { get; set; }
 
+        
 
         private UIImage Background;
 
         public UIGizmoSearch(UIScript script, UIGizmo parent)
         {
+
+
             Background = script.Create<UIImage>("BackgroundImageSearch");
             this.Add(Background);
 
@@ -79,13 +84,13 @@ namespace FSO.Client.UI.Panels
         public UIButton Top100SubListScrollDownButton { get; set; }
         public UIListBox Top100SubList { get; set; }
         public UIListBox Top100ResultList { get; set; }
-
         private int UpdateCooldown;
-
+        public UIGizmo Main;
         public UIImage Background; //public so we can disable visibility when not selected... workaround to stop background mouse blocking still happening when panel is hidden
 
         public UIGizmoTop100(UIScript script, UIGizmo parent)
         {
+            Main = parent;
 
             Background = script.Create<UIImage>("BackgroundImageTop100Lists");
             this.Add(Background);
@@ -95,7 +100,10 @@ namespace FSO.Client.UI.Panels
             Top100Slider.AttachButtons(Top100ListScrollUpButton, Top100ListScrollDownButton, 1);
             Top100ResultList.AttachSlider(Top100Slider);
 
+
             populateWithXMLHouses();
+
+            populateWithCharacters();
 
             Top100ResultList.OnDoubleClick += Top100ItemSelect;
             UpdateCooldown = 100;
@@ -106,7 +114,10 @@ namespace FSO.Client.UI.Panels
             base.Update(state);
             if (UpdateCooldown-- < 0)
             {
-                populateWithXMLHouses();
+                if (Main.TabV == UIGizmoTab.Property)
+                    populateWithXMLHouses();
+                else if (Main.TabV == UIGizmoTab.People)
+                    populateWithCharacters();
                 UpdateCooldown = 100;
             }
         }
@@ -129,9 +140,40 @@ namespace FSO.Client.UI.Panels
             Top100ResultList.Items = xmlHouses.Select(x => new UIListBoxItem(x, x.Filename)).ToList();
         }
 
+        public void populateWithCharacters()
+        {
+            var xmlChars = new List<string>();
+
+            var CharList = Directory.GetFiles("Content/Characters/", "*.xml", SearchOption.AllDirectories);
+
+
+            for (int i = 0; i < CharList.Length; i++)
+            {
+                string entry = CharList[i];
+                string filename = Path.GetFileNameWithoutExtension(entry);
+                xmlChars.Add(filename);
+            }
+
+            if (xmlChars != null)
+            {
+                Top100ResultList.Items = xmlChars.Select(x => new UIListBoxItem(x, x)).ToList();
+
+
+            }
+        }
+
         private void Top100ItemSelect(UIElement button)
         {
+            if (Main.TabV == UIGizmoTab.Property)
+
             ((CoreGameScreen)(Parent.Parent)).InitTestLot(((UIXMLLotEntry)Top100ResultList.SelectedItem.Data).Path, true);
+
+            else if (Main.TabV == UIGizmoTab.People)
+            {
+                ((UIGizmo)Parent).SimBoxSelect(Top100ResultList.SelectedItem.Data.ToString());
+
+            }
+
         }
     }
 
@@ -176,10 +218,14 @@ namespace FSO.Client.UI.Panels
         public UIGizmoSearch Search;
         public UIGizmoTop100 Top100;
 
+        public UIGizmoTab TabV;
+        public XmlCharacter SelectedCharInfo;
         public UISim SimBox;
 
         public UIGizmo()
         {
+            TabV = Tab;
+
             var ui = this.RenderScript("gizmo.uis");
 
             BackgroundImageGizmo = ui.Create<UIImage>("BackgroundImageGizmo");
@@ -235,26 +281,74 @@ namespace FSO.Client.UI.Panels
                 SimBox = new UISim(PlayerAccount.CurrentlyActiveSim.GUID.ToString());
             else
                 SimBox = new UISim("");
-            //var sim = new Sim(Guid.NewGuid().ToString());
-            //var maleHeads = new Collection(ContentManager.GetResourceFromLongID((ulong)FileIDs.CollectionsFileIDs.ea_male_heads));
-            //SimCatalog.LoadSim3D(sim, maleHeads.First().PurchasableObject.Outfit, AppearanceType.Light);
-            //
 
-            //sim.HeadOutfitID = 4853313044493;
-            //sim.AppearanceType = AppearanceType.Light;
-            //sim.BodyOutfitID = 5394478923789;
-
-            //SimCatalog.LoadSim3D(sim);
-            //SimCatalog.LoadSim3D(sim, SimCatalog.GetOutfit(4462471020557), AppearanceType.Light);
-
-            //SimBox.Sim = sim;
-            //SimBox.SimScale = 0.4f;
-            //SimBox.Position = new Microsoft.Xna.Framework.Vector2(60, 60);
-
-            //this.Add(SimBox);
-
+            
             View = UIGizmoView.Top100;
             SetOpen(true);
+
+
+            TabV = UIGizmoTab.People;
+
+        }
+
+        public UISim SelectCharacter(string file)
+        {
+
+            UISim sim;
+
+            XmlCharacter charInfo;
+
+            AppearanceType type;
+
+            charInfo = XmlCharacter.Parse(file);
+
+            Enum.TryParse(charInfo.Appearance, out type);
+
+            var headPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Head, 16));
+            var bodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Body, 16));
+
+
+            sim = new UISim(charInfo.ObjID, true)
+            {
+                Name = charInfo.Name,
+                Head = Content.Content.Get().AvatarOutfits.Get(headPurchasable.OutfitID),
+                Body = Content.Content.Get().AvatarOutfits.Get(bodyPurchasable.OutfitID),
+                HeadOutfitID = headPurchasable.OutfitID,
+                BodyOutfitID = bodyPurchasable.OutfitID,
+                Handgroup = Content.Content.Get().AvatarOutfits.Get(bodyPurchasable.OutfitID),
+
+
+            };
+
+            sim.Avatar.Appearance = type;
+
+
+            return sim;
+
+        }
+
+        public void SimBoxSelect(string charname)
+        {
+            this.Remove(SimBox);
+            SimBox = null;
+            if (PlayerAccount.CurrentlyActiveSim != null)
+                SimBox = new UISim(PlayerAccount.CurrentlyActiveSim.GUID.ToString(), true);
+            else
+                SimBox = new UISim("",false);
+
+            string charfile = FSOEnvironment.ContentDir + "/Characters/" + charname + ".xml";
+            var sim = SelectCharacter(charfile);
+            SelectedCharInfo = XmlCharacter.Parse(charfile);
+
+            SimBox = sim;
+            SimBox.SimScale = 0.1f;
+            SimBox.Position = new Microsoft.Xna.Framework.Vector2(0, 6);
+
+
+            this.Add(SimBox);
+
+
+
         }
 
         void Top100ListsButton_OnButtonClick(UIElement button)
@@ -267,24 +361,28 @@ namespace FSO.Client.UI.Panels
         {
             View = UIGizmoView.Search;
             SetOpen(true);
+           
         }
 
         void FiltersButton_OnButtonClick(UIElement button)
         {
             View = UIGizmoView.Filters;
             SetOpen(true);
+            
         }
 
         void HousesTabButton_OnButtonClick(UIElement button)
         {
-            Tab = UIGizmoTab.Property;
-            Redraw();
+            m_Opt = false;
+            TabV = UIGizmoTab.Property;
+            SetOpen(true);
         }
 
         void PeopleTabButton_OnButtonClick(UIElement button)
         {
-            Tab = UIGizmoTab.People;
-            Redraw();
+            m_Opt = true;
+            TabV = UIGizmoTab.People;
+            SetOpen(true);
         }
 
         void ContractButton_OnButtonClick(UIElement button)
@@ -300,6 +398,7 @@ namespace FSO.Client.UI.Panels
         private bool m_Open = false;
         private UIGizmoView View = UIGizmoView.Filters;
         private UIGizmoTab Tab = UIGizmoTab.Property;
+        private bool m_Opt = false;
 
         private void SetOpen(bool open)
         {
@@ -310,15 +409,16 @@ namespace FSO.Client.UI.Panels
         private void Redraw()
         {
             var isOpen = m_Open;
+            var isOpt = m_Opt;
             var isClosed = !m_Open;
 
             if (isOpen)
             {
-                SimBox.Position = new Microsoft.Xna.Framework.Vector2(60, 66);
+                SimBox.Position = new Microsoft.Xna.Framework.Vector2(0, 6);
             }
             else
             {
-                SimBox.Position = new Microsoft.Xna.Framework.Vector2(60, 60);
+                SimBox.Position = new Microsoft.Xna.Framework.Vector2(0, 6);
             }
 
             PeopleTabButton.Disabled = View == UIGizmoView.Filters;
@@ -340,9 +440,12 @@ namespace FSO.Client.UI.Panels
             Search.Visible = false;
 
             PeopleTabButton.Visible = isOpen;
+            PeopleTabButton.Selected = isOpt;
             HousesTabButton.Visible = isOpen;
+            HousesTabButton.Selected = !isOpt;
 
-            if (Tab == UIGizmoTab.People && View == UIGizmoView.Filters)
+
+            if (View == UIGizmoView.Filters)
             {
                 View = UIGizmoView.Search;
             }
