@@ -52,13 +52,12 @@ namespace FSO.Client.UI.Panels
         public UITextEdit SearchText { get; set; }
         public UILabel NoSearchResultsText { get; set; }
 
-        
-
+        private UIGizmo Main;
         private UIImage Background;
 
         public UIGizmoSearch(UIScript script, UIGizmo parent)
         {
-
+            Main = parent;
 
             Background = script.Create<UIImage>("BackgroundImageSearch");
             this.Add(Background);
@@ -71,7 +70,19 @@ namespace FSO.Client.UI.Panels
 
         private void JoinServerLot(UIElement button)
         {
-            ((CoreGameScreen)(Parent.Parent)).InitTestLot(SearchText.CurrentText, false);
+
+            if (Main.SelectedCharInfo != null)
+            {
+
+                ((CoreGameScreen)(Parent.Parent)).InitTestLot(SearchText.CurrentText, false);
+            }
+            else
+            {
+
+                UI.Framework.UIScreen.ShowAlert(Main.MessageDialog, true);
+
+            }   
+        
         }
     }
 
@@ -87,10 +98,13 @@ namespace FSO.Client.UI.Panels
         private int UpdateCooldown;
         public UIGizmo Main;
         public UIImage Background; //public so we can disable visibility when not selected... workaround to stop background mouse blocking still happening when panel is hidden
+        private bool Selected;
 
         public UIGizmoTop100(UIScript script, UIGizmo parent)
         {
             Main = parent;
+
+            Selected = false;
 
             Background = script.Create<UIImage>("BackgroundImageTop100Lists");
             this.Add(Background);
@@ -164,13 +178,31 @@ namespace FSO.Client.UI.Panels
 
         private void Top100ItemSelect(UIElement button)
         {
-            if (Main.TabV == UIGizmoTab.Property)
+            if (Main.TabV == UIGizmoTab.Property){
 
-            ((CoreGameScreen)(Parent.Parent)).InitTestLot(((UIXMLLotEntry)Top100ResultList.SelectedItem.Data).Path, true);
+                if (Main.SelectedCharInfo != null){
+
+                    ((CoreGameScreen)(Parent.Parent)).InitTestLot(((UIXMLLotEntry)Top100ResultList.SelectedItem.Data).Path, true);
+
+                }
+                else
+                {
+
+
+                    UI.Framework.UIScreen.ShowAlert(Main.MessageDialog, true);
+
+
+                }
+
+                Selected = true;
+
+            }
 
             else if (Main.TabV == UIGizmoTab.People)
             {
                 ((UIGizmo)Parent).SimBoxSelect(Top100ResultList.SelectedItem.Data.ToString());
+
+                Selected = false;
 
             }
 
@@ -217,6 +249,9 @@ namespace FSO.Client.UI.Panels
         public UIGizmoPropertyFilters FiltersProperty;
         public UIGizmoSearch Search;
         public UIGizmoTop100 Top100;
+
+        public UIAlertOptions MessageDialog = new UIAlertOptions();
+        
 
         public UIGizmoTab TabV;
         public XmlCharacter SelectedCharInfo;
@@ -282,6 +317,11 @@ namespace FSO.Client.UI.Panels
             else
                 SimBox = new UISim("");
 
+            MessageDialog = new UIAlertOptions();
+            MessageDialog.Message = "No avatar has been selected";
+            MessageDialog.Title = "Avatar selectioin";
+            MessageDialog.Buttons[0].Type = UIAlertButtonType.OK;
+
             
             View = UIGizmoView.Top100;
             SetOpen(true);
@@ -306,16 +346,17 @@ namespace FSO.Client.UI.Panels
 
             var headPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Head, 16));
             var bodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Body, 16));
-
+            Outfit HeadOutfit = Content.Content.Get().AvatarOutfits.Get(headPurchasable != null ? headPurchasable.OutfitID :
+                Convert.ToUInt64(charInfo.Head, 16));
+            Outfit BodyOutfit = Content.Content.Get().AvatarOutfits.Get(bodyPurchasable != null ? bodyPurchasable.OutfitID : 
+                Convert.ToUInt64(charInfo.Body, 16));
 
             sim = new UISim(charInfo.ObjID, true)
             {
                 Name = charInfo.Name,
-                Head = Content.Content.Get().AvatarOutfits.Get(headPurchasable.OutfitID),
-                Body = Content.Content.Get().AvatarOutfits.Get(bodyPurchasable.OutfitID),
-                HeadOutfitID = headPurchasable.OutfitID,
-                BodyOutfitID = bodyPurchasable.OutfitID,
-                Handgroup = Content.Content.Get().AvatarOutfits.Get(bodyPurchasable.OutfitID),
+                Head = HeadOutfit,
+                Body = BodyOutfit,
+                Handgroup = BodyOutfit,
 
 
             };
@@ -398,7 +439,7 @@ namespace FSO.Client.UI.Panels
         private bool m_Open = false;
         private UIGizmoView View = UIGizmoView.Filters;
         private UIGizmoTab Tab = UIGizmoTab.Property;
-        private bool m_Opt = false;
+        private bool m_Opt = true;
 
         private void SetOpen(bool open)
         {

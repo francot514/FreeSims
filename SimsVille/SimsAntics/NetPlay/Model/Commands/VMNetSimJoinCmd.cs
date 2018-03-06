@@ -14,6 +14,8 @@ using FSO.SimAntics.Primitives;
 using FSO.SimAntics.Model;
 using FSO.SimAntics.Model.TSOPlatform;
 using GonzoNet;
+using tso.world.Model;
+using FSO.Common;
 
 namespace FSO.SimAntics.NetPlay.Model.Commands
 {
@@ -32,6 +34,7 @@ namespace FSO.SimAntics.NetPlay.Model.Commands
         public bool Gender;
         public string Name;
         public VMTSOAvatarPermissions Permissions;
+        public List<XmlCharacter> Characters;
 
         public static ushort CurVer = 0xFFEE;
 
@@ -70,6 +73,7 @@ namespace FSO.SimAntics.NetPlay.Model.Commands
 
             if (RequesterID == vm.MyUID) vm.MyUID = ActorUID; //we're this sim! try send commands as them.
             vm.SignalChatEvent(new VMChatEvent(avatar.PersistID, VMChatEventType.Join, avatar.Name));
+
 
             return true;
         }

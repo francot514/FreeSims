@@ -383,8 +383,12 @@ namespace FSO.SimAntics
                 else if (Gender == "Female")
                     SetPersonData(VMPersonDataVariable.Gender, 1);
 
-                Avatar.Head = Content.Content.Get().AvatarOutfits.Get(headPurchasable.OutfitID);
-                Avatar.Body = Content.Content.Get().AvatarOutfits.Get(bodyPurchasable.OutfitID);
+                Outfit HeadOutfit = Content.Content.Get().AvatarOutfits.Get(headPurchasable != null ? headPurchasable.OutfitID :
+                Convert.ToUInt64(charInfo.Head, 16));
+                Outfit BodyOutfit = Content.Content.Get().AvatarOutfits.Get(bodyPurchasable != null ? bodyPurchasable.OutfitID :
+                Convert.ToUInt64(charInfo.Body, 16));
+                Avatar.Head = HeadOutfit;
+                Avatar.Body = BodyOutfit;
                 Avatar.Handgroup = Avatar.Body;
             }
             else
@@ -988,6 +992,11 @@ namespace FSO.SimAntics
             SetPersonData(VMPersonDataVariable.RenderDisplayFlags, GetPersonData(VMPersonDataVariable.RenderDisplayFlags));
             BodyOutfit = input.BodyOutfit;
             HeadOutfit = input.HeadOutfit;
+
+            Avatar.Head = Content.Content.Get().AvatarOutfits.Get(HeadOutfit);
+            Avatar.Body = Content.Content.Get().AvatarOutfits.Get(BodyOutfit);
+            Avatar.Handgroup = Avatar.Body;
+            
         }
         #endregion
     }

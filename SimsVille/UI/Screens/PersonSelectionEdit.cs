@@ -24,6 +24,7 @@ using FSO.Content;
 using FSO.Client.GameContent;
 using FSO.Client.UI.Model;
 using FSO.Common;
+using tso.world.Model;
 
 namespace FSO.Client.UI.Screens
 {
@@ -65,6 +66,7 @@ namespace FSO.Client.UI.Screens
 
         public CityInfo SelectedCity;
         public UISim SimBox;
+        public XmlCharacter XmlCharacter;
 
         public PersonSelectionEdit() : base()
         {
@@ -250,7 +252,7 @@ namespace FSO.Client.UI.Screens
 
         private void AcceptButton_OnButtonClick(UIElement button)
         {
-            var sim = new UISim("", false);
+            var sim = new UISim("0x7FD96B54", false);
 
             sim.Name = NameTextEdit.CurrentText;
             sim.Sex = System.Enum.GetName(typeof(Gender), Gender);
@@ -270,6 +272,19 @@ namespace FSO.Client.UI.Screens
             sim.Handgroup = Content.Content.Get().AvatarOutfits.Get(bodyPurchasable.OutfitID);
             sim.Avatar.Appearance = this.AppearanceType;
 
+            XmlCharacter = new XmlCharacter()
+            {
+
+                Id = sim.CharacterID.ToString(),
+                Name = sim.Name,
+                ObjID = sim.GUID,
+                Gender = sim.Sex,
+                Head = sim.HeadOutfitID.ToString("X"),
+                Body = sim.BodyOutfitID.ToString("X"),
+                Appearance = sim.Avatar.Appearance.ToString()
+
+            };
+
             GlobalSettings.Default.LastBody = sim.BodyOutfitID;
             GlobalSettings.Default.LastHead = sim.HeadOutfitID;
             GlobalSettings.Default.LastUser = sim.Name;
@@ -277,6 +292,8 @@ namespace FSO.Client.UI.Screens
             GlobalSettings.Default.LastSkin = (int)this.AppearanceType;
 
             GlobalSettings.Default.Save();
+
+            XmlCharacter.Save(FSOEnvironment.ContentDir + "/Characters/" + sim.Name + ".xml", XmlCharacter);
 
             GameFacade.Controller.ShowLotDebug();
 

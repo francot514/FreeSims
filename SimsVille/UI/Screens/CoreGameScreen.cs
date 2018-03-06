@@ -35,6 +35,7 @@ using FSO.Common;
 using SimsVille.UI.Model;
 using FSO.Client.Rendering.City;
 using tso.world.Model;
+using FSO.Vitaboy;
 
 namespace FSO.Client.UI.Screens
 {
@@ -49,9 +50,8 @@ namespace FSO.Client.UI.Screens
         private string[] CityMusic;
         private String city, lotName;
 
-        private string[] CharacterInfos;
+        private string[] CharacterInfos;      
         public List<XmlCharacter> Characters;
-
 
         private bool Connecting;
         private UILoginProgress ConnectingDialog;
@@ -217,7 +217,7 @@ namespace FSO.Client.UI.Screens
             this.Add(VMDebug);*/
             //InitializeMouse();
 
-            Characters = new List<XmlCharacter>();
+            
             CharacterInfos = new string[9];
 
 
@@ -370,6 +370,20 @@ namespace FSO.Client.UI.Screens
             if (!Visible)
                 CityRenderer.Visible = false;
 
+            if (ZoomLevel < 4)
+            {
+
+                CreateChar.Visible = false;
+                SaveHouseButton.Visible = true;
+
+            }
+            else if (ZoomLevel >= 4)
+            {
+
+                CreateChar.Visible = true;
+                SaveHouseButton.Visible = false;
+
+            }
         }
 
         public void CleanupLastWorld()
@@ -458,6 +472,8 @@ namespace FSO.Client.UI.Screens
 
             lotName = path;
 
+            Characters = new List<XmlCharacter>();
+
             SaveHouseButton.Visible = true;
             CreateChar.Visible = false;
 
@@ -488,6 +504,25 @@ namespace FSO.Client.UI.Screens
             vm = new VM(new VMContext(World), driver, new UIHeadlineRendererProvider());
             vm.Init();
             vm.LotName = (path == null) ? "localhost" : path.Split('/').LastOrDefault(); //quick hack just so we can remember where we are
+
+
+            var DirectoryInfo = new DirectoryInfo(Path.Combine(FSOEnvironment.UserDir, "Characters/"));
+
+            for (int i = 0; i <= DirectoryInfo.GetFiles().Count() - 1; i++)
+            {
+
+
+                var file = DirectoryInfo.GetFiles()[i];
+                CharacterInfos[i] = Path.GetFileNameWithoutExtension(file.FullName);
+
+                if (CharacterInfos[i] != null && CharacterInfos[i] != gizmo.SelectedCharInfo.Name)
+                {
+                    Characters.Add(XmlCharacter.Parse(file.FullName));
+
+
+                }
+
+            }
 
             if (host)
             {
@@ -520,22 +555,38 @@ namespace FSO.Client.UI.Screens
                     vm.SendCommand(new VMBlueprintRestoreCmd
                     {
                         JobLevel = jobLevel,
-                        XMLData = File.ReadAllBytes(path)
+                        XMLData = File.ReadAllBytes(path),
+                        Characters = Characters,
+                        ActiveChar = gizmo.SelectedCharInfo
                     });
                 }
             }
 
+
             uint simID = (uint)(new Random()).Next();
             vm.MyUID = simID;
+
+
+            var headPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(gizmo.SelectedCharInfo.Head, 16));
+            var bodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(gizmo.SelectedCharInfo.Body, 16));
+            var HeadID = headPurchasable != null ? headPurchasable.OutfitID :
+                Convert.ToUInt64(gizmo.SelectedCharInfo.Head, 16);
+            var BodyID = bodyPurchasable != null ? bodyPurchasable.OutfitID :
+                Convert.ToUInt64(gizmo.SelectedCharInfo.Body, 16);
+
+            AppearanceType type;
+            Enum.TryParse(gizmo.SelectedCharInfo.Appearance, out type);
+            bool Male = (gizmo.SelectedCharInfo.Gender == "male") ? true:false;
 
             vm.SendCommand(new VMNetSimJoinCmd
             {
                 ActorUID = simID,
-                HeadID = GlobalSettings.Default.LastHead,
-                BodyID = GlobalSettings.Default.LastBody,
-                SkinTone = (byte)GlobalSettings.Default.LastSkin,
-                Gender = !GlobalSettings.Default.LastGender,
-                Name = GlobalSettings.Default.LastUser
+                HeadID = HeadID,
+                BodyID =  BodyID,
+                SkinTone = (byte)type,
+                Gender = Male,
+                Name = gizmo.SelectedCharInfo.Name,
+                Characters = Characters
             });
 
             LotController = new UILotControl(vm, World);
@@ -547,8 +598,7 @@ namespace FSO.Client.UI.Screens
                 World.Visible = false;
                 LotController.Visible = false;
             }
-
-            var activator = new VMWorldActivator(vm, World);
+        
 
             if (host)
             {

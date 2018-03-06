@@ -21,12 +21,14 @@ namespace FSO.SimAntics.NetPlay.Model.Commands
     {
         public byte[] XMLData;
         public short JobLevel = -1;
+        public List<XmlCharacter> Characters;
+        public XmlCharacter ActiveChar;
 
         public override bool Execute(VM vm)
         {
 
             string[] CharacterInfos = new string[9];
-            List<XmlCharacter> Characters = new List<XmlCharacter>();
+            
             XmlHouseData lotInfo;
             using (var stream = new MemoryStream(XMLData))
             {
@@ -34,6 +36,7 @@ namespace FSO.SimAntics.NetPlay.Model.Commands
             }
 
             vm.Activator = new VMWorldActivator(vm, vm.Context.World);
+            
             var blueprint = vm.Activator.LoadFromXML(lotInfo);
 
             if (VM.UseWorld)
@@ -44,28 +47,23 @@ namespace FSO.SimAntics.NetPlay.Model.Commands
             vm.SetGlobalValue(11, JobLevel);
 
 
-            var DirectoryInfo = new DirectoryInfo(Path.Combine(FSOEnvironment.UserDir, "Characters/"));
-            
-
             if (vm.IsServer)
-               {  
-                
+            {
 
-                for (int i = 0; i <= DirectoryInfo.GetFiles().Count() - 1; i++)
+
+
+                foreach (XmlCharacter Char in Characters)
                 {
-
-                    var file = DirectoryInfo.GetFiles()[i];
-                    CharacterInfos[i] = file.FullName;
-                    Characters.Add(XmlCharacter.Parse(file.FullName));
-
-                    VMAvatar visitor = vm.Activator.CreateAvatar(Convert.ToUInt32(Characters[i].ObjID, 16), Characters[i], true, (short)i);
+                    VMAvatar visitor = vm.Activator.CreateAvatar
+                        (Convert.ToUInt32(Char.ObjID, 16), Char, true, Convert.ToInt16(Char.Id));
 
                     if (!vm.Entities.Contains(visitor))
                         vm.Entities.Add(visitor);
+
                 }
+            }
+            
 
-
-               }
 
             return true;
         }
