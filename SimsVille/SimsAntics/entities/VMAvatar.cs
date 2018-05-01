@@ -292,6 +292,9 @@ namespace FSO.SimAntics
             catch
             {
                 //head or body invalid, resort to default.
+                HeadOutfit = SetAvatarRandomOutfit(1);
+                BodyOutfit = SetAvatarRandomOutfit(0);
+
             }
          
 

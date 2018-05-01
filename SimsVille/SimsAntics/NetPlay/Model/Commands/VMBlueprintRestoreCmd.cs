@@ -14,6 +14,7 @@ using FSO.SimAntics.Utils;
 using tso.world.Model;
 using FSO.Common;
 using FSO.SimAntics.Primitives;
+using FSO.Vitaboy;
 
 namespace FSO.SimAntics.NetPlay.Model.Commands
 {
@@ -22,7 +23,7 @@ namespace FSO.SimAntics.NetPlay.Model.Commands
         public byte[] XMLData;
         public short JobLevel = -1;
         public List<XmlCharacter> Characters;
-        public XmlCharacter ActiveChar;
+
 
         public override bool Execute(VM vm)
         {
@@ -35,9 +36,11 @@ namespace FSO.SimAntics.NetPlay.Model.Commands
                 lotInfo = XmlHouseData.Parse(stream);
             }
 
-            vm.Activator = new VMWorldActivator(vm, vm.Context.World);
+            VMWorldActivator activator = new VMWorldActivator(vm, vm.Context.World);
+
+            vm.Activator = activator;
             
-            var blueprint = vm.Activator.LoadFromXML(lotInfo);
+            var blueprint = activator.LoadFromXML(lotInfo);
 
             if (VM.UseWorld)
             {
@@ -46,23 +49,35 @@ namespace FSO.SimAntics.NetPlay.Model.Commands
             }
             vm.SetGlobalValue(11, JobLevel);
 
+            AppearanceType type;
 
-            if (vm.IsServer)
+            foreach (XmlCharacter Char in Characters)
             {
+                uint vsimID = (uint)(new Random()).Next();
+                Enum.TryParse(Char.Appearance, out type);
 
+                var vheadPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(Char.Head, 16));
+                var vbodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(Char.Body, 16));
+                var vHeadID = vheadPurchasable != null ? vheadPurchasable.OutfitID :
+                    Convert.ToUInt64(Char.Head, 16);
+                var vBodyID = vbodyPurchasable != null ? vbodyPurchasable.OutfitID :
+                    Convert.ToUInt64(Char.Body, 16);
 
+                VMAvatar visitor = vm.Activator.CreateAvatar
+                    (Convert.ToUInt32(Char.ObjID, 16), Char, true, Convert.ToInt16(Char.Id));
 
-                foreach (XmlCharacter Char in Characters)
-                {
-                    VMAvatar visitor = vm.Activator.CreateAvatar
-                        (Convert.ToUInt32(Char.ObjID, 16), Char, true, Convert.ToInt16(Char.Id));
+                if (!vm.Entities.Contains(visitor))
+                    vm.SendCommand(new VMNetVisitorCmd
+                    {
+                        ActorUID = vsimID,
+                        HeadID = vHeadID,
+                        BodyID = vBodyID,
+                        SkinTone = (byte)type,
+                        Gender = Char.Gender == "male" ? true : false,
+                        Name = Char.Name
 
-                    if (!vm.Entities.Contains(visitor))
-                        vm.Entities.Add(visitor);
-
-                }
+                    });
             }
-            
 
 
             return true;

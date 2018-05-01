@@ -19,7 +19,7 @@ using FSO.Common;
 
 namespace FSO.SimAntics.NetPlay.Model.Commands
 {
-    public class VMNetSimJoinCmd : VMNetCommandBodyAbstract
+    public class VMNetVisitorCmd : VMNetCommandBodyAbstract
     {
         public ushort Version = CurVer;
 
@@ -55,25 +55,12 @@ namespace FSO.SimAntics.NetPlay.Model.Commands
             VMAvatar avatar = (VMAvatar)sim;
             avatar.SkinTone = (Vitaboy.AppearanceType)SkinTone;
             avatar.SetPersonData(VMPersonDataVariable.Gender, (short)((Gender) ? 1 : 0));
-            avatar.DefaultSuits = new VMAvatarDefaultSuits(Gender);
-            avatar.DefaultSuits.Daywear = BodyID;
             avatar.BodyOutfit = BodyID;
             avatar.HeadOutfit = HeadID;
             avatar.Name = Name;
-            ((VMTSOAvatarState)avatar.TSOState).Budget.Value = 999999;
             ((VMTSOAvatarState)avatar.TSOState).Permissions = Permissions;
 
-            if (ActorUID == uint.MaxValue - 1)
-            {
-                avatar.SetValue(VMStackObjectVariable.Hidden, 1);
-                avatar.SetPosition(LotTilePos.OUT_OF_WORLD, Direction.NORTH, vm.Context);
-                avatar.SetFlag(VMEntityFlags.HasZeroExtent, true);
-                avatar.SetPersonData(VMPersonDataVariable.IsGhost, 1); //oooooOOooooOo
-            }
-
-            if (RequesterID == vm.MyUID) vm.MyUID = ActorUID; //we're this sim! try send commands as them.
-            vm.SignalChatEvent(new VMChatEvent(avatar.PersistID, VMChatEventType.Join, avatar.Name));
-
+            
 
             return true;
         }
