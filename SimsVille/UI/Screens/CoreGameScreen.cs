@@ -472,6 +472,8 @@ namespace FSO.Client.UI.Screens
 
             lotName = path;
 
+            
+
             Characters = new List<XmlCharacter>();
 
             SaveHouseButton.Visible = true;
@@ -485,6 +487,7 @@ namespace FSO.Client.UI.Screens
             VMNetDriver driver;
             if (host)
             {
+                
                 driver = new VMServerDriver(37564, null);
             }
             else
@@ -556,8 +559,7 @@ namespace FSO.Client.UI.Screens
                     {
                         JobLevel = jobLevel,
                         XMLData = File.ReadAllBytes(path),
-                        Characters = Characters,
-                        ActiveChar = gizmo.SelectedCharInfo
+                        Characters = Characters
                     });
                 }
             }
@@ -586,13 +588,48 @@ namespace FSO.Client.UI.Screens
                 SkinTone = (byte)type,
                 Gender = Male,
                 Name = gizmo.SelectedCharInfo.Name,
-                Characters = Characters
             });
+
+            VMWorldActivator activator = new VMWorldActivator(vm, World);
+
+           if (host){
+               
+
+              }
+        else
+             {
+
+
+                foreach (XmlCharacter Char in Characters)
+                {
+                    uint vsimID = (uint)(new Random()).Next();
+                    Enum.TryParse(Char.Appearance, out type);
+
+                    var vheadPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(Char.Head, 16));
+                    var vbodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(Char.Body, 16));
+                    var vHeadID = vheadPurchasable != null ? vheadPurchasable.OutfitID :
+                        Convert.ToUInt64(Char.Head, 16);
+                    var vBodyID = vbodyPurchasable != null ? vbodyPurchasable.OutfitID :
+                        Convert.ToUInt64(Char.Body, 16);
+
+                    VMEntity vEntity = vm.Entities.FirstOrDefault(x => (x.Object.OBJ.GUID == 0x7FD96B54 && x.Name == Char.Name));
+
+                    if (vEntity != null)
+                         {
+                            
+
+                             ((VMAvatar)vEntity).SetAvatarData(Char);
+
+                         }
+                }
+
+            }
 
             LotController = new UILotControl(vm, World);
             this.AddAt(0, LotController);
 
             vm.Context.Clock.Hours = 10;
+         
             if (m_ZoomLevel > 3)
             {
                 World.Visible = false;

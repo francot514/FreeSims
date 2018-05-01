@@ -220,6 +220,7 @@
     <Compile Include="SimsAntics\NetPlay\EODs\Model\VMEODPluginThreadState.cs" />
     <Compile Include="SimsAntics\NetPlay\EODs\VMEODHost.cs" />
     <Compile Include="SimsAntics\NetPlay\EODs\VMEODServer.cs" />
+    <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetVisitorCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMBlueprintRestoreCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMChangePermissionsCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMGenericDialogCommand.cs" />
@@ -470,7 +471,6 @@
     <Reference Include="MonoGame.Framework, Version=3.1.2.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Dependencies\MonoGame.Framework.dll</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="OpenTK, Version=1.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>

@@ -80,18 +80,30 @@ namespace FSO.Content
                 }
             }
 
-            TSOAudio = new DBPFFile(ContentManager.GetPath("TSOAudio.dat"));
-            tsov2 = new DBPFFile(ContentManager.GetPath("tsov2.dat"));
-            Stings = new DBPFFile(ContentManager.GetPath("Stings.dat"));
-            EP5Samps = new DBPFFile(ContentManager.GetPath("EP5Samps.dat"));
-            EP2 = new DBPFFile(ContentManager.GetPath("EP2.dat"));
-            Hitlists = new DBPFFile(ContentManager.GetPath("HitListsTemp.dat"));
+            if (File.Exists(ContentManager.GetPath("TSOAudio.dat")))
+                TSOAudio = new DBPFFile(ContentManager.GetPath("TSOAudio.dat"));
+
+            if (File.Exists(ContentManager.GetPath("tsov2.dat")))
+                tsov2 = new DBPFFile(ContentManager.GetPath("tsov2.dat"));
+
+            if (File.Exists(ContentManager.GetPath("Stings.dat")))
+                Stings = new DBPFFile(ContentManager.GetPath("Stings.dat"));
+
+            if (File.Exists(ContentManager.GetPath("EP5Samps.dat")))
+                EP5Samps = new DBPFFile(ContentManager.GetPath("EP5Samps.dat"));
+
+            if (File.Exists(ContentManager.GetPath("EP2.dat")))
+                EP2 = new DBPFFile(ContentManager.GetPath("EP2.dat"));
+
+            if (File.Exists(ContentManager.GetPath("HitListsTemp.dat")))
+                Hitlists = new DBPFFile(ContentManager.GetPath("HitListsTemp.dat"));
 
             SFXCache = new Dictionary<uint, SoundEffect>();
             TracksById = new Dictionary<uint, Track>();
             HitlistsById = new Dictionary<uint, Hitlist>();
 
-            AddTracksFrom(TSOAudio);
+            if (TSOAudio != null)
+                AddTracksFrom(TSOAudio);
         }
 
         /// <summary>

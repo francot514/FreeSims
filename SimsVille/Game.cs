@@ -17,7 +17,6 @@ using FSO.Client.GameContent;
 using FSO.Common;
 using Microsoft.Xna.Framework.Audio;
 using TSO.HIT;
-//using System.Windows.Forms;
 
 namespace FSO.Client
 {
@@ -34,7 +33,9 @@ namespace FSO.Client
 		public TSOGame() : base()
         {
             GameFacade.Game = this;
+            
             Content.RootDirectory = FSOEnvironment.GFXContentDir;
+            WorldContent.Init(this.Services, Content.RootDirectory);
             Graphics.SynchronizeWithVerticalRetrace = true;
             
             Graphics.PreferredBackBufferWidth = GlobalSettings.Default.GraphicsWidth;
@@ -129,7 +130,7 @@ namespace FSO.Client
 
             this.Window.ClientSizeChanged += new EventHandler<EventArgs>(Window_ClientSizeChanged);
 
-            WorldContent.Init(this.Services, Content.RootDirectory);
+           
             if (!FSOEnvironment.SoftwareKeyboard) AddTextInput();
             base.Screen.Layers.Add(SceneMgr);
             base.Screen.Layers.Add(uiLayer);
@@ -173,27 +174,16 @@ namespace FSO.Client
             Font = Content.Load<SpriteFont>("Fonts/SimsFont");
             BigFont = Content.Load<SpriteFont>("Fonts/SimsFontBig");
 
+
             GameFacade.MainFont = new FSO.Client.UI.Framework.Font();
             GameFacade.MainFont.AddSize(10, Font);
             GameFacade.MainFont.AddSize(12, Font);
             GameFacade.MainFont.AddSize(14, BigFont);
             GameFacade.MainFont.AddSize(16, BigFont);
 
-
             vitaboyEffect = Content.Load<Effect>("Effects/Vitaboy");
-
-            try
-            {
-
-
                 
-                
-            }
-            catch (Exception e)
-            {
-                e = new Exception();
-                Exit();
-            }
+            
 
             FSO.Vitaboy.Avatar.setVitaboyEffect(vitaboyEffect);
         }

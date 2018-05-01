@@ -12,13 +12,15 @@ namespace FSO.Client
     /// </summary>
     public class GameStartProxy
     {
+        public TSOGame Game;
+
         public void Start(bool useDX)
         {
-			TSOGame game = new TSOGame();
+			Game = new TSOGame();
             GameFacade.DirectX = useDX;
 			World.DirectX = useDX;
-            game.Run();
-            game.Dispose();
+            Game.Run();
+            Game.Dispose();
         }
 
 		public void SetPath(string path)
