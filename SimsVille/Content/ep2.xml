@@ -1,0 +1,23 @@
+  <Items>
+    <P g="0x80234543" n="EntertainerBoxer" s="-1" p="0" m="0" i="0" />
+    <P g="0x84CEB10B" n="EntertainerCake" s="18" p="300" m="1" i="-1" />
+    <P g="0xBAAE34BE" n="EntertainerClown" s="-1" p="0" m="0" i="0" />
+    <P g="0x71211D31" n="EntertainerFemale" s="-1" p="0" m="0" i="0" />
+    <P g="0xC6D44553" n="EntertainerGorilla" s="-1" p="0" m="0" i="0" />
+    <P g="0xCDAC4E1" n="EntertainerMale" s="-1" p="0" m="0" i="0" />
+    <P g="0x8F45A52" n="EntertainerSI" s="-1" p="0" m="0" i="0" />
+    <P g="0x1567C14A" n="Mime" s="-1" p="0" m="0" i="0" />
+    <P g="0xAAFEC112" n="MimeSI" s="-1" p="0" m="0" i="0" />
+    <P g="0x3BBFCFAA" n="NPCCar" s="-1" p="0" m="2" i="-1" />
+    <P g="0x4A731B75" n="NPCCaterer" s="-1" p="0" m="0" i="0" />
+    <P g="0x813C0B24" n="NPCCatererPP" s="-1" p="0" m="0" i="0" />
+    <P g="0xC03407E3" n="NPCCatererSI" s="-1" p="0" m="0" i="0" />
+    <P g="0xF12700FD" n="NPCCelebrity" s="-1" p="0" m="0" i="0" />
+    <P g="0xC04820E3" n="NPCCelebrity" s="-1" p="0" m="0" i="0" />
+    <P g="0xA490A947" n="NPCCelebritySI" s="-1" p="0" m="0" i="0" />
+    <P g="0xF7800C6" n="NPCPartyCrasher" s="-1" p="0" m="0" i="0" />
+    <P g="0x81160376" n="NPCPartyCrasher2" s="-1" p="0" m="0" i="0" />
+    <P g="0x6DD88E6D" n="phones2" s="15" p="110" m="0" i="0" />
+    <P g="0x6DC6DEF0" n="phones2" s="-1" p="50" m="0" i="0" />
+    <P g="0x69BD37AF" n="Teleporter_SP" s="15" p="6000" m="1" i="-1" />
+  </Items>

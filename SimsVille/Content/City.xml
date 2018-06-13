@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<city xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <id>1</id>
+  <name>Sims Ville</name>
+  <lots>
+   <lot id="1" name="house1" x="176" y="296" flags="0" cost="2000" />
+   <lot id="2" name="house2" x="177" y="309" flags="0" cost="2000" />
+   <lot id="3" name="house3" x="161" y="221" flags="0" cost="2000" />
+   <lot id="4" name="house4" x="159" y="221" flags="0" cost="2000" />
+  </lots>
+</city>

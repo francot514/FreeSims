@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<character xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <id>28</id>
+  <name>Gerry</name>
+  <objID>0x7FD96B54</objID>
+  <gender>Male</gender>
+  <head>40F0000000F</head>
+  <body>2560000000F</body>
+  <appearance>Medium</appearance>
+</character>
