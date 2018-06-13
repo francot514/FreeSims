@@ -36,6 +36,7 @@ using SimsVille.UI.Model;
 using FSO.Client.Rendering.City;
 using tso.world.Model;
 using FSO.Vitaboy;
+using FSO.SimAntics.Model.TSOPlatform;
 
 namespace FSO.Client.UI.Screens
 {
@@ -53,7 +54,7 @@ namespace FSO.Client.UI.Screens
         private string[] CharacterInfos;      
         public List<XmlCharacter> Characters;
 
-        private bool Connecting;
+        private bool Connecting, Permissions;
         private UILoginProgress ConnectingDialog;
         private Queue<SimConnectStateChange> StateChanges;
         private UIMouseEventRef MouseHitAreaEventRef = null;
@@ -484,30 +485,12 @@ namespace FSO.Client.UI.Screens
             World = new LotView.World(GameFacade.Game.GraphicsDevice);
             GameFacade.Scenes.Add(World);
 
-            VMNetDriver driver;
-            if (host)
-            {
-                
-                driver = new VMServerDriver(37564, null);
-            }
-            else
-            {
-                Connecting = true;
-                ConnectingDialog = new UILoginProgress();
+            
 
-                ConnectingDialog.Caption = GameFacade.Strings.GetString("211", "1");
-                ConnectingDialog.ProgressCaption = GameFacade.Strings.GetString("211", "24");
-                //this.Add(ConnectingDialog);
-
-                UIScreen.ShowDialog(ConnectingDialog, true);
-
-                driver = new VMClientDriver(path, 37564, ClientStateChange);
-            }
-
-            vm = new VM(new VMContext(World), driver, new UIHeadlineRendererProvider());
+            vm = new VM(new VMContext(World), new UIHeadlineRendererProvider());
             vm.Init();
             vm.LotName = (path == null) ? "localhost" : path.Split('/').LastOrDefault(); //quick hack just so we can remember where we are
-
+            
 
             var DirectoryInfo = new DirectoryInfo(Path.Combine(FSOEnvironment.UserDir, "Characters/"));
 
@@ -527,6 +510,34 @@ namespace FSO.Client.UI.Screens
 
             }
 
+
+            VMNetDriver driver;
+            if (host )
+            {
+
+                driver = new VMServerDriver(37564, null);
+            }
+            else
+            {
+                Connecting = true;
+                ConnectingDialog = new UILoginProgress();
+
+                ConnectingDialog.Caption = GameFacade.Strings.GetString("211", "1");
+                ConnectingDialog.ProgressCaption = GameFacade.Strings.GetString("211", "24");
+                //this.Add(ConnectingDialog);
+
+                UIScreen.ShowDialog(ConnectingDialog, true);
+
+                driver = new VMClientDriver(path, 37564, ClientStateChange);
+            }
+
+           
+            vm.VM_SetDriver(driver);
+
+
+           
+
+
             if (host)
             {
                 //check: do we have an fsov to try loading from?
@@ -534,7 +545,7 @@ namespace FSO.Client.UI.Screens
                 string filename = Path.GetFileName(path);
                 try
                 {
-                    using (var file = new BinaryReader(File.OpenRead(Path.Combine(FSOEnvironment.UserDir, "Houses/")+filename.Substring(0, filename.Length-4)+".fsov")))
+                    using (var file = new BinaryReader(File.OpenRead(Path.Combine(FSOEnvironment.UserDir, "Houses/") + filename.Substring(0, filename.Length - 4) + ".fsov")))
                     {
                         var marshal = new SimAntics.Marshals.VMMarshal();
                         marshal.Deserialize(file);
@@ -542,7 +553,8 @@ namespace FSO.Client.UI.Screens
                         vm.Reset();
                     }
                 }
-                catch (Exception) {
+                catch (Exception)
+                {
                     short jobLevel = -1;
 
                     //quick hack to find the job level from the chosen blueprint
@@ -564,6 +576,16 @@ namespace FSO.Client.UI.Screens
                 }
             }
 
+            //Check the clients loaded;
+            List<VMAvatar> Clients = new List<VMAvatar>();
+
+            foreach (VMEntity entity in vm.Entities)
+                if (entity is VMAvatar && entity.PersistID > 0)
+                    Clients.Add((VMAvatar)entity);
+
+
+            if (Clients.Count == 0)
+                Permissions = true;
 
             uint simID = (uint)(new Random()).Next();
             vm.MyUID = simID;
@@ -584,10 +606,12 @@ namespace FSO.Client.UI.Screens
             {
                 ActorUID = simID,
                 HeadID = HeadID,
-                BodyID =  BodyID,
+                BodyID = BodyID,
                 SkinTone = (byte)type,
                 Gender = Male,
                 Name = gizmo.SelectedCharInfo.Name,
+                Permissions = (Permissions == true) ? 
+                VMTSOAvatarPermissions.Owner : VMTSOAvatarPermissions.Visitor
             });
 
             VMWorldActivator activator = new VMWorldActivator(vm, World);

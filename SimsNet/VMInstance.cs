@@ -59,9 +59,10 @@ namespace SimsNet
             VMNetDriver driver;
             driver = new VMServerDriver(Port, NetClosed);
 
-            var vm = new VM(new VMContext(null), driver, new VMNullHeadlineProvider());
+            var vm = new VM(new VMContext(null),  new VMNullHeadlineProvider());
             state = vm;
             vm.Init();
+            vm.VM_SetDriver(driver);
             vm.OnChatEvent += Vm_OnChatEvent;
 
             Console.WriteLine("Select the lot type");
@@ -140,11 +141,20 @@ namespace SimsNet
                 }
             }
             vm.MyUID = uint.MaxValue-1;
-            vm.SendCommand(new VMNetSimJoinCmd
-            {
-                ActorUID = uint.MaxValue - 1,
-                Name = "server"
-            });
+
+
+            Console.WriteLine("Select the server type");
+            Console.WriteLine("1-Host");
+            Console.WriteLine("2-Dedicated");
+
+            int host = Convert.ToInt32(Console.ReadLine());
+
+            if (host == 1)
+                vm.SendCommand(new VMNetSimJoinCmd
+                {
+                    ActorUID = uint.MaxValue - 1,
+                    Name = "server"
+                });
         }
 
         private void CleanLot()

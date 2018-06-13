@@ -106,14 +106,20 @@ namespace FSO.SimAntics
         /// Constructs a new Virtual Machine instance.
         /// </summary>
         /// <param name="context">The VMContext instance to use.</param>
-        public VM(VMContext context, VMNetDriver driver, VMHeadlineRendererProvider headline)
+        public VM(VMContext context,  VMHeadlineRendererProvider headline)
         {
             context.VM = this;
-            this.Context = context;
-            this.Driver = driver;
+            this.Context = context;       
             Headline = headline;
             FreeWill = new VMFreeWill(this);
             OnBHAVChange += VM_OnBHAVChange;
+        }
+
+        public void VM_SetDriver(VMNetDriver driver)
+        {
+            
+            this.Driver = driver;
+
         }
 
         private void VM_OnBHAVChange()
