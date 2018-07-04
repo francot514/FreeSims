@@ -31,6 +31,33 @@ namespace FSO.Files.HIT
             Read(new MemoryStream(Filedata));
         }
 
+        public Hitlist()
+        {
+            IDs = new List<uint>();
+        }
+
+        public void Populate(string str)
+        {
+            var commaSplit = str.Split(',');
+            for (int i = 0; i < commaSplit.Length; i++)
+            {
+                var dashSplit = commaSplit[i].Split('-');
+                if (dashSplit.Length > 1)
+                { //range, parse two values and fill in the gap
+                    var min = Convert.ToUInt32(dashSplit[0]);
+                    var max = Convert.ToUInt32(dashSplit[1]);
+                    for (uint j = min; j <= max; j++)
+                    {
+                        IDs.Add(j);
+                    }
+                }
+                else
+                { //literal entry, add to list
+                    IDs.Add(Convert.ToUInt32(commaSplit[i]));
+                }
+            }
+        }
+
         private void Read(Stream data)
         {
             BinaryReader Reader = new BinaryReader(data);
@@ -79,6 +106,13 @@ namespace FSO.Files.HIT
                 for (int i = 0; i < VerOrCount; i++)
                     IDs.Add(Reader.ReadUInt32());
             }
+        }
+
+        public static Hitlist HitlistFromString(string str)
+        {
+            var result = new Hitlist();
+            result.Populate(str);
+            return result;
         }
 
         /// <summary>

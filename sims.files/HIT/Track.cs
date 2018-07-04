@@ -28,6 +28,10 @@ namespace FSO.Files.HIT
         public uint Looped;
         public uint Volume;
 
+        public uint SubroutineID;
+        public uint HitlistID;
+
+        public Track() { }
         /// <summary>
         /// Creates a new track.
         /// </summary>
