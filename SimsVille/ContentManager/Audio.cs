@@ -50,6 +50,22 @@ namespace FSO.Content
         /** Audio Cache **/
         public Dictionary<uint, SoundEffect> SFXCache;
 
+        public Dictionary<string, string> StationPaths
+        {
+            get
+            {
+                return _StationPaths;
+            }
+        }
+
+        public Dictionary<int, string> MusicModes
+        {
+            get
+            {
+                return _MusicModes;
+            }
+        }
+
         public Audio(Content contentManager)
         {
             this.ContentManager = contentManager;
@@ -233,5 +249,42 @@ namespace FSO.Content
             result.AddRange(Stations);
             return result;
         }
+
+        private Dictionary<string, string> _StationPaths = new Dictionary<string, string>
+        {
+            {"KBEA", "Music/Stations/Beach/"},
+            {"KCLA", "Music/Stations/Classica/"},
+            {"KCOU", "Music/Stations/Country/"},
+            {"KCDA", "Music/Stations/CountryD/"},
+            {"KDIS", "Music/Stations/Disco/"},
+            {"KEZE", "Music/Stations/EZ/"},
+            {"KEZX", "Music/Stations/EZX/"},
+            {"KLAT", "Music/Stations/Latin/"},
+            {"KRAP", "Music/Stations/Rap/"},
+            {"KRAV", "Music/Stations/Rave/"},
+            {"KROC", "Music/Stations/Rock/"},
+            // These ones aren't radio stations - they're UI music
+            {"KMAP", "Music/Modes/Map/"},
+            {"KSEL", "Music/Modes/Select/"},
+            {"KCRE", "Music/Modes/Create/"},
+            //tv
+            { "KACT", "sounddata/tvstations/tv_action/" },
+            { "KCOM", "sounddata/tvstations/tv_comedy_cartoon/" },
+            { "KMYS", "sounddata/tvstations/tv_mystery/" },
+            { "KROM", "sounddata/tvstations/tv_romance/" },
+            // More music
+            {"KHOR", "Music/Stations/Horror/"},
+            {"KOLD", "Music/Stations/OldWorld/"},
+            {"KSCI", "Music/Stations/SciFi/"},
+        };
+
+        private Dictionary<int, string> _MusicModes = new Dictionary<int, string>
+        {
+            { 11, "KSEL" },
+            { 12, "KCRE" },
+            { 13, "KMAP" },
+            { 9, "" }
+        };
+
     }
 }

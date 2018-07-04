@@ -53,7 +53,7 @@ namespace FSO.SimAntics.NetPlay.Model.Commands
 
             foreach (XmlCharacter Char in Characters)
             {
-                uint vsimID = (uint)(new Random()).Next();
+                uint vsimID = (0);
                 Enum.TryParse(Char.Appearance, out type);
 
                 var vheadPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(Char.Head, 16));

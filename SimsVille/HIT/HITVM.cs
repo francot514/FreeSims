@@ -6,6 +6,7 @@ using TSO.HIT.model;
 using FSO.Content;
 using System.IO;
 using FSO.Files.HIT;
+using FSO.HIT.Events;
 
 namespace TSO.HIT
 {
@@ -32,13 +33,22 @@ namespace TSO.HIT
         private HITResourceGroup tsov3;
         private HITResourceGroup turkey;
 
-        private Dictionary<string, HITThread> ActiveEvents; //events that are active are reused for all objects calling that event.
-        private List<HITThread> Threads;
+
+        private HITTVOn MusicEvent;
+        private HITTVOn NextMusic;
+
+        private Dictionary<string, HITSound> ActiveEvents; //events that are active are reused for all objects calling that event.
+        private List<HITSound> Threads;
         private int[] Globals; //SimSpeed 0x64 to CampfireSize 0x87.
 
         private List<FSCPlayer> FSCPlayers;
 
         private Dictionary<string, HITEventRegistration> Events;
+
+        private float[] GroupMasterVolumes = new float[]
+        {
+            1.0f, 1.0f, 1.0f, 1.0f
+};
 
         public HITVM()
         {
@@ -60,8 +70,8 @@ namespace TSO.HIT
             RegisterEvents(turkey);
 
             Globals = new int[36];
-            Threads = new List<HITThread>();
-            ActiveEvents = new Dictionary<string, HITThread>();
+            Threads = new List<HITSound>();
+            ActiveEvents = new Dictionary<string, HITSound>();
             FSCPlayers = new List<FSCPlayer>();
         }
 
@@ -120,6 +130,17 @@ namespace TSO.HIT
             {
                 FSCPlayers[i].Tick(1/60f);
             }
+
+            if (NextMusic != null)
+            {
+                if (MusicEvent == null || MusicEvent.Dead)
+                {
+                    MusicEvent = NextMusic;
+                    Threads.Add(NextMusic);
+                    NextMusic = null;
+                }
+            }
+
         }
 
         public void StopFSC(FSCPlayer input)
@@ -137,7 +158,7 @@ namespace TSO.HIT
             return player;
         }
 
-        public HITThread PlaySoundEvent(string evt)
+        public HITSound PlaySoundEvent(string evt)
         {
             evt = evt.ToLower();
             if (ActiveEvents.ContainsKey(evt))
@@ -178,7 +199,25 @@ namespace TSO.HIT
                     if (entPoints.ContainsKey(evtent.TrackID)) SubroutinePointer = entPoints[evtent.TrackID];
                 }
 
-                if (SubroutinePointer != 0)
+                if (evtent.EventType == HITEvents.kTurnOnTV)
+                {
+                    var thread = new HITTVOn(evtent.TrackID, this);
+                    thread.VolGroup = HITVolumeGroup.FX;
+                    Threads.Add(thread);
+                    ActiveEvents.Add(evt, thread);
+                    return thread;
+                }
+                else if (evtent.EventType == HITEvents.kSetMusicMode)
+                {
+                    var thread = new HITTVOn(evtent.TrackID, this, true);
+                    thread.VolGroup = HITVolumeGroup.MUSIC;
+                    ActiveEvents.Add(evt, thread);
+                    if (NextMusic != null) NextMusic.Kill();
+                    if (MusicEvent != null) MusicEvent.Fade();
+                    NextMusic = thread;
+                    return thread;
+                }
+                else if (SubroutinePointer != 0)
                 {
                     var thread = new HITThread(evtent.ResGroup.hit, this);
                     thread.PC = SubroutinePointer;
@@ -198,6 +237,11 @@ namespace TSO.HIT
             }
 
             return null;
+        }
+
+        public float GetMasterVolume(HITVolumeGroup group)
+        {
+            return GroupMasterVolumes[(int)group];
         }
 
         /// <summary>

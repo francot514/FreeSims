@@ -30,6 +30,7 @@ using FSO.SimAntics.NetPlay.Drivers;
 using FSO.SimAntics.NetPlay.Model.Commands;
 using FSO.SimAntics.Utils;
 using TSO.SimsAntics;
+using TSO.HIT;
 
 namespace FSO.SimAntics
 {
@@ -61,7 +62,14 @@ namespace FSO.SimAntics
         public VMWorldActivator Activator;
         public VMFreeWill FreeWill;
 
+        public int SpeedMultiplier = 1;
+        public int LastSpeedMultiplier;
+        private int LastFrameSpeed = 1;
+
         public List<VMEntity> Entities = new List<VMEntity>();
+        public HashSet<VMEntity> SoundEntities = new HashSet<VMEntity>();
+
+
         public short[] GlobalState;
         public VMPlatformState PlatformState;
         public VMTSOLotState TSOState
@@ -179,6 +187,20 @@ namespace FSO.SimAntics
         private bool AlternateTick;
         public void Update()
         {
+
+            if (LastFrameSpeed != SpeedMultiplier)
+            {
+                var allSounds = new List<HITSound>();
+                foreach (var ent in SoundEntities)
+                {
+                    allSounds.AddRange(ent.SoundThreads.Select(x => x.Sound));
+                }
+
+                if (SpeedMultiplier < 1 && LastFrameSpeed >= 1) allSounds.ForEach((x) => x.Pause());
+                else if (SpeedMultiplier >= 1 && LastFrameSpeed < 1) allSounds.ForEach((x) => x.Resume());
+                LastFrameSpeed = SpeedMultiplier;
+            }
+
             if (!Ready || AlternateTick)
             {
                 Tick();
@@ -491,6 +513,10 @@ namespace FSO.SimAntics
             }
 
             Entities = new List<VMEntity>();
+
+            SoundEntities = new HashSet<VMEntity>();
+
+
             ObjectsById = new Dictionary<short, VMEntity>();
             foreach (var ent in input.Entities)
             {

@@ -114,6 +114,7 @@
     <Compile Include="HIT\HITResourceGroup.cs" />
     <Compile Include="HIT\HITSound.cs" />
     <Compile Include="HIT\HITThread.cs" />
+    <Compile Include="HIT\HITTVOn.cs" />
     <Compile Include="HIT\HITVM.cs" />
     <Compile Include="Network\Cache.cs" />
     <Compile Include="Network\CityDataRetriever.cs" />

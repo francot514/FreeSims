@@ -20,7 +20,7 @@ using FSO.Files.HIT;
 
 namespace TSO.HIT
 {
-    public class HITThread
+    public class HITThread : HITSound
     {
         public uint PC; //program counter
         public HITFile Src;
@@ -29,21 +29,16 @@ namespace TSO.HIT
         private int[] Registers; //includes args, vars, whatever "h" is up to 0xf
         private int[] LocalVar; //the sims online set, 0x10 "argstyle" up to 0x45 orientz. are half of these even used? no. but even in the test files? no
         public int[] ObjectVar; //IsInsideViewFrustrum 0x271a to Neatness 0x2736. Set by object on thread invocation.
-        private Track ActiveTrack;
+       
         public int LoopPointer = -1;
         public int WaitRemain = -1;
+        public bool Paused;
 
-        public bool Dead;
-
-        private bool EverHadOwners; //if we never had owners, don't kill the thread. (ui sounds)
-        private List<int> Owners;
 
         private bool SimpleMode; //certain sounds play with no HIT.
         private bool PlaySimple;
-        private bool VolumeSet;
-        private float Volume = 1;
-        public float PreviousVolume = 1; //This is accessed by HitVM.Unduck()
-        public float Pan; //This is accessed by HitVM.Duck()
+
+ 
 
         private uint Patch; //sound id
 
@@ -54,16 +49,7 @@ namespace TSO.HIT
             get { return Notes.Count - 1; }
         }
 
-        public HITDuckingPriorities DuckPriority
-        {
-            get
-            {
-                if (ActiveTrack != null)
-                    return ActiveTrack.DuckingPriority;
-                else
-                    return HITDuckingPriorities.duckpri_normal;
-            }
-        }
+
 
         public bool ZeroFlag; //flags set by instructions
         public bool SignFlag;
@@ -72,8 +58,11 @@ namespace TSO.HIT
 
         private FSO.Content.Audio audContent;
 
-        public bool Tick() //true if continue, false if kill
+        public override  bool Tick() //true if continue, false if kill
         {
+
+            if (Paused) return true;
+
             if (EverHadOwners && Owners.Count == 0)
             {
                 KillVocals();
@@ -198,21 +187,6 @@ namespace TSO.HIT
             VolumeSet = true;
         }
 
-        public void AddOwner(int id)
-        {
-            EverHadOwners = true;
-            Owners.Add(id);
-        }
-
-        public void RemoveOwner(int id)
-        {
-            Owners.Remove(id);
-        }
-
-        public bool AlreadyOwns(int id)
-        {
-            return Owners.Contains(id);
-        }
 
         public void LoadHitlist(uint id)
         {
@@ -256,6 +230,24 @@ namespace TSO.HIT
             else
             {
                 Debug.WriteLine("Couldn't find track: " + value);
+            }
+        }
+
+        public override void Pause()
+        {
+            Paused = true;
+            foreach (var note in Notes)
+            {
+                if (note.instance.State != SoundState.Stopped) note.instance.Pause();
+            }
+        }
+
+        public override void Resume()
+        {
+            Paused = false;
+            foreach (var note in Notes)
+            {
+                if (note.instance.State != SoundState.Stopped) note.instance.Resume();
             }
         }
 
@@ -425,6 +417,15 @@ namespace TSO.HIT
         {
             PC = (uint)Src.EntryPointByTrackID[(uint)TrackID];
         }
+
+
+
+        public override void Dispose()
+        {
+            //InterruptWaiter?.Unblock();
+            foreach (var note in Notes) note.instance.Dispose();
+        }
+
     }
 
     public struct HITNoteEntry 

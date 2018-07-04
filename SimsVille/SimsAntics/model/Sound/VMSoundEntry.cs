@@ -4,7 +4,7 @@ namespace FSO.SimAntics.Model.Sound
 {
     public class VMSoundEntry
     {
-        public HITThread Sound;
+        public HITSound Sound;
         public bool Pan;
         public bool Zoom;
         public bool Loop;
