@@ -24,6 +24,13 @@ namespace FSO.LotView
         private World World;
         public GraphicsDevice Device;
 
+        private float _PreciseZoom = 1f;
+        public float PreciseZoom
+        {
+            get { return _PreciseZoom; }
+            set { _PreciseZoom = value; InvalidatePreciseZoom(); }
+        }
+
         /// <summary>
         /// Creates a new WorldState instance.
         /// </summary>
@@ -42,6 +49,12 @@ namespace FSO.LotView
             Zoom = WorldZoom.Near;
             Rotation = WorldRotation.TopLeft;
             Level = 1;
+        }
+
+        protected void InvalidatePreciseZoom()
+        {
+            InvalidateCamera();
+            World.InvalidatePreciseZoom();
         }
 
         public void SetDimensions(Vector2 dim)

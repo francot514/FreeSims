@@ -44,20 +44,30 @@ namespace tso.world.Components
         public void RegenRoof(GraphicsDevice device)
         {
             var roofs = FSO.Content.Content.Get().WorldRoofs;
-            Texture = roofs.Get(roofs.IDToName((int)RoofStyle)).Get(device);
-            for (int i=1; i<=blueprint.Stories; i++)
+
+            if (roofs.Count > 0)
             {
-                RegenRoof((sbyte)(i + 1), device);
+                Texture = roofs.Get(roofs.IDToName((int)RoofStyle)).Get(device);
+                for (int i=1; i<=blueprint.Stories; i++)
+                {
+                    RegenRoof((sbyte)(i + 1), device);
+                }
+
             }
         }
 
         public void RemeshRoof(GraphicsDevice device)
         {
             var roofs = FSO.Content.Content.Get().WorldRoofs;
-            Texture = roofs.Get(roofs.IDToName((int)RoofStyle)).Get(device);
-            for (int i = 1; i < blueprint.Stories; i++)
+
+            if (roofs.Count > 0)
             {
-                MeshRects((sbyte)(i + 1), device);
+                Texture = roofs.Get(roofs.IDToName((int)RoofStyle)).Get(device);
+                for (int i = 1; i < blueprint.Stories; i++)
+                {
+                    MeshRects((sbyte)(i + 1), device);
+                }
+
             }
         }
 

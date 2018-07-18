@@ -195,6 +195,96 @@ namespace FSO.LotView
         }
 
         /// <summary>
+        /// Gets the current lot's thumbnail.
+        /// </summary>
+        /// <param name="objects">The object components to draw.</param>
+        /// <param name="gd">GraphicsDevice instance.</param>
+        /// <param name="state">WorldState instance.</param>
+        /// <returns>Object's ID if the object was found at the given position.</returns>
+        public virtual Texture2D GetLotThumb(GraphicsDevice gd, WorldState state, Action<Texture2D> rooflessCallback)
+        {
+            if (!(state.Camera is WorldCamera)) return new Texture2D(gd, 8, 8);
+            var oldZoom = state.Zoom;
+            var oldRotation = state.Rotation;
+            var oldLevel = state.Level;
+            var oldCutaway = Blueprint.Cutaway;
+            var wCam = (WorldCamera)state.Camera;
+            var oldViewDimensions = wCam.ViewDimensions;
+            //wCam.ViewDimensions = new Vector2(-1, -1);
+            var oldPreciseZoom = state.PreciseZoom;
+
+            //full invalidation because we must recalculate all object sprites. slow but necessary!
+            state.Zoom = WorldZoom.Far;
+            state.Rotation = WorldRotation.TopLeft;
+            state.Level = Blueprint.Stories;
+            state.PreciseZoom = 1 / 4f;
+            state._2D.PreciseZoom = state.PreciseZoom;
+            state.WorldSpace.Invalidate();
+            state.InvalidateCamera();
+
+            var oldCenter = state.CenterTile;
+            state.CenterTile -= state.WorldSpace.GetTileFromScreen(new Vector2((576 - state.WorldSpace.WorldPxWidth), (576 - state.WorldSpace.WorldPxHeight)) / 2);
+            var pxOffset = -state.WorldSpace.GetScreenOffset();
+            state.TempDraw = true;
+            Blueprint.Cutaway = new bool[Blueprint.Cutaway.Length];
+
+            var _2d = state._2D;
+            Promise<Texture2D> bufferTexture = null;
+            var lastLight = state.OutsideColor;
+            state.OutsideColor = Color.White;
+            state._2D.OBJIDMode = false;
+            using (var buffer = state._2D.WithBuffer(BUFFER_THUMB_DEPTH, ref bufferTexture))
+            {
+                _2d.SetScroll(pxOffset);
+                while (buffer.NextPass())
+                {
+                    _2d.Pause();
+                    _2d.Resume();
+                    //Blueprint.SetLightColor(WorldContent.GrassEffect, Color.White, Color.White);
+                    Blueprint.Terrain.Draw(gd, state);
+                    //Blueprint.Terrain.DrawMask(gd, state, state.Camera.View, state.Camera.Projection);
+                    Blueprint.WallComp.Draw(gd, state);
+                    _2d.Pause();
+                    _2d.Resume();
+                    foreach (var obj in Blueprint.Objects)
+                    {
+                        var renderInfo = GetRenderInfo(obj);
+                        var tilePosition = obj.Position;
+                        _2d.OffsetPixel(state.WorldSpace.GetScreenFromTile(tilePosition));
+                        _2d.OffsetTile(tilePosition);
+                        obj.Draw(gd, state);
+                    }
+                    _2d.Pause();
+                    _2d.Resume();
+                    rooflessCallback?.Invoke(bufferTexture.Get());
+                    Blueprint.RoofComp.Draw(gd, state);
+                }
+
+            }
+
+            Blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.LIGHTING_CHANGED));
+            Blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.FLOOR_CHANGED));
+            //return things to normal
+            //state.PrepareLighting();
+            state.OutsideColor = lastLight;
+            state.PreciseZoom = oldPreciseZoom;
+            state.WorldSpace.Invalidate();
+            state.InvalidateCamera();
+            wCam.ViewDimensions = oldViewDimensions;
+            state.TempDraw = false;
+            state.CenterTile = oldCenter;
+
+            state.Zoom = oldZoom;
+            state.Rotation = oldRotation;
+            state.Level = oldLevel;
+            Blueprint.Cutaway = oldCutaway;
+
+            var tex = bufferTexture.Get();
+            return tex; //TextureUtils.Clip(gd, tex, bounds);
+        }
+
+
+        /// <summary>
         /// Gets an object group's thumbnail provided an array of objects.
         /// </summary>
         /// <param name="objects">The object components to draw.</param>

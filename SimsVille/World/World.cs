@@ -389,6 +389,12 @@ namespace FSO.LotView
             State._2D.OutputDepth = false;
         }
 
+        public void InvalidatePreciseZoom()
+        {
+            if (Blueprint == null) { return; }
+            Blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.PRECISE_ZOOM));
+        }
+
         /// <summary>
         /// Gets the ID of the object at a given position.
         /// </summary>
@@ -402,7 +408,13 @@ namespace FSO.LotView
             return _2DWorld.GetObjectIDAtScreenPos(x, y, gd, State);
         }
 
-         /// <summary>
+        public Texture2D GetLotThumb(GraphicsDevice gd, Action<Texture2D> rooflessCallback)
+        {
+            State._2D.Begin(this.State.Camera);
+            return _2DWorld.GetLotThumb(gd, State, rooflessCallback);
+        }
+
+        /// <summary>
         /// Gets an object group's thumbnail provided an array of objects.
         /// </summary>
         /// <param name="objects">The object components to draw.</param>

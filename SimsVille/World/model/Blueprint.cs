@@ -86,6 +86,7 @@ namespace FSO.LotView.Model
             this.Cutaway = new bool[numTiles];
         }
 
+
         public void GenerateRoomLights()
         {
             var minOut = OutsideColor * (float)(150 / Math.Sqrt(OutsideColor.R * OutsideColor.R + OutsideColor.G * OutsideColor.G + OutsideColor.B * OutsideColor.B));
@@ -224,7 +225,8 @@ namespace FSO.LotView.Model
         LEVEL_CHANGED,
         LIGHTING_CHANGED,
         ROOM_CHANGED,
-        ROOF_STYLE_CHANGED
+        ROOF_STYLE_CHANGED,
+        PRECISE_ZOOM
     }
 
     public class BlueprintObjectList {
