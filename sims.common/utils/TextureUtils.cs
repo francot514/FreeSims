@@ -286,6 +286,50 @@ namespace FSO.Common.Utils
             return newTexture;
         }
 
+        public static Texture2D Decimate(Texture2D Texture, GraphicsDevice gd, int factor, bool disposeOld)
+        {
+            if (Texture.Width < factor || Texture.Height < factor) return Texture;
+            var size = Texture.Width * Texture.Height * 4;
+            byte[] buffer = new byte[size];
+
+            Texture.GetData(buffer);
+
+            var newWidth = Texture.Width / factor;
+            var newHeight = Texture.Height / factor;
+            var target = new byte[newWidth * newHeight * 4];
+
+            for (int y = 0; y < Texture.Height; y += factor)
+            {
+                for (int x = 0; x < Texture.Width; x += factor)
+                {
+                    for (int c = 0; c < 4; c++)
+                    {
+                        var targy = (y / factor);
+                        var targx = (x / factor);
+                        if (targy >= newHeight || targx >= newWidth) continue;
+                        int avg = 0;
+                        int total = 0;
+                        for (int yo = y; yo < y + factor && yo < Texture.Height; yo++)
+                        {
+                            for (int xo = x; xo < x + factor && xo < Texture.Width; xo++)
+                            {
+                                avg += (int)buffer[(yo * Texture.Width + xo) * 4 + c];
+                                total++;
+                            }
+                        }
+
+                        avg /= total;
+                        target[(targy * newWidth + targx) * 4 + c] = (byte)avg;
+                    }
+                }
+            }
+            if (disposeOld) Texture.Dispose();
+
+            var outTex = new Texture2D(gd, newWidth, newHeight);
+            outTex.SetData(target);
+            return outTex;
+        }
+
         public static Texture2D Resize(GraphicsDevice gd, Texture2D texture, int newWidth, int newHeight)
         {
             return texture; //todo: why is this broken (framebuffer incomplete when we try to bind it)
