@@ -136,7 +136,7 @@ namespace FSO.SimAntics
 
             if (name.Contains("Mail") || name.Contains("Window") || name.Contains("Door") || name.Contains("Lamp")
                 || name.Contains("Stair") || name.Contains("Arch") || name.Contains("Tree") || name.Contains("Portal")
-                || name.Contains("Trash") || name.Contains("Phone"))
+                || name.Contains("Trash") || name.Contains("Phone") || name.Contains("Fire") || name.Contains("NPC"))
                 BadName = true;
 
             return BadName;

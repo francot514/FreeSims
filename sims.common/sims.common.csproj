@@ -125,7 +125,6 @@
     <Compile Include="rendering\vitaboy\PurchasableOutfit.cs" />
     <Compile Include="rendering\vitaboy\Skeleton.cs" />
     <Compile Include="rendering\vitaboy\VitaboyVertex.cs" />
-    <Compile Include="utils\CollectionUtils.cs" />
     <Compile Include="utils\DirectionUtils.cs" />
     <Compile Include="utils\FileUtils.cs" />
     <Compile Include="utils\HTMLPrinter.cs" />

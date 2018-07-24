@@ -83,7 +83,7 @@ using FSO.SimAntics.Engine;
                     foreach (var interaction in entity.TreeTable.Interactions)
                     {
 
-                        if (!interaction.Debug)
+                        if (!interaction.Debug || interaction.WhenDead)
                             interactionList.Add(entity.TreeTableStrings.GetString((int)interaction.TTAIndex));
                     }
                 }
@@ -175,12 +175,22 @@ using FSO.SimAntics.Engine;
                 CheckForUsableObjects(vm);
 
                 for (int i = 0; i < Visitors.Count; i++)
+                
+                if (Visitors[i].Visitor)
+                {
 
-                    if (Visitors[i].Visitor && (Visitors[i].Thread.Queue.Count < 2 ||
-                        Visitors[i].Thread.Queue[0].Priority == (short)VMQueuePriority.Idle))
+                   if (Visitors[i].Thread.Queue.Count > 2)
+                      Visitors[i].Thread.Queue.Clear();
+
+
+                    if (Visitors[i].Thread.Queue.Count < 2 ||
+                        Visitors[i].Thread.Queue[0].Priority == (short)VMQueuePriority.Idle)
                     {
-                            RunAction(Visitors[i]);
+                        RunAction(Visitors[i]);
                     }
+
+                }
+
 
             }
 

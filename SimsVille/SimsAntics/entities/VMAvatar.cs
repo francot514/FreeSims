@@ -980,6 +980,7 @@ namespace FSO.SimAntics
 
             SkinTone = input.SkinTone;
 
+
             if (UseWorld) WorldUI.ObjectID = ObjectID;
         }
 
