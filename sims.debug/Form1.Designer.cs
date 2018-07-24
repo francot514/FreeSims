@@ -51,6 +51,7 @@
             this.label6 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
+            this.button5 = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -215,6 +216,7 @@
             // 
             // tabPage2
             // 
+            this.tabPage2.Controls.Add(this.button5);
             this.tabPage2.Controls.Add(this.comboBox1);
             this.tabPage2.Controls.Add(this.listBox3);
             this.tabPage2.Controls.Add(this.label6);
@@ -234,7 +236,7 @@
             this.comboBox1.Items.AddRange(new object[] {
             "Houses",
             "Families"});
-            this.comboBox1.Location = new System.Drawing.Point(190, 67);
+            this.comboBox1.Location = new System.Drawing.Point(295, 72);
             this.comboBox1.Name = "comboBox1";
             this.comboBox1.Size = new System.Drawing.Size(88, 21);
             this.comboBox1.TabIndex = 4;
@@ -260,7 +262,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(245, 27);
+            this.label5.Location = new System.Drawing.Point(231, 27);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(33, 13);
             this.label5.TabIndex = 1;
@@ -274,6 +276,16 @@
             this.label4.Size = new System.Drawing.Size(52, 13);
             this.label4.TabIndex = 0;
             this.label4.Text = "Directory:";
+            // 
+            // button5
+            // 
+            this.button5.Location = new System.Drawing.Point(308, 221);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(75, 23);
+            this.button5.TabIndex = 19;
+            this.button5.Text = "Search";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
             // Form1
             // 
@@ -323,7 +335,7 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.ListBox listBox3;
         private System.Windows.Forms.ComboBox comboBox1;
-
+        private System.Windows.Forms.Button button5;
     }
 }
 

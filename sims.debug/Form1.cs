@@ -279,7 +279,7 @@ namespace sims.debug
         {
 
             List<FarEntry> Resource = new List<FarEntry>();
-            FAR1Archive Archive = new FAR1Archive("UIGraphics.far");
+            FAR1Archive Archive = new FAR1Archive("UIGraphics.far", false);
                     //m_Archives.Add(path, Archive);
              Resource = Archive.GetAllFarEntries();
 
@@ -336,6 +336,44 @@ namespace sims.debug
             Userpath = "UserData/";
 
         }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            listBox3.Items.Clear();
+
+
+            int current = comboBox1.SelectedIndex;
+            DirectoryInfo dir;
+
+            if (Userpath != "")
+            {
+                if (current == 0)
+                {
+                    dir = new DirectoryInfo(Userpath + "Houses");
+
+                    foreach (FileInfo file in dir.GetFiles())
+
+                        if (file.Extension == ".iff")
+                            listBox3.Items.Add(file.Name);
+
+                }
+
+                else if (current == 1)
+                {
+                    dir = new DirectoryInfo(Userpath + "Families");
+
+                    foreach (FileInfo file in dir.GetFiles())
+                        if (file.Extension == ".iff")
+                            listBox3.Items.Add(file.Name);
+
+                }
+
+            }
+
+
+
+        }
+
 
         private void loadToolStripMenuItem_Click(object sender, EventArgs e)
         {
