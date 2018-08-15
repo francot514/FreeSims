@@ -234,7 +234,7 @@ namespace FSO.SimAntics.Engine
                         Entity.ExecuteEntryPoint(1, Context, false);
                         if (Stack.Count == 0) return;
                     }
-                    if ((!Stack.LastOrDefault().ActionTree) || (!Queue[0].Callee.Dead)) //main or our target is not dead
+                    if ((!Stack.LastOrDefault().ActionTree) || (Queue.Count > 0 && (Queue[0] != null && !Queue[0].Callee.Dead))) //main or our target is not dead
                     {
 #if IDE_COMPAT
                         if (ThreadBreak == VMThreadBreakMode.ReturnTrue)

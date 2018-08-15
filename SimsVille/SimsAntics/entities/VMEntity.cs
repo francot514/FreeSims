@@ -25,6 +25,7 @@ using FSO.SimAntics.Marshals;
 using FSO.Common.Utils;
 using FSO.SimAntics.Model.TSOPlatform;
 using FSO.SimAntics.Model.Sound;
+using System.IO;
 
 namespace FSO.SimAntics
 {
@@ -188,6 +189,8 @@ namespace FSO.SimAntics
             var test = obj.Resource.List<OBJf>();
 
             SemiGlobal = obj.Resource.SemiGlobal;
+
+           
 
             Slots = obj.Resource.Get<SLOT>(obj.OBJ.SlotID); //containment slots are dealt with in the avatar and object classes respectively.
 
@@ -512,8 +515,11 @@ namespace FSO.SimAntics
 
         public VMBHAVOwnerPair GetBHAVWithOwner(ushort ActionID, VMContext context)
         {
-            BHAV bhav;
+            BHAV bhav = null;
             GameObject CodeOwner;
+
+           
+
             if (ActionID < 4096)
             { //global
                 bhav = context.Globals.Resource.Get<BHAV>(ActionID);
@@ -522,10 +528,13 @@ namespace FSO.SimAntics
             { //local
                 bhav = Object.Resource.Get<BHAV>(ActionID);
             }
-            else
-            { //semi-global
+            else if (SemiGlobal != null)
+            {
+
                 bhav = SemiGlobal.Get<BHAV>(ActionID);
+
             }
+            
 
             CodeOwner = Object;
 
