@@ -74,7 +74,7 @@ namespace FSO.Client.UI.Panels
             if (Main.SelectedCharInfo != null)
             {
 
-                ((CoreGameScreen)(Parent.Parent)).InitTestLot(SearchText.CurrentText, false);
+                ((CoreGameScreen)(Parent.Parent)).InitTestLot(SearchText.CurrentText, SearchText.CurrentText, false);
             }
             else
             {
@@ -182,7 +182,7 @@ namespace FSO.Client.UI.Panels
 
                 if (Main.SelectedCharInfo != null){
 
-                    ((CoreGameScreen)(Parent.Parent)).InitTestLot(((UIXMLLotEntry)Top100ResultList.SelectedItem.Data).Path, true);
+                    ((CoreGameScreen)(Parent.Parent)).InitTestLot(((UIXMLLotEntry)Top100ResultList.SelectedItem.Data).Path, ((UIXMLLotEntry)Top100ResultList.SelectedItem.Data).Filename, true);
 
                 }
                 else

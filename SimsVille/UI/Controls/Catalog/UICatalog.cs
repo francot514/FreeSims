@@ -72,28 +72,6 @@ namespace FSO.Client.UI.Controls.Catalog
                         });
                     }
 
-                    //load and build Content Objects into catalog
-                    var path = Path.Combine(FSOEnvironment.ContentDir, "catalog_downloads.xml");
-                    if (File.Exists(path))
-                    {
-                        var dpackingslip = new XmlDocument();
-
-                        dpackingslip.Load(path);
-                        var downloadInfos = dpackingslip.GetElementsByTagName("P");
-
-                        foreach (XmlNode objectInfo in downloadInfos)
-                        {
-                            sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
-                            if (Category < 0) continue;
-                            _Catalog[Category].Add(new UICatalogElement()
-                            {
-                                GUID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16),
-                                Category = Category,
-                                Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
-                                Name = objectInfo.Attributes["n"].Value
-                            });
-                        }
-                    }
 
                     if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/ExpansionPack"))
                     {
@@ -242,6 +220,29 @@ namespace FSO.Client.UI.Controls.Catalog
                         var ep7objectInfos = ep7packingslip.GetElementsByTagName("P");
 
                         foreach (XmlNode objectInfo in ep7objectInfos)
+                        {
+                            sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
+                            if (Category < 0) continue;
+                            _Catalog[Category].Add(new UICatalogElement()
+                            {
+                                GUID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16),
+                                Category = Category,
+                                Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
+                                Name = objectInfo.Attributes["n"].Value
+                            });
+                        }
+
+                    }
+
+                    if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/Downloads"))
+                    {
+
+                        var dpackingslip = new XmlDocument();
+
+                        dpackingslip.Load("Content/downloads.xml");
+                        var dobjectInfos = dpackingslip.GetElementsByTagName("P");
+
+                        foreach (XmlNode objectInfo in dobjectInfos)
                         {
                             sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
                             if (Category < 0) continue;

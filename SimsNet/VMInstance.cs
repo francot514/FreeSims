@@ -73,15 +73,22 @@ namespace SimsNet
             int lot = Convert.ToInt32(Console.ReadLine());
 
             if (lot == 1)
-                path = AppDomain.CurrentDomain.BaseDirectory + "Content/Houses/" + Settings.Default.DebugLot;
+            {
+
+                if (Settings.Default.DebugLot != String.Empty)
+                    path = AppDomain.CurrentDomain.BaseDirectory + "Content/Houses/" + Settings.Default.DebugLot;
+                else
+                    path = AppDomain.CurrentDomain.BaseDirectory + "Content/Houses/empty_lot.xml";
+
+            }     
             else if (lot == 2)
-                {
+            {
 
                     Console.WriteLine("Specify lot name");
                     path = AppDomain.CurrentDomain.BaseDirectory + "Content/Houses/" + Console.ReadLine() + ".xml";
 
 
-                }
+            }
 
             
             string filename = Path.GetFileName(path);

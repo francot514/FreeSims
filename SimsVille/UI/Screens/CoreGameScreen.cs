@@ -37,6 +37,7 @@ using FSO.Client.Rendering.City;
 using tso.world.Model;
 using FSO.Vitaboy;
 using FSO.SimAntics.Model.TSOPlatform;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace FSO.Client.UI.Screens
 {
@@ -467,13 +468,13 @@ namespace FSO.Client.UI.Screens
             Connecting = false;
         }
 
-        public void InitTestLot(string path, bool host)
+        public void InitTestLot(string path, string name, bool host)
         {
             if (Connecting) return;
 
-            lotName = path;
+            lotName = name.Split('.')[0];
 
-            
+
 
             Characters = new List<XmlCharacter>();
 
@@ -591,6 +592,11 @@ namespace FSO.Client.UI.Screens
             vm.MyUID = simID;
 
 
+            //Load clients data
+            AppearanceType type;
+
+            VMWorldActivator activator = new VMWorldActivator(vm, World);
+
             var headPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(gizmo.SelectedCharInfo.Head, 16));
             var bodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(gizmo.SelectedCharInfo.Body, 16));
             var HeadID = headPurchasable != null ? headPurchasable.OutfitID :
@@ -598,9 +604,9 @@ namespace FSO.Client.UI.Screens
             var BodyID = bodyPurchasable != null ? bodyPurchasable.OutfitID :
                 Convert.ToUInt64(gizmo.SelectedCharInfo.Body, 16);
 
-            AppearanceType type;
+
             Enum.TryParse(gizmo.SelectedCharInfo.Appearance, out type);
-            bool Male = (gizmo.SelectedCharInfo.Gender == "male") ? true:false;
+            bool Male = (gizmo.SelectedCharInfo.Gender == "male") ? true : false;
 
             vm.SendCommand(new VMNetSimJoinCmd
             {
@@ -610,16 +616,15 @@ namespace FSO.Client.UI.Screens
                 SkinTone = (byte)type,
                 Gender = Male,
                 Name = gizmo.SelectedCharInfo.Name,
-                Permissions = (Permissions == true) ? 
+                Permissions = (Permissions == true) ?
                 VMTSOAvatarPermissions.Owner : VMTSOAvatarPermissions.Visitor
             });
 
-            VMWorldActivator activator = new VMWorldActivator(vm, World);
+            if (host){
 
-           if (host){
                
 
-              }
+            }
         else
              {
 
@@ -725,20 +730,49 @@ namespace FSO.Client.UI.Screens
 
         private void SaveHouseButton_OnButtonClick(UIElement button)
         {
+            int houses = 0;
+
+
+            DirectoryInfo HousesDir;
+
             if (vm == null) return;
-            
-            var exporter = new VMWorldExporter();
-            exporter.SaveHouse(vm, lotName);
-            var marshal = vm.Save();
 
             if (!Directory.Exists(Path.Combine(FSOEnvironment.UserDir, "Houses/")))
-                Directory.CreateDirectory(Path.Combine(FSOEnvironment.UserDir, "Houses/"));
-
-
-            using (var output = new FileStream(Path.Combine(FSOEnvironment.UserDir, "Houses/house_00.fsov"), FileMode.Create))
             {
-                marshal.SerializeInto(new BinaryWriter(output));
+                HousesDir = Directory.CreateDirectory(Path.Combine(FSOEnvironment.UserDir, "Houses/"));
             }
+
+            HousesDir = new DirectoryInfo(Path.Combine(FSOEnvironment.UserDir, "Houses/"));
+
+            foreach (FileInfo file in HousesDir.GetFiles())
+                if (file.Extension == ".xml")
+                    houses += 1;
+
+            var exporter = new VMWorldExporter();
+
+            if (lotName == "empty_lot")
+                lotName = "house0" + houses;
+
+            string housePath = Path.Combine(FSOEnvironment.UserDir, "Houses/", lotName);
+
+            exporter.SaveHouse(vm, housePath + ".xml");
+            var marshal = vm.Save();
+
+            if (marshal != null)
+            using (var output = new FileStream(Path.Combine(FSOEnvironment.UserDir, "Houses/" + lotName + ".fsov"), FileMode.Create))
+                {
+                    marshal.SerializeInto(new BinaryWriter(output));
+                }
+
+            Texture2D lotThumb = World.GetLotThumb(GameFacade.GraphicsDevice, null);
+
+            if (lotThumb != null)
+                using (var output = File.Open(housePath + ".png", FileMode.OpenOrCreate))
+                {
+                    lotThumb.SaveAsPng(output, lotThumb.Width, lotThumb.Height);
+                }
+         
+
             if (vm.GlobalLink != null) ((VMTSOGlobalLinkStub)vm.GlobalLink).Database.Save();
         }
 

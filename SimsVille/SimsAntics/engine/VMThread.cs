@@ -402,7 +402,7 @@ namespace FSO.SimAntics.Engine
                 var operand = (VMSubRoutineOperand)instruction.Operand;
                 ExecuteSubRoutine(frame, bhav, CodeOwner, operand);
 #if IDE_COMPAT
-                if (Stack.LastOrDefault().GetCurrentInstruction().Breakpoint || ThreadBreak == VMThreadBreakMode.StepIn)
+                if ((Stack.Count > 0 && Stack.LastOrDefault().GetCurrentInstruction().Breakpoint) || ThreadBreak == VMThreadBreakMode.StepIn)
                 {
                     Breakpoint(frame);
                     ContinueExecution = false;

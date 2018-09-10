@@ -32,7 +32,7 @@ namespace FSO.Client.Utils.GameLocator
                     }
                 }
             }
-            return @"C:\Program Files\Maxis\The Sims Online\TSOClient\".Replace('\\', '/');
+            return AppDomain.CurrentDomain.BaseDirectory;
         }
 
 
@@ -57,7 +57,7 @@ namespace FSO.Client.Utils.GameLocator
                     }
                 }
             }
-            return @"C:\Program Files\Maxis\The Sims\";
+            return AppDomain.CurrentDomain.BaseDirectory;
         }
 
 

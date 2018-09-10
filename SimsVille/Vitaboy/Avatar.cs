@@ -68,13 +68,17 @@ namespace FSO.Vitaboy
         /// <param name="apr">The Appearance instance of the accessory.</param>
         public void AddAccessory(Appearance apr)
         {
-            if (Accessories.ContainsKey(apr))
+            if (Accessories.Count > 0)
             {
-                return;
-            }
+                if (Accessories.ContainsKey(apr))
+                {
+                    return;
+                }
 
             var add = AddAppearance(apr, null);
             Accessories.Add(apr, add);
+
+            }
         }
 
         /// <summary>
@@ -83,7 +87,8 @@ namespace FSO.Vitaboy
         /// <param name="apr">The Appearance of the accessory to remove.</param>
         public void RemoveAccessory(Appearance apr)
         {
-            if (Accessories.ContainsKey(apr))
+
+            if (Accessories.Count > 0 && Accessories.ContainsKey(apr))
             {
                 RemoveAppearance(Accessories[apr], true);
                 Accessories.Remove(apr);

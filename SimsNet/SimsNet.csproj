@@ -73,7 +73,7 @@
       <Name>sims.common</Name>
     </ProjectReference>
     <ProjectReference Include="..\SimsVille\SimsVille.csproj">
-      <Project>{FBCDEE0E-D16A-4FFC-B118-5744C0A59B44}</Project>
+      <Project>{fbcdee0e-d16a-4ffc-b118-5744c0a59b44}</Project>
       <Name>SimsVille</Name>
     </ProjectReference>
   </ItemGroup>
