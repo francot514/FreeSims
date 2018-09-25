@@ -135,7 +135,8 @@ namespace FSO.SimAntics.Engine.Utils
                     //throw new VMSimanticsException("Not implemented...");
 
                 case VMVariableScope.NeighborInStackObject: //24
-                    throw new VMSimanticsException("Not implemented...", context);
+
+                     return 0;
 
                 case VMVariableScope.Local: //25
                     return (short)context.Locals[data];

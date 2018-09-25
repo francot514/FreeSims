@@ -47,7 +47,7 @@ using FSO.SimAntics.Engine;
                     foreach (var ent in Entities)
                     {
                         if (ent.Position != LotTilePos.OUT_OF_WORLD && ent.GetBadNames() == false
-                            && ent.Object.GUID != VMAvatar.NPC_MAID && ent.Object.GUID != VMAvatar.NPC_GARDENER)
+                            && ent.Object.GUID != VMAvatar.TEMPLATE_PERSON && ent.Object.GUID != VMAvatar.TEMPLATE_NPC)
                             Objects.Add(ent);
 
                         
@@ -67,7 +67,7 @@ using FSO.SimAntics.Engine;
             {
                 interactionList = new List<string>();
                 interactionList.Clear();
-                if (entity.TreeTable != null)
+                if (entity.TreeTable != null && entity.TreeTableStrings != null)
                 {
                     TreeTableSelected = entity.TreeTable;
 
@@ -83,7 +83,7 @@ using FSO.SimAntics.Engine;
                     foreach (var interaction in entity.TreeTable.Interactions)
                     {
 
-                        if (!interaction.Debug || interaction.WhenDead)
+                        if (!interaction.Debug || !interaction.WhenDead || !interaction.Leapfrog)
                             interactionList.Add(entity.TreeTableStrings.GetString((int)interaction.TTAIndex));
                     }
                 }

@@ -997,8 +997,17 @@ namespace FSO.SimAntics
             BodyOutfit = input.BodyOutfit;
             HeadOutfit = input.HeadOutfit;
 
-            Avatar.Head = Content.Content.Get().AvatarOutfits.Get(HeadOutfit);
-            Avatar.Body = Content.Content.Get().AvatarOutfits.Get(BodyOutfit);
+            var headPurchasable = Content.Content.Get().AvatarPurchasables.Get(input.BodyOutfit);
+            var bodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(input.HeadOutfit);
+
+            Outfit Head = Content.Content.Get().AvatarOutfits.Get(headPurchasable != null ? headPurchasable.OutfitID :
+            BodyOutfit);
+            Outfit Body = Content.Content.Get().AvatarOutfits.Get(bodyPurchasable != null ? bodyPurchasable.OutfitID :
+            HeadOutfit);
+
+
+            Avatar.Head = Head;
+            Avatar.Body = Body;
             Avatar.Handgroup = Avatar.Body;
             
         }
