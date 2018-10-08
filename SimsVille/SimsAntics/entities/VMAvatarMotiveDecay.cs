@@ -17,7 +17,6 @@ namespace FSO.SimAntics.Entities
             "Comfort",
             "Hygiene",
             "Bladder",
-
             "Energy",
             "Fun",
             "Social"

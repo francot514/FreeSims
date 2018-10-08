@@ -33,13 +33,23 @@ namespace TSO.HIT
         public int LoopPointer = -1;
         public int WaitRemain = -1;
         public bool Paused;
-
+        public int TickN;
 
         private bool SimpleMode; //certain sounds play with no HIT.
         private bool PlaySimple;
 
- 
 
+        public bool HasSetLoop;
+        public bool LoopDefined;
+        public bool ThreadDead;
+
+        public bool Interruptable
+        {
+            get { return LocalVar != null && (LocalVar[0x21] > 0 || LocalVar[0x27] > 0); }
+        }
+        public bool Interrupted;
+        public HITThread InterruptWaiter;
+        public HITThread InterruptBlocker;
         private uint Patch; //sound id
 
         private List<HITNoteEntry> Notes;
@@ -58,10 +68,34 @@ namespace TSO.HIT
 
         private FSO.Content.Audio audContent;
 
+        public void Interrupt(HITThread waiter)
+        {
+            Interrupted = true;
+            InterruptWaiter = waiter;
+            waiter.InterruptBlocker = this;
+            for (int i = 0; i < Notes.Count; i++)
+            {
+                var note = Notes[i];
+                if (note.EndTick == -1)
+                {
+                    var tickDuration = (note.Duration);
+                    note.EndTick = note.StartTick + (int)(Math.Ceiling((TickN - note.StartTick) / tickDuration) * tickDuration);
+                    Notes[i] = note;
+                }
+            }
+        }
+
+        public void Unblock()
+        {
+            InterruptBlocker = null;
+        }
+
+
         public override  bool Tick() //true if continue, false if kill
         {
 
             if (Paused) return true;
+            TickN++;
 
             if (EverHadOwners && Owners.Count == 0)
             {
@@ -74,7 +108,14 @@ namespace TSO.HIT
             {
                 for (int i = 0; i < Notes.Count; i++)
                 {
+                    var note = Notes[i];
                     var inst = Notes[i].instance;
+                    if (note.EndTick != -1 && TickN > note.EndTick) inst.Stop();
+                    if (!note.started && inst.State == SoundState.Stopped)
+                    {
+                        if (!inst.IsDisposed) inst.Dispose();
+                        continue;
+                    }
                     inst.Pan = Pan;
                     inst.Volume = Volume;
                 }
@@ -272,7 +313,7 @@ namespace TSO.HIT
                 instance.Pan = Pan;
                 instance.Play();
 
-                var entry = new HITNoteEntry(instance, Patch);
+                var entry = new HITNoteEntry(sound, instance, Patch, TickN);
                 Notes.Add(entry);
                 NotesByChannel.Add(instance, entry);
                 return Notes.Count - 1;
@@ -300,7 +341,7 @@ namespace TSO.HIT
                 instance.Pan = Pan;
                 instance.Play();
 
-                var entry = new HITNoteEntry(instance, Patch);
+                var entry = new HITNoteEntry(sound, instance, Patch, TickN);
                 Notes.Add(entry);
                 NotesByChannel.Add(instance, entry);
                 return Notes.Count - 1;
@@ -422,7 +463,7 @@ namespace TSO.HIT
 
         public override void Dispose()
         {
-            //InterruptWaiter?.Unblock();
+            InterruptWaiter?.Unblock();
             foreach (var note in Notes) note.instance.Dispose();
         }
 
@@ -433,12 +474,21 @@ namespace TSO.HIT
         public SoundEffectInstance instance;
         public uint SoundID; //This is for killing specific sounds, see HITInterpreter.SeqGroupKill.
         public bool ended;
+        public bool started;
+        public int StartTick;
+        public int EndTick;
+        public float Duration;
 
-        public HITNoteEntry(SoundEffectInstance instance, uint SoundID)
+        public HITNoteEntry(SoundEffect sfx, SoundEffectInstance instance, uint SoundID, int startTick)
         {
             this.instance = instance;
             this.SoundID = SoundID;
             this.ended = false;
+            this.started = false;
+            this.EndTick = -1;
+            this.Duration = (float)sfx.Duration.TotalSeconds;
+            this.StartTick = startTick;
+
         }
     }
 }

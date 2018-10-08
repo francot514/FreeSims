@@ -28,6 +28,7 @@ namespace FSO.SimAntics.Primitives
             if (context.Thread.IsCheck) return VMPrimitiveExitCode.GOTO_FALSE;
 
             var obj = context.StackObject;
+            if (obj == null) return VMPrimitiveExitCode.GOTO_FALSE;
             var avatar = (VMAvatar)context.Caller;
 
             if (obj.Position == LotTilePos.OUT_OF_WORLD) return VMPrimitiveExitCode.GOTO_FALSE;
@@ -36,9 +37,16 @@ namespace FSO.SimAntics.Primitives
 
             if (operand.Location != VMGotoRelativeLocation.OnTopOf) { //default slot is on top of
                 slot.MinProximity = 16;
-                slot.MaxProximity = 24;
+                slot.MaxProximity = 32; //diamond shaped
+                slot.OptimalProximity = 16;
                 if (operand.Location == VMGotoRelativeLocation.AnywhereNear) slot.Rsflags |= (SLOTFlags)255;
                 else slot.Rsflags |= (SLOTFlags)(1 << (((int)operand.Location) % 8));
+            }
+            else
+            {
+                slot.MinProximity = 16;
+                slot.MaxProximity = 24;
+                slot.Rsflags |= (SLOTFlags)(1 << (((int)operand.Location) % 8));
             }
 
             if (operand.Direction == VMGotoRelativeDirection.AnyDirection) slot.Facing = SLOTFacing.FaceAnywhere; //TODO: verify. not sure where this came from?

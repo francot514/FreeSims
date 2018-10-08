@@ -23,6 +23,11 @@ namespace FSO.SimAntics.Engine.Primitives
 
     public class VMFindBestObjectForFunction : VMPrimitiveHandler
     {
+
+        public static HashSet<uint> SurfaceFunctions = new HashSet<uint>() {
+            14, 18, 20, 25
+        };
+
         public static uint[] FunctionToEntryPoint = {
             18, //prepare food
             19, //cook food
@@ -93,12 +98,20 @@ namespace FSO.SimAntics.Engine.Primitives
                             Execute = (test == VMPrimitiveExitCode.RETURN_TRUE);
                         } else Execute = true;
 
-                    } else {
+                    } else if (SurfaceFunctions.Contains(entry))
+                    {
+                        //ts1: surface functions that have no check tree rely on the engine to check there is nothing in slot 0.
+                        Execute = ent.GetSlot(0) == null;
+                    } else
+                    {
+
                         Execute = true;
                     }
-
+                        
                     if (Execute)
                     {
+                        if (ent.IsInUse(context.VM.Context, true)) continue;
+
                         //calculate the score for this object.
                         int score = 0;
                         if (ScoreVar[operand.Function] != VMStackObjectVariable.Invalid) {

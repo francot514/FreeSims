@@ -249,6 +249,36 @@ namespace FSO.SimAntics
             if (TreeTable != null) TreeTableStrings = obj.Resource.Get<TTAs>(id);
         }
 
+        public bool IsInUse(VMContext context, bool multitile)
+        {
+            return IsInUse(context, multitile, false);
+        }
+
+        public bool IsInUse(VMContext context, bool multitile, bool stackObjSafety)
+        {
+            if (multitile)
+            {
+                foreach (var obj in MultitileGroup.Objects)
+                {
+                    if (obj.IsInUse(context, false)) return true;
+                }
+            }
+            else
+            {
+                if (GetFlag(VMEntityFlags.Occupied)) return true;
+                foreach (var ava in context.VM.Entities)
+                {
+                    if (ava is VMAvatar)
+                    foreach (var item in ava.Thread.Stack)
+                    {
+                        if (item.Callee == this) return true;
+                        if (stackObjSafety && item.StackObject == this) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         public virtual void Tick()
         {
             //decrement lockout count
@@ -622,6 +652,12 @@ namespace FSO.SimAntics
         {
             switch (var) //special cases
             {
+                case VMStackObjectVariable.Flags:
+                    if (((value ^ ObjectData[(short)var]) & (int)VMEntityFlags.HasZeroExtent) > 0)
+                        Footprint = GetObstacle(Position, Direction);
+                    if (this is VMAvatar && ((value ^ ObjectData[(short)var]) & (int)VMEntityFlags.Burning) > 0)
+                        this.Reset(Thread.Context);
+                    break;
                 case VMStackObjectVariable.Direction:
                     value = (short)(((int)value + 65536) % 8);
                     switch (value) {
@@ -644,6 +680,8 @@ namespace FSO.SimAntics
                 case VMStackObjectVariable.Hidden:
                     if (UseWorld) WorldUI.Visible = value == 0;
                     break;
+
+
             }
 
             if ((short)var > 79) throw new Exception("Object Data out of range!");

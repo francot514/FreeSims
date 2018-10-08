@@ -161,10 +161,29 @@ namespace TSO.HIT
         public HITSound PlaySoundEvent(string evt)
         {
             evt = evt.ToLower();
+            HITThread InterruptBlocker = null;  //the thread we have to wait for to finish before we begin.
+
+
             if (ActiveEvents.ContainsKey(evt))
             {
-                if (ActiveEvents[evt].Dead) ActiveEvents.Remove(evt); //if the last event is dead, remove and make a new one
-                else return ActiveEvents[evt]; //an event of this type is already alive - here, take it.
+
+                var aevt = ActiveEvents[evt];
+
+                if (aevt.Dead) ActiveEvents.Remove(evt); //if the last event is dead, remove and make a new one
+                else
+                {
+                    if ((aevt as HITThread)?.InterruptBlocker != null)
+                    {
+                        //we can stop this thread - steal its waiter
+                        (aevt as HITThread).Dead = true;
+                        InterruptBlocker = (aevt as HITThread).InterruptBlocker;
+                    }
+                    else if ((aevt as HITThread)?.Interruptable == true)
+                    {
+                        InterruptBlocker = (aevt as HITThread);
+                    }
+                    else return aevt; //an event of this type is already alive - here, take it.
+                }
             }
 
             var content = FSO.Content.Content.Get();
@@ -225,6 +244,13 @@ namespace TSO.HIT
 
                     Threads.Add(thread);
                     ActiveEvents.Add(evt, thread);
+
+                    if (InterruptBlocker != null)
+                    {
+                        InterruptBlocker.Interrupt(thread);
+                        InterruptBlocker.KillVocals();
+                    }
+
                     return thread;
                 }
                 else if (TrackID != 0 && content.Audio.TracksById.ContainsKey(TrackID))
@@ -232,6 +258,13 @@ namespace TSO.HIT
                     var thread = new HITThread(TrackID);
                     Threads.Add(thread);
                     ActiveEvents.Add(evt, thread);
+
+                    if (InterruptBlocker != null)
+                    {
+                        InterruptBlocker.Interrupt(thread);
+                        InterruptBlocker.KillVocals();
+                    }
+
                     return thread;
                 }
             }
