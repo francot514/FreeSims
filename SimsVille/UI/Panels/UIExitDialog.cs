@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text;
 using FSO.Client.UI.Controls;
 using FSO.Client.UI.Framework;
+using FSO.Client.UI.Screens;
 
 namespace FSO.Client.UI.Panels
 {
@@ -18,13 +19,16 @@ namespace FSO.Client.UI.Panels
         /// <summary>
         /// Exit buttons
         /// </summary>
+        public UIDestroyablePanel Parent;
         public UIButton ReLoginButton { get; set; }
         public UIButton ExitButton { get; set; }
         public UIButton CancelButton { get; set; }
 
-        public UIExitDialog()
+        public UIExitDialog(UIDestroyablePanel parent)
             : base(UIDialogStyle.Standard, true)
         {
+
+            Parent = parent;
             this.RenderScript("exitdialog.uis");
             this.SetSize(380, 180);
 
@@ -45,7 +49,14 @@ namespace FSO.Client.UI.Panels
 
         private void ReLoginButton_OnButtonClick(UIElement button)
         {
-            var alert = UIScreen.ShowAlert(new UIAlertOptions { Title = "Not Implemented", Message = "This feature is not implemented yet!" }, true);
+
+            UIScreen.RemoveDialog(this);
+
+            UIOptions options = (UIOptions)Parent;
+
+            CoreGameScreen screen = ((UIUCP)options.Parent).Game;
+
+            GameFacade.Controller.ShowCity(screen);
         }
     }
 }

@@ -31,9 +31,10 @@ namespace FSO.Content
         private Dictionary<ushort, Floor> ById;
 
         public Dictionary<ushort, FloorReference> Entries;
-        public FAR1Provider<IffFile> Floors;
+        public Dictionary<string, ushort> DynamicFloorFromID;
+        public FAR1Provider<Files.Formats.IFF.IffFile> Floors;
 
-        private IffFile FloorGlobals;
+        private Files.Formats.IFF.IffFile FloorGlobals;
         public int NumFloors;
 
         public WorldFloorProvider(Content contentManager)
@@ -49,13 +50,14 @@ namespace FSO.Content
 
             this.Entries = new Dictionary<ushort, FloorReference>();
             this.ById = new Dictionary<ushort, Floor>();
+            this.DynamicFloorFromID = new Dictionary<string, ushort>();
 
             var floorGlobalsPath = ContentManager.GetPath("objectdata/globals/floors.iff");
-            var floorGlobals = new IffFile(floorGlobalsPath);
+            var floorGlobals = new Files.Formats.IFF.IffFile(floorGlobalsPath);
             FloorGlobals = floorGlobals;
 
             var buildGlobalsPath = ContentManager.GetPath("objectdata/globals/build.iff");
-            var buildGlobals = new IffFile(buildGlobalsPath); //todo: centralize?
+            var buildGlobals = new Files.Formats.IFF.IffFile(buildGlobalsPath); //todo: centralize?
 
             /** There is a small handful of floors in a global file for some reason **/
             ushort floorID = 1;
@@ -117,7 +119,8 @@ namespace FSO.Content
 
                 foreach (var entry in entries)
                 {
-                    var iff = new IffFile();
+                    var iff = new Files.Formats.IFF.IffFile();
+                    DynamicFloorFromID[new string(entry.Key.TakeWhile(x => x != '.').ToArray()).ToLowerInvariant()] = floorID;
                     var bytes = archive.GetEntry(entry);
                     using(var stream = new MemoryStream(bytes))
                     {
@@ -143,7 +146,7 @@ namespace FSO.Content
             }
 
             NumFloors = floorID;
-            this.Floors = new FAR1Provider<IffFile>(ContentManager, new IffCodec(), new Regex(".*/floors.*\\.far"));
+            this.Floors = new FAR1Provider<Files.Formats.IFF.IffFile>(ContentManager, new IffCodec(), new Regex(".*/floors.*\\.far"));
             Floors.Init();
         }
 
@@ -183,7 +186,7 @@ namespace FSO.Content
             {
                 //get from iff
                 if (!Entries.ContainsKey((ushort)id)) return null;
-                IffFile iff = this.Floors.Get(Entries[(ushort)id].FileName);
+                Files.Formats.IFF.IffFile iff = this.Floors.Get(Entries[(ushort)id].FileName);
                 if (iff == null) return null;
 
                 var far = iff.Get<SPR2>(1);

@@ -77,11 +77,13 @@ namespace FSO.Client
            // GameFacade.Screens.AddScreen(new CityTransitionScreen(selectedCity, CharacterCreated));
         }
 
-        public void ShowCity()
+        public void ShowCity(CoreGameScreen screen)
         {
-            var screen = new CoreGameScreen();
-            GameFacade.Screens.RemoveCurrent();
-            GameFacade.Screens.AddScreen(screen);
+
+            if (screen != null)
+                screen.ZoomLevel = 4;
+
+
         }
 
         public void ShowCredits()

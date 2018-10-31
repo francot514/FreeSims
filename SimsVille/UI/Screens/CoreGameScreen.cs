@@ -38,6 +38,7 @@ using tso.world.Model;
 using FSO.Vitaboy;
 using FSO.SimAntics.Model.TSOPlatform;
 using Microsoft.Xna.Framework.Graphics;
+using FSO.Files.Formats.IFF;
 
 namespace FSO.Client.UI.Screens
 {
@@ -261,6 +262,8 @@ namespace FSO.Client.UI.Screens
             Title.SetTitle(city);
             this.Add(Title);
 
+            
+
             //OpenInbox();
 
             this.Add(GameFacade.MessageController);
@@ -468,7 +471,7 @@ namespace FSO.Client.UI.Screens
             Connecting = false;
         }
 
-        public void InitTestLot(string path, string name, bool host)
+        public void InitTestLot(string path, string name, bool host, bool TS1)
         {
             if (Connecting) return;
 
@@ -543,6 +546,7 @@ namespace FSO.Client.UI.Screens
             {
                 //check: do we have an fsov to try loading from?
 
+                IffFile HouseFile = new IffFile();
                 string filename = Path.GetFileName(path);
                 try
                 {
@@ -568,12 +572,18 @@ namespace FSO.Client.UI.Screens
                     }
                     catch (Exception) { }
 
-                    vm.SendCommand(new VMBlueprintRestoreCmd
-                    {
-                        JobLevel = jobLevel,
-                        XMLData = File.ReadAllBytes(path),
-                        Characters = Characters
-                    });
+                    if (TS1)
+                        HouseFile = new IffFile(path);
+
+                        vm.SendCommand(new VMBlueprintRestoreCmd
+                        {
+                            JobLevel = jobLevel,
+                            XMLData = File.ReadAllBytes(path),
+                            Characters = Characters,
+                            HouseFile = HouseFile,
+                            TS1 = TS1
+
+                        });
                 }
             }
 

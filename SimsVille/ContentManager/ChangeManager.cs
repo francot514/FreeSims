@@ -12,7 +12,7 @@ namespace FSO.Content
 {
     public class ChangeManager
     {
-        HashSet<IffFile> ChangedFiles = new HashSet<IffFile>();
+        HashSet<Files.Formats.IFF.IffFile> ChangedFiles = new HashSet<Files.Formats.IFF.IffFile>();
         private Queue<ResAction> ResActionQueue = new Queue<ResAction>();
         private Queue<ResInvokeElem> InvokeQueue = new Queue<ResInvokeElem>();
 
@@ -27,7 +27,7 @@ namespace FSO.Content
             inv.Sync.WaitOne();
         }
 
-        public void IffChanged(IffFile file)
+        public void IffChanged(Files.Formats.IFF.IffFile file)
         {
             file.RuntimeInfo.Dirty = true;
             lock (this) ChangedFiles.Add(file);
@@ -40,7 +40,7 @@ namespace FSO.Content
             IffChanged(chunk.ChunkParent);
         }
 
-        public void UnregisterObjects(IffFile file)
+        public void UnregisterObjects(Files.Formats.IFF.IffFile file)
         {
             var objRegistry = Content.Get().WorldObjects;
             var defs = file.List<OBJD>();
@@ -53,7 +53,7 @@ namespace FSO.Content
             }
         }
 
-        public void RegisterObjects(IffFile file)
+        public void RegisterObjects(Files.Formats.IFF.IffFile file)
         {
             var objRegistry = Content.Get().WorldObjects;
             var defs = file.List<OBJD>();
@@ -66,17 +66,17 @@ namespace FSO.Content
             }
         }
 
-        public HashSet<IffFile> GetChangeList()
+        public HashSet<Files.Formats.IFF.IffFile> GetChangeList()
         {
-            lock (this) return new HashSet<IffFile>(ChangedFiles);
+            lock (this) return new HashSet<Files.Formats.IFF.IffFile>(ChangedFiles);
         }
 
-        public void DiscardChanges(IEnumerable<IffFile> files)
+        public void DiscardChanges(IEnumerable<Files.Formats.IFF.IffFile> files)
         {
             lock (this) foreach (var file in files) DiscardChange(file);
         }
 
-        public void DiscardChange(IffFile file)
+        public void DiscardChange(Files.Formats.IFF.IffFile file)
         {
             lock (this)
             {
@@ -104,12 +104,12 @@ namespace FSO.Content
             }
         }
 
-        public void SaveChanges(IEnumerable<IffFile> files)
+        public void SaveChanges(IEnumerable<Files.Formats.IFF.IffFile> files)
         {
             lock (this) foreach (var file in files) SaveChange(file);
         }
 
-        public void SaveChange(IffFile file)
+        public void SaveChange(Files.Formats.IFF.IffFile file)
         {
             lock (this)
             {

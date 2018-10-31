@@ -26,6 +26,7 @@ namespace FSO.Client.UI.Panels
     public class UIGizmoPropertyFilters : UIContainer
     {
         public UIImage Background;
+        
 
         public UIGizmoPropertyFilters(UIScript script, UIGizmo parent)
         {
@@ -55,6 +56,9 @@ namespace FSO.Client.UI.Panels
         private UIGizmo Main;
         private UIImage Background;
 
+        
+
+
         public UIGizmoSearch(UIScript script, UIGizmo parent)
         {
             Main = parent;
@@ -74,7 +78,7 @@ namespace FSO.Client.UI.Panels
             if (Main.SelectedCharInfo != null)
             {
 
-                ((CoreGameScreen)(Parent.Parent)).InitTestLot(SearchText.CurrentText, SearchText.CurrentText, false);
+                ((CoreGameScreen)(Parent.Parent)).InitTestLot(SearchText.CurrentText, SearchText.CurrentText, false, ((UIGizmoTop100)(Parent)).TS1);
             }
             else
             {
@@ -98,7 +102,8 @@ namespace FSO.Client.UI.Panels
         private int UpdateCooldown;
         public UIGizmo Main;
         public UIImage Background; //public so we can disable visibility when not selected... workaround to stop background mouse blocking still happening when panel is hidden
-        private bool Selected;
+        public bool Selected;
+        public bool TS1;
 
         public UIGizmoTop100(UIScript script, UIGizmo parent)
         {
@@ -116,7 +121,6 @@ namespace FSO.Client.UI.Panels
 
 
             populateWithXMLHouses();
-
             populateWithCharacters();
 
             Top100ResultList.OnDoubleClick += Top100ItemSelect;
@@ -142,17 +146,32 @@ namespace FSO.Client.UI.Panels
 
             string[] paths = Directory.GetFiles("Content/Houses/", "*.xml", SearchOption.AllDirectories);
 
+
             
             for (int i = 0; i < paths.Length; i++)
             {
                 string entry = paths[i];
                 string filename = Path.GetFileName(entry);
                 xmlHouses.Add(new UIXMLLotEntry { Filename = filename, Path = entry });
+                
+            }
+
+            paths = Directory.GetFiles("Content/Houses/", "*.iff", SearchOption.AllDirectories);
+
+
+            for (int i = 0; i < paths.Length; i++)
+            {
+                string entry = paths[i];
+                string filename = Path.GetFileName(entry);
+                xmlHouses.Add(new UIXMLLotEntry { Filename = filename, Path = entry });
+                
             }
 
 
             Top100ResultList.Items = xmlHouses.Select(x => new UIListBoxItem(x, x.Filename)).ToList();
         }
+
+
 
         public void populateWithCharacters()
         {
@@ -182,7 +201,12 @@ namespace FSO.Client.UI.Panels
 
                 if (Main.SelectedCharInfo != null){
 
-                    ((CoreGameScreen)(Parent.Parent)).InitTestLot(((UIXMLLotEntry)Top100ResultList.SelectedItem.Data).Path, ((UIXMLLotEntry)Top100ResultList.SelectedItem.Data).Filename, true);
+                    if (((UIXMLLotEntry)Top100ResultList.SelectedItem.Data).Path.Contains(".iff"))
+                        TS1 = true;
+                    else if (((UIXMLLotEntry)Top100ResultList.SelectedItem.Data).Path.Contains(".xml"))
+                        TS1 = false;
+
+                    ((CoreGameScreen)(Parent.Parent)).InitTestLot(((UIXMLLotEntry)Top100ResultList.SelectedItem.Data).Path, ((UIXMLLotEntry)Top100ResultList.SelectedItem.Data).Filename, true, TS1);
 
                 }
                 else

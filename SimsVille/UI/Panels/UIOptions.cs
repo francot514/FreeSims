@@ -104,7 +104,7 @@ namespace FSO.Client.UI.Panels
 
         private void ExitButton_OnButtonClick(UIElement button)
         {
-            UIScreen.ShowDialog(new UIExitDialog(), true);
+            UIScreen.ShowDialog(new UIExitDialog(this), true);
         }
 
         private void GraphicsButton_OnButtonClick(UIElement button)
@@ -124,6 +124,7 @@ namespace FSO.Client.UI.Panels
 
         private void SelectSimButton_OnButtonClick(UIElement button)
         {
+
             var alert = UIScreen.ShowAlert(new UIAlertOptions { Title = "Not Implemented", Message = "This feature is not implemented yet!" }, true);
         }
     }

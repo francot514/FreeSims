@@ -20,6 +20,10 @@ namespace FSO.SimAntics
         public int TicksPerMinute;
         public int Minutes;
         public int Hours;
+        public int DayOfMonth;
+        public int Month;
+        public int Year;
+
         public int TimeOfDay
         {
             get

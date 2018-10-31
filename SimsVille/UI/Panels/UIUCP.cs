@@ -29,7 +29,7 @@ namespace FSO.Client.UI.Panels
     /// </summary>
     public class UIUCP : UIContainer
     {
-        private CoreGameScreen Game; //the main screen
+        public CoreGameScreen Game; //the main screen
         private UISelectHouseView SelWallsPanel; //select view panel that is created when clicking the current walls mode
 
         /// <summary>

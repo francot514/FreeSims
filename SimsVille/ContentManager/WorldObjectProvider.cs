@@ -28,8 +28,8 @@ namespace FSO.Content
     public class WorldObjectProvider : IContentProvider<GameObject>
     {
         private ConcurrentDictionary<ulong, GameObject> Cache = new ConcurrentDictionary<ulong, GameObject>();
-        private FAR1Provider<IffFile> Iffs;
-        private FAR1Provider<IffFile> Sprites;
+        private FAR1Provider<Files.Formats.IFF.IffFile> Iffs;
+        private FAR1Provider<Files.Formats.IFF.IffFile> Sprites;
         private FAR1Provider<OTFFile> TuningTables;
         private Content ContentManager;
 
@@ -348,7 +348,7 @@ namespace FSO.Content
 
             }
 
-            Iffs = new FAR1Provider<IffFile>(ContentManager, new IffCodec(), FarFiles.ToArray());
+            Iffs = new FAR1Provider<Files.Formats.IFF.IffFile>(ContentManager, new IffCodec(), FarFiles.ToArray());
 
             TuningTables = new FAR1Provider<OTFFile>(ContentManager, new OTFCodec(), new Regex(".*/objotf.*\\.far"));
 
@@ -357,7 +357,7 @@ namespace FSO.Content
 
             if (withSprites)
             {
-                Sprites = new FAR1Provider<IffFile>(ContentManager, new IffCodec(), SpriteFiles.ToArray());
+                Sprites = new FAR1Provider<Files.Formats.IFF.IffFile>(ContentManager, new IffCodec(), SpriteFiles.ToArray());
                 Sprites.Init();
             }
 
@@ -405,7 +405,7 @@ namespace FSO.Content
                     if (resource == null)
                     {
                         /** Better set this up! **/
-                        IffFile sprites = null, iff = null;
+                        Files.Formats.IFF.IffFile sprites = null, iff = null;
                         OTFFile tuning = null;
 
                         if (reference.Source == GameObjectSource.Far)
@@ -423,7 +423,7 @@ namespace FSO.Content
                         }
                         else
                         {
-                            iff = new IffFile(reference.FileName);
+                            iff = new Files.Formats.IFF.IffFile(reference.FileName);
                             iff.RuntimeInfo.Path = reference.FileName;
                             iff.RuntimeInfo.State = IffRuntimeState.Standalone;
                         }
@@ -493,7 +493,7 @@ namespace FSO.Content
             }
         }
 
-        public void AddObject(IffFile iff, OBJD obj)
+        public void AddObject(Files.Formats.IFF.IffFile iff, OBJD obj)
         {
             lock (Entries)
             {
@@ -536,7 +536,7 @@ namespace FSO.Content
             }
         }
 
-        public void ResetFile(IffFile iff)
+        public void ResetFile(Files.Formats.IFF.IffFile iff)
         {
             lock (Entries)
             {
@@ -635,8 +635,8 @@ namespace FSO.Content
     public class GameObjectResource : GameIffResource
     {
         //DO NOT USE THESE, THEY ARE ONLY PUBLIC FOR DEBUG UTILITIES
-        public IffFile Iff;
-        public IffFile Sprites;
+        public Files.Formats.IFF.IffFile Iff;
+        public Files.Formats.IFF.IffFile Sprites;
         public OTFFile Tuning;
 
         //use this tho
@@ -647,7 +647,7 @@ namespace FSO.Content
             get { return Iff; }
         }
 
-        public GameObjectResource(IffFile iff, IffFile sprites, OTFFile tuning, string iname)
+        public GameObjectResource(Files.Formats.IFF.IffFile iff, Files.Formats.IFF.IffFile sprites, OTFFile tuning, string iname)
         {
             this.Iff = iff;
             this.Sprites = sprites;

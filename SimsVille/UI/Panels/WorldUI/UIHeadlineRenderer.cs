@@ -16,7 +16,7 @@ namespace FSO.Client.UI.Panels.WorldUI
 {
     public class UIHeadlineRenderer : VMHeadlineRenderer
     {
-        private static IffFile Sprites;
+        private static Files.Formats.IFF.IffFile Sprites;
         private static Texture2D WhitePx;
         private static int[] GroupOffsets =
         {

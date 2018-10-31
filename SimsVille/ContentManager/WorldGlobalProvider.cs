@@ -28,7 +28,7 @@ namespace FSO.Content
     {
         private Dictionary<string, GameGlobal> Cache; //indexed by lowercase filename, minus directory and extension.
         private Content ContentManager;
-        public FAR1Provider<IffFile> GlobalIffs;
+        public FAR1Provider<Files.Formats.IFF.IffFile> GlobalIffs;
 
 
         public WorldGlobalProvider(Content contentManager)
@@ -50,7 +50,7 @@ namespace FSO.Content
 
                     GlobalFiles.Add(FSOEnvironment.SimsCompleteDir + "/Global/Global.far");
 
-                    GlobalIffs = new FAR1Provider<IffFile>(ContentManager, new IffCodec(), GlobalFiles.ToArray());
+                GlobalIffs = new FAR1Provider<Files.Formats.IFF.IffFile>(ContentManager, new IffCodec(), GlobalFiles.ToArray());
 
                     GlobalIffs.Init();
 
@@ -66,7 +66,7 @@ namespace FSO.Content
         public GameGlobal Get(string filename)
         {
             string filepath;
-            IffFile iff = null;
+            Files.Formats.IFF.IffFile iff = null;
 
             filename = filename.ToLowerInvariant();
             lock (Cache)
@@ -82,7 +82,7 @@ namespace FSO.Content
                 //if we can't load this let it throw an exception...
                 //probably sanity check this when we add user objects.
                 if (File.Exists(filepath))
-                    iff = new IffFile(filepath);
+                    iff = new Files.Formats.IFF.IffFile(filepath);
                
 
                 if (GlobalIffs != null)
@@ -121,7 +121,7 @@ namespace FSO.Content
     /// </summary>
     public class GameGlobalResource : GameIffResource
     {
-        public IffFile Iff;
+        public Files.Formats.IFF.IffFile Iff;
         public OTFFile Tuning;
 
         public override IffFile MainIff
@@ -129,7 +129,7 @@ namespace FSO.Content
             get { return Iff; }
         }
 
-        public GameGlobalResource(IffFile iff, OTFFile tuning)
+        public GameGlobalResource(Files.Formats.IFF.IffFile iff, OTFFile tuning)
         {
             this.Iff = iff;
             this.Tuning = tuning;

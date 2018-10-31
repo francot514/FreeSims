@@ -243,7 +243,8 @@ namespace TSO.HIT
                     if (TrackID != 0) thread.SetTrack(TrackID);
 
                     Threads.Add(thread);
-                    ActiveEvents.Add(evt, thread);
+                    if (!ActiveEvents.ContainsKey(evt))
+                        ActiveEvents.Add(evt, thread);
 
                     if (InterruptBlocker != null)
                     {

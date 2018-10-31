@@ -36,6 +36,7 @@ namespace FSO.SimAntics.NetPlay.Model
             { VMCommandType.EODObjEvent, typeof(VMNetEODEventCmd) },
             { VMCommandType.EODMessage, typeof(VMNetEODMessageCmd) },
             { VMCommandType.SetRoof, typeof(VMNetSetRoofCmd) },
+
         };
         public static Dictionary<Type, VMCommandType> ReverseMap = CmdMap.ToDictionary(x => x.Value, x => x.Key);
 

@@ -15,6 +15,7 @@ using tso.world.Model;
 using FSO.Common;
 using FSO.SimAntics.Primitives;
 using FSO.Vitaboy;
+using FSO.Files.Formats.IFF;
 
 namespace FSO.SimAntics.NetPlay.Model.Commands
 {
@@ -23,29 +24,45 @@ namespace FSO.SimAntics.NetPlay.Model.Commands
         public byte[] XMLData;
         public short JobLevel = -1;
         public List<XmlCharacter> Characters;
-
+        public IffFile HouseFile;
+        public bool TS1;
 
         public override bool Execute(VM vm)
         {
 
             string[] CharacterInfos = new string[9];
-            
+            Blueprint Blueprint = new Blueprint(64,64);
             XmlHouseData lotInfo;
-            using (var stream = new MemoryStream(XMLData))
-            {
-                lotInfo = XmlHouseData.Parse(stream);
-            }
 
             VMWorldActivator activator = new VMWorldActivator(vm, vm.Context.World);
 
+            if (TS1)
+            {
+
+                Blueprint = activator.LoadFromIff(HouseFile);
+
+
+            }
+            else 
+            {
+                using (var stream = new MemoryStream(XMLData))
+                {
+                    lotInfo = XmlHouseData.Parse(stream);
+                }
+
+                Blueprint = activator.LoadFromXML(lotInfo);
+
+            }
+
+
             vm.Activator = activator;
-            
-            var blueprint = activator.LoadFromXML(lotInfo);
+
+                     
 
             if (VM.UseWorld)
             {
-                vm.Context.World.InitBlueprint(blueprint);
-                vm.Context.Blueprint = blueprint;
+                vm.Context.World.InitBlueprint(Blueprint);
+                vm.Context.Blueprint = Blueprint;
             }
             vm.SetGlobalValue(11, JobLevel);
 

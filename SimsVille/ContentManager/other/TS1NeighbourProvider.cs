@@ -15,12 +15,12 @@ namespace FSO.Content.TS1
     /// </summary>
     public class TS1NeighborhoodProvider
     {
-        public IffFile MainResource;
-        public IffFile LotLocations;
-        public IffFile StreetNames;
-        public IffFile NeighbourhoodDesc;
-        public IffFile STDesc;
-        public IffFile MTDesc;
+        public Files.Formats.IFF.IffFile MainResource;
+        public Files.Formats.IFF.IffFile LotLocations;
+        public Files.Formats.IFF.IffFile StreetNames;
+        public Files.Formats.IFF.IffFile NeighbourhoodDesc;
+        public Files.Formats.IFF.IffFile STDesc;
+        public Files.Formats.IFF.IffFile MTDesc;
         public Dictionary<short, short> ZoningDictionary = new Dictionary<short, short>();
         public NBRS Neighbors;
         public NGBH Neighborhood;
@@ -57,7 +57,7 @@ namespace FSO.Content.TS1
                
             UserPath = userPath;
 
-            MainResource = new IffFile(Path.Combine(UserPath, "Neighborhood.iff"));
+            MainResource = new Files.Formats.IFF.IffFile(Path.Combine(UserPath, "Neighborhood.iff"));
 
             Neighbors = MainResource.List<NBRS>().FirstOrDefault();
             Neighborhood = MainResource.List<NGBH>().FirstOrDefault();
@@ -113,7 +113,7 @@ namespace FSO.Content.TS1
             return true;
         }
 
-        public bool SaveHouse(int houseID, IffFile file)
+        public bool SaveHouse(int houseID, Files.Formats.IFF.IffFile file)
         {
             using (var stream = new FileStream(GetHousePath(houseID), FileMode.Create, FileAccess.Write, FileShare.None))
                 file.Write(stream);
@@ -123,7 +123,7 @@ namespace FSO.Content.TS1
 
         public IffFile GetHouse(int id)
         {
-            return new IffFile(Path.Combine(UserPath, "Houses/House"+id.ToString().PadLeft(2, '0')+".iff"));
+            return new Files.Formats.IFF.IffFile(Path.Combine(UserPath, "Houses/House"+ id.ToString().PadLeft(2, '0')+".iff"));
         }
 
         public string GetHousePath(int id)

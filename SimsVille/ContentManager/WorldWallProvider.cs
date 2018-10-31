@@ -32,11 +32,12 @@ namespace FSO.Content
         private List<WallStyle> WallStyles;
         private Dictionary<ushort, Wall> ById;
         private Dictionary<ushort, WallStyle> StyleById;
-        private IffFile WallGlobals;
+        public Dictionary<string, ushort> DynamicWallFromID;
+        private Files.Formats.IFF.IffFile WallGlobals;
 
         public Dictionary<ushort, WallReference> Entries;
 
-        public FAR1Provider<IffFile> Walls;
+        public FAR1Provider<Files.Formats.IFF.IffFile> Walls;
 
         public int NumWalls;
 
@@ -74,14 +75,15 @@ namespace FSO.Content
 
             this.Entries = new Dictionary<ushort, WallReference>();
             this.ById = new Dictionary<ushort, Wall>();
+            this.DynamicWallFromID = new Dictionary<string, ushort>();
             this.StyleById = new Dictionary<ushort, WallStyle>();
             this.WallStyles = new List<WallStyle>();
 
             var wallGlobalsPath = ContentManager.GetPath("objectdata/globals/walls.iff");
-            WallGlobals = new IffFile(wallGlobalsPath);
+            WallGlobals = new Files.Formats.IFF.IffFile(wallGlobalsPath);
 
             var buildGlobalsPath = ContentManager.GetPath("objectdata/globals/build.iff");
-            var buildGlobals = new IffFile(buildGlobalsPath); //todo: centralize?
+            var buildGlobals = new Files.Formats.IFF.IffFile(buildGlobalsPath); //todo: centralize?
 
             /** Get wall styles from globals file **/
             var styleStrs = buildGlobals.Get<STR>(0x81);
@@ -197,7 +199,8 @@ namespace FSO.Content
                 foreach (var entry in entries)
                 {
 
-                    var iff = new IffFile();
+                    var iff = new Files.Formats.IFF.IffFile();
+                    DynamicWallFromID[Path.GetFileNameWithoutExtension(entry.ToString().Replace('\\', '/')).ToLowerInvariant()] = wallID;
                     var bytes = archive.GetEntry(entry);
                     using(var stream = new MemoryStream(bytes))
                     {
@@ -221,7 +224,7 @@ namespace FSO.Content
                 archive.Close();
             }
 
-            this.Walls = new FAR1Provider<IffFile>(ContentManager, new IffCodec(), new Regex(".*/walls.*\\.far"));
+            this.Walls = new FAR1Provider<Files.Formats.IFF.IffFile>(ContentManager, new IffCodec(), new Regex(".*/walls.*\\.far"));
             Walls.Init();
             NumWalls = wallID;
         }
@@ -299,7 +302,7 @@ namespace FSO.Content
             else
             {
                 //get from iff
-                IffFile iff = this.Walls.Get(Entries[(ushort)id].FileName);
+                Files.Formats.IFF.IffFile iff = this.Walls.Get(Entries[(ushort)id].FileName);
                 if (iff == null) return null;
 
                 var far = iff.Get<SPR>(1);

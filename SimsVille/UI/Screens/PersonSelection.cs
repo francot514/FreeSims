@@ -263,7 +263,7 @@ namespace FSO.Client.UI.Screens
 
         private void m_ExitButton_OnButtonClick(UIElement button)
         {
-            UIScreen.ShowDialog(new UIExitDialog(), true);
+            UIScreen.ShowDialog(new UIExitDialog(null), true);
         }
 
         private void CreditsButton_OnButtonClick(UIElement button)
