@@ -50,6 +50,16 @@ namespace FSO.Files.Formats.IFF
             {"BMP_", typeof(BMP)},
             {"NBRS", typeof(NBRS)},
             {"NGBH", typeof(NGBH)},
+            {"objt", typeof(OBJT) },
+            {"Arry", typeof(ARRY) },
+            {"ObjM", typeof(OBJM) },
+            {"WALm", typeof(WALm) },
+            {"FLRm", typeof(FLRm) },
+            {"FAMI", typeof(FAMI) },
+            {"FAMs", typeof(FAMs) },
+            {"SIMI", typeof(SIMI) },
+            {"TATT", typeof(TATT) },
+            {"HOUS", typeof(HOUS) },
             {"PIFF", typeof(PIFF) }
         };
 
@@ -387,7 +397,7 @@ namespace FSO.Files.Formats.IFF
                 chunk.ChunkData = chunk.OriginalData;
                 foreach (var piffFile in RuntimeInfo.Patches)
                 {
-                    var piff = piffFile.List<PIFF>()[0];
+                    var piff = piffFile.List<Chunks.PIFF>()[0];
                     foreach (var e in piff.Entries)
                     { 
                         var type = CHUNK_TYPES[e.Type];
@@ -406,7 +416,7 @@ namespace FSO.Files.Formats.IFF
         public void Patch(IffFile piffFile)
         {
             if (RuntimeInfo.State == IffRuntimeState.ReadOnly) RuntimeInfo.State = IffRuntimeState.PIFFPatch;
-            var piff = piffFile.List<PIFF>()[0];
+            var piff = piffFile.List<Chunks.PIFF>()[0];
 
             //patch existing chunks using the PIFF chunk
             //also delete chunks marked for deletion
@@ -450,7 +460,7 @@ namespace FSO.Files.Formats.IFF
             //add chunks present in the piff to the original file
             foreach (var typeG in piffFile.ByChunkType)
             {
-                if (typeG.Key == typeof(PIFF)) continue;
+                if (typeG.Key == typeof(Chunks.PIFF)) continue;
                 foreach (var res in typeG.Value)
                 {
                     var chunk = (IffChunk)res;

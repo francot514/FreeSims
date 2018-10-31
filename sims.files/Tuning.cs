@@ -58,6 +58,8 @@ namespace FSO.Files
 
 		public Tuning(string Path)
 		{
+
+
 			try
 			{
 				m_Reader = new BinaryReader(File.OpenRead(Path));
@@ -67,7 +69,9 @@ namespace FSO.Files
 				throw new Exception("Tuning.cs: Invalid path: "+Path);
 			}
 
-			Create(m_Reader);
+
+
+            Create(m_Reader);
 		}
 
 		private void Create(BinaryReader Reader)

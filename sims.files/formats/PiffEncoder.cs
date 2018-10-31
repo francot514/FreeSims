@@ -10,11 +10,11 @@ namespace FSO.Files.Formats
 {
     public static class PiffEncoder
     {
-        public static IffFile GeneratePiff(IffFile iff, HashSet<Type> allowedTypes, HashSet<Type> disallowedTypes)
+        public static IffFile GeneratePiff(IFF.IffFile iff, HashSet<Type> allowedTypes, HashSet<Type> disallowedTypes)
         {
-            var piffFile = new IffFile();
+            var piffFile = new IFF.IffFile();
 
-            var piff = new PIFF();
+            var piff = new IFF.Chunks.PIFF();
             piff.SourceIff = iff.Filename;
             var entries = new List<PIFFEntry>();
             var chunks = iff.ListAll();

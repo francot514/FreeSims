@@ -86,6 +86,7 @@
     <Compile Include="formats\dbpf\DBPFFile.cs" />
     <Compile Include="formats\iff\AbstractIffChunk.cs" />
     <Compile Include="formats\iff\ChunkRuntimeInfo.cs" />
+    <Compile Include="formats\iff\chunks\ARRY.cs" />
     <Compile Include="formats\iff\chunks\BCON.cs" />
     <Compile Include="formats\iff\chunks\BHAV.cs" />
     <Compile Include="formats\iff\chunks\BMP.cs" />
@@ -95,13 +96,17 @@
     <Compile Include="formats\iff\chunks\FAMs.cs" />
     <Compile Include="formats\iff\chunks\FWAV.cs" />
     <Compile Include="formats\iff\chunks\GLOB.cs" />
+    <Compile Include="formats\iff\chunks\HOUS.cs" />
     <Compile Include="formats\iff\chunks\ISPR.cs" />
     <Compile Include="formats\iff\chunks\NBRS.cs" />
     <Compile Include="formats\iff\chunks\NGBH.cs" />
     <Compile Include="formats\iff\chunks\OBJD.cs" />
     <Compile Include="formats\iff\chunks\OBJf.cs" />
+    <Compile Include="formats\iff\chunks\OBJM.cs" />
+    <Compile Include="formats\iff\chunks\OBJT.cs" />
     <Compile Include="formats\iff\chunks\PALT.cs" />
     <Compile Include="formats\iff\chunks\PIFF.cs" />
+    <Compile Include="formats\iff\chunks\SIMI.cs" />
     <Compile Include="formats\iff\chunks\SLOT.cs" />
     <Compile Include="formats\iff\chunks\SPR.cs" />
     <Compile Include="formats\iff\chunks\SPR2.cs" />
@@ -111,6 +116,7 @@
     <Compile Include="formats\iff\chunks\TTAB.cs" />
     <Compile Include="formats\iff\chunks\TTAs.cs" />
     <Compile Include="formats\iff\chunks\TTAT.cs" />
+    <Compile Include="formats\iff\chunks\WALm.cs" />
     <Compile Include="formats\iff\IffFieldEncode.cs" />
     <Compile Include="formats\iff\IffFile.cs" />
     <Compile Include="formats\iff\IffRuntimeInfo.cs" />

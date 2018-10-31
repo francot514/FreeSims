@@ -29,7 +29,7 @@ namespace FSO.Files.Formats.IFF
                 string filename = Path.GetFileName(entry);
 
                 IffFile piffFile = new IffFile(entry);
-                PIFF piff = piffFile.List<PIFF>()[0];
+                    Chunks.PIFF piff = piffFile.List<Chunks.PIFF>()[0];
 
                 if (IsPIFFUser.ContainsKey(piff.SourceIff))
                 {

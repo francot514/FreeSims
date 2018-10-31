@@ -22,7 +22,7 @@ namespace FSO.Files.FAR1
         private uint m_ManifestOffset;
         private uint m_NumFiles;
         private List<FarEntry> m_Entries = new List<FarEntry>();
-        private bool V1b = true;
+        
         /// <summary>
         /// The offset into the archive of the manifest.
         /// </summary>
