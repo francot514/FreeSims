@@ -37,6 +37,8 @@ namespace sims.debug
         {
             Housedir = path + "/Houses";
 
+            
+
             DirectoryInfo housedirinfo = new DirectoryInfo(Housedir);
             label5.Text = housedirinfo.Name;
 
@@ -374,6 +376,27 @@ namespace sims.debug
 
         }
 
+        private void listBox3_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+
+            string current = listBox3.SelectedItem.ToString();
+            string userdata = comboBox1.SelectedItem.ToString();
+
+
+            var iff = new IffFile(userdata + "/Houses" + current + ".iff");
+
+            var simi = iff.Get<SIMI>(326);
+
+            int value = simi.ArchitectureValue();
+
+            int rooms = simi.Rooms();
+
+        }
 
         private void loadToolStripMenuItem_Click(object sender, EventArgs e)
         {
