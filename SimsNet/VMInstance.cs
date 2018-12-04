@@ -24,6 +24,7 @@ using FSO.SimAntics.Utils;
 using FSO.LotView;
 using SimsNet.Properties;
 using FSO.LotView.Model;
+using FSO.Files.Formats.IFF;
 
 namespace SimsNet
 {
@@ -34,11 +35,13 @@ namespace SimsNet
         private int TicksSinceSave;
         private static int SaveTickFreq = 60 * 60; //save every minute for safety
         private int Port;
+        private bool TS1;
 
         public VMInstance(int port)
         {
             VM.UseWorld = false;
             Port = port;
+            TS1 = false;
             ResetVM();
         }
 
@@ -67,8 +70,9 @@ namespace SimsNet
 
             Console.WriteLine("Select the lot type");
             Console.WriteLine("1-Empty");
-            Console.WriteLine("2-Defined");
-
+            Console.WriteLine("2-Blueprint");
+            Console.WriteLine("3-House");
+            
             string path = "";
             int lot = Convert.ToInt32(Console.ReadLine());
 
@@ -89,10 +93,22 @@ namespace SimsNet
 
 
             }
+            else if (lot == 3)
+            {
 
+                    Console.WriteLine("Specify house name");
+                    path = AppDomain.CurrentDomain.BaseDirectory + "Content/Houses/" + Console.ReadLine() + ".iff";
+                    TS1 = true;
+
+            }
             
+            
+            XmlHouseData lotInfo;
+            IffFile HouseInfo = null;
             string filename = Path.GetFileName(path);
-            try
+
+            if (!TS1)
+                try
             {
                 //try to load from FSOV first.
                 LoadState(vm, "Content/LocalHouse/" + filename.Substring(0, filename.Length - 4) + ".fsov");
@@ -119,23 +135,53 @@ namespace SimsNet
                     }
                     catch (Exception) { }
 
-                    //vm.SendCommand(new VMBlueprintRestoreCmd
-                    //{
-                       // JobLevel = jobLevel,
-                       // XMLData = File.ReadAllBytes(path)
-                    //});
+                        //vm.SendCommand(new VMBlueprintRestoreCmd
+                        //{
+                        // JobLevel = jobLevel,
+                        // XMLData = File.ReadAllBytes(path)
+                        //});
 
-                    XmlHouseData lotInfo;
-                    using (var stream = new MemoryStream(File.ReadAllBytes(path)))
+                        using (var stream = new MemoryStream(File.ReadAllBytes(path)))
+                        {
+                            lotInfo = XmlHouseData.Parse(stream);
+                        }
+
+                        VMWorldActivator activator = new VMWorldActivator(vm, vm.Context.World);
+
+                        vm.Activator = activator;
+
+                        var blueprint = activator.LoadFromXML(lotInfo);
+
+                        if (VM.UseWorld)
+                        {
+                            vm.Context.World.InitBlueprint(blueprint);
+                            vm.Context.Blueprint = blueprint;
+                        }
+
+
+                        vm.Context.Clock.Hours = 10;
+
+                        vm.MyUID = uint.MaxValue - 1;
+
+
+                    }
+
+              }
+            else
+            {
+
+
+
+                    if (File.Exists(path))
                     {
-                        lotInfo = XmlHouseData.Parse(stream);
+                        HouseInfo = new IffFile(path);
                     }
 
                     VMWorldActivator activator = new VMWorldActivator(vm, vm.Context.World);
 
                     vm.Activator = activator;
 
-                    var blueprint = activator.LoadFromXML(lotInfo);
+                    var blueprint = activator.LoadFromIff(HouseInfo);
 
                     if (VM.UseWorld)
                     {
@@ -145,9 +191,12 @@ namespace SimsNet
                   
 
                     vm.Context.Clock.Hours = 10;
-                }
+
+                vm.MyUID = uint.MaxValue - 1;
+
             }
-            vm.MyUID = uint.MaxValue-1;
+              
+                              
 
 
             Console.WriteLine("Select the server type");
