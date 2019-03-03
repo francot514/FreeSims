@@ -770,6 +770,12 @@ namespace FSO.SimAntics
             else return (ushort)Architecture.Rooms[pos.Level-1].Map[pos.TileX + pos.TileY * _Arch.Width];
         }
 
+        public short GetRoomScore(ushort room)
+        {
+            if (room >= RoomInfo.Length) return 0;
+            return RoomInfo[RoomInfo[room].Room.LightBaseRoom].Light.RoomScore;
+        }
+
         public VMMultitileGroup GhostCopyGroup(VMMultitileGroup group)
         {
             var newGroup = CreateObjectInstance(((group.MultiTile) ? group.BaseObject.MasterDefinition.GUID : group.BaseObject.Object.OBJ.GUID), LotTilePos.OUT_OF_WORLD, group.BaseObject.Direction, true);

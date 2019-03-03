@@ -167,6 +167,7 @@
     <Compile Include="SimsAntics\Entities\VMEntity.cs" />
     <Compile Include="SimsAntics\Entities\VMGameObject.cs" />
     <Compile Include="SimsAntics\Entities\VMMultitileGroup.cs" />
+    <Compile Include="SimsAntics\Entities\VMTS1MotiveDecay.cs" />
     <Compile Include="SimsAntics\Marshals\Threads\VMQueuedActionMarshal.cs" />
     <Compile Include="SimsAntics\Marshals\Threads\VMRoutingFrameMarshal.cs" />
     <Compile Include="SimsAntics\Marshals\Threads\VMStackFrameMarshal.cs" />

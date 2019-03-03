@@ -81,7 +81,7 @@ namespace FSO.Content
             WorldRoofs = new WorldRoofProvider(this);
 
             Audio = new Audio(this);
-            GlobalTuning = new Tuning(Path.Combine(basePath, "tuning.dat"));
+            //GlobalTuning = new Tuning(Path.Combine(basePath, "tuning.dat"));
 
             Init();
         }

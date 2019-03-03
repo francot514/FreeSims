@@ -69,7 +69,7 @@ namespace FSO.SimAntics
         public Vector3 Velocity; //used for 60 fps walking animation
         public bool Visitor;
         private VMMotiveChange[] MotiveChanges = new VMMotiveChange[16];
-        private VMAvatarMotiveDecay MotiveDecay;
+        private VMIMotiveDecay MotiveDecay;
         private short[] PersonData = new short[100];
         private short[] MotiveData = new short[16];
         private VMEntity HandObject;
@@ -206,7 +206,7 @@ namespace FSO.SimAntics
             }
 
 
-            MotiveDecay = new VMAvatarMotiveDecay();
+            MotiveDecay = new VMTS1MotiveDecay();
             for (int i = 0; i < 16; i++)
             {
                 MotiveChanges[i] = new VMMotiveChange();
@@ -727,6 +727,11 @@ namespace FSO.SimAntics
                 temp.MaxValue = MaxValue;
                 temp.Ticked = false;
             }
+        }
+
+        public bool HasMotiveChange(VMMotive motive)
+        {
+            return MotiveChanges[(int)motive].PerHourChange != 0;
         }
 
         public virtual void ClearMotiveChanges()

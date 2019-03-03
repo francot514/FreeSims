@@ -19,6 +19,7 @@ namespace FSO.SimAntics.Model
     public struct VMRoomInfo
     {
         public List<VMRoomPortal> Portals;
+        public List<VMRoomPortal> WindowPortals;
         public List<VMEntity> Entities;
         public RoomLighting Light;
         public VMRoom Room;
@@ -27,18 +28,26 @@ namespace FSO.SimAntics.Model
     public struct VMRoom
     {
         public ushort RoomID;
+        public ushort LightBaseRoom;
+        public sbyte Floor;
 
         public bool IsOutside;
         public ushort Area;
         public bool IsPool;
         public bool Unroutable;
 
+        public HashSet<ushort> AdjRooms; //all adjacent rooms, for DFS traversal of light
         public List<VMObstacle> WallObs;
         public List<VMObstacle> RoomObs;
+        public List<Vector2[]> WallLines;
+        public List<Vector2[]> FenceLines;
         public Rectangle Bounds;
+
+        public List<ushort> SupportRooms;
     }
 
-    public class VMRoomPortal : VMSerializable {
+    public class VMRoomPortal : VMSerializable
+    {
         public short ObjectID;
         public ushort TargetRoom;
 
@@ -78,7 +87,7 @@ namespace FSO.SimAntics.Model
 
         public override int GetHashCode()
         {
-            return ObjectID+TargetRoom;
+            return ObjectID + TargetRoom;
         }
 
         public void SerializeInto(BinaryWriter writer)
