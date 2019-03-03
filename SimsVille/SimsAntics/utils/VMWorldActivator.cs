@@ -640,6 +640,7 @@ namespace FSO.SimAntics.Utils
             LotTilePos pos = (obj.Level == 0) ? LotTilePos.OUT_OF_WORLD : LotTilePos.FromBigTile((short)obj.X, (short)obj.Y, (sbyte)obj.Level);
             
             var mojb = VM.Context.CreateObjectInstance(obj.GUIDInt, pos, obj.Direction);
+            if (mojb == null) return;
 
             var nobj = mojb.Objects[0];
 
