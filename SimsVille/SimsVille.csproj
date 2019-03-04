@@ -162,6 +162,7 @@
     <Compile Include="SimsAntics\Engine\VMStackFrame.cs" />
     <Compile Include="SimsAntics\Engine\VMSuitProvider.cs" />
     <Compile Include="SimsAntics\Engine\VMThread.cs" />
+    <Compile Include="SimsAntics\Engine\VMTS1MotiveDecay.cs" />
     <Compile Include="SimsAntics\Entities\VMAvatar.cs" />
     <Compile Include="SimsAntics\Entities\VMAvatarMotiveDecay.cs" />
     <Compile Include="SimsAntics\Entities\VMEntity.cs" />
@@ -180,6 +181,7 @@
     <Compile Include="SimsAntics\Marshals\VMMarshal.cs" />
     <Compile Include="SimsAntics\Marshals\VMMultitileGroupMarshal.cs" />
     <Compile Include="SimsAntics\Marshals\VMRuntimeHeadlineMarshal.cs" />
+    <Compile Include="SimsAntics\Model\DynamicTuning.cs" />
     <Compile Include="SimsAntics\Model\Routing\VMFreeList.cs" />
     <Compile Include="SimsAntics\Model\Routing\VMObstacle.cs" />
     <Compile Include="SimsAntics\Model\Routing\VMRouteFailCode.cs" />
@@ -209,6 +211,7 @@
     <Compile Include="SimsAntics\Model\VMSetToNextCache.cs" />
     <Compile Include="SimsAntics\Model\VMStackObjectDefinitionVariable.cs" />
     <Compile Include="SimsAntics\Model\VMStackObjectVariable.cs" />
+    <Compile Include="SimsAntics\Model\VMTuningCache.cs" />
     <Compile Include="SimsAntics\NetPlay\Drivers\VMClientDriver.cs" />
     <Compile Include="SimsAntics\NetPlay\Drivers\VMServerDriver.cs" />
     <Compile Include="SimsAntics\NetPlay\EODs\Handlers\Data\VMEODSignsData.cs" />

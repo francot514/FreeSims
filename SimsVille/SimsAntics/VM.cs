@@ -31,6 +31,7 @@ using FSO.SimAntics.NetPlay.Model.Commands;
 using FSO.SimAntics.Utils;
 using TSO.SimsAntics;
 using TSO.HIT;
+using FSO.Common.Model;
 
 namespace FSO.SimAntics
 {
@@ -69,6 +70,10 @@ namespace FSO.SimAntics
         public List<VMEntity> Entities = new List<VMEntity>();
         public HashSet<VMEntity> SoundEntities = new HashSet<VMEntity>();
 
+        public DynamicTuning Tuning;
+        public VMTuningCache TuningCache = new VMTuningCache();
+
+        public bool TS1 = false;
 
         public short[] GlobalState;
         public VMPlatformState PlatformState;

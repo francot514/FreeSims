@@ -5,7 +5,7 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.Generic;   
 using System.Linq;
 using System.Text;
 using FSO.LotView.Components;
@@ -727,6 +727,11 @@ namespace FSO.SimAntics
                 temp.MaxValue = MaxValue;
                 temp.Ticked = false;
             }
+        }
+
+        public bool HasMotiveChange(VMMotive motive)
+        {
+            return MotiveChanges[(int)motive].PerHourChange != 0;
         }
 
         public virtual void ClearMotiveChanges()

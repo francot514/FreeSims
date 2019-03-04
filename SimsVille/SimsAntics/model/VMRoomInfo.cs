@@ -27,7 +27,7 @@ namespace FSO.SimAntics.Model
     public struct VMRoom
     {
         public ushort RoomID;
-
+        public ushort LightBaseRoom;
         public bool IsOutside;
         public ushort Area;
         public bool IsPool;

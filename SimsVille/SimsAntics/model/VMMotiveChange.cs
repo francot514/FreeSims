@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using FSO.Files;
+using FSO.SimAntics.Entities;
 
 namespace FSO.SimAntics.Model
 {
@@ -20,6 +22,8 @@ namespace FSO.SimAntics.Model
         public VMMotive Motive;
         private double fractional;
         public bool Ticked;
+
+        public static TuningEntry? LotMotives;
 
         public void Clear()
         {
@@ -46,6 +50,45 @@ namespace FSO.SimAntics.Model
                     avatar.SetMotiveData(Motive, motive);
                 }
             }
+        }
+        public static int ScaleRate(VM vm, int rate, VMMotive type)
+        {
+            if (vm.TS1)
+            {
+                if (type == VMMotive.Energy && rate > 0)
+                {
+                    rate *= (int)VMTS1MotiveDecay.Constants[0] / (24 - (int)VMTS1MotiveDecay.Constants[1]);
+                }
+                return rate;
+            }
+            else
+            {
+                if (rate < 0) return rate;
+                if (LotMotives == null) LotMotives = Content.Content.Get().GlobalTuning.EntriesByName["lotmotives"];
+                if (vm.TSOState.PropertyCategory == 4 && type > 0) rate = (rate * 3) / 2; //1.5x gain multiplier on services lots
+                if (VMMotive.Comfort == type) return rate;
+                var ind = Array.IndexOf(VMAvatarMotiveDecay.DecrementMotives, type);
+                var cat = vm.TSOState.PropertyCategory;
+                if (cat > 10) cat = 0;
+                string category = VMAvatarMotiveDecay.CategoryNames[cat];
+                var weight = ToFixed1000(LotMotives.Value.GetNum(category + "_" + VMAvatarMotiveDecay.LotMotiveNames[ind] + "Weight"));
+                return (rate * 1000) / weight;
+            }
+        }
+
+        public static short ScaleMax(VM vm, short oldMax, VMMotive type)
+        {
+            return (short)((oldMax - 100) + vm.TuningCache.GetLimit(type));
+        }
+
+        private static int ToFixed1000(float input)
+        {
+            return (int)(input * 1000);
+        }
+
+        private static int FracMul(int input, int frac)
+        {
+            return (int)((long)input * frac) / 1000;
         }
 
         public void SerializeInto(BinaryWriter writer)
