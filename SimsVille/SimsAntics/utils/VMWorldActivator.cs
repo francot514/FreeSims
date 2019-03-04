@@ -641,6 +641,8 @@ namespace FSO.SimAntics.Utils
             
             var mojb = VM.Context.CreateObjectInstance(obj.GUIDInt, pos, obj.Direction);
 
+            if (mojb == null) return;
+
             var nobj = mojb.Objects[0];
 
             if (obj.Group != 0)
