@@ -201,7 +201,7 @@ namespace FSO.Client.UI.Panels
             AdStrings = new string[14];
             for (int i = 0; i < 14; i++)
             {
-                string str = GameFacade.Strings.GetString("160", (i + 4).ToString());
+                string str = GameFacade.Strings.GetString("206", (i + 4).ToString());
                 AdStrings[i] = ((i<7)?str.Substring(0,str.Length-2)+"{0}":str) + "\r\n";
             }
 
