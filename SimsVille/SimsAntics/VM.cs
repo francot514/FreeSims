@@ -67,6 +67,7 @@ namespace FSO.SimAntics
         public int LastSpeedMultiplier;
         private int LastFrameSpeed = 1;
 
+
         public List<VMEntity> Entities = new List<VMEntity>();
         public HashSet<VMEntity> SoundEntities = new HashSet<VMEntity>();
 
@@ -190,6 +191,13 @@ namespace FSO.SimAntics
         }
 
         private bool AlternateTick;
+
+        public void UpdateTuning()
+        {
+            TuningCache.UpdateTuning(this);
+       
+        }
+
         public void Update()
         {
 
