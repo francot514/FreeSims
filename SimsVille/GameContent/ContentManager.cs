@@ -51,13 +51,13 @@ namespace FSO.Client.GameContent
         
         static ContentManager()
         {
-            m_Resources = new Dictionary<ulong, string>();
-            m_LoadedResources = new Dictionary<ulong, ContentResource>();
+            //m_Resources = new Dictionary<ulong, string>();
+            //m_LoadedResources = new Dictionary<ulong, ContentResource>();
 
-            XmlDocument AnimTable = new XmlDocument();
-            AnimTable.Load("Content/animtable.xml");
+            //XmlDocument AnimTable = new XmlDocument();
+            //AnimTable.Load("Content/animtable.xml");
 
-            XmlNodeList NodeList = AnimTable.GetElementsByTagName("DefineAssetString");
+            //XmlNodeList NodeList = AnimTable.GetElementsByTagName("DefineAssetString");
 
             //foreach (XmlNode Node in NodeList)
             //{
@@ -68,173 +68,173 @@ namespace FSO.Client.GameContent
             //    m_Resources.Add(FileID, FileName);
             //}
 
-            XmlDocument UIGraphicsTable = new XmlDocument();
-            UIGraphicsTable.Load("Content/uigraphics.xml");
+            //XmlDocument UIGraphicsTable = new XmlDocument();
+            //UIGraphicsTable.Load("Content/uigraphics.xml");
 
-            NodeList = UIGraphicsTable.GetElementsByTagName("DefineAssetString");
+            //NodeList = UIGraphicsTable.GetElementsByTagName("DefineAssetString");
 
-            foreach (XmlNode Node in NodeList)
-            {
-                ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
+            //foreach (XmlNode Node in NodeList)
+            //{
+            //    ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
 
-                string FileName = "";
+            //    string FileName = "";
 
-                if (Node.Attributes["key"].Value.Contains(".dat"))
-                {
-                    FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
-                }
-                else
-                    FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
+            //    if (Node.Attributes["key"].Value.Contains(".dat"))
+            //    {
+            //        FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
+            //    }
+            //    else
+            //        FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
 
-                m_Resources.Add(FileID, FileName);
-            }
+            //    m_Resources.Add(FileID, FileName);
+            //}
 
-            XmlDocument CollectionsTable = new XmlDocument();
-            CollectionsTable.Load("Content/collections.xml");
+            //XmlDocument CollectionsTable = new XmlDocument();
+            //CollectionsTable.Load("Content/collections.xml");
 
-            NodeList = CollectionsTable.GetElementsByTagName("DefineAssetString");
+            //NodeList = CollectionsTable.GetElementsByTagName("DefineAssetString");
 
-            foreach (XmlNode Node in NodeList)
-            {
-                ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
-                string FileName = "";
+            //foreach (XmlNode Node in NodeList)
+            //{
+            //    ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
+            //    string FileName = "";
 
-                if (Node.Attributes["key"].Value.Contains(".dat"))
-                {
-                    FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
-                }
+            //    if (Node.Attributes["key"].Value.Contains(".dat"))
+            //    {
+            //        FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
+            //    }
 
-                m_Resources.Add(FileID, FileName);
-            }
+            //    m_Resources.Add(FileID, FileName);
+            //}
 
-            XmlDocument PurchasablesTable = new XmlDocument();
-            PurchasablesTable.Load("Content/purchasables.xml");
+            //XmlDocument PurchasablesTable = new XmlDocument();
+            //PurchasablesTable.Load("Content/purchasables.xml");
 
-            NodeList = PurchasablesTable.GetElementsByTagName("DefineAssetString");
+            //NodeList = PurchasablesTable.GetElementsByTagName("DefineAssetString");
 
-            foreach (XmlNode Node in NodeList)
-            {
-                ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
-                string FileName = "";
+            //foreach (XmlNode Node in NodeList)
+            //{
+            //    ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
+            //    string FileName = "";
 
-                if (Node.Attributes["key"].Value.Contains(".dat"))
-                {
-                    FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
-                }
+            //    if (Node.Attributes["key"].Value.Contains(".dat"))
+            //    {
+            //        FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
+            //    }
 
-                m_Resources.Add(FileID, FileName);
-            }
+            //    m_Resources.Add(FileID, FileName);
+            //}
 
-            XmlDocument OutfitsTable = new XmlDocument();
-            OutfitsTable.Load("Content/alloutfits.xml");
+            //XmlDocument OutfitsTable = new XmlDocument();
+            //OutfitsTable.Load("Content/alloutfits.xml");
 
-            NodeList = OutfitsTable.GetElementsByTagName("DefineAssetString");
+            //NodeList = OutfitsTable.GetElementsByTagName("DefineAssetString");
 
-            foreach (XmlNode Node in NodeList)
-            {
-                ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
-                string FileName = "";
+            //foreach (XmlNode Node in NodeList)
+            //{
+            //    ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
+            //    string FileName = "";
 
-                if (Node.Attributes["key"].Value.Contains(".dat"))
-                {
-                    FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
-                }
+            //    if (Node.Attributes["key"].Value.Contains(".dat"))
+            //    {
+            //        FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
+            //    }
 
-                m_Resources.Add(FileID, FileName);
-            }
+            //    m_Resources.Add(FileID, FileName);
+            //}
 
-            XmlDocument AppearancesTable = new XmlDocument();
-            AppearancesTable.Load("Content/appearances.xml");
+            //XmlDocument AppearancesTable = new XmlDocument();
+            //AppearancesTable.Load("Content/appearances.xml");
 
-            NodeList = AppearancesTable.GetElementsByTagName("DefineAssetString");
+            //NodeList = AppearancesTable.GetElementsByTagName("DefineAssetString");
 
-            foreach (XmlNode Node in NodeList)
-            {
-                ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
-                string FileName = "";
+            //foreach (XmlNode Node in NodeList)
+            //{
+            //    ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
+            //    string FileName = "";
 
-                if (Node.Attributes["key"].Value.Contains(".dat"))
-                {
-                    FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
-                }
+            //    if (Node.Attributes["key"].Value.Contains(".dat"))
+            //    {
+            //        FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
+            //    }
 
-                if (!m_Resources.ContainsKey(FileID))
-                    m_Resources.Add(FileID, FileName);
-            }
+            //    if (!m_Resources.ContainsKey(FileID))
+            //        m_Resources.Add(FileID, FileName);
+            //}
 
-            XmlDocument ThumbnailsTable = new XmlDocument();
-            ThumbnailsTable.Load("Content/thumbnails.xml");
+            //XmlDocument ThumbnailsTable = new XmlDocument();
+            //ThumbnailsTable.Load("Content/thumbnails.xml");
 
-            NodeList = ThumbnailsTable.GetElementsByTagName("DefineAssetString");
+            //NodeList = ThumbnailsTable.GetElementsByTagName("DefineAssetString");
 
-            foreach (XmlNode Node in NodeList)
-            {
-                ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
-                string FileName = "";
+            //foreach (XmlNode Node in NodeList)
+            //{
+            //    ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
+            //    string FileName = "";
 
-                if (Node.Attributes["key"].Value.Contains(".dat"))
-                {
-                    FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
-                }
+            //    if (Node.Attributes["key"].Value.Contains(".dat"))
+            //    {
+            //        FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
+            //    }
 
-                m_Resources.Add(FileID, FileName);
-            }
+            //    m_Resources.Add(FileID, FileName);
+            //}
 
-            XmlDocument MeshTable = new XmlDocument();
-            MeshTable.Load("Content/meshes.xml");
+            //XmlDocument MeshTable = new XmlDocument();
+            //MeshTable.Load("Content/meshes.xml");
 
-            NodeList = MeshTable.GetElementsByTagName("DefineAssetString");
+            //NodeList = MeshTable.GetElementsByTagName("DefineAssetString");
 
-            foreach (XmlNode Node in NodeList)
-            {
-                ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
-                string FileName = "";
+            //foreach (XmlNode Node in NodeList)
+            //{
+            //    ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
+            //    string FileName = "";
 
-                if (Node.Attributes["key"].Value.Contains(".dat"))
-                {
-                    FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
-                }
+            //    if (Node.Attributes["key"].Value.Contains(".dat"))
+            //    {
+            //        FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
+            //    }
 
-                if (!m_Resources.ContainsKey(FileID))
-                    m_Resources.Add(FileID, FileName);
-            }
+            //    if (!m_Resources.ContainsKey(FileID))
+            //        m_Resources.Add(FileID, FileName);
+            //}
 
-            XmlDocument TextureTable = new XmlDocument();
-            TextureTable.Load("Content/textures.xml");
+            //XmlDocument TextureTable = new XmlDocument();
+            //TextureTable.Load("Content/textures.xml");
 
-            NodeList = TextureTable.GetElementsByTagName("DefineAssetString");
+            //NodeList = TextureTable.GetElementsByTagName("DefineAssetString");
 
-            foreach (XmlNode Node in NodeList)
-            {
-                ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
-                string FileName = "";
+            //foreach (XmlNode Node in NodeList)
+            //{
+            //    ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
+            //    string FileName = "";
 
-                if (Node.Attributes["key"].Value.Contains(".dat"))
-                {
-                    FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
-                }
-                if (!m_Resources.ContainsKey(FileID))
-                    m_Resources.Add(FileID, FileName);
-            }
+            //    if (Node.Attributes["key"].Value.Contains(".dat"))
+            //    {
+            //        FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
+            //    }
+            //    if (!m_Resources.ContainsKey(FileID))
+            //        m_Resources.Add(FileID, FileName);
+            //}
 
-            XmlDocument BindingsTable = new XmlDocument();
-            BindingsTable.Load("Content/bindings.xml");
+            //XmlDocument BindingsTable = new XmlDocument();
+            //BindingsTable.Load("Content/bindings.xml");
 
-            NodeList = BindingsTable.GetElementsByTagName("DefineAssetString");
+            //NodeList = BindingsTable.GetElementsByTagName("DefineAssetString");
 
-            foreach (XmlNode Node in NodeList)
-            {
-                ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
-                string FileName = "";
+            //foreach (XmlNode Node in NodeList)
+            //{
+            //    ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
+            //    string FileName = "";
 
-                if (Node.Attributes["key"].Value.Contains(".dat"))
-                {
-                    FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
-                }
+            //    if (Node.Attributes["key"].Value.Contains(".dat"))
+            //    {
+            //        FileName = GlobalSettings.Default.StartupPath + Node.Attributes["key"].Value;
+            //    }
 
-                if (!m_Resources.ContainsKey(FileID))
-                    m_Resources.Add(FileID, FileName);
-            }
+            //    if (!m_Resources.ContainsKey(FileID))
+            //        m_Resources.Add(FileID, FileName);
+            //}
 
             /*var cacheFiles = Directory.GetFiles(GameFacade.CacheDirectory);
             foreach (var file in cacheFiles)
