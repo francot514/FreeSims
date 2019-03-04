@@ -9,9 +9,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using FSO.Common;
-using FSO.Files.Formats.IFF;
-using FSO.Files.Formats.IFF.Chunks;
 
 namespace FSO.Client.GameContent
 {
@@ -22,16 +19,9 @@ namespace FSO.Client.GameContent
         public ContentStrings()
         {
             StringTable = new Dictionary<string, Dictionary<string, Dictionary<string, string>>>();
-            var langdir = GlobalSettings.Default.CurrentLang.ToLowerInvariant() + ".dir";
-
-            LoadTS1();
-            var fsodir = "Content/UI/uitext/";
-            if (Directory.Exists(Path.Combine(fsodir, ""))) {
-                if (Directory.Exists(Path.Combine(fsodir, langdir)))
-                    Load("UIText", Path.Combine(fsodir, langdir));
-                else
-                    Load("UIText", Path.Combine(fsodir, "english.dir"));
-            }
+            if (Directory.Exists(Path.Combine(GlobalSettings.Default.StartupPath, @"gamedata/uitext/english.dir")))
+                Load("UIText", Path.Combine(GlobalSettings.Default.StartupPath, @"gamedata/uitext/english.dir"));
+            
         }
 
         public string this[string dir, string table, string id]
@@ -112,31 +102,6 @@ namespace FSO.Client.GameContent
             }
 
             return "";
-        }
-
-        public void LoadTS1()
-        {
-            var path = Path.Combine(FSOEnvironment.SimsCompleteDir, "GameData/UIText.iff");
-            var iff = new IffFile(path);
-
-            var dirName = "UIText";
-            Dictionary<string, Dictionary<string, string>> table;
-            if (!StringTable.TryGetValue(dirName, out table))
-            {
-                table = new Dictionary<string, Dictionary<string, string>>();
-                StringTable.Add(dirName, table);
-            }
-
-            var tables = iff.List<STR>();
-            foreach (var str in tables)
-            {
-                var tableData = new Dictionary<string, string>();
-                for (int i = 0; i < str.Length; i++)
-                {
-                    tableData[i.ToString()] = str.GetString(i);
-                }
-                table[str.ChunkID.ToString()] = tableData; //overwrites previous.
-            }
         }
 
         /// <summary>
