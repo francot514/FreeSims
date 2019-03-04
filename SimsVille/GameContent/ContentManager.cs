@@ -59,14 +59,14 @@ namespace FSO.Client.GameContent
 
             XmlNodeList NodeList = AnimTable.GetElementsByTagName("DefineAssetString");
 
-            foreach (XmlNode Node in NodeList)
-            {
-                ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
-                //TODO: Figure out when to use avatardata2 and avatardata3...
-                string FileName = GlobalSettings.Default.StartupPath + "avatardata/animations/animations.dat";
+            //foreach (XmlNode Node in NodeList)
+            //{
+            //    ulong FileID = Convert.ToUInt64(Node.Attributes["assetID"].Value, 16);
+            //    //TODO: Figure out when to use avatardata2 and avatardata3...
+            //    string FileName = GlobalSettings.Default.StartupPath + "avatardata/animations/animations.dat";
 
-                m_Resources.Add(FileID, FileName);
-            }
+            //    m_Resources.Add(FileID, FileName);
+            //}
 
             XmlDocument UIGraphicsTable = new XmlDocument();
             UIGraphicsTable.Load("Content/uigraphics.xml");
@@ -243,7 +243,7 @@ namespace FSO.Client.GameContent
                 m_CachedResources.Add(ulong.Parse(fileName), file);
             }*/
 
-            m_Resources.Add(0x100000005, GlobalSettings.Default.StartupPath + "avatardata/skeletons/skeletons.dat");
+            //m_Resources.Add(0x100000005, GlobalSettings.Default.StartupPath + "avatardata/skeletons/skeletons.dat");
 
             initComplete = true;
             GameFacade.TriggerContentLoaderReady();
