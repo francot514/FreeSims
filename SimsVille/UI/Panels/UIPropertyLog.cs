@@ -98,21 +98,21 @@ namespace FSO.Client.UI.Panels
            
         public string RenderEvent(VMChatEvent evt)
         {
-            switch (evt.Type)
-            {
-                case VMChatEventType.Message:
-                    return GameFacade.Strings.GetString("261", "8").Replace("%", evt.Text[0]) + evt.Text[1];
-                case VMChatEventType.MessageMe:
-                    return GameFacade.Strings.GetString("261", "9") + evt.Text[1];
-                case VMChatEventType.Join:
-                    return GameFacade.Strings.GetString("261", "6").Replace("%", evt.Text[0]);
-                case VMChatEventType.Leave:
-                    return GameFacade.Strings.GetString("261", "7").Replace("%", evt.Text[0]);
-                case VMChatEventType.Arch:
-                    return "<" + evt.Text[0] + " (" + evt.Text[1] + ")" + "> " + evt.Text[2];
-                default:
+            //switch (evt.Type)
+            //{
+            //    case VMChatEventType.Message:
+            //        return GameFacade.Strings.GetString("261", "8").Replace("%", evt.Text[0]) + evt.Text[1];
+            //    case VMChatEventType.MessageMe:
+            //        return GameFacade.Strings.GetString("261", "9") + evt.Text[1];
+            //    case VMChatEventType.Join:
+            //        return GameFacade.Strings.GetString("261", "6").Replace("%", evt.Text[0]);
+            //    case VMChatEventType.Leave:
+            //        return GameFacade.Strings.GetString("261", "7").Replace("%", evt.Text[0]);
+            //    case VMChatEventType.Arch:
+            //        return "<" + evt.Text[0] + " (" + evt.Text[1] + ")" + "> " + evt.Text[2];
+            //    default:
                     return "";
-            }
+            //}
         }
 
         public override void Draw(UISpriteBatch batch)
