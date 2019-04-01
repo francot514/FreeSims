@@ -263,7 +263,7 @@ namespace FSO.Files.HIT
         private int HSMConst(string input)
         {
             int result = 0;
-            AsmNames.Constants.TryGetValue(input, out result);
+            AsmNames?.Constants?.TryGetValue(input, out result);
             return result;
         }
 
