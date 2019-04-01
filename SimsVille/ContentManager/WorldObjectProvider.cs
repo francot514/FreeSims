@@ -80,6 +80,37 @@ namespace FSO.Content
                 });
             }
 
+            if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/GameData"))
+            {
+
+                string GFile = FSOEnvironment.SimsCompleteDir + "/GameData/Objects/Objects.far";
+                FarFiles.Add(GFile);
+                SpriteFiles.Add(GFile);
+
+                var gobjects = new XmlDocument();
+                gobjects.Load("Content/npc.xml");
+                var nobjectInfos = gobjects.GetElementsByTagName("P");
+
+                foreach (XmlNode objectInfo in nobjectInfos)
+                {
+                    ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
+
+                    if (!Entries.ContainsKey(FileID))
+                        Entries.Add(FileID, new GameObjectReference(this)
+                        {
+                            ID = FileID,
+                            FileName = objectInfo.Attributes["n"].Value,
+                            Source = GameObjectSource.Far,
+                            Group = Convert.ToInt16(objectInfo.Attributes["m"].Value),
+                            SubIndex = Convert.ToInt16(objectInfo.Attributes["i"].Value),
+                            EpObject = true
+
+                        });
+                }
+
+            }
+
+
             if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/ExpansionPack"))
             {
 
