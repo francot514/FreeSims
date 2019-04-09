@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{FB62CC25-FCE9-483F-B467-AB20822BA06E}</ProjectGuid>
+    <ProjectGuid>{338AB28F-C3DF-48BC-A84D-1D5777601268}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>SimsNet</RootNamespace>
@@ -36,17 +36,20 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="GOLDEngine">
-      <HintPath>..\SimsVille\bin\Debug\GOLDEngine.dll</HintPath>
+      <HintPath>..\SimsVille\Dependencies\GOLDEngine.dll</HintPath>
     </Reference>
     <Reference Include="GonzoNet">
-      <HintPath>..\SimsVille\bin\Debug\GonzoNet.dll</HintPath>
+      <HintPath>..\SimsVille\Dependencies\GonzoNet.dll</HintPath>
     </Reference>
-    <Reference Include="MonoGame.Framework, Version=3.1.2.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="MonoGame.Framework, Version=3.4.0.456, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\SimsVille\Dependencies\MonoGame.Framework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
   </ItemGroup>
@@ -68,12 +71,16 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\sims.common\sims.common.csproj">
-      <Project>{C42962A1-8796-4F47-9DCD-79ED5904D8CA}</Project>
+    <ProjectReference Include="..\Common\sims.common.csproj">
+      <Project>{44ED89AC-E790-4B4C-BD56-36F70B8CD529}</Project>
       <Name>sims.common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Sims.files\sims.files.csproj">
+      <Project>{0AC49DBD-1E42-4D7D-BEBF-61B903BADCF3}</Project>
+      <Name>sims.files</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SimsVille\SimsVille.csproj">
-      <Project>{fbcdee0e-d16a-4ffc-b118-5744c0a59b44}</Project>
+      <Project>{A2CC8AAC-1283-4235-98D8-7356201C5EC5}</Project>
       <Name>SimsVille</Name>
     </ProjectReference>
   </ItemGroup>
