@@ -71,7 +71,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Common\sims.common.csproj">
+    <ProjectReference Include="..\sims.common\sims.common.csproj">
       <Project>{44ED89AC-E790-4B4C-BD56-36F70B8CD529}</Project>
       <Name>sims.common</Name>
     </ProjectReference>
