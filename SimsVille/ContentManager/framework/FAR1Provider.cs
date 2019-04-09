@@ -182,8 +182,8 @@ namespace FSO.Content.Framework
             }
 
             foreach (var farPath in FarFiles){
-             
-                if (farPath.Contains("Expansion") || farPath.Contains("Global"))
+
+                if (farPath.Contains("Expansion") || farPath.Contains("Global") || farPath.Contains("Objects"))
                     Epfile = false;
 
                 var archive = new FAR1Archive(ContentManager.GetPath(farPath),Epfile);
