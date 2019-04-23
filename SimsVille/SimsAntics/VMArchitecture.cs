@@ -43,9 +43,11 @@ namespace FSO.SimAntics
         public VMRoomMap[] Rooms;
         public List<VMRoom> RoomData;
         public event ArchitectureEvent WallsChanged;
+        public VMArchitectureTerrain Terrain;
 
         public uint RoofStyle = 16;
         public float RoofPitch = 0.66f;
+        public bool TerrainDirty = true;
 
         public VMContext Context; //used for access to objects
 
@@ -249,6 +251,23 @@ namespace FSO.SimAntics
                 for (int i = 1; i < Stories; i++)
                     RegenerateSupported(i + 1);
             }
+
+            if (TerrainDirty)
+            {
+                Terrain.RegenerateCenters();
+                if (VM.UseWorld)
+                {
+                    WorldUI.Altitude = Terrain.Heights;
+
+                    WorldUI.AltitudeCenters = Terrain.Centers;
+                    WorldUI.Terrain.UpdateTerrain(Terrain.LightType, Terrain.DarkType, Terrain.Heights, Terrain.GrassState);
+
+                }
+                TerrainDirty = false;
+            }
+
+
+
             if (VM.UseWorld && Redraw)
             {
                 LastTestCost = SimulateCommands(Commands, true);
