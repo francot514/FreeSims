@@ -18,7 +18,7 @@ using FSO.SimAntics.Model;
 using tso.world.Model;
 using FSO.SimAntics.Primitives;
 using FSO.Files.Formats.IFF;
-using static FSO.Files.Formats.IFF.Chunks.OBJM;
+
 
 namespace FSO.SimAntics.Utils
 {
@@ -229,7 +229,7 @@ namespace FSO.SimAntics.Utils
             for (int i = 0; i < objm.IDToOBJT.Length; i += 2)
             {
                 if (objm.IDToOBJT[i] == 0) continue;
-                MappedObject target;
+                FSO.Files.Formats.IFF.Chunks.OBJM.MappedObject target;
                 if (!objm.ObjectData.TryGetValue(objm.IDToOBJT[i], out target)) continue;
                 var entry = objt.Entries[objm.IDToOBJT[i + 1] - 1];
                 target.Name = entry.Name;
@@ -250,7 +250,7 @@ namespace FSO.SimAntics.Utils
                     {
                         var x = i % 64;
                         var y = i / 64;
-                        MappedObject targ;
+                        FSO.Files.Formats.IFF.Chunks.OBJM.MappedObject targ;
                         if (!objm.ObjectData.TryGetValue(obj, out targ)) continue;
                         targ.ArryX = x;
                         targ.ArryY = y;
@@ -297,7 +297,7 @@ namespace FSO.SimAntics.Utils
 
                 //objm parent positioning
                 //objects without positions inherit position from the objects in their "parent id".
-                MappedObject src = obj;
+                FSO.Files.Formats.IFF.Chunks.OBJM.MappedObject src = obj;
                 while (src != null && src.ParentID != 0)
                 {
                     if (objm.ObjectData.TryGetValue(src.ParentID, out src))
@@ -340,7 +340,8 @@ namespace FSO.SimAntics.Utils
             foreach (var nobj in entClone) nobj.ExecuteEntryPoint(11, VM.Context, true);
 
             arch.SignalRedraw();
-            VM.Context.World?.InitBlueprint(Blueprint);
+            if (VM.Context.World != null)
+                VM.Context.World.InitBlueprint(Blueprint);
             arch.Tick();
 
 
@@ -597,14 +598,14 @@ namespace FSO.SimAntics.Utils
 
         private TerrainComponent CreateTerrain(XmlHouseData model)
         {
-            var terrain = new TerrainComponent(new Rectangle(1, 1, model.Size - 2, model.Size - 2));
+            var terrain = new TerrainComponent(new Rectangle(1, 1, model.Size - 2, model.Size - 2), Blueprint);
             this.InitWorldComponent(terrain);
             return terrain;
         }
 
         private TerrainComponent CreateTerrain(short Size)
         {
-            var terrain = new TerrainComponent(new Rectangle(1, 1, Size - 2, Size - 2));
+            var terrain = new TerrainComponent(new Rectangle(1, 1, Size - 2, Size - 2), Blueprint);
             this.InitWorldComponent(terrain);
             return terrain;
         }
