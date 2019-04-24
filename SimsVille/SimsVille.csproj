@@ -6,11 +6,12 @@
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{FBCDEE0E-D16A-4FFC-B118-5744C0A59B44}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>FSO.Client</RootNamespace>
     <AssemblyName>SimsVille</AssemblyName>
     <FileAlignment>512</FileAlignment>
+    <MonoGamePlatform>Linux</MonoGamePlatform>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <PlatformTarget>x86</PlatformTarget>
