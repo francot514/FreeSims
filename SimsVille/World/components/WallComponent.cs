@@ -151,8 +151,7 @@ namespace FSO.LotView.Components
                         if (comp.Segments != 0)
                         {
                             comp = RotateWall(world.Rotation, comp, x, y, level);
-                            var alt = blueprint.GetAltitude(x, y);
-                            var tilePosition = new Vector3(x, y, (level-1) * 2.95f+ alt);
+                            var tilePosition = new Vector3(x, y, (level-1) * 2.95f);
                             world._2D.OffsetPixel(world.WorldSpace.GetScreenFromTile(tilePosition));
                             world._2D.OffsetTile(tilePosition);
                             var myCuts = Cuts[off];
@@ -554,12 +553,12 @@ namespace FSO.LotView.Components
                         if (UpJunctions[off] == 0)
                         {
                             flags = DownJunctions[off];
-                            yOff = 0.3f + (level - 1) * 2.95f + blueprint.GetAltitude(x, y);
+                            yOff = 0.3f + (level - 1) * 2.95f; ;
                         }
                         else
                         {
                             flags = UpJunctions[off];
-                            yOff = level * 2.95f + blueprint.GetAltitude(x, y);
+                            yOff = level * 2.95f;
                         }
 
                         if (flags > 0 && JunctionMap.ContainsKey(flags)) //there is a junction here! if the junction map contains the unrotated junction, it will contain the rotated junction.

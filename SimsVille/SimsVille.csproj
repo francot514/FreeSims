@@ -195,7 +195,6 @@
     <Compile Include="SimsAntics\Model\TSOPlatform\VMTSOObjectState.cs" />
     <Compile Include="SimsAntics\Model\VMAnimationState.cs" />
     <Compile Include="SimsAntics\Model\VMArchitectureCommand.cs" />
-	<Compile Include="SimsAntics\Model\VMArchitectureTerrain.cs" />
     <Compile Include="SimsAntics\Model\VMBHAVOwnerPair.cs" />
     <Compile Include="SimsAntics\Model\VMBudget.cs" />
     <Compile Include="SimsAntics\Model\VMDialogInfo.cs" />
