@@ -946,7 +946,7 @@ namespace FSO.SimAntics
                 foreach (var active in input.Ambience.ActiveSounds) Ambience.SetAmbience(active, true);
 
                 World.State.WorldSize = input.Architecture.Width;
-                Blueprint.Terrain = new TerrainComponent(new Rectangle(1, 1, input.Architecture.Width - 2, input.Architecture.Height - 2), Blueprint);
+                Blueprint.Terrain = new TerrainComponent(new Rectangle(1, 1, input.Architecture.Width - 2, input.Architecture.Height - 2));
                 Blueprint.Terrain.Initialize(this.World.State.Device, this.World.State);
 
                 World.InitBlueprint(Blueprint);

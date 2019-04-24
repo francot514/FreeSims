@@ -19,33 +19,17 @@ using FSO.Common.Utils;
 
 namespace FSO.LotView.Components
 {
-
-    public enum TerrainType
-    {
-        Grass = 0,
-        Snow = 1,
-        Sand = 2,
-        Rock = 3,
-        Water = 4
-    }
-
     public class TerrainComponent : WorldComponent
     {
         private Rectangle Size;
 
         private int GeomLength;
-        private byte[] GrassState; //0 = green, 1 = brown. to start with, should be randomly distriuted in range 0-0.5.
-        private short[] GroundHeight;
+        private float[] GrassState; //0 = green, 1 = brown. to start with, should be randomly distriuted in range 0-0.5.
         private int NumPrimitives;
         private int BladePrimitives;
         private IndexBuffer IndexBuffer;
         private IndexBuffer BladeIndexBuffer;
         private VertexBuffer VertexBuffer;
-        private bool TerrainDirty = true;
-
-        private TerrainType LightType = TerrainType.Grass;
-        private TerrainType DarkType = TerrainType.Grass;
-
 
         private LotTypes LotType;
         private Color LightGreen = new Color(80, 116, 59);
@@ -59,16 +43,26 @@ namespace FSO.LotView.Components
         private Effect Effect;
         public bool DrawGrid = false;
 
-        public TerrainComponent(Rectangle size, Blueprint blueprint){
+        public TerrainComponent(Rectangle size){
             this.Size = size;
             this.Effect = WorldContent.GrassEffect;
             LotType = LotTypes.Grass; //(LotTypes)(new Random()).Next(4);
 
-
             UpdateLotType();
-            GenerateGrassStates(blueprint.Width, blueprint.Height);
+            GenerateGrassStates();
         }
 
+        public void UpdateLotType()
+        {
+            int index = (int)LotType;
+            LightGreen = LotTypeGrassInfo.LightGreen[index];
+            LightBrown = LotTypeGrassInfo.LightBrown[index];
+            DarkGreen = LotTypeGrassInfo.DarkGreen[index];
+            DarkBrown = LotTypeGrassInfo.DarkBrown[index];
+            GrassHeight = LotTypeGrassInfo.Heights[index];
+            if (!FSOEnvironment.UseMRT) GrassHeight /= 2;
+            GrassDensityScale = LotTypeGrassInfo.GrassDensity[index];
+        }
 
         public override float PreferredDrawOrder
         {
@@ -171,121 +165,39 @@ namespace FSO.LotView.Components
             base.Initialize(device, world);
         }
 
-        public void GenerateGrassStates(int Width, int Height) //generates a set of grass states for a lot.
+        public void GenerateGrassStates() //generates a set of grass states for a lot.
         {
             //right now only works for square lots, but that's all tso has!
             var random = new Random();
-            int width = Width;
-
-
-            float[] result = new float[Width * Height];
-            int initial = width / 4; //divide by more for less noisyness!
-            float factor = 0.42f / ((int)Math.Log(initial, 2));
-
-            float min = 1;
-            float max = 0;
-            if (LightType != DarkType) factor /= 2.5f;
-            int offset;
-
+            int width = Size.Width;
+            float[] result = new float[width * width];
+            int initial = width/4; //divide by more for less noisyness!
+            float factor = 0.5f/((int)Math.Log(initial, 2));
             while (initial > 0)
             {
                 var squared = initial * initial;
                 var noise = new float[squared];
-                for (int i = 0; i < squared; i++) noise[i] = (float)random.NextDouble() * factor;
+                for (int i = 0; i < squared; i++) noise[i] = (float)random.NextDouble()*factor;
 
-                offset = 0;
+                int offset = 0;
                 for (int x = 0; x < width; x++)
                 {
-                    double xInt = (x / (double)(width - 1)) * (initial - 1);
+                    double xInt = (x / (double)(width-1)) * (initial-1);
                     for (int y = 0; y < width; y++)
                     {
                         double yInt = (y / (double)(width - 1)) * (initial - 1);
-                        float tl = noise[(int)(Math.Floor(yInt) * initial + Math.Floor(xInt))];
+                        float tl = noise[(int)(Math.Floor(yInt)*initial+Math.Floor(xInt))];
                         float tr = noise[(int)(Math.Floor(yInt) * initial + Math.Ceiling(xInt))];
                         float bl = noise[(int)(Math.Ceiling(yInt) * initial + Math.Floor(xInt))];
                         float br = noise[(int)(Math.Ceiling(yInt) * initial + Math.Ceiling(xInt))];
-                        float p = (float)(xInt % 1.0);
-                        float q = (float)(yInt % 1.0);
+                        float p = (float)(xInt%1.0);
+                        float q = (float)(yInt%1.0);
                         result[offset++] += (tl * (1 - p) + tr * (p)) * (1 - q) + (bl * (1 - p) + br * (p)) * q; //don't you love 2 dimensional linear interpolation?? ;)
-                        if (initial == 1)
-                        {
-                            if (result[offset - 1] < min) min = result[offset - 1];
-                            if (result[offset - 1] > max) max = result[offset - 1];
-                        }
                     }
                 }
-                factor *= 1.25f;
                 initial /= 2;
             }
-
-            var off = (min * 3 + max) / 4;
-            offset = 0;
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < width; y++)
-                {
-                    result[offset++] -= off;
-                    if (result[offset - 1] < 0) result[offset - 1] = 0;
-
-                    //if within 8 of edges, gradiate to 0
-                    var dist1 = Math.Abs(x);
-                    var dist2 = Math.Abs(x - width);
-                    if (dist2 < dist1) dist1 = dist2;
-                    dist2 = Math.Abs(y);
-                    if (dist2 < dist1) dist1 = dist2;
-                    dist2 = Math.Abs(y - Height);
-                    if (dist2 < dist1) dist1 = dist2;
-
-                    if (dist1 < 8) result[offset - 1] *= dist1 / 8f;
-                }
-            }
-
-            GrassState = new byte[result.Length];
-            for (int i = 0; i < result.Length; i++)
-            {
-                GrassState[i] = (byte)(result[i] * 255);
-            }
-        }
-
-        public void UpdateTerrain(TerrainType light, TerrainType dark, short[] heights, byte[] grass)
-        {
-            //DECEMBER TEMP: snow replace
-            //TODO: tie to tuning, or serverside weather system.
-            LightType = light;
-            DarkType = dark;
-            //ForceSnow();
-            GrassState = grass;
-            GroundHeight = heights;
-            UpdateLotType();
-            TerrainDirty = true;
-        }
-
-        public void ForceSnow()
-        {
-            if (LightType == TerrainType.Grass || LightType == TerrainType.Sand) LightType = TerrainType.Snow;
-            if (DarkType == TerrainType.Sand) DarkType = TerrainType.Snow;
-        }
-
-        public void UpdateLotType()
-        {
-            int index = (int)LightType;
-            LightGreen = LotTypeGrassInfo.LightGreen[index];
-            DarkGreen = LotTypeGrassInfo.DarkGreen[index];
-            if (LightType != DarkType)
-            {
-                var dindex = (int)DarkType;
-                LightBrown = LotTypeGrassInfo.LightGreen[dindex];
-                DarkBrown = LotTypeGrassInfo.DarkGreen[dindex];
-            }
-            else
-            {
-                LightBrown = LotTypeGrassInfo.LightBrown[index];
-                DarkBrown = LotTypeGrassInfo.DarkBrown[index];
-            }
-            GrassHeight = LotTypeGrassInfo.Heights[index];
-            if (!FSOEnvironment.UseMRT) GrassHeight /= 2;
-            if (GrassHeight == 0) GrassHeight = 1;
-            GrassDensityScale = LotTypeGrassInfo.GrassDensity[index];
+            GrassState = result;
         }
 
         /// <summary>
