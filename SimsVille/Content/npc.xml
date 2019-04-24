@@ -1,6 +1,7 @@
   <Items>
 	<P g="0x14C180BA" n="NPCFirefighter" s="-1" p="0" m="0" i="0" />
-	<P g="0x6B264238" n="PhoneWallNew" s="-1" p="0" m="0" i="0" />
 	<P g="0x7557C98E" n="NPCOfficer" s="-1" p="0" m="0" i="0" />
 	<P g="0xC7857D8A" n="NPCThief" s="-1" p="0" m="0" i="0" />
+	<P g="0xD840F488" s="-1" p="0" n="Bills"></P>
+	<P g="0x70F69082" s="-1" p="0" n="NPC Controller"></P>
   </Items>

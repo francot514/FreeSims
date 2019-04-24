@@ -568,14 +568,14 @@
 <P g="0x242A033A" s="-1" p="0" n="Food Counter - Cart - B"></P>
 <P g="0x242A1280" s="-1" p="0" n="Food Counter - Cart - A"></P>
 <P g="0x242A3752" s="-1" p="0" n="Food Counter - Ice Cream - B"></P>
-<P g="0x242A4868" s="-1" p="8000" n="Food Counter - Cart - Hot Dogs"></P>
+<P g="0x242A4868" s="18" p="2100" n="Food Counter - Cart - Hot Dogs"></P>
 <P g="0x242A650D" s="-1" p="3200" n="Food Counter - Cheap"></P>
 <P g="0x242A67CF" s="-1" p="0" n="Food Counter - Ice Cream - A"></P>
 <P g="0x242CDFDB" s="-1" p="0" n="Fishing Pier - A"></P>
 <P g="0x243A5D42" s="-1" p="0" n="Food Counter - Cheap - A"></P>
 <P g="0x243ECFF3" s="-1" p="0" n="Stair - Spiral - Iron - Middle Hi"></P>
 <P g="0x2454D328" s="19" p="235" n="Lamp - Table - French"></P>
-<P g="0x245B2FC5" s="14" p="8000" n="Food Counter - Ice Cream"></P>
+<P g="0x245B2FC5" s="18" p="3400" n="Food Counter - Ice Cream"></P>
 <P g="0x245CAADF" s="14" p="18000" n="Tub - Love - Hot Date"></P>
 <P g="0x246C31A1" s="-1" p="0" n="NPC - Downtown - Cart Vendor - Female Medium"></P>
 <P g="0x246FEF64" s="-1" p="570" n="Front Desk - Vacation"></P>
@@ -619,7 +619,7 @@
 <P g="0x253F4AC3" s="-1" p="0" n="Barbecue - Back Left - Grill"></P>
 <P g="0x254233AD" s="12" p="1500" n="Sofa - Bamboo"></P>
 <P g="0x254DBB22" s="-1" p="0" n="Front Desk - Beach - Reserve B"></P>
-<P g="0x255098F9" s="13" p="480" n="Food Counter - Pastry"></P>
+<P g="0x255098F9" s="-1" p="0" n="Food Counter - Pastry"></P>
 <P g="0x2565A0DE" s="-1" p="0" n="Front Desk - Beach - Reserve C"></P>
 <P g="0x2565AE77" s="-1" p="0" n="Christmas Tree - Left"></P>
 <P g="0x2584A0B6" s="-1" p="0" n="FoodCounter - Pastry - A"></P>
@@ -1920,7 +1920,6 @@
 <P g="0x70D41E29" s="-1" p="0" n="Window Storm - part 1"></P>
 <P g="0x70E7B9A5" s="3" p="140" n="Trees - PricklyPear"></P>
 <P g="0x70EC0DBA" s="-1" p="0" n="Dining Table - Retro 1 - B"></P>
-<P g="0x70F69082" s="-1" p="0" n="NPC Controller"></P>
 <P g="0x71024F76" s="-1" p="0" n="Bed - Single - Antique - top"></P>
 <P g="0x711330BC" s="-1" p="0" n="Recliner - Vacation - Part B"></P>
 <P g="0x712A674A" s="-1" p="0" n="Dining Table - Vegas - C"></P>
