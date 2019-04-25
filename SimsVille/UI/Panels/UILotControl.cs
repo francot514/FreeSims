@@ -79,7 +79,7 @@ namespace FSO.Client.UI.Panels
         private int OldMX;
         private int OldMY;
         private bool FoundMe; //if false and avatar changes, center. Should center on join lot.
-
+        private bool KBScroll;
         private bool RMBScroll;
         private int RMBScrollX;
         private int RMBScrollY;
@@ -554,6 +554,20 @@ namespace FSO.Client.UI.Panels
                 if (ShowTooltip) state.UIState.TooltipProperties.UpdateDead = false;
 
                 bool scrolled = false;
+                if (KBScroll)
+                {
+                    World.State.ScrollAnchor = null;
+                    int KeyboardAxisX = 0;
+                    int KeyboardAxisY = 0;
+                    Vector2 scrollBy = new Vector2();
+                    if (state.KeyboardState.IsKeyDown(Keys.Up) || state.KeyboardState.IsKeyDown(Keys.W)) KeyboardAxisY -= 1;
+                    if (state.KeyboardState.IsKeyDown(Keys.Left) || state.KeyboardState.IsKeyDown(Keys.A)) KeyboardAxisX -= 1;
+                    if (state.KeyboardState.IsKeyDown(Keys.Down) || state.KeyboardState.IsKeyDown(Keys.S)) KeyboardAxisY += 1;
+                    if (state.KeyboardState.IsKeyDown(Keys.Right) || state.KeyboardState.IsKeyDown(Keys.D)) KeyboardAxisX += 1;
+                    scrollBy = new Vector2(KeyboardAxisX, KeyboardAxisY);
+                    scrollBy *= 0.05f;
+                    World.Scroll(scrollBy * (60f / 60));
+                }
                 if (RMBScroll)
                 {
                     World.State.ScrollAnchor = null;
@@ -569,10 +583,39 @@ namespace FSO.Client.UI.Panels
                     {
                         scrollBy = new Vector2(state.MouseState.X - RMBScrollX, state.MouseState.Y - RMBScrollY);
                         scrollBy *= 0.0005f;
+
+
+                        var angle = (Math.Atan2(state.MouseState.X - RMBScrollX, (RMBScrollY - state.MouseState.Y) * 2) / Math.PI) * 4;
+                        angle += 8;
+                        angle %= 8;
+
+                        CursorType type = CursorType.ArrowUp;
+                        switch ((int)Math.Round(angle))
+                        {
+                            case 0: type = CursorType.ArrowUp; break;
+                            case 1: type = CursorType.ArrowUpRight; break;
+                            case 2: type = CursorType.ArrowRight; break;
+                            case 3: type = CursorType.ArrowDownRight; break;
+                            case 4: type = CursorType.ArrowDown; break;
+                            case 5: type = CursorType.ArrowDownLeft; break;
+                            case 6: type = CursorType.ArrowLeft; break;
+                            case 7: type = CursorType.ArrowUpLeft; break;
+                        }
+                        GameFacade.Cursor.SetCursor(type);
+
                     }
-                    World.Scroll(scrollBy);
+                    World.Scroll(scrollBy *(60f / 60));
                     scrolled = true;
                 }
+
+                var nofocus = state.InputManager.GetFocus() == null;
+                var keyst = state.KeyboardState;
+                if (nofocus && (keyst.IsKeyDown(Keys.Up) || keyst.IsKeyDown(Keys.Left) || keyst.IsKeyDown(Keys.Down) || keyst.IsKeyDown(Keys.Right) ||
+                    (keyst.IsKeyDown(Keys.W) || keyst.IsKeyDown(Keys.A) || keyst.IsKeyDown(Keys.S) || keyst.IsKeyDown(Keys.D))))
+                    KBScroll = true;
+                else
+                    KBScroll = false;
+
                 if (MouseIsOn)
                 {
                     if (state.MouseState.RightButton == ButtonState.Pressed)
@@ -580,6 +623,7 @@ namespace FSO.Client.UI.Panels
                         if (RMBScroll == false)
                         {
                             RMBScroll = true;
+                            state.InputManager.SetFocus(null);
                             RMBScrollX = state.MouseState.X;
                             RMBScrollY = state.MouseState.Y;
                         }
@@ -590,6 +634,12 @@ namespace FSO.Client.UI.Panels
                         if (!scrolled && GlobalSettings.Default.EdgeScroll && !state.TouchMode) scrolled = World.TestScroll(state);
                     }
 
+                }
+
+                if (state.MouseState.RightButton != ButtonState.Pressed)
+                {
+                    if (RMBScroll) GameFacade.Cursor.SetCursor(CursorType.Normal);
+                    RMBScroll = false;
                 }
 
                 if (LiveMode) LiveModeUpdate(state, scrolled);
