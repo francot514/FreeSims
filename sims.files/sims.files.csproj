@@ -132,6 +132,7 @@
     <Compile Include="HIT\HSM.cs" />
     <Compile Include="HIT\TLO.cs" />
     <Compile Include="HIT\Track.cs" />
+	<Compile Include="Hash.cs" />
     <Compile Include="ImageLoader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tuning.cs" />

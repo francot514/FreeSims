@@ -9,18 +9,14 @@ namespace FSO.Files.Formats.IFF
 {
     public static class PIFFRegistry
     {
-        private static Dictionary<string, List<IffFile>> PIFFsByName;
-        private static Dictionary<string, bool> IsPIFFUser; //if a piff is User, all other piffs for that file are ignored.
+        private static Dictionary<string, List<IffFile>> PIFFsByName = new Dictionary<string, List<IffFile>>();
+        private static Dictionary<string, string> OtfRewrite = new Dictionary<string, string>();
+        private static Dictionary<string, bool> IsPIFFUser = new Dictionary<string, bool>(); //if a piff is User, all other piffs for that file are ignored.
+        private static HashSet<string> OBJDAdded = new HashSet<string>();
 
         public static void Init(string basePath)
         {
-            PIFFsByName = new Dictionary<string, List<IffFile>>();
-            IsPIFFUser = new Dictionary<string, bool>();
-
-            //Directory.CreateDirectory(basePath);
-            if (Directory.Exists("Content/Patch"))
-            {
-
+            if (!Directory.Exists(basePath)) return;
             string[] paths = Directory.GetFiles(basePath, "*.piff", SearchOption.AllDirectories);
             for (int i = 0; i < paths.Length; i++)
             {
@@ -28,8 +24,17 @@ namespace FSO.Files.Formats.IFF
                 bool user = entry.Contains("User/");
                 string filename = Path.GetFileName(entry);
 
-                IffFile piffFile = new IffFile(entry);
-                    Chunks.PIFF piff = piffFile.List<Chunks.PIFF>()[0];
+                PIFF piff;
+                IffFile piffFile;
+                try
+                {
+                    piffFile = new IffFile(entry);
+                    piff = piffFile.List<PIFF>()[0];
+                }
+                catch (Exception)
+                {
+                    continue;
+                }
 
                 if (IsPIFFUser.ContainsKey(piff.SourceIff))
                 {
@@ -51,15 +56,50 @@ namespace FSO.Files.Formats.IFF
                 PIFFsByName[piff.SourceIff].Add(piffFile);
             }
 
+            string[] otfs = Directory.GetFiles(basePath, "*.otf", SearchOption.AllDirectories);
 
+            foreach (var otf in otfs)
+            {
+                string entry = otf.Replace('\\', '/');
+                OtfRewrite[Path.GetFileName(entry)] = entry;
             }
+
+            foreach (var piffs in PIFFsByName)
+            {
+                foreach (var piff in piffs.Value)
+                {
+                    var addedOBJD = piff.List<OBJD>();
+                    if (addedOBJD != null)
+                    {
+                        OBJDAdded.Add(piffs.Key);
+                        continue;
+                    }
+
+                    var pChunk = piff.List<PIFF>()?.FirstOrDefault();
+                    if (pChunk != null && pChunk.Entries.Any(x => x.Type == "OBJD"))
+                    {
+                        OBJDAdded.Add(piffs.Key); 
+                        continue;
+                    }
+                }
+            }
+        }
+
+        public static HashSet<string> GetOBJDRewriteNames()
+        {
+            return OBJDAdded;
+        }
+
+        public static string GetOTFRewrite(string srcFile)
+        {
+            string result = null;
+            OtfRewrite.TryGetValue(srcFile, out result);
+            return result;
         }
 
         public static List<IffFile> GetPIFFs(string srcFile)
         {
             List<IffFile> result = null;
-
-            if (PIFFsByName != null)
             PIFFsByName.TryGetValue(srcFile, out result);
             return result;
         }

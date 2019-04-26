@@ -67,6 +67,7 @@ namespace FSO.Files.Formats.IFF
         private Dictionary<Type, Dictionary<ushort, object>> ByChunkId;
         private Dictionary<Type, List<object>> ByChunkType;
         public List<IffChunk> RemovedOriginal = new List<IffChunk>();
+        public uint ExecutableHash; //hash of BHAV and BCON chunks
 
         /// <summary>
         /// Constructs a new IFF instance.
@@ -286,6 +287,23 @@ namespace FSO.Files.Formats.IFF
             //register this chunk as one that has been hard removed
             if (!chunk.AddedByPatch) RemovedOriginal.Add(chunk);
             RemoveChunk(chunk);
+        }
+
+        public void InitHash()
+        {
+            if (ExecutableHash != 0) return;
+            if (ByChunkType.ContainsKey(typeof(BHAV)))
+            {
+                IEnumerable<object> executableTypes = ByChunkType[typeof(BHAV)];
+                if (ByChunkType.ContainsKey(typeof(BCON))) executableTypes = executableTypes.Concat(ByChunkType[typeof(BCON)]);
+                var hash = new Hash();
+                hash.Init();
+                foreach (IffChunk chunk in executableTypes)
+                {
+                    hash.Update(chunk.ChunkData ?? chunk.OriginalData, chunk.ChunkData.Length);
+                }
+                ExecutableHash = hash.Digest();
+            }
         }
 
         public void AddChunk(IffChunk chunk)
