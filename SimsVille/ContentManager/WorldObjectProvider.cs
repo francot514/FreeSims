@@ -80,10 +80,10 @@ namespace FSO.Content
                 });
             }
 
-            //if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/GameData"))
-            //{
+            if (Directory.Exists("Content/Objects"))
+            {
 
-                string GFile = FSOEnvironment.SimsCompleteDir + "/GameData/Objects/Objects.far";
+                string GFile = "Content/Objects/npcs.far";
                 FarFiles.Add(GFile);
                 SpriteFiles.Add(GFile);
 
@@ -108,7 +108,7 @@ namespace FSO.Content
                         });
                 }
 
-            //}
+            }
 
 
             if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/ExpansionPack"))
