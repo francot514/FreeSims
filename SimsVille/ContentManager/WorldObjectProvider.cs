@@ -80,10 +80,10 @@ namespace FSO.Content
                 });
             }
 
-            if (Directory.Exists("Content/Objects"))
+            if (Directory.Exists(AppDomain.CurrentDomain.BaseDirectory + "/Content/Objects"))
             {
 
-                string GFile = "Content/Objects/npcs.far";
+                string GFile = AppDomain.CurrentDomain.BaseDirectory + "Content/Objects/npcs.far";
                 FarFiles.Add(GFile);
                 SpriteFiles.Add(GFile);
 
