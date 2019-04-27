@@ -104,10 +104,10 @@ namespace sims.debug
                 || name.Contains("Fridge") || name.Contains("Shower") || name.Contains("tub") || name.Contains("Toilet") || name.Contains("shower") || name.Contains("sink"))
                 category = 14;
             else if (name.Contains("tv") || name.Contains("Stereo") || name.Contains("Computer") || name.Contains("Dance") || name.Contains("Mechanical")
-                || name.Contains("Teleport") || name.Contains("Cash"))
+                || name.Contains("Teleport") || name.Contains("phone") ||  name.Contains("Cash"))
                 category = 15;
             else if (name.Contains("Piano") || name.Contains("Book") || name.Contains("Mirror") || name.Contains("Telescope") || name.Contains("mirror") || name.Contains("book")
-                || name.Contains("Chemistry") || name.Contains("Guitar") || name.Contains("mirror"))
+                || name.Contains("Chemistry") || name.Contains("Guitar") || name.Contains("mirror") || name.Contains("chess"))
                 category = 16;
             else if (name.Contains("Sculpture") || name.Contains("Plant") || name.Contains("Painting") || name.Contains("Clock")
                 || name.Contains("Rug") || name.Contains("Ball") || name.Contains("Christmas") || name.Contains("awning") || name.Contains("Sign"))
@@ -115,7 +115,7 @@ namespace sims.debug
             else if (name.Contains("Cloth") || name.Contains("Dress") || name.Contains("Can") || name.Contains("Bar")
                 || name.Contains("Trash") || name.Contains("Alarm") || name.Contains("Trunk") || name.Contains("DisplayCase"))
                 category = 18;
-            else if (name.Contains("Lamp") || name.Contains("Light") || name.Contains("lamp") || name.Contains("Menorah"))
+            else if (name.Contains("Lamp") || name.Contains("Light") || name.Contains("lamp") || name.Contains("candle") || name.Contains("Menorah"))
                 category = 19;
             else if (name.Contains("Pet") || name.Contains("Dog") || name.Contains("Cat"))
                 category = 20;
