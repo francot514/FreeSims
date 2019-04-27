@@ -419,14 +419,13 @@ namespace FSO.Content
             var piffModified = PIFFRegistry.GetOBJDRewriteNames();
             foreach (var name in piffModified)
             {
-                ProcessedFiles.GetOrAdd(name, GenerateResource(new GameObjectReference(this) { FileName = name.Substring(0, name.Length - 4), Source = GameObjectSource.Far }));
+                ProcessedFiles.Add(name, GenerateResource(new GameObjectReference(this) { FileName = name.Substring(0, name.Length - 4), Source = GameObjectSource.Far }));
             }
         }
 
-        protected override Func<string, GameObjectResource> GenerateResource(GameObjectReference reference)
+        private GameObjectResource GenerateResource(GameObjectReference reference)
         {
-            return (fname) =>
-            {
+            
                 /** Better set this up! **/
                 IffFile sprites = null, iff = null;
                 OTFFile tuning = null;
@@ -465,7 +464,7 @@ namespace FSO.Content
                 if (sprites != null) sprites.RuntimeInfo.UseCase = IffUseCase.ObjectSprites;
 
                 return new GameObjectResource(iff, sprites, tuning, reference.FileName);
-            };
+            
         }
     
 
