@@ -464,7 +464,7 @@ namespace FSO.Content
         }
     
 
-        private Dictionary<string, GameObjectResource> ProcessedFiles = new Dictionary<string, GameObjectResource>();
+        private ConcurrentDictionary<string, GameObjectResource> ProcessedFiles = new ConcurrentDictionary<string, GameObjectResource>();
 
         #region IContentProvider<GameObject> Members
 
@@ -541,24 +541,18 @@ namespace FSO.Content
 
                         resource = new GameObjectResource(iff, sprites, tuning, reference.FileName);
 
-                        
-
-                        lock (ProcessedFiles)
-                        {
-                            ProcessedFiles.Add(reference.FileName, resource);
-                        }
-
-
                         var piffModified = PIFFRegistry.GetOBJDRewriteNames();
                         foreach (var name in piffModified)
                         {
 
-                            if (ProcessedFiles.ContainsKey(name))
-                                ProcessedFiles.Remove(name);
 
-
-                            ProcessedFiles.Add(name, GenerateResource(new GameObjectReference(this) { FileName = name.Substring(0, name.Length - 4), Source = GameObjectSource.Far }));
+                            ProcessedFiles.GetOrAdd(name, GenerateResource(new GameObjectReference(this) { FileName = name.Substring(0, name.Length - 4), Source = GameObjectSource.Far }));
                         }
+
+                        lock (ProcessedFiles)
+                        {
+                            ProcessedFiles.GetOrAdd(reference.FileName, resource);
+                        }   
 
                     }
 
