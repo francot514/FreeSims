@@ -392,7 +392,82 @@ namespace FSO.Content
                 Sprites.Init();
             }
 
+
+            //init local objects, piff clones
+            string[] paths = Directory.GetFiles(Path.Combine(FSOEnvironment.ContentDir, "Objects"), "*.iff", SearchOption.AllDirectories);
+            for (int i = 0; i < paths.Length; i++)
+            {
+                string entry = paths[i];
+                string filename = Path.GetFileName(entry);
+                IffFile iffFile = new IffFile(entry);
+
+                var objs = iffFile.List<OBJD>();
+                foreach (var obj in objs)
+                {
+                    Entries.Add(obj.GUID, new GameObjectReference(this)
+                    {
+                        ID = obj.GUID,
+                        FileName = entry,
+                        Source = GameObjectSource.Standalone,
+                        Name = obj.ChunkLabel,
+                        Group = (short)obj.MasterID,
+                        SubIndex = obj.SubIndex
+                    });
+                }
+            }
+
+            var piffModified = PIFFRegistry.GetOBJDRewriteNames();
+            foreach (var name in piffModified)
+            {
+                ProcessedFiles.GetOrAdd(name, GenerateResource(new GameObjectReference(this) { FileName = name.Substring(0, name.Length - 4), Source = GameObjectSource.Far }));
+            }
         }
+
+        protected override Func<string, GameObjectResource> GenerateResource(GameObjectReference reference)
+        {
+            return (fname) =>
+            {
+                /** Better set this up! **/
+                IffFile sprites = null, iff = null;
+                OTFFile tuning = null;
+
+                if (reference.Source == GameObjectSource.Far)
+                {
+                    iff = this.Iffs.Get(reference.FileName + ".iff");
+                    iff.InitHash();
+                    iff.RuntimeInfo.Path = reference.FileName;
+                    if (WithSprites) sprites = this.Sprites.Get(reference.FileName + ".spf");
+                    var rewrite = PIFFRegistry.GetOTFRewrite(reference.FileName + ".otf");
+                    try
+                    {
+                        tuning = (rewrite != null) ? new OTFFile(rewrite) : this.TuningTables.Get(reference.FileName + ".otf");
+                    }
+                    catch (Exception)
+                    {
+                        //if any issues occur loading an otf, just silently ignore it.
+                    }
+                }
+                else
+                {
+                    iff = new IffFile(reference.FileName);
+                    iff.InitHash();
+                    iff.RuntimeInfo.Path = reference.FileName;
+                    iff.RuntimeInfo.State = IffRuntimeState.Standalone;
+                }
+
+                if (iff.RuntimeInfo.State == IffRuntimeState.PIFFPatch)
+                {
+                    //OBJDs may have changed due to patch. Remove all file references
+                    ResetFile(iff);
+                }
+
+                iff.RuntimeInfo.UseCase = IffUseCase.Object;
+                if (sprites != null) sprites.RuntimeInfo.UseCase = IffUseCase.ObjectSprites;
+
+                return new GameObjectResource(iff, sprites, tuning, reference.FileName);
+            };
+        }
+    
 
         private Dictionary<string, GameObjectResource> ProcessedFiles = new Dictionary<string, GameObjectResource>();
 
