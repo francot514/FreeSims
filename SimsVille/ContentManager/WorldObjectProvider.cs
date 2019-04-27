@@ -552,6 +552,11 @@ namespace FSO.Content
                         var piffModified = PIFFRegistry.GetOBJDRewriteNames();
                         foreach (var name in piffModified)
                         {
+
+                            if (ProcessedFiles.ContainsKey(name))
+                                ProcessedFiles.Remove(name);
+
+
                             ProcessedFiles.Add(name, GenerateResource(new GameObjectReference(this) { FileName = name.Substring(0, name.Length - 4), Source = GameObjectSource.Far }));
                         }
 
