@@ -541,18 +541,17 @@ namespace FSO.Content
 
                         resource = new GameObjectResource(iff, sprites, tuning, reference.FileName);
 
-                        var piffModified = PIFFRegistry.GetOBJDRewriteNames();
-                        foreach (var name in piffModified)
-                        {
-
-
-                            ProcessedFiles.GetOrAdd(name, GenerateResource(new GameObjectReference(this) { FileName = name.Substring(0, name.Length - 4), Source = GameObjectSource.Far }));
-                        }
 
                         lock (ProcessedFiles)
                         {
                             ProcessedFiles.GetOrAdd(reference.FileName, resource);
-                        }   
+                        }
+                        
+                        var piffModified = PIFFRegistry.GetOBJDRewriteNames();
+                        foreach (var name in piffModified)
+                        {
+                            ProcessedFiles.GetOrAdd(name, GenerateResource(new GameObjectReference(this) { FileName = name.Substring(0, name.Length - 4), Source = GameObjectSource.Far }));
+                        }
 
                     }
 

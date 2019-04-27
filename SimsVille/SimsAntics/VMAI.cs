@@ -83,7 +83,8 @@ using FSO.SimAntics.Engine;
                     foreach (var interaction in entity.TreeTable.Interactions)
                     {
 
-                        if (!interaction.Debug || !interaction.WhenDead || !interaction.Leapfrog)
+                        if (!interaction.Debug || !interaction.WhenDead || !interaction.Leapfrog 
+                            || !interaction.AllowGhosts || !interaction.AllowCSRs || !interaction.AllowConsecutive)
                             interactionList.Add(entity.TreeTableStrings.GetString((int)interaction.TTAIndex));
                     }
                 }
