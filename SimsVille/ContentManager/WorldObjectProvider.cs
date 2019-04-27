@@ -416,11 +416,7 @@ namespace FSO.Content
                 }
             }
 
-            var piffModified = PIFFRegistry.GetOBJDRewriteNames();
-            foreach (var name in piffModified)
-            {
-                ProcessedFiles.Add(name, GenerateResource(new GameObjectReference(this) { FileName = name.Substring(0, name.Length - 4), Source = GameObjectSource.Far }));
-            }
+            
         }
 
         private GameObjectResource GenerateResource(GameObjectReference reference)
@@ -543,6 +539,12 @@ namespace FSO.Content
                         if (sprites != null) sprites.RuntimeInfo.UseCase = IffUseCase.ObjectSprites;
 
                         resource = new GameObjectResource(iff, sprites, tuning, reference.FileName);
+
+                        var piffModified = PIFFRegistry.GetOBJDRewriteNames();
+                        foreach (var name in piffModified)
+                        {
+                            ProcessedFiles.Add(name, GenerateResource(new GameObjectReference(this) { FileName = name.Substring(0, name.Length - 4), Source = GameObjectSource.Far }));
+                        }
 
                         lock (ProcessedFiles)
                         {
