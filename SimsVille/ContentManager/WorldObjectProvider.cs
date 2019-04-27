@@ -533,6 +533,7 @@ namespace FSO.Content
                         {
                             //OBJDs may have changed due to patch. Remove all file references
                             ResetFile(iff);
+
                         }
 
                         iff.RuntimeInfo.UseCase = IffUseCase.Object;
@@ -540,16 +541,20 @@ namespace FSO.Content
 
                         resource = new GameObjectResource(iff, sprites, tuning, reference.FileName);
 
+                        
+
+                        lock (ProcessedFiles)
+                        {
+                            ProcessedFiles.Add(reference.FileName, resource);
+                        }
+
+
                         var piffModified = PIFFRegistry.GetOBJDRewriteNames();
                         foreach (var name in piffModified)
                         {
                             ProcessedFiles.Add(name, GenerateResource(new GameObjectReference(this) { FileName = name.Substring(0, name.Length - 4), Source = GameObjectSource.Far }));
                         }
 
-                        lock (ProcessedFiles)
-                        {
-                            ProcessedFiles.Add(reference.FileName, resource);
-                        }
                     }
 
                     foreach (var objd in resource.MainIff.List<OBJD>())
