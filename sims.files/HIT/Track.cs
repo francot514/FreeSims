@@ -27,6 +27,7 @@ namespace FSO.Files.HIT
         public HITDuckingPriorities DuckingPriority;
         public uint Looped;
         public uint Volume;
+        public bool LoopDefined = false;
 
         public uint SubroutineID;
         public uint HitlistID;
@@ -72,6 +73,7 @@ namespace FSO.Files.HIT
                 DuckingPriority = (HITDuckingPriorities)ParseHexString(Values[CurrentVal]);
                 CurrentVal++;
                 Looped = ParseHexString(Values[CurrentVal]);
+                LoopDefined = true;
                 CurrentVal++;
                 Volume = ParseHexString(Values[CurrentVal]);
             }
