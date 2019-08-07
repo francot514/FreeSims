@@ -15,8 +15,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using TSO.Files.utils;
-using TSO.Files.FAR3;
+using FSO.Files.Utils;
+using FSO.Files.Formats.DBPF;
 
 namespace TSO.Files.formats.dbpf
 {

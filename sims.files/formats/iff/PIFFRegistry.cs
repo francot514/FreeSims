@@ -75,7 +75,7 @@ namespace FSO.Files.Formats.IFF
                         continue;
                     }
 
-                    var pChunk = piff.List<PIFF>()?.FirstOrDefault();
+                    var pChunk = piff.List<PIFF>().FirstOrDefault();
                     if (pChunk != null && pChunk.Entries.Any(x => x.Type == "OBJD"))
                     {
                         OBJDAdded.Add(piffs.Key); 
