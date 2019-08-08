@@ -35,7 +35,17 @@ namespace sims.debug
         public string GUID;
 
         [XmlAttribute("n")]
+        public string FileName;
+
+        [XmlAttribute("o")]
         public string Name;
+
+        [XmlAttribute("m")]
+        public string Group;
+
+        [XmlAttribute("i")]
+        public string SubIndex;
+
     }
 
     

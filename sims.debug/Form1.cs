@@ -29,8 +29,12 @@ namespace sims.debug
 
             DirectoryInfo dirinfo = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
             foreach (DirectoryInfo dir in dirinfo.GetDirectories())
-                listBox2.Items.Add(dir.FullName);
+                listBox1.Items.Add(dir.FullName);
 
+            FileInfo file = new FileInfo(AppDomain.CurrentDomain.BaseDirectory + "/Objects/Objects.far");
+            if (File.Exists(file.FullName))
+                listBox2.Items.Add(file.FullName);
+            
         }
 
         private void LoadHouses(string path)
@@ -146,7 +150,7 @@ namespace sims.debug
 
 
                foreach (OBJD obj in iff.List<OBJD>())
-               if (obj.IsMultiTile && obj.SubIndex == -1)
+               if (obj.IsMultiTile)
                    {
 
                    FileID = obj.GUID;
@@ -155,12 +159,14 @@ namespace sims.debug
                     infotable.Items.Add(new TableItem()
                             {
                                 GUID = FileID.ToString("X"),
-                                Name = name,
-                                
+                                FileName = name,
+                                Name = iff.Filename.Substring(0,iff.Filename.Length - 4),
+                                Group = obj.MasterID.ToString(),
+                                SubIndex = obj.SubIndex.ToString()
 
                             });
 
-                    listBox1.Items.Add(file.Name + " " + FileID);
+                    listBox2.Items.Add(file.Name + " " + FileID);
                     InfoTable.Save("table.xml", infotable);
 
                    }
@@ -173,11 +179,14 @@ namespace sims.debug
                    infotable.Items.Add(new TableItem()
                    {
                        GUID = FileID.ToString("X"),
-                       Name = name,
+                       FileName = name,
+                       Name = iff.Filename.Substring(0, iff.Filename.Length - 4),
+                       Group = obj.MasterID.ToString(),
+                       SubIndex = obj.SubIndex.ToString()
 
                    });
 
-                    listBox1.Items.Add(file.Name + " " + FileID);
+                    listBox2.Items.Add(file.Name + " " + FileID);
                     InfoTable.Save("table.xml", infotable);
                         }
           
@@ -217,7 +226,7 @@ namespace sims.debug
 
                             });
 
-                    listBox1.Items.Add(file.Name + " " + FileID);
+                    listBox2.Items.Add(file.Name + " " + FileID);
                     CatalogTable.Save("catalog.xml", catalog);
 
                    }
@@ -236,7 +245,7 @@ namespace sims.debug
 
                    });
 
-                   listBox1.Items.Add(file.Name + " " + FileID);
+                   listBox2.Items.Add(file.Name + " " + FileID);
                    CatalogTable.Save("catalog.xml", catalog);
 
                }
@@ -249,13 +258,13 @@ namespace sims.debug
         private void button1_Click(object sender, EventArgs e)
         {
 
-            listBox1.Items.Clear();
+            listBox2.Items.Clear();
 
             string file = "";
 
-            if (listBox2.SelectedItem != null)
+            if (listBox1.SelectedItem != null)
 
-                file = listBox2.SelectedItem.ToString();
+                file = listBox1.SelectedItem.ToString();
 
             CreateTableFile(file);
 
@@ -266,13 +275,13 @@ namespace sims.debug
 
         private void button2_Click(object sender, EventArgs e)
         {
-            listBox1.Items.Clear();
+            listBox2.Items.Clear();
 
             string file = "";
 
-            if (listBox2.SelectedItem != null)
+            if (listBox1.SelectedItem != null)
 
-                file = listBox2.SelectedItem.ToString();
+                file = listBox1.SelectedItem.ToString();
 
             CreateCatalogFile(file);
         }
@@ -392,10 +401,31 @@ namespace sims.debug
 
             var simi = iff.Get<SIMI>(326);
 
-            int value = simi.ArchitectureValue();
+           // int value = simi.ArchitectureValue();
 
-            int rooms = simi.Rooms();
+            //int rooms = simi.Rooms();
 
+        }
+
+        private void listBox2_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+            string current = listBox2.SelectedItem.ToString();
+
+            if (!Directory.Exists("Export"))
+                Directory.CreateDirectory("Export");
+
+            if (current != null)
+            {
+                FAR1Archive far = new FAR1Archive(current, false);
+
+                foreach ( KeyValuePair<string, byte[]> entry in far.GetAllEntries())
+                    if (entry.Key.Contains(".iff"))
+                    {
+                        File.WriteAllBytes("Export/" + entry.Key, entry.Value);
+
+                    }
+            }
         }
 
         private void loadToolStripMenuItem_Click(object sender, EventArgs e)

@@ -46,13 +46,14 @@
             this.label1 = new System.Windows.Forms.Label();
             this.listBox1 = new System.Windows.Forms.ListBox();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.button6 = new System.Windows.Forms.Button();
             this.button5 = new System.Windows.Forms.Button();
             this.comboBox1 = new System.Windows.Forms.ComboBox();
             this.listBox3 = new System.Windows.Forms.ListBox();
             this.label6 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
-            this.button6 = new System.Windows.Forms.Button();
+            this.label7 = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -118,6 +119,7 @@
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.label7);
             this.tabPage1.Controls.Add(this.button4);
             this.tabPage1.Controls.Add(this.button3);
             this.tabPage1.Controls.Add(this.listBox2);
@@ -159,8 +161,9 @@
             this.listBox2.FormattingEnabled = true;
             this.listBox2.Location = new System.Drawing.Point(28, 40);
             this.listBox2.Name = "listBox2";
-            this.listBox2.Size = new System.Drawing.Size(317, 95);
+            this.listBox2.Size = new System.Drawing.Size(375, 95);
             this.listBox2.TabIndex = 16;
+            this.listBox2.SelectedIndexChanged += new System.EventHandler(this.listBox2_SelectedIndexChanged);
             // 
             // button2
             // 
@@ -170,6 +173,7 @@
             this.button2.TabIndex = 15;
             this.button2.Text = "Catalog";
             this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // button1
             // 
@@ -179,6 +183,7 @@
             this.button1.TabIndex = 14;
             this.button1.Text = "Table";
             this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // label3
             // 
@@ -210,9 +215,9 @@
             // listBox1
             // 
             this.listBox1.FormattingEnabled = true;
-            this.listBox1.Location = new System.Drawing.Point(166, 144);
+            this.listBox1.Location = new System.Drawing.Point(166, 167);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(179, 95);
+            this.listBox1.Size = new System.Drawing.Size(237, 95);
             this.listBox1.TabIndex = 10;
             // 
             // tabPage2
@@ -231,6 +236,16 @@
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Other";
             this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // button6
+            // 
+            this.button6.Location = new System.Drawing.Point(308, 221);
+            this.button6.Name = "button6";
+            this.button6.Size = new System.Drawing.Size(75, 23);
+            this.button6.TabIndex = 20;
+            this.button6.Text = "Load";
+            this.button6.UseVisualStyleBackColor = true;
+            this.button6.Click += new System.EventHandler(this.button6_Click);
             // 
             // button5
             // 
@@ -290,15 +305,14 @@
             this.label4.TabIndex = 0;
             this.label4.Text = "Directory:";
             // 
-            // button6
+            // label7
             // 
-            this.button6.Location = new System.Drawing.Point(308, 221);
-            this.button6.Name = "button6";
-            this.button6.Size = new System.Drawing.Size(75, 23);
-            this.button6.TabIndex = 20;
-            this.button6.Text = "Load";
-            this.button6.UseVisualStyleBackColor = true;
-            this.button6.Click += new System.EventHandler(this.button6_Click);
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(206, 146);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(57, 13);
+            this.label7.TabIndex = 19;
+            this.label7.Text = "Directories";
             // 
             // Form1
             // 
@@ -350,6 +364,7 @@
         private System.Windows.Forms.ComboBox comboBox1;
         private System.Windows.Forms.Button button5;
         private System.Windows.Forms.Button button6;
+        private System.Windows.Forms.Label label7;
     }
 }
 
