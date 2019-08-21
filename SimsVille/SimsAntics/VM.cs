@@ -353,6 +353,27 @@ namespace FSO.SimAntics
             entity.Dead = true;
         }
 
+        public static void DeleteFromObjList(List<VMEntity> list, VMEntity entity)
+        {
+            if (list.Count == 0) { return; }
+            int id = entity.ObjectID;
+            int max = list.Count;
+            int min = 0;
+            while (max > min)
+            {
+                int mid = (max + min) / 2;
+                int nid = list[mid].ObjectID;
+                if (id < nid) max = mid;
+                else if (id == nid)
+                {
+                    list.RemoveAt(mid); //found it
+                    return;
+                }
+                else min = mid + 1;
+            }
+            //list.RemoveAt(min);
+        }
+
         /// <summary>
         /// Finds the next free object ID and remembers it for use when making another object.
         /// </summary>

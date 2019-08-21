@@ -53,6 +53,7 @@ namespace FSO.SimAntics
         public VMAmbientSound Ambience;
         public ulong RandomSeed;
 
+        //public VMObjectQueries ObjectQueries;
         public GameGlobal Globals;
         public VMSetToNextCache SetToNextCache;
         public VMRoomInfo[] RoomInfo;

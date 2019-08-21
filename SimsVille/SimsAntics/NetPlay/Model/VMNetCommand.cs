@@ -33,6 +33,7 @@ namespace FSO.SimAntics.NetPlay.Model
             { VMCommandType.GenericDialog, typeof(VMGenericDialogCommand) },
             { VMCommandType.AsyncResponse, typeof(VMNetAsyncResponseCmd) },
             { VMCommandType.ChangePermissions, typeof(VMChangePermissionsCmd) },
+            { VMCommandType.ChangeControl, typeof(VMNetChangeControlCmd) },
             { VMCommandType.EODObjEvent, typeof(VMNetEODEventCmd) },
             { VMCommandType.EODMessage, typeof(VMNetEODMessageCmd) },
             { VMCommandType.SetRoof, typeof(VMNetSetRoofCmd) },

@@ -681,7 +681,16 @@ namespace FSO.SimAntics
                     if (UseWorld) WorldUI.Visible = value == 0;
                     break;
 
-
+                case VMStackObjectVariable.Category:
+                    if (Thread != null)
+                    {
+                        Thread.Context.SetToNextCache.RemoveCategory(this, ObjectData[(short)var]);
+                        Thread.Context.SetToNextCache.RegisterCategory(this, value);
+                    }
+                    break;
+               // case VMStackObjectVariable.CurrentValue:
+                 //   MultitileGroup.InitialPrice = value;
+                   // break;
             }
 
             if ((short)var > 79) throw new Exception("Object Data out of range!");

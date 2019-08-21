@@ -16,10 +16,10 @@ using FSO.SimAntics.Engine;
             public List<VMEntity> Objects;
             public List<VMEntity> Entities;
             public List<VMAvatar> Visitors;
-            private VMEntity Target;
+            public VMEntity Target, Subject;
             private TTAB TreeTableSelected;
             private List<string> interactionList;
-
+            public int SelectedID;
 
 
             public VMFreeWill(VM vm)
