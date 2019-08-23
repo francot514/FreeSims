@@ -170,8 +170,6 @@ namespace SimsNet
             else
             {
 
-
-
                     if (File.Exists(path))
                     {
                         HouseInfo = new IffFile(path);
@@ -190,9 +188,9 @@ namespace SimsNet
                     }
                   
 
-                    vm.Context.Clock.Hours = 10;
+                    vm.Context.Clock.Hours = 8;
 
-                vm.MyUID = uint.MaxValue - 1;
+                    vm.MyUID = uint.MaxValue - 1;
 
             }
               
