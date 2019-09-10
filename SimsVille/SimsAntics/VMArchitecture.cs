@@ -15,6 +15,7 @@ using FSO.SimAntics.Utils;
 using FSO.SimAntics.Marshals;
 using FSO.SimAntics.NetPlay.Model;
 using FSO.Content;
+using FSO.Files.Formats.IFF.Chunks;
 
 namespace FSO.SimAntics
 {
@@ -39,6 +40,10 @@ namespace FSO.SimAntics
         public bool[][] Supported;
 
         public List<VMArchitectureCommand> Commands;
+
+        public Rectangle BuildableArea;
+        public bool[] FineBuildableArea;
+        public int BuildableFloors;
 
         public VMRoomMap[] Rooms;
         public List<VMRoom> RoomData;
@@ -264,6 +269,8 @@ namespace FSO.SimAntics
             WallsDirty = false;
         }
 
+        
+
         public int SimulateCommands(List<VMArchitectureCommand> commands, bool visualChange)
         {
             int cost;
@@ -448,6 +455,18 @@ namespace FSO.SimAntics
             ));
 
             return cost;
+        }
+
+        public void UpdateBuildableArea(Rectangle area, int floors)
+        {
+            //notify the lotview this has changed too, so it can be drawn.
+            BuildableArea = area;
+            BuildableFloors = floors;
+            if (VM.UseWorld)
+            {
+                WorldUI.BuildableArea = BuildableArea;
+               // WorldUI.Terrain.TerrainDirty = true;
+            }
         }
 
         private WallReference GetPatternRef(ushort id)

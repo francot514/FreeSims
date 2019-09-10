@@ -88,12 +88,16 @@ namespace FSO.Client.UI.Panels
         public UIPersonGrid PersonGrid;
 
         UILotControl LotController;
-        private VMAvatar SelectedAvatar
+        public VMAvatar SelectedAvatar
         {
             get
             {
                 return (LotController.ActiveEntity != null && LotController.ActiveEntity is VMAvatar) ? (VMAvatar)LotController.ActiveEntity : null;
             }
+            set
+            {
+            }
+
         }
         private VMAvatar LastSelected;
         private EODLiveModeOpt LastEODConfig;

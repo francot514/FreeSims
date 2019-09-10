@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using Microsoft.Xna.Framework;
 
 namespace FSO.SimAntics.Model.TSOPlatform
 {
@@ -11,6 +12,7 @@ namespace FSO.SimAntics.Model.TSOPlatform
     {
         public VMTSOAvatarPermissions Permissions = VMTSOAvatarPermissions.Visitor;
         public HashSet<uint> IgnoredAvatars = new HashSet<uint>();
+        public Color ChatColor = Color.White;
 
         public override void Deserialize(BinaryReader reader)
         {

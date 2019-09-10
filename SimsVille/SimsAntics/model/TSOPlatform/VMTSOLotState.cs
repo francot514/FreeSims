@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using FSO.SimAntics.Model.Platform;
 
 namespace FSO.SimAntics.Model.TSOPlatform
 {
@@ -14,6 +15,9 @@ namespace FSO.SimAntics.Model.TSOPlatform
         public byte TerrainType;
         public byte PropertyCategory;
         public int Size = 8;
+
+        public int ObjectLimit, DonateLimit;
+        public override bool LimitExceeded { get; set; }
 
         public uint OwnerID;
         public HashSet<uint> Roommates = new HashSet<uint>();
@@ -36,6 +40,16 @@ namespace FSO.SimAntics.Model.TSOPlatform
             for (int i = 0; i < broomCount; i++) BuildRoommates.Add(reader.ReadUInt32());
         }
 
+        public override void ActivateValidator(VM vm)
+        {
+            switch (PropertyCategory)
+            {               
+                default:
+                    Validator = new VMDefaultValidator(vm); break;
+            }
+
+        }
+
         public override void SerializeInto(BinaryWriter writer)
         {
             writer.Write(Name);
@@ -49,6 +63,16 @@ namespace FSO.SimAntics.Model.TSOPlatform
             foreach (var roomie in Roommates) writer.Write(roomie);
             writer.Write((short)BuildRoommates.Count);
             foreach (var roomie in BuildRoommates) writer.Write(roomie);
+        }
+
+        public override bool CanPlaceNewUserObject(VM vm)
+        {
+            return (vm.Context.ObjectQueries.NumUserObjects < ObjectLimit);
+        }
+
+        public override bool CanPlaceNewDonatedObject(VM vm)
+        {
+            return (vm.Context.ObjectQueries.NumDonatedObjects < DonateLimit);
         }
 
         public override void Tick(VM vm, object owner)

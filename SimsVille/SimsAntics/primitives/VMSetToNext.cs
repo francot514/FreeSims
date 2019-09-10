@@ -118,6 +118,9 @@ namespace FSO.SimAntics.Primitives
                         entities = context.VM.Context.SetToNextCache.Avatars; break;
                     case VMSetToNextSearchType.ObjectOfType:
                         entities = context.VM.Context.SetToNextCache.GetObjectsByGUID(operand.GUID); break;
+                    case VMSetToNextSearchType.ObjectWithCategoryEqualToSP0:
+                        entities = context.VM.Context.SetToNextCache.GetObjectsByCategory(context.Args[0]); break;
+
                 }
                 if (entities == null) return VMPrimitiveExitCode.GOTO_FALSE;
 
@@ -147,10 +150,12 @@ namespace FSO.SimAntics.Primitives
                                 //var nexta = Content.Content.Get().TS1Neighborhood.SetToNext(targetValue, operand.GUID);
                                 //if (nexta < 0) return VMPrimitiveExitCode.GOTO_FALSE;
                                 //VMMemory.SetVariable(context, operand.TargetOwner, operand.TargetData, 0);
-                                    return VMPrimitiveExitCode.GOTO_TRUE;
+                                 return VMPrimitiveExitCode.GOTO_TRUE;
                             case VMSetToNextSearchType.Career:
                                 return VMPrimitiveExitCode.GOTO_TRUE;
                             case VMSetToNextSearchType.ClosestHouse:
+                                return VMPrimitiveExitCode.GOTO_TRUE;
+                            case VMSetToNextSearchType.FamilyMember:
                                 return VMPrimitiveExitCode.GOTO_TRUE;
                             default:
                                 //set to next object, or cached search.
@@ -264,6 +269,7 @@ namespace FSO.SimAntics.Primitives
         ObjectOnSameTile = 8,
         ObjectAdjacentToObjectInLocal = 9,
         Career = 10,
-        ClosestHouse = 11
+        ClosestHouse = 11,
+        FamilyMember = 12
     }
 }

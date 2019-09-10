@@ -39,6 +39,7 @@ using FSO.Vitaboy;
 using FSO.SimAntics.Model.TSOPlatform;
 using Microsoft.Xna.Framework.Graphics;
 using FSO.Files.Formats.IFF;
+using FSO.Debug;
 
 namespace FSO.Client.UI.Screens
 {
@@ -49,6 +50,7 @@ namespace FSO.Client.UI.Screens
         public UIInbox Inbox;
         public UIGameTitle Title;
         private UIButton SaveHouseButton;
+        private UIButton VMDebug;
         private UIButton CreateChar;
         private string[] CityMusic;
         private String city, lotName;
@@ -209,7 +211,7 @@ namespace FSO.Client.UI.Screens
             };
             HITVM.Get().PlaySoundEvent(UIMusic.Map);
 
-            /*VMDebug = new UIButton()
+            VMDebug = new UIButton()
             {
                 Caption = "Simantics",
                 Y = 45,
@@ -217,7 +219,7 @@ namespace FSO.Client.UI.Screens
                 X = GlobalSettings.Default.GraphicsWidth - 110
             };
             VMDebug.OnButtonClick += new ButtonClickDelegate(VMDebug_OnButtonClick);
-            this.Add(VMDebug);*/
+            this.Add(VMDebug);
             //InitializeMouse();
 
             
@@ -539,14 +541,14 @@ namespace FSO.Client.UI.Screens
             vm.VM_SetDriver(driver);
 
 
-           
 
+            IffFile HouseFile = new IffFile();
 
             if (host)
             {
                 //check: do we have an fsov to try loading from?
 
-                IffFile HouseFile = new IffFile();
+                
                 string filename = Path.GetFileName(path);
                 try
                 {
@@ -575,18 +577,19 @@ namespace FSO.Client.UI.Screens
                     if (TS1)
                         HouseFile = new IffFile(path);
 
-                        vm.SendCommand(new VMBlueprintRestoreCmd
-                        {
-                            JobLevel = jobLevel,
-                            XMLData = File.ReadAllBytes(path),
-                            Characters = Characters,
-                            HouseFile = HouseFile,
-                            TS1 = TS1
+                    vm.SendCommand(new VMBlueprintRestoreCmd
+                    {
+                        JobLevel = -1,
+                        XMLData = File.ReadAllBytes(path),
+                        Characters = Characters,
+                        HouseFile = HouseFile,
+                        TS1 = TS1
 
-                        });
+                    });
                 }
             }
 
+            
             //Check the clients loaded;
             List<VMAvatar> Clients = new List<VMAvatar>();
 
@@ -630,39 +633,6 @@ namespace FSO.Client.UI.Screens
                 VMTSOAvatarPermissions.Owner : VMTSOAvatarPermissions.Visitor
             });
 
-            if (host){
-
-               
-
-            }
-        else
-             {
-
-
-                foreach (XmlCharacter Char in Characters)
-                {
-                    uint vsimID = (uint)(new Random()).Next();
-                    Enum.TryParse(Char.Appearance, out type);
-
-                    var vheadPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(Char.Head, 16));
-                    var vbodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(Char.Body, 16));
-                    var vHeadID = vheadPurchasable != null ? vheadPurchasable.OutfitID :
-                        Convert.ToUInt64(Char.Head, 16);
-                    var vBodyID = vbodyPurchasable != null ? vbodyPurchasable.OutfitID :
-                        Convert.ToUInt64(Char.Body, 16);
-
-                    VMEntity vEntity = vm.Entities.FirstOrDefault(x => (x.Object.OBJ.GUID == 0x7FD96B54 && x.Name == Char.Name));
-
-                    if (vEntity != null)
-                         {
-                            
-
-                             ((VMAvatar)vEntity).SetAvatarData(Char);
-
-                         }
-                }
-
-            }
 
             LotController = new UILotControl(vm, World);
             this.AddAt(0, LotController);
@@ -711,16 +681,16 @@ namespace FSO.Client.UI.Screens
 
         private void VMDebug_OnButtonClick(UIElement button)
         {
-            /*
-            if (vm == null) return;
+            
+            if (vm != null) 
+            {
+                var debugTools = new Simantics(vm);
 
-            var debugTools = new Simantics(vm);
-
-            var window = GameFacade.Game.Window;
-            debugTools.Show();
-            debugTools.Location = new System.Drawing.Point(window.ClientBounds.X + window.ClientBounds.Width, window.ClientBounds.Y);
-            debugTools.UpdateAQLocation();
-            */
+                var window = GameFacade.Game.Window;
+                debugTools.Show();
+                debugTools.Location = new System.Drawing.Point(window.ClientBounds.X + window.ClientBounds.Width, window.ClientBounds.Y);
+                debugTools.UpdateAQLocation();
+            }
 
         }
 

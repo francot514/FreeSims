@@ -44,6 +44,7 @@ namespace FSO.SimAntics
 
         public VMEntityRTTI RTTI;
         public bool GhostImage;
+        public bool Portal => EntryPoints[15].ActionFunction != 0;
         public VMMultitileGroup GhostOriginal; //Ignore collisions/slots from any of these objects.
 
         //own properties (for instance)
@@ -571,6 +572,39 @@ namespace FSO.SimAntics
             if (bhav == null) return null;
             return new VMBHAVOwnerPair(bhav, CodeOwner);
 
+        }
+
+        private VMPlacementError IndividualUserMovable(VMContext context, bool deleting)
+        {
+            if (this is VMAvatar) return VMPlacementError.CantBePickedup;
+            var movementFlags = (VMMovementFlags)GetValue(VMStackObjectVariable.MovementFlags);
+            if ((movementFlags & VMMovementFlags.PlayersCanMove) == 0) return VMPlacementError.CantBePickedup;
+            if (deleting && (movementFlags & VMMovementFlags.PlayersCanDelete) == 0) return VMPlacementError.ObjectNotOwnedByYou;
+            if (context.IsUserOutOfBounds(Position)) return VMPlacementError.CantBePickedupOutOfBounds;
+            if (IsInUse(context, true)) return VMPlacementError.InUse;
+            var total = TotalSlots();
+            for (int i = 0; i < total; i++)
+            {
+                var item = GetSlot(i);
+                if (item != null &&
+                    (deleting || item is VMAvatar || item.IsUserMovable(context, deleting) != VMPlacementError.Success)) return VMPlacementError.CantBePickedup;
+            }
+            return VMPlacementError.Success;
+        }
+
+        public VMPlacementError IsUserMovable(VMContext context, bool deleting)
+        {
+            foreach (var obj in MultitileGroup.Objects)
+            {
+                var result = obj.IndividualUserMovable(context, deleting);
+                if (result != VMPlacementError.Success) return result;
+            }
+            return VMPlacementError.Success;
+        }
+
+        public void FetchTreeByName(VMContext context)
+        {
+            TreeByName = Object.Resource.TreeByName;
         }
 
         public bool IsDynamicSpriteFlagSet(ushort index)
@@ -1236,6 +1270,17 @@ namespace FSO.SimAntics
         ArchitectualWindow = 1 << 14,
         ArchitectualDoor = 1 << 15
     }
+
+    [Flags]
+    public enum VMMovementFlags
+    {
+        SimsCanMove = 1, //only cleared by payphone...
+        PlayersCanMove = 1 << 1,
+        SelfPropelled = 1 << 2, //unused
+        PlayersCanDelete = 1 << 3,
+        StaysAfterEvict = 1 << 4
+    }
+
     public class VMPieMenuInteraction
     {
         public string Name;

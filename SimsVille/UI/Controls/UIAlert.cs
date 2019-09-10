@@ -41,6 +41,7 @@ namespace FSO.Client.UI.Controls
             }
         }
 
+
         public UIAlert(UIAlertOptions options) : base(UIDialogStyle.Standard, true)
         {
             this.m_Options = options;

@@ -177,7 +177,7 @@ namespace FSO.Client.UI.Panels
             }
 
             QueryPanel.OnSellBackClicked += ObjectHolder.SellBack;
-            //QueryPanel.OnInventoryClicked += ObjectHolder.MoveToInventory;
+            QueryPanel.OnInventoryClicked += ObjectHolder.MoveToInventory;
             //QueryPanel.OnAsyncBuyClicked += ObjectHolder.AsyncBuy;
             //QueryPanel.OnAsyncSaleClicked += ObjectHolder.AsyncSale;
             //QueryPanel.OnAsyncPriceClicked += ObjectHolder.AsyncSale;
@@ -475,6 +475,24 @@ namespace FSO.Client.UI.Panels
                 }
 
                 CursorManager.INSTANCE.SetCursor(cursor);
+            }
+
+            if (state.KeyboardState.IsKeyDown(Keys.Space))
+            {
+
+
+                vm.FreeWill.Subject = ActiveEntity;
+
+                if (vm.FreeWill.SelectedID < vm.FreeWill.Visitors.Count - 1)
+                    vm.FreeWill.SelectedID += 1;
+                else
+                    vm.FreeWill.SelectedID = 0;
+
+                foreach (VMEntity entity in vm.FreeWill.Visitors)
+                    if (entity != vm.FreeWill.Subject)
+                        ActiveEntity = vm.FreeWill.Visitors[vm.FreeWill.SelectedID];
+
+                vm.SendCommand(new VMNetChangeControlCmd() { TargetID = ActiveEntity.ObjectID });
             }
 
         }

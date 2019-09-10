@@ -290,11 +290,14 @@ namespace FSO.Client.UI.Panels
             {
                 BuyItem = vm.Context.CreateObjectInstance(item.GUID, LotTilePos.OUT_OF_WORLD, Direction.NORTH, true);
                 if (BuyItem != null)
-                QueryPanel.SetInfo(LotController.vm, BuyItem.Objects[0], false);
-                QueryPanel.Mode = 1;
-                QueryPanel.Tab = 0;
-                QueryPanel.Active = true;
-                Holder.SetSelected(BuyItem);
+                {
+                    QueryPanel.SetInfo(LotController.vm, BuyItem.Objects[0], false);
+                    QueryPanel.Mode = 1;
+                    QueryPanel.Tab = 0;
+                    QueryPanel.Active = true;
+                    Holder.SetSelected(BuyItem);
+
+                }
             }
 
             OldSelection = selection;

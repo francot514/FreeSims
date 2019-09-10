@@ -26,6 +26,7 @@ namespace FSO.SimAntics
     public class VMGameObject : VMEntity
     {
 
+        public VMGameObjectDisableFlags Disabled;
         /** Definition **/
 
         public VMGameObject(GameObject def, ObjectComponent worldUI) : base(def)
@@ -98,11 +99,16 @@ namespace FSO.SimAntics
         {
             if (UseWorld)
             {
-                var flags = (VMEntityFlags2)GetValue(VMStackObjectVariable.FlagField2);
+                if (Disabled >= VMGameObjectDisableFlags.LotCategoryWrong) WorldUI.Room = 65533; //grayscale
+                else
+                {
+                    var flags = (VMEntityFlags2)GetValue(VMStackObjectVariable.FlagField2);
                 WorldUI.Room = ((flags & VMEntityFlags2.GeneratesLight) > 0 && 
                     GetValue(VMStackObjectVariable.LightingContribution)>0 && 
-                    (flags & (VMEntityFlags2.ArchitectualWindow | VMEntityFlags2.ArchitectualDoor)) == 0) 
+                    (flags & (VMEntityFlags2.ArchitectualWindow | VMEntityFlags2.ArchitectualDoor)) == 0)
                     ? (ushort)65535 : (ushort)GetValue(VMStackObjectVariable.Room);
+
+                }
             }
         }
 
@@ -141,6 +147,15 @@ namespace FSO.SimAntics
             }
         }
 
+        public bool PartOfPortal()
+        {
+            foreach (var obj in MultitileGroup.Objects)
+            {
+                if (obj.Portal) return true;
+            }
+            return false;
+        }
+
         public override Vector3 VisualPosition
         {
             get { return (UseWorld)?(WorldUI.Position + new Vector3(0.5f, 0.5f, 0f)):new Vector3(); }
@@ -159,6 +174,20 @@ namespace FSO.SimAntics
                 return label;
             }
             return Object.OBJ.GUID.ToString("X");
+        }
+
+        public void DisableIfTSOCategoryWrong(VMContext context)
+        {
+            //if (context.VM.TS1) return;
+            OBJD obj = Object.OBJ;
+            if (MasterDefinition != null) obj = MasterDefinition;
+            var category = context.VM.TSOState.PropertyCategory;
+            var flag = (1 << category);
+            if (category == 7) flag |= 2; //money objects are allowed on welcome lots too. (fso change, disabling this is todo)
+            if (category != 255 && obj.LotCategories > 0 && (obj.LotCategories & flag) == 0)
+                Disabled |= VMGameObjectDisableFlags.LotCategoryWrong;
+            else
+                Disabled &= ~VMGameObjectDisableFlags.LotCategoryWrong;
         }
 
         // Begin Container SLOTs interface
@@ -386,5 +415,17 @@ namespace FSO.SimAntics
             }
         }
         #endregion
+    }
+
+    [Flags]
+    public enum VMGameObjectDisableFlags
+    {
+        TransactionIncomplete = 1 << 0,
+        ForSale = 1 << 1,
+        //past this point disabled objects appear in grayscale.
+        LotCategoryWrong = 1 << 2,
+        ObjectLimitExceeded = 1 << 3, //when too many objects are on a lot and the object lot is lowered, the last few objects are disabled.
+        PendingRoommateDeletion = 1 << 4,
+        ObjectLimitThreadDisable = 1 << 5 //activated when object limit exceeded and object is no longer in use.
     }
 }

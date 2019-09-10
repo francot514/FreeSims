@@ -27,12 +27,28 @@ namespace FSO.SimAntics.Primitives
         public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
             var operand = (VMReachOperand)args;
+            var completedPickup = false;
 
             int height;
 
             if (operand.Mode == 0)
             { //reach to stack object
-                height = 4; //todo: get slot height
+                var container = context.StackObject.Container;
+                if (container == context.Caller) completedPickup = true;
+                if (container == null || container is VMAvatar)
+                {
+                    height = 0;
+                }
+                else
+                {
+                    var slot = container.Slots.Slots[0][context.StackObject.ContainerSlot];
+                    if (slot != null)
+                    {
+                        height = (int)Math.Round((slot.Height != 5) ? SLOT.HeightOffsets[slot.Height - 1] : slot.Offset.Z);
+                    }
+                    else height = 0;
+                }
+               // height = 4; //todo: get slot height
             }
             else if (operand.Mode == 1)
             {
@@ -62,7 +78,7 @@ namespace FSO.SimAntics.Primitives
             var avatar = (VMAvatar)context.Caller;
             
             /** Are we starting the animation or progressing it? **/
-            if (avatar.CurrentAnimationState == null || avatar.CurrentAnimationState.Anim != animation)
+            if (avatar.CurrentAnimationState == null || avatar.CurrentAnimationState.Anim != animation && !completedPickup)
             { //start the grab!
 
                 /** Start it **/

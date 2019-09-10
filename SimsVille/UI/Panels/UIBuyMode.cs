@@ -18,6 +18,8 @@ using FSO.SimAntics.Entities;
 using FSO.Common.Rendering.Framework.Model;
 using Microsoft.Xna.Framework.Input;
 using FSO.Common;
+using FSO.SimAntics.Model;
+using static FSO.Content.WorldObjectCatalog;
 
 namespace FSO.Client.UI.Panels
 {
@@ -66,6 +68,7 @@ namespace FSO.Client.UI.Panels
         public UIButton BathRoomButton { get; set; }
         public UIButton OutsideButton { get; set; }
         public UIButton MiscRoomButton { get; set; }
+        public UIButton InventoryButton { get; set; }
 
         public UIButton MapBuildingModeButton { get; set; }
         public UIButton PetsButton { get; set; }
@@ -78,6 +81,8 @@ namespace FSO.Client.UI.Panels
 
         private Dictionary<UIButton, int> CategoryMap;
         private List<UICatalogElement> CurrentCategory;
+        private List<VMInventoryItem> LastInventory;
+        private List<UICatalogElement> CurrentInventory;
 
         private bool RoomCategories = false;
         private bool Roommate = true; //if false, shows visitor inventory only.
@@ -138,6 +143,7 @@ namespace FSO.Client.UI.Panels
             MiscButton.OnButtonClick += ChangeCategory;
             PetsButton.OnButtonClick += ChangeCategory;
             MapBuildingModeButton.OnButtonClick += ChangeCategory;
+            InventoryButton.OnButtonClick += ChangeCategory;
 
             ProductCatalogPreviousPageButton.OnButtonClick += PreviousPage;
             InventoryCatalogRoommatePreviousPageButton.OnButtonClick += PreviousPage;
@@ -217,8 +223,54 @@ namespace FSO.Client.UI.Panels
 
         public override void Update(UpdateState state)
         {
+            if (LotController.ActiveEntity != null)
+            {
+                Catalog.Budget = (int)LotController.ActiveEntity.TSOState.Budget.Value;
+                bool refreshInventory = false;
+                var inventory = LotController.vm.MyInventory;
+                if (LastInventory != null)
+                {
+                    if (LastInventory.Count != inventory.Count) refreshInventory = true;
+                    else
+                    {
+                        for (int i = 0; i < inventory.Count; i++)
+                        {
+                            if (LastInventory[i] != inventory[i])
+                            {
+                                refreshInventory = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                else { refreshInventory = true; }
+                if (refreshInventory)
+                {
+                    var lastCatPage = Catalog.GetPage();
+                    LastInventory = new List<VMInventoryItem>(inventory);
+                    if (CurrentInventory == null) CurrentInventory = new List<UICatalogElement>();
+                    CurrentInventory.Clear();
+                    foreach (var item in inventory)
+                    {
+                        var catItem = Content.Content.Get().WorldCatalog.GetItemByGUID(item.GUID);
+                        if (catItem == null) { catItem = GenCatItem(item.GUID); }
 
-            if (LotController.ActiveEntity != null) Catalog.Budget = (int)LotController.ActiveEntity.TSOState.Budget.Value;
+                        var obj = catItem;
+                        //note that catalog items are structs, so we can modify their properties freely without affecting the permanant store.
+                        //todo: what if this is null? it shouldn't be, but still
+                        obj.Name = (item.Name == "") ? obj.Name : item.Name;
+                        obj.Price = 0;
+                        //todo: make icon for correct graphic.
+                        CurrentInventory.Add(new UICatalogElement { Item = obj });
+                    }
+                    if (Mode == 2)
+                    {
+                        ChangeCategory(InventoryButton); //refresh display
+                        SetPage(Math.Min(Catalog.TotalPages() - 1, lastCatPage));
+                    }
+                }
+            }
+
             base.Update(state);
         }
 
@@ -226,10 +278,21 @@ namespace FSO.Client.UI.Panels
         {
             var item = CurrentCategory[selection];
 
+           
+
             if (LotController.ActiveEntity != null && item.Price > LotController.ActiveEntity.TSOState.Budget.Value)
             {
                 TSO.HIT.HITVM.Get().PlaySoundEvent(Model.UISounds.Error);
                 return;
+            }
+
+            if (CurrentCategory == CurrentInventory)
+            {
+                if (selection < LastInventory.Count)
+                {
+                    Holder.Holding.InventoryPID = LastInventory[selection].ObjectPID;
+                    Holder.Holding.Price = 0;
+                }
             }
 
             if (OldSelection != -1) Catalog.SetActive(OldSelection, false);
@@ -242,6 +305,29 @@ namespace FSO.Client.UI.Panels
             QueryPanel.Active = true;
             Holder.SetSelected(BuyItem);
             OldSelection = selection;
+        }
+
+
+        private ObjectCatalogItem GenCatItem(uint GUID)
+        {
+            var obj = Content.Content.Get().WorldObjects.Get(GUID);
+            if (obj == null)
+            {
+                return new ObjectCatalogItem()
+                {
+                    Name = "Unknown Object",
+                    GUID = GUID
+                };
+            }
+            else
+            {
+                //todo: get ctss?
+                return new ObjectCatalogItem()
+                {
+                    Name = obj.OBJ.ChunkLabel,
+                    GUID = GUID
+                };
+            }
         }
 
         public void PageSlider(UIElement element)
@@ -297,11 +383,24 @@ namespace FSO.Client.UI.Panels
             LightingButton.Selected = false;
             MiscButton.Selected = false;
             PetsButton.Selected = false;
+            InventoryButton.Selected = false;
 
             UIButton button = (UIButton)elem;
             button.Selected = true;
-            if (!CategoryMap.ContainsKey(button)) return;
-            CurrentCategory = UICatalog.Catalog[CategoryMap[button]];
+            if (elem == InventoryButton)
+            {
+                //if (CurrentCategory != CurrentInventory && LotController.ObjectHolder.DonateMode)
+                //{
+                //   new UIAlert(GameFacade.Strings.GetString("f114", "2"), GameFacade.Strings.GetString("f114", "3"), true);
+                // }
+                CurrentCategory = CurrentInventory;
+            }
+            else
+            {
+                if (!CategoryMap.ContainsKey(button)) return;
+                CurrentCategory = UICatalog.Catalog[CategoryMap[button]];
+            }
+
             Catalog.SetCategory(CurrentCategory);
 
             int total = Catalog.TotalPages();
@@ -346,6 +445,7 @@ namespace FSO.Client.UI.Panels
             InventoryCatalogVisitorNextPageButton.Visible = (mode == 2 && !Roommate);
             InventoryCatalogVisitorPreviousPageButton.Visible = (mode == 2 && !Roommate);
 
+
             Mode = mode;
         }
 
@@ -368,6 +468,7 @@ namespace FSO.Client.UI.Panels
             LightingButton.Visible = active;
             MiscButton.Visible = active;
             PetsButton.Visible = active;
+            InventoryButton.Visible = active;
             MapBuildingModeButton.Visible = false;
 
             active = Roommate && (value);

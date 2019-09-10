@@ -5,7 +5,7 @@
  */
 
 using System;
-using System.Collections.Generic;   
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using FSO.LotView.Components;
@@ -29,6 +29,7 @@ using FSO.SimAntics.Engine;
 using FSO.SimAntics.Primitives;
 using FSO.Client.GameContent;
 using tso.world.Model;
+using FSO.Client.UI.Model;
 
 namespace FSO.SimAntics
 {
@@ -38,11 +39,13 @@ namespace FSO.SimAntics
         public static uint TEMPLATE_NPC = 0x7FD96B56;
         public static uint NPC_MAID = 0xC61931DC;
         public static uint NPC_GARDENER = 0xD62B91B4;
-        public static uint DOG_TEMPLATE = 0x5F0C674C;
+        public static uint DOG_TEMPLATE = 0x3AC5D780;
+        public static uint CAT_TEMPLATE = 0x3762D78D;
 
         public SimAvatar Avatar;
 
         /** Animation vars **/
+        public VMTSOAvatarState AvatarState;
 
         public List<VMAnimationState> Animations;
         public VMAnimationState CurrentAnimationState {
@@ -192,7 +195,8 @@ namespace FSO.SimAntics
         public VMAvatar(GameObject obj)
             : base(obj)
         {
-            PlatformState = new VMTSOAvatarState(); //todo: ts1 switch
+            AvatarState = new VMTSOAvatarState(); //todo: ts1 switch
+            PlatformState = AvatarState;
             BodyStrings = Object.Resource.Get<STR>(Object.OBJ.BodyStringID);
             Visitor = false;
             SetAvatarType(BodyStrings);
@@ -912,12 +916,20 @@ namespace FSO.SimAntics
 
         public override Texture2D GetIcon(GraphicsDevice gd, int store)
         {
+            var icon = new Texture2D(gd, 0, 0);
+
             if (Avatar.Head == null && Avatar.Body == null) return null;
             Outfit ThumbOutfit = (Avatar.Head == null) ? Avatar.Body : Avatar.Head;
             var AppearanceID = ThumbOutfit.GetAppearance(Avatar.Appearance);
             var Appearance = FSO.Content.Content.Get().AvatarAppearances.Get(AppearanceID);
 
-            return FSO.Content.Content.Get().AvatarThumbnails.Get(Appearance.ThumbnailTypeID, Appearance.ThumbnailFileID).Get(gd);
+            if (IsPet)
+                icon = UIIconCache.GetObject(this);
+            else
+                icon = FSO.Content.Content.Get().AvatarThumbnails.Get(Appearance.ThumbnailTypeID, Appearance.ThumbnailFileID).Get(gd);
+     
+            
+            return icon;
         }
 
         #region VM Marshalling Functions

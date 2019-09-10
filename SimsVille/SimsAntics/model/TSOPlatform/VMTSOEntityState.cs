@@ -9,6 +9,8 @@ namespace FSO.SimAntics.Model.TSOPlatform
     public class VMTSOEntityState : VMPlatformState
     {
         public VMBudget Budget = new VMBudget();
+        public override bool LimitExceeded { get; set; }
+
         public override void Deserialize(BinaryReader reader)
         {
             Budget.Deserialize(reader);
@@ -21,6 +23,11 @@ namespace FSO.SimAntics.Model.TSOPlatform
 
         public override void Tick(VM vm, object owner)
         {
+        }
+
+        public override void ActivateValidator(VM vm)
+        {
+            
         }
     }
 }

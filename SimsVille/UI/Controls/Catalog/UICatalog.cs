@@ -17,6 +17,7 @@ using FSO.Files.Formats.IFF.Chunks;
 using FSO.Client.UI.Controls;
 using FSO.Client.UI.Panels.LotControls;
 using FSO.Common;
+using static FSO.Content.WorldObjectCatalog;
 
 namespace FSO.Client.UI.Controls.Catalog
 {
@@ -488,6 +489,7 @@ namespace FSO.Client.UI.Controls.Catalog
     public delegate void CatalogSelectionChangeDelegate(int selection);
 
     public struct UICatalogElement {
+        public ObjectCatalogItem Item;
         public uint GUID;
         public sbyte Category;
         public uint Price;

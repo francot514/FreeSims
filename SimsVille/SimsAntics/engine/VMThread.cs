@@ -29,6 +29,8 @@ namespace FSO.SimAntics.Engine
         public VMContext Context;
         private VMEntity Entity;
 
+        public static int MAX_USER_ACTIONS = 20;
+
         public VMThreadBreakMode ThreadBreak = VMThreadBreakMode.Active;
         public int BreakFrame; //frame the last breakpoint was performed on
         public bool RoutineDirty;
@@ -164,8 +166,11 @@ namespace FSO.SimAntics.Engine
         /// </summary>
         public bool AttemptPush()
         {
+            int priorityCompare = int.MinValue;
+            if (ActiveQueueBlock > -1) priorityCompare = this.Queue[ActiveQueueBlock].Priority;
+            
             QueueDirty = true;
-            while (Queue.Count > 0)
+            while (Queue.Count > ActiveQueueBlock + 1)
             {
                 var item = Queue[0];
                 if (item.Cancelled) Entity.SetFlag(VMEntityFlags.InteractionCanceled, true);
@@ -176,7 +181,7 @@ namespace FSO.SimAntics.Engine
                 }
                 else
                 {
-                    Queue.RemoveAt(0); //keep going.
+                    Queue.RemoveAt(ActiveQueueBlock + 1); //keep going.
                 }
             }
             return false;

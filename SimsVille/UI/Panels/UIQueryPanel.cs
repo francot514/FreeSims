@@ -89,6 +89,7 @@ namespace FSO.Client.UI.Panels
         public UIImage OwnerPriceBack;
 
         public event ButtonClickDelegate OnSellBackClicked;
+        public event ButtonClickDelegate OnInventoryClicked;
 
         //world required for drawing thumbnails
         public LotView.World World;
@@ -317,6 +318,11 @@ namespace FSO.Client.UI.Panels
 
             }
             base.Update(state);
+        }
+
+        private void InventoryButton_OnButtonClick(UIElement button)
+        {
+            if (OnInventoryClicked != null) OnInventoryClicked(button);
         }
 
         public void SetInfo(VM vm, VMEntity entity, bool bought)

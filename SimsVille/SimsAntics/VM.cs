@@ -67,7 +67,7 @@ namespace FSO.SimAntics
         public int LastSpeedMultiplier;
         private int LastFrameSpeed = 1;
 
-
+        public List<VMInventoryItem> MyInventory = new List<VMInventoryItem>();
         public List<VMEntity> Entities = new List<VMEntity>();
         public HashSet<VMEntity> SoundEntities = new HashSet<VMEntity>();
 
@@ -167,6 +167,7 @@ namespace FSO.SimAntics
         {
             Context.Globals = FSO.Content.Content.Get().WorldObjectGlobals.Get("global");
             PlatformState = new VMTSOLotState();
+            PlatformState.ActivateValidator(this);
             GlobalState = new short[33];
             GlobalState[20] = 255; //Game Edition. Basically, what "expansion packs" are running. Let's just say all of them.
             GlobalState[25] = 4; //as seen in EA-Land edith's simulator globals, this needs to be set for people to do their idle interactions.

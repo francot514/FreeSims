@@ -75,7 +75,7 @@ using FSO.SimAntics.Engine;
                     foreach (var interaction in entity.TreeTable.Interactions)
                     {
 
-                       if (interaction.Flags == TTABFlags.AllowDogs)
+                       if (interaction.Flags == TTABFlags.AllowDogs || interaction.Flags == TTABFlags.AllowCats)
                          interactionList.Add(entity.TreeTableStrings.GetString((int)interaction.TTAIndex));
                     }
 
@@ -146,7 +146,8 @@ using FSO.SimAntics.Engine;
             public void RunAction(VMEntity entity)
             {
 
-                bool PetAction = entity.Object.GUID == VMAvatar.DOG_TEMPLATE ? true : false;
+                bool PetAction = entity.Object.GUID == VMAvatar.DOG_TEMPLATE ||
+                entity.Object.GUID == VMAvatar.CAT_TEMPLATE ? true : false;
 
                 if (Objects.Count > 0)
                 {

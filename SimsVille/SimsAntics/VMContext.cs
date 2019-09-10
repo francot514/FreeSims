@@ -30,6 +30,7 @@ namespace FSO.SimAntics
     {
         public static bool UseWorld = true;
         public Blueprint Blueprint;
+        public VMObjectQueries ObjectQueries;
         public VMClock Clock { get; internal set; }
 
         private VMArchitecture _Arch;
@@ -427,11 +428,15 @@ namespace FSO.SimAntics
                 OperandModel = typeof(VMFindBestActionOperand)
             });
 
-            //TODO: Set Dynamic Object Name
-            
-            //TODO: Inventory Operations
+            AddPrimitive(new VMPrimitiveRegistration(new VMInventoryOperations())
+            {
+                Opcode = 67,
+                Name = "inventory_operations",
+                OperandModel = typeof(VMInventoryOperationsOperand)
+            });
 
         }
+
 
         /// <summary>
         /// Returns a random number between 0 and less than the specified maximum.
@@ -465,6 +470,85 @@ namespace FSO.SimAntics
                     }
                 }
             }
+        }
+
+        public ObjectComponent MakeObjectComponent(GameObject obj)
+        {
+            if (UseWorld) return World.MakeObjectComponent(obj);
+            return new ObjectComponent(obj);
+        }
+
+        public bool IsUserOutOfBounds(LotTilePos pos)
+        {
+            var fine = Architecture.FineBuildableArea;
+            if (fine != null)
+            {
+                if (pos.TileX < 0 || pos.TileX >= _Arch.Width) return false;
+                else if (pos.TileY < 0 || pos.TileY >= _Arch.Height) return false;
+                else if (pos.Level < 1 || pos.Level > _Arch.BuildableFloors) return false;
+                else
+                {
+                        return !fine[pos.TileX + pos.TileY * _Arch.Width];
+                }
+            }
+            else
+            {
+                var area = Architecture.BuildableArea;
+                return (pos.TileX < area.X || pos.TileY < area.Y || pos.Level < 1 || pos.TileX >= area.Right || pos.TileY >= area.Bottom || pos.Level > _Arch.BuildableFloors);
+            }
+        }
+
+        public void UpdateTSOBuildableArea()
+        {
+            //if (VM.TS1) return;
+            VMBuildableAreaInfo.UpdateOverbudgetObjects(VM);
+            var lotSInfo = VM.TSOState.Size;
+            var area = GetTSOBuildableArea(lotSInfo);
+            Architecture.UpdateBuildableArea(area, ((lotSInfo >> 8) & 255) + 2);
+        }
+
+        public Rectangle GetTSOBuildableArea(int lotSInfo)
+        {
+            if (Architecture == null) return new Rectangle();
+            //note: sync on this DOES matter as the OOB check performs on some primitives, and objects are double checked before placement.
+
+            var lotSize = lotSInfo & 255;
+            var lotFloors = ((lotSInfo >> 8) & 255) + 2;
+            var lotDir = (lotSInfo >> 16);
+
+            var dim = VMBuildableAreaInfo.BuildableSizes[lotSize];
+
+            //need to rotate the lot dir towards the road. bit weird cos we're rotating a rectangle
+
+            var w = Architecture.Width;
+            var h = Architecture.Height;
+            var corners = new Vector2[]
+            {
+                new Vector2(6, 6), // top, default orientation
+                new Vector2(w-7, 6), // right
+                new Vector2(w-7, h-7), // bottom
+                new Vector2(6, h-7) // left
+            };
+            var perpIncrease = new Vector2[]
+            {
+                new Vector2(0, -1), //bottom left road side
+                new Vector2(-1, 0),
+                new Vector2(0, -1),
+                new Vector2(-1, 0)
+            };
+
+            //rotation 0: move perp from closer point to top bottom -> left (90 degree ccw of perp)
+            //rotation 1: choose closer pt to top left->top (90 degree ccw of perp)
+            //rotation 2: choose closer pt to top top->right (90 degree cw of perp)
+
+            var pt1 = corners[(lotDir + 2) % 4];
+            var pt2 = corners[(lotDir + 3) % 4];
+
+            var ctr = (pt1 + pt2) / 2;
+            var lotBase = ctr + perpIncrease[(3 - lotDir) % 4] * dim / 2;
+            if (lotDir == 0 || lotDir == 3) lotBase += perpIncrease[lotDir] * (dim);
+
+            return new Rectangle((int)lotBase.X, (int)lotBase.Y, dim, dim);
         }
 
         public void RegeneratePortalInfo()
