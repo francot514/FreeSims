@@ -75,7 +75,7 @@ using FSO.SimAntics.Engine;
                     foreach (var interaction in entity.TreeTable.Interactions)
                     {
 
-                       if (interaction.Flags == TTABFlags.AllowDogs || interaction.Flags == TTABFlags.AllowCats)
+                       if (interaction.Flags == TTABFlags.TS1AllowDogs || interaction.Flags == TTABFlags.TS1AllowCats)
                          interactionList.Add(entity.TreeTableStrings.GetString((int)interaction.TTAIndex));
                     }
 
@@ -84,7 +84,8 @@ using FSO.SimAntics.Engine;
                     {
 
                         if (!interaction.Debug || !interaction.WhenDead || !interaction.Leapfrog 
-                            || !interaction.AllowGhosts || !interaction.AllowCSRs || !interaction.AllowConsecutive)
+                            || !interaction.AllowGhosts || !interaction.AllowCSRs || !interaction.AllowConsecutive
+                            || !interaction.AllowDogs || !interaction.AllowCats)
                             interactionList.Add(entity.TreeTableStrings.GetString((int)interaction.TTAIndex));
                     }
                 }

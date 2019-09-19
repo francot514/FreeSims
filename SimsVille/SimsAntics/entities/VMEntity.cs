@@ -44,6 +44,7 @@ namespace FSO.SimAntics
 
         public VMEntityRTTI RTTI;
         public bool GhostImage;
+        public bool Reseted;
         public bool Portal => EntryPoints[15].ActionFunction != 0;
         public VMMultitileGroup GhostOriginal; //Ignore collisions/slots from any of these objects.
 
@@ -130,6 +131,18 @@ namespace FSO.SimAntics
             }
         }
 
+        public bool GetBadObjects()
+        {
+
+            bool badobject = false;
+
+            if (Object.OBJ.GUID == 0xA7888650 || Object.OBJ.GUID == 0xA7C2E4B1)
+                badobject = true;
+
+           return badobject;
+
+        }
+
         public bool GetBadNames()
         {
             string name = this.ToString();
@@ -167,6 +180,7 @@ namespace FSO.SimAntics
         public VMEntity(GameObject obj)
         {
             this.Object = obj;
+            GameGlobal GlobalResource = null;
             /** 
              * For some reason, in the aquarium object (maybe others) the numAttributes is set to 0
              * but it should be 4. There are 4 entries in the label table. Go figure?
@@ -189,9 +203,9 @@ namespace FSO.SimAntics
 
             var test = obj.Resource.List<OBJf>();
 
-            SemiGlobal = obj.Resource.SemiGlobal;
+            var GLOBChunks = obj.Resource.List<GLOB>();
 
-           
+            SemiGlobal = obj.Resource.SemiGlobal;
 
             Slots = obj.Resource.Get<SLOT>(obj.OBJ.SlotID); //containment slots are dealt with in the avatar and object classes respectively.
 
@@ -453,6 +467,8 @@ namespace FSO.SimAntics
             this.Thread.ActiveQueueBlock = 0;
             this.Thread.BlockingState = null;
             this.Thread.EODConnection = null;
+
+            Reseted = false;
 
             if (EntryPoints[3].ActionFunction != 0) ExecuteEntryPoint(3, context, true); //Reset
             if (!GhostImage) ExecuteEntryPoint(1, context, false); //Main
@@ -774,7 +790,9 @@ namespace FSO.SimAntics
                 caller.ObjectData[(int)VMStackObjectVariable.HideInteraction] = 0;
                 if (action != null) action.Flags &= ~TTABFlags.MustRun;
                 var actionStrings = caller.Thread.CheckAction(action);
-                if (caller.ObjectData[(int)VMStackObjectVariable.HideInteraction] == 1 && !includeHidden) continue;
+                if ((caller.ObjectData[(int)VMStackObjectVariable.Hidden] == 1 ||
+                    caller.ObjectData[(int)VMStackObjectVariable.HideInteraction] == 1 ||
+                    caller.Position == LotTilePos.OUT_OF_WORLD) && !includeHidden) continue;
 
                 if (actionStrings != null)
                 {
