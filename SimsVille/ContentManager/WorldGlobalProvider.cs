@@ -18,6 +18,7 @@ using FSO.Files.Formats.IFF;
 using FSO.Files.Formats.IFF.Chunks;
 using FSO.Files.Formats.OTF;
 using FSO.Common;
+using FSO.Files.FAR1;
 
 namespace FSO.Content
 {
@@ -28,7 +29,7 @@ namespace FSO.Content
     {
         private Dictionary<string, GameGlobal> Cache; //indexed by lowercase filename, minus directory and extension.
         private Content ContentManager;
-        public FAR1Provider<Files.Formats.IFF.IffFile> GlobalIffs;
+        public FAR1Archive GlobalFar;
 
 
         public WorldGlobalProvider(Content contentManager)
@@ -45,15 +46,10 @@ namespace FSO.Content
 
             List<string> GlobalFiles = new List<string>();
        
-            if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/Global"))
+            if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/GameData/Global"))
                 {
 
-                    GlobalFiles.Add(FSOEnvironment.SimsCompleteDir + "/Global/Global.far");
-
-                GlobalIffs = new FAR1Provider<Files.Formats.IFF.IffFile>(ContentManager, new IffCodec(), GlobalFiles.ToArray());
-
-                    GlobalIffs.Init();
-
+                    GlobalFar = new FAR1Archive(FSOEnvironment.SimsCompleteDir + "/GameData/Global/Global.far", false);
 
                 }
         }
@@ -85,8 +81,20 @@ namespace FSO.Content
                     iff = new Files.Formats.IFF.IffFile(filepath);
                
 
-                if (GlobalIffs != null)
-                    iff = this.GlobalIffs.Get(filename + ".iff");
+                if (GlobalFar != null && iff == null)
+                {
+                    iff = new IffFile();
+
+                    var bytes = GlobalFar.GetEntry(GlobalFar.GetAllEntries().FirstOrDefault(x => x.Key.ToLowerInvariant() == (filename + ".iff").ToLowerInvariant()));
+                    using (var stream = new MemoryStream(bytes))
+                    {
+                        iff.Read(stream);
+                    }
+
+
+
+                }
+
 
                 OTFFile otf = null;
                 try
