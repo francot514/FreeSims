@@ -1,7 +1,11 @@
   <Items>
-	<P g="0x14C180BA" n="NPCFirefighter" s="-1" p="0" m="0" i="0" />
-	<P g="0x7557C98E" n="NPCOfficer" s="-1" p="0" m="0" i="0" />
-	<P g="0xC7857D8A" n="NPCThief" s="-1" p="0" m="0" i="0" />
-	<P g="0xD840F488" s="-1" p="0" n="Bills"></P>
-	<P g="0x70F69082" s="-1" p="0" n="NPC Controller"></P>
+	<P g="0x14C180BA" n="Firefighter" s="-1" p="0" m="0" i="0" />
+	<P g="0xEEA7D425" n="FireAlarm" s="18" p="100" m="0" i="0" />
+	<P g="0xAB647747" n="BurglarAlarm" s="18" p="150" m="0" i="0" />
+	<P g="0xC7857D8A" n="Thief" s="-1" p="0" m="0" i="0" />
+	<P g="0xB2EBBF92" n="MailCarrierF1" s="-1" p="0" m="0" i="0" />
+	<P g="0xFC72C0C0" n="PizzaDude" s="-1" p="0" m="0" i="0" />
+	<P g="0xD840F488" n="Bills" s="-1" p="0" m="0" i="0" />
+	<P g="0x76F256C5" n="Baby" s="18" p="100" m="0" i="0" />
+	<P g="0x529D2B89" n="phones" s="-1" p="0" m="0" i="0" />
   </Items>

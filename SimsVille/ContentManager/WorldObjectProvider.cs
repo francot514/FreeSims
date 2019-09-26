@@ -80,10 +80,10 @@ namespace FSO.Content
                 });
             }
 
-            if (Directory.Exists(AppDomain.CurrentDomain.BaseDirectory + "/Content/Objects"))
+            if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/GameData/Objects"))
             {
 
-                string GFile = AppDomain.CurrentDomain.BaseDirectory + "Content/Objects/npcs.far";
+                string GFile = FSOEnvironment.SimsCompleteDir + "/GameData/Objects/Objects.far";
                 FarFiles.Add(GFile);
                 SpriteFiles.Add(GFile);
 

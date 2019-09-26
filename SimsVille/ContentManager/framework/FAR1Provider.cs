@@ -199,18 +199,19 @@ namespace FSO.Content.Framework
                     if (entry.Filename != null)
                     {
                         var ext = Path.GetExtension(entry.Filename).ToLowerInvariant();
-                        if (EntriesByName.ContainsKey(entry.Filename))
+                        if (!EntriesByName.ContainsKey(entry.Filename))
                         {
-                            System.Diagnostics.Debug.WriteLine("Duplicate! " + entry.Filename);
-                        }
-                        EntriesByName[entry.Filename] = referenceItem;
-                        List<Far1ProviderEntry<T>> group = null;
-                        if (!EntriesOfType.TryGetValue(ext, out group))
-                        {
-                            group = new List<Far1ProviderEntry<T>>();
-                            EntriesOfType[ext] = group;
-                        }
-                        group.Add(referenceItem);
+                        
+							EntriesByName[entry.Filename] = referenceItem;
+							List<Far1ProviderEntry<T>> group = null;
+							if (!EntriesOfType.TryGetValue(ext, out group))
+							{
+								group = new List<Far1ProviderEntry<T>>();
+								EntriesOfType[ext] = group;
+							}
+							group.Add(referenceItem);
+						
+						}
                     }
                 }
             }
