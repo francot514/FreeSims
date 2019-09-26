@@ -1276,7 +1276,6 @@
 <I g="0xD62B91B4" n="gardener" o="NPC Gardener" m="0" f="4" i="0" l="0"></I>
 <I g="0xC14849AC" n="gardengnome" o="Garden Gnome" m="0" f="100" i="0" l="0"></I>
 <I g="0x3406D2AE" n="gardenpest" o="Garden Pest - Gopher" m="0" f="4" i="0" l="0"></I>
-<I g="0x2BABD2BC" n="gardenplot" o="GardenPlot" m="0" f="4" i="0" l="0"></I>
 <I g="0xA76F6A5E" n="geniegoldpile" o="NPC Genie Gold Pile" m="0" f="4" i="0" l="0"></I>
 <I g="0x4C35511B" n="ggworkbench" o="Garden Gnome - WB - Left" m="1" f="16" i="0" l="0"></I>
 <I g="0x4DDF498C" n="ggworkbench" o="Garden Gnome - WB" m="1" f="97" i="-1" l="0"></I>
@@ -1541,6 +1540,7 @@
 <I g="0x2BDBD42B" n="npc_unleashed_saxplayer" o="NPC - Unleashed - SaxPlayer" m="0" f="4" i="0" l="0"></I>
 <I g="0x2DB9D421" n="npc_unleashed_skunk" o="NPC - Unleashed - Skunk" m="0" f="100" i="0" l="0"></I>
 <I g="0x3883D422" n="npc_unleashed_trainer" o="NPC - Unleashed - Pet Trainer" m="0" f="4" i="0" l="0"></I>
+<I g="0x70F69082" n="npccontroller" o="NPC Controller" m="0" f="12" i="0" l="0"></I>
 <I g="0x3103AA48" n="npcdealer" o="NPC Dealer" m="0" f="4" i="0" l="0"></I>
 <I g="0x23BC2034" n="npcportal" o="Portal - NPC" m="0" f="4" i="0" l="0"></I>
 <I g="0x4E57C380" n="npcportal" o="Portal - NPC 2" m="0" f="4" i="0" l="0"></I>
@@ -1754,7 +1754,6 @@
 <I g="0x2C03D408" n="pantryunleashed" o="Pantry - Rustic" m="0" f="4" i="0" l="0"></I>
 <I g="0x2C219C02" n="pantryunleashed" o="Pantry - Modern" m="0" f="4" i="0" l="0"></I>
 <I g="0xDD0A4385" n="papercarrierf1" o="NPC Paper Girl" m="0" f="4" i="0" l="0"></I>
-<I g="0x35D9E04A" n="parkgrill" o="Park Grill" m="0" f="100" i="0" l="0"></I>
 <I g="0x2C51D460" n="parkrockers" o="Park Rocker Horse" m="1" f="1" i="-1" l="0"></I>
 <I g="0x2C1D9C6A" n="parkrockers" o="Park Rocker Horse Front" m="1" f="0" i="0" l="0"></I>
 <I g="0x2CF1CCF7" n="parkrockers" o="Park Rocker Horse Middle" m="1" f="0" i="1" l="0"></I>
@@ -2085,7 +2084,7 @@
 <I g="0x27ECBF36" n="rugs3" o="Rug - Daisy" m="2" f="97" i="-1" l="0"></I>
 <I g="0xA90240FC" n="salvageinteraction" o="Salvage Interaction (OOW)" m="0" f="4" i="0" l="0"></I>
 <I g="0x50DA2B05" n="scheduler" o="Scheduler - Network Game" m="0" f="12" i="0" l="0"></I>
-<I g="0x8535DBF8" n="scheduler" o="Scheduler" m="0" f="12" i="0" l="0"></I>
+
 <I g="0x2FD2A7F1" n="sculpturedressingscreen" o="Sculpture - DressingScreen - Part A" m="1" f="0" i="256" l="0"></I>
 <I g="0x2FD3F76C" n="sculpturedressingscreen" o="Sculpture - DressingScreen - Part B" m="1" f="0" i="0" l="0"></I>
 <I g="0x2FECBF66" n="sculpturedressingscreen" o="Sculpture - DressingScreen" m="1" f="97" i="-1" l="0"></I>
