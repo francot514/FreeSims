@@ -20,13 +20,7 @@ namespace FSO.LotView.Model
 
         public override int GetHashCode()
         {
-            if (Pixel != null)
-                return (Pixel.GetHashCode() == 0 ? 0 : Pixel.GetHashCode());
-
-            if (Mask != null)
-                return (Pixel.GetHashCode() == 0 ? 0 : Pixel.GetHashCode()) ^ (Mask.GetHashCode() == 0 ? 0 : Mask.GetHashCode());
-
-            return 0;
+            return (Pixel?.GetHashCode()??0) ^ (Mask?.GetHashCode()??0);
         }
 
         public override bool Equals(object obj)

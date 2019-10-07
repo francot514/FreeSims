@@ -43,11 +43,9 @@ namespace FSO.LotView
                     _2d.OffsetPixel(state.WorldSpace.GetScreenFromTile(avatar.Position));
                     _2d.OffsetTile(avatar.Position);
                     avatar.Draw(gd, state);
-
-                    if (state.DrawRoofs) Blueprint.RoofComp.Draw(gd, state);
-
                 }
             }
+            if (state.DrawRoofs) Blueprint.RoofComp.Draw(gd, state);
         }
     }
 }

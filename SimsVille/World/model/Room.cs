@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Microsoft.Xna.Framework;
+using System.Threading.Tasks;
 
-namespace tso.world.Model
+namespace FSO.LotView.Model
 {
-    public class Room
+    public struct Room
     {
         public ushort RoomID;
 
@@ -15,25 +16,5 @@ namespace tso.world.Model
         public bool IsPool;
 
         public Rectangle Bounds;
-
-        public Room(ushort id, bool outside, Rectangle bounds, ushort area)
-        {
-
-            RoomID = id;
-            IsOutside = outside;
-            Bounds = bounds;
-            Area = area;
-
-        }
-
-    }
-
-    public class RoomLighting
-    {
-        //TODO: point lights
-
-        public ushort OutsideLight;
-        public ushort AmbientLight;
-        public short RoomScore;
     }
 }

@@ -22,7 +22,7 @@ namespace FSO.LotView
     /// <summary>
     /// Handles rendering the 2D world
     /// </summary>
-    public class World2D
+    public class World2D : IDisposable
     {
         public static SurfaceFormat[] BUFFER_SURFACE_FORMATS = new SurfaceFormat[] {
             /** Thumbnail buffer **/
@@ -51,6 +51,9 @@ namespace FSO.LotView
 
             //Thumbnail depth
             SurfaceFormat.Color,
+
+            /** Lot Thumbnail Buffer **/
+            SurfaceFormat.Color
         };
 
         public static bool[] FORMAT_ALWAYS_DEPTHSTENCIL = new bool[] {
@@ -80,9 +83,13 @@ namespace FSO.LotView
 
             //Thumbnail depth
             false,
+
+            //lot thumb
+            true,
+            false,
         };
 
-        public static readonly int NUM_2D_BUFFERS = 11;
+        public static readonly int NUM_2D_BUFFERS = 12;
         public static readonly int BUFFER_THUMB = 0; //used for drawing thumbnails
         public static readonly int BUFFER_STATIC_OBJECTS_PIXEL = 1;
         public static readonly int BUFFER_STATIC_OBJECTS_DEPTH = 2;
@@ -91,10 +98,10 @@ namespace FSO.LotView
         public static readonly int BUFFER_FLOOR_PIXEL = 5;
         public static readonly int BUFFER_FLOOR_DEPTH = 6;
         public static readonly int BUFFER_STATIC_TERRAIN_DEPTH = 7;
-
         public static readonly int BUFFER_WALL_PIXEL = 8;
         public static readonly int BUFFER_WALL_DEPTH = 9;
         public static readonly int BUFFER_THUMB_DEPTH = 10;
+        public static readonly int BUFFER_LOTTHUMB = 11;
 
 
         public static readonly int SCROLL_BUFFER = 512; //resolution to add to render size for scroll reasons
@@ -141,7 +148,7 @@ namespace FSO.LotView
             var _2d = state._2D;
             Promise<Texture2D> bufferTexture = null;
 
-            var worldBounds = new Rectangle((int)(-pxOffset).X, (int)(-pxOffset).Y, 1, 1);
+            var worldBounds = new Rectangle((-pxOffset).ToPoint(), new Point(1, 1));
 
             state.TempDraw = true;
             state._2D.OBJIDMode = true;
@@ -160,7 +167,7 @@ namespace FSO.LotView
 
                                 var oPx = state.WorldSpace.GetScreenFromTile(tilePosition);
                                 obj.ValidateSprite(state);
-                                var offBound = new Rectangle(obj.Bounding.Location.X + (int)oPx.X, obj.Bounding.Location.Y + (int)oPx.Y, obj.Bounding.Width, obj.Bounding.Height);
+                                var offBound = new Rectangle(obj.Bounding.Location + oPx.ToPoint(), obj.Bounding.Size);
                                 if (!offBound.Intersects(worldBounds)) continue;
 
                                 var renderInfo = GetRenderInfo(obj);
@@ -195,96 +202,6 @@ namespace FSO.LotView
         }
 
         /// <summary>
-        /// Gets the current lot's thumbnail.
-        /// </summary>
-        /// <param name="objects">The object components to draw.</param>
-        /// <param name="gd">GraphicsDevice instance.</param>
-        /// <param name="state">WorldState instance.</param>
-        /// <returns>Object's ID if the object was found at the given position.</returns>
-        public virtual Texture2D GetLotThumb(GraphicsDevice gd, WorldState state, Action<Texture2D> rooflessCallback)
-        {
-            if (!(state.Camera is WorldCamera)) return new Texture2D(gd, 8, 8);
-            var oldZoom = state.Zoom;
-            var oldRotation = state.Rotation;
-            var oldLevel = state.Level;
-            var oldCutaway = Blueprint.Cutaway;
-            var wCam = (WorldCamera)state.Camera;
-            var oldViewDimensions = wCam.ViewDimensions;
-            //wCam.ViewDimensions = new Vector2(-1, -1);
-            var oldPreciseZoom = state.PreciseZoom;
-
-            //full invalidation because we must recalculate all object sprites. slow but necessary!
-            state.Zoom = WorldZoom.Far;
-            state.Rotation = WorldRotation.TopLeft;
-            state.Level = Blueprint.Stories;
-            state.PreciseZoom = 1 / 4f;
-            state._2D.PreciseZoom = state.PreciseZoom;
-            state.WorldSpace.Invalidate();
-            state.InvalidateCamera();
-
-            var oldCenter = state.CenterTile;
-            state.CenterTile -= state.WorldSpace.GetTileFromScreen(new Vector2((576 - state.WorldSpace.WorldPxWidth), (576 - state.WorldSpace.WorldPxHeight)) / 2);
-            var pxOffset = -state.WorldSpace.GetScreenOffset();
-            state.TempDraw = true;
-            Blueprint.Cutaway = new bool[Blueprint.Cutaway.Length];
-
-            var _2d = state._2D;
-            Promise<Texture2D> bufferTexture = null;
-            var lastLight = state.OutsideColor;
-            state.OutsideColor = Color.White;
-            state._2D.OBJIDMode = false;
-            using (var buffer = state._2D.WithBuffer(BUFFER_THUMB_DEPTH, ref bufferTexture))
-            {
-                _2d.SetScroll(pxOffset);
-                while (buffer.NextPass())
-                {
-                    _2d.Pause();
-                    _2d.Resume();
-                    //Blueprint.SetLightColor(WorldContent.GrassEffect, Color.White, Color.White);
-                    Blueprint.Terrain.Draw(gd, state);
-                    //Blueprint.Terrain.DrawMask(gd, state, state.Camera.View, state.Camera.Projection);
-                    Blueprint.WallComp.Draw(gd, state);
-                    _2d.Pause();
-                    _2d.Resume();
-                    foreach (var obj in Blueprint.Objects)
-                    {
-                        var renderInfo = GetRenderInfo(obj);
-                        var tilePosition = obj.Position;
-                        _2d.OffsetPixel(state.WorldSpace.GetScreenFromTile(tilePosition));
-                        _2d.OffsetTile(tilePosition);
-                        obj.Draw(gd, state);
-                    }
-                    _2d.Pause();
-                    _2d.Resume();
-                    rooflessCallback?.Invoke(bufferTexture.Get());
-                    Blueprint.RoofComp.Draw(gd, state);
-                }
-
-            }
-
-            Blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.LIGHTING_CHANGED));
-            Blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.FLOOR_CHANGED));
-            //return things to normal
-            //state.PrepareLighting();
-            state.OutsideColor = lastLight;
-            state.PreciseZoom = oldPreciseZoom;
-            state.WorldSpace.Invalidate();
-            state.InvalidateCamera();
-            wCam.ViewDimensions = oldViewDimensions;
-            state.TempDraw = false;
-            state.CenterTile = oldCenter;
-
-            state.Zoom = oldZoom;
-            state.Rotation = oldRotation;
-            state.Level = oldLevel;
-            Blueprint.Cutaway = oldCutaway;
-
-            var tex = bufferTexture.Get();
-            return tex; //TextureUtils.Clip(gd, tex, bounds);
-        }
-
-
-        /// <summary>
         /// Gets an object group's thumbnail provided an array of objects.
         /// </summary>
         /// <param name="objects">The object components to draw.</param>
@@ -295,6 +212,7 @@ namespace FSO.LotView
         {
             var oldZoom = state.Zoom;
             var oldRotation = state.Rotation;
+            var oldPreciseZoom = state.PreciseZoom;
             /** Center average position **/
             Vector3 average = new Vector3();
             for (int i = 0; i < positions.Length; i++)
@@ -305,8 +223,10 @@ namespace FSO.LotView
 
             state.SilentZoom = WorldZoom.Near;
             state.SilentRotation = WorldRotation.BottomRight;
+            state.SilentPreciseZoom = 1;
             state.WorldSpace.Invalidate();
             state.InvalidateCamera();
+            state.DrawOOB = true;
             state.TempDraw = true;
             var pxOffset = new Vector2(442, 275) - state.WorldSpace.GetScreenFromTile(average);
 
@@ -339,6 +259,7 @@ namespace FSO.LotView
                         _2d.OffsetPixel(state.WorldSpace.GetScreenFromTile(tilePosition) + pxOffset);
                         _2d.OffsetTile(tilePosition);
                         _2d.SetObjID(obj.ObjectID);
+
                         obj.Draw(gd, state);
 
                         //return everything to normal
@@ -358,12 +279,90 @@ namespace FSO.LotView
             if (bounds.Height + bounds.Y > 1024) bounds.Height = 1024 - bounds.Y;
 
             //return things to normal
+            state.DrawOOB = false;
+            state.SilentPreciseZoom = oldPreciseZoom;
             state.WorldSpace.Invalidate();
             state.InvalidateCamera();
             state.TempDraw = false;
 
             var tex = bufferTexture.Get();
             return TextureUtils.Clip(gd, tex, bounds);
+        }
+
+        /// <summary>
+        /// Gets the current lot's thumbnail.
+        /// </summary>
+        /// <param name="objects">The object components to draw.</param>
+        /// <param name="gd">GraphicsDevice instance.</param>
+        /// <param name="state">WorldState instance.</param>
+        /// <returns>Object's ID if the object was found at the given position.</returns>
+        public Texture2D GetLotThumb(GraphicsDevice gd, WorldState state)
+        {
+            var oldZoom = state.Zoom;
+            var oldRotation = state.Rotation;
+            var oldLevel = state.Level;
+
+            //full invalidation because we must recalculate all object sprites. slow but necessary!
+            state.Zoom = WorldZoom.Far;
+            state.Rotation = WorldRotation.TopLeft;
+            state.Level = Blueprint.Stories;
+            state.WorldSpace.Invalidate();
+            state.InvalidateCamera();
+
+            var oldCenter = state.CenterTile;
+            state.CenterTile = new Vector2(Blueprint.Width/2, Blueprint.Height/2);
+            state.CenterTile -= state.WorldSpace.GetTileFromScreen(new Vector2(1024 - state.WorldSpace.WorldPxWidth, 1024 - state.WorldSpace.WorldPxHeight) / 2);
+            var pxOffset = -state.WorldSpace.GetScreenOffset();
+            //pxOffset -= 
+            state.TempDraw = true;
+
+            var _2d = state._2D;
+            _2d.AmbientLight = TextureGenerator.GetPxWhite(gd);
+            Promise<Texture2D> bufferTexture = null;
+            state._2D.OBJIDMode = false;
+            using (var buffer = state._2D.WithBuffer(BUFFER_LOTTHUMB, ref bufferTexture))
+            {
+                _2d.SetScroll(pxOffset);
+                while (buffer.NextPass())
+                {
+                    _2d.Pause();
+                    _2d.Resume(); 
+                    Blueprint.FloorComp.DrawBound = new Rectangle(6, 6, Blueprint.Width - 13, Blueprint.Height - 13);
+                    Blueprint.FloorComp.Draw(gd, state);
+                    Blueprint.FloorComp.DrawBound = null;
+                    Blueprint.Terrain.Draw(gd, state);
+                    Blueprint.WallComp.Draw(gd, state);
+                    _2d.Pause();
+
+                    _2d.Resume();
+                    foreach (var obj in Blueprint.Objects)
+                    {
+                        var renderInfo = GetRenderInfo(obj);
+                        var tilePosition = obj.Position;
+                        _2d.OffsetPixel(state.WorldSpace.GetScreenFromTile(tilePosition));
+                        _2d.OffsetTile(tilePosition);
+                        obj.Draw(gd, state);
+                    }
+                    _2d.Pause();
+                    _2d.Resume();
+                    Blueprint.RoofComp.Draw(gd, state);
+                }
+
+            }
+
+            //return things to normal
+            _2d.AmbientLight = state.AmbientLight;
+            state.WorldSpace.Invalidate();
+            state.InvalidateCamera();
+            state.TempDraw = false;
+            state.CenterTile = oldCenter;
+
+            state.Zoom = oldZoom;
+            state.Rotation = oldRotation;
+            state.Level = oldLevel;
+
+            var tex = bufferTexture.Get();
+            return tex; //TextureUtils.Clip(gd, tex, bounds);
         }
 
         /// <summary>
@@ -411,12 +410,15 @@ namespace FSO.LotView
                         recacheTerrain = true;
                         break;
                     case BlueprintDamageType.SCROLL:
-                        if (StaticObjects == null || StaticObjects.PxOffset != GetScrollIncrement(pxOffset))
+                        if (StaticObjects == null || StaticObjects.PxOffset != GetScrollIncrement(pxOffset, state))
                         {
                             redrawFloor = true;
                             redrawWall = true;
                             redrawStaticObjects = true;
                         }
+                        break;
+                    case BlueprintDamageType.PRECISE_ZOOM:
+                        redrawFloor = redrawWall = redrawStaticObjects = true;
                         break;
                     case BlueprintDamageType.LIGHTING_CHANGED:
                         redrawFloor = true;
@@ -461,6 +463,9 @@ namespace FSO.LotView
                     case BlueprintDamageType.ROOF_STYLE_CHANGED:
                         Blueprint.RoofComp.StyleDirty = true;
                         break;
+                    case BlueprintDamageType.ROOM_CHANGED:
+                        Blueprint.RoofComp.ShapeDirty = true;
+                        break;
                     case BlueprintDamageType.FLOOR_CHANGED:
                     case BlueprintDamageType.WALL_CHANGED:
                         recacheTerrain = true;
@@ -474,13 +479,12 @@ namespace FSO.LotView
                 if (recacheObjects) redrawStaticObjects = true;
             }
             damage.Clear();
-
-            var tileOffset = state.WorldSpace.GetTileFromScreen(-pxOffset);
+            
             //scroll buffer loads in increments of SCROLL_BUFFER
-            var newOff = GetScrollIncrement(pxOffset);
+            var newOff = GetScrollIncrement(pxOffset, state);
             var oldCenter = state.CenterTile;
             state.CenterTile += state.WorldSpace.GetTileFromScreen(newOff-pxOffset); //offset the scroll to the position of the scroll buffer.
-            tileOffset = state.CenterTile;
+            var tileOffset = state.CenterTile;
 
             pxOffset = newOff;
 
@@ -505,39 +509,6 @@ namespace FSO.LotView
                 _2d.End(StaticFloorCache, true);
             }
 
-            if (redrawFloor)
-            {
-                /** Draw archetecture to a texture **/
-                Promise<Texture2D> bufferTexture = null;
-                Promise<Texture2D> depthTexture = null;
-                using (var buffer = state._2D.WithBuffer(BUFFER_FLOOR_PIXEL, ref bufferTexture, BUFFER_FLOOR_DEPTH, ref depthTexture))
-                {
-                    _2d.SetScroll(pxOffset);
-                    while (buffer.NextPass())
-                    {
-                        _2d.RenderCache(StaticFloorCache);
-                        Blueprint.Terrain.DepthMode = _2d.OutputDepth;
-                        Blueprint.Terrain.Draw(gd, state);
-                    }
-                }
-                StaticFloor = new ScrollBuffer(bufferTexture.Get(), depthTexture.Get(), pxOffset, new Vector3(tileOffset, 0));
-            }
-
-            if (redrawWall)
-            {
-                Promise<Texture2D> bufferTexture = null;
-                Promise<Texture2D> depthTexture = null;
-                using (var buffer = state._2D.WithBuffer(BUFFER_WALL_PIXEL, ref bufferTexture, BUFFER_WALL_DEPTH, ref depthTexture))
-                {
-                    _2d.SetScroll(pxOffset);
-                    while (buffer.NextPass())
-                    {
-                        _2d.RenderCache(StaticWallCache);
-                    }
-                }
-                StaticWall = new ScrollBuffer(bufferTexture.Get(), depthTexture.Get(), pxOffset, new Vector3(tileOffset, 0));
-            }
-
             if (recacheObjects)
             {
                 _2d.Pause();
@@ -560,26 +531,64 @@ namespace FSO.LotView
                 _2d.End(StaticObjectsCache, true);
             }
 
+            if (redrawFloor)
+            {
+                /** Draw archetecture to a texture **/
+                Promise<Texture2D> bufferTexture = null;
+                Promise<Texture2D> depthTexture = null;
+                using (var buffer = state._2D.WithBuffer(BUFFER_FLOOR_PIXEL, ref bufferTexture, BUFFER_FLOOR_DEPTH, ref depthTexture))
+                {
+                    _2d.SetScroll(pxOffset);
+                    while (buffer.NextPass())
+                    {
+                        Blueprint.Terrain.DepthMode = _2d.OutputDepth;
+                        Blueprint.Terrain.Draw(gd, state);
+                        _2d.RenderCache(StaticFloorCache);
+                        foreach (var sub in Blueprint.SubWorlds) sub.DrawArch(gd, state);
+                    }
+                }
+                StaticFloor = new ScrollBuffer(bufferTexture.Get(), depthTexture.Get(), pxOffset, new Vector3(tileOffset, 0));
+            }
+
+            if (redrawWall)
+            {
+                Promise<Texture2D> bufferTexture = null;
+                Promise<Texture2D> depthTexture = null;
+                using (var buffer = state._2D.WithBuffer(BUFFER_WALL_PIXEL, ref bufferTexture, BUFFER_WALL_DEPTH, ref depthTexture))
+                {
+                    _2d.SetScroll(pxOffset);
+                    while (buffer.NextPass())
+                    {
+                        _2d.RenderCache(StaticWallCache);
+                    }
+                }
+                StaticWall = new ScrollBuffer(bufferTexture.Get(), depthTexture.Get(), pxOffset, new Vector3(tileOffset, 0));
+            }
+
             if (redrawStaticObjects){
                 /** Draw static objects to a texture **/
                 Promise<Texture2D> bufferTexture = null;
                 Promise<Texture2D> depthTexture = null;
                 using (var buffer = state._2D.WithBuffer(BUFFER_STATIC_OBJECTS_PIXEL, ref bufferTexture, BUFFER_STATIC_OBJECTS_DEPTH, ref depthTexture))
                 {
-                    _2d.SetScroll(pxOffset);
+                    
                     while (buffer.NextPass())
                     {
+                        foreach (var sub in Blueprint.SubWorlds) sub.DrawObjects(gd, state);
+                        _2d.SetScroll(pxOffset);
                         _2d.RenderCache(StaticObjectsCache);
                     }
                 }
                 StaticObjects = new ScrollBuffer(bufferTexture.Get(), depthTexture.Get(), pxOffset, new Vector3(tileOffset, 0));
             }
+            //state._2D.PreciseZoom = state.PreciseZoom;
             state.CenterTile = oldCenter; //revert to our real scroll position
         }
 
-        public Vector2 GetScrollIncrement(Vector2 pxOffset)
+        public Vector2 GetScrollIncrement(Vector2 pxOffset, WorldState state)
         {
-            return new Vector2((float)Math.Floor(pxOffset.X / SCROLL_BUFFER) * SCROLL_BUFFER, (float)Math.Floor(pxOffset.Y / SCROLL_BUFFER) * SCROLL_BUFFER);
+            var scrollSize = SCROLL_BUFFER / state.PreciseZoom;
+            return new Vector2((float)Math.Floor(pxOffset.X / scrollSize) * scrollSize, (float)Math.Floor(pxOffset.Y / scrollSize) * scrollSize);
         }
 
         /// <summary>
@@ -598,6 +607,10 @@ namespace FSO.LotView
 
             var pxOffset = -state.WorldSpace.GetScreenOffset();
             var tileOffset = state.CenterTile;
+
+            state._2D.PreciseZoom = 1f;
+            _2d.SetScroll(new Vector2());
+
             _2d.Begin(state.Camera);
             if (StaticFloor != null)
             {
@@ -618,6 +631,9 @@ namespace FSO.LotView
                 _2d.Resume();
             }
 
+            state._2D.PreciseZoom = state.PreciseZoom;
+            _2d.SetScroll(pxOffset);
+
             _2d.End();
             _2d.Begin(state.Camera);
 
@@ -630,7 +646,7 @@ namespace FSO.LotView
             var size = new Vector2(state.WorldSpace.WorldPxWidth, state.WorldSpace.WorldPxHeight);
             var mainBd = state.WorldSpace.GetScreenFromTile(state.CenterTile);
             var diff = pxOffset - mainBd;
-            var worldBounds = new Rectangle((int)pxOffset.X, (int)pxOffset.Y, (int)size.X, (int)size.Y);
+            var worldBounds = new Rectangle((pxOffset).ToPoint(), size.ToPoint());
 
             foreach (var obj in Blueprint.Objects)
             {
@@ -641,7 +657,7 @@ namespace FSO.LotView
                     var tilePosition = obj.Position;
                     var oPx = state.WorldSpace.GetScreenFromTile(tilePosition);
                     obj.ValidateSprite(state);
-                    var offBound = new Rectangle(obj.Bounding.Location.X + (int)oPx.X, obj.Bounding.Location.Y + (int)oPx.Y, obj.Bounding.Width, obj.Bounding.Height);
+                    var offBound = new Rectangle(obj.Bounding.Location + oPx.ToPoint(), obj.Bounding.Size);
                     if (!offBound.Intersects(worldBounds)) continue;
                     _2d.OffsetPixel(oPx);
                     _2d.OffsetTile(tilePosition);
@@ -655,6 +671,13 @@ namespace FSO.LotView
         {
             foreach (var b in buf) b.Dispose();
             buf.Clear();
+        }
+
+        public void Dispose()
+        {
+            ClearDrawBuffer(StaticWallCache);
+            ClearDrawBuffer(StaticFloorCache);
+            ClearDrawBuffer(StaticObjectsCache);
         }
     }
 

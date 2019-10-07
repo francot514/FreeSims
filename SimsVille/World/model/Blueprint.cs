@@ -12,8 +12,6 @@ using FSO.LotView.Components;
 using FSO.LotView.Utils;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
-using tso.world.Components;
-using tso.world.Model;
 
 namespace FSO.LotView.Model
 {
@@ -35,15 +33,17 @@ namespace FSO.LotView.Model
         public WallTile[][] Walls;
         public List<int>[] WallsAt;
         public WallComponent WallComp;
-        public RoofComponent RoofComp;
 
         public FloorTile[][] Floors;
         public FloorComponent FloorComp;
+
+        public RoofComponent RoofComp;
 
         public bool[][] Supported; //directly the VM's copy at all times. DO NOT MODIFY.
 
         public List<ObjectComponent> Objects = new List<ObjectComponent>();
         public List<AvatarComponent> Avatars = new List<AvatarComponent>();
+        public List<SubWorldComponent> SubWorlds = new List<SubWorldComponent>();
         public TerrainComponent Terrain;
 
         /// <summary>
@@ -58,6 +58,8 @@ namespace FSO.LotView.Model
         public List<Room> Rooms = new List<Room>();
 
         public Color[] RoomColors;
+        public Rectangle BuildableArea;
+        public Rectangle TargetBuildableArea;
 
         public Blueprint(int width, int height){
             this.Width = width;
@@ -69,6 +71,7 @@ namespace FSO.LotView.Model
             this.FloorComp = new FloorComponent();
             FloorComp.blueprint = this;
             this.RoofComp = new RoofComponent(this);
+        
             RoomColors = new Color[65536];
             this.WallsAt = new List<int>[Stories];
             this.Walls = new WallTile[Stories][];
@@ -85,7 +88,6 @@ namespace FSO.LotView.Model
             }
             this.Cutaway = new bool[numTiles];
         }
-
 
         public void GenerateRoomLights()
         {
@@ -121,6 +123,13 @@ namespace FSO.LotView.Model
         public void SignalWallChange()
         {
             Damage.Add(new BlueprintDamage(BlueprintDamageType.WALL_CHANGED, 0, 0, 1)); 
+            //todo: should this even have a position? we're rerendering the whole thing atm
+            //should eventually consider level
+        }
+
+        public void SignalRoomChange()
+        {
+            Damage.Add(new BlueprintDamage(BlueprintDamageType.ROOM_CHANGED, 0, 0, 1));
             //todo: should this even have a position? we're rerendering the whole thing atm
             //should eventually consider level
         }
@@ -221,12 +230,12 @@ namespace FSO.LotView.Model
         SCROLL,
         ROTATE,
         ZOOM,
+        PRECISE_ZOOM,
         WALL_CUT_CHANGED,
         LEVEL_CHANGED,
         LIGHTING_CHANGED,
         ROOM_CHANGED,
-        ROOF_STYLE_CHANGED,
-        PRECISE_ZOOM
+        ROOF_STYLE_CHANGED
     }
 
     public class BlueprintObjectList {

@@ -36,11 +36,7 @@ namespace FSO.LotView
         public static Effect _2DWorldBatchEffect
         {
             get{
-
-                if (ContentManager != null)
                 return ContentManager.Load<Effect>("Effects/2DWorldBatch"+EffectSuffix);
-
-                return null;
             }
         }
 
@@ -48,11 +44,7 @@ namespace FSO.LotView
         {
             get
             {
-                if (ContentManager != null)
-                 return ContentManager.Load<Effect>("Effects/GrassShader"+EffectSuffix);
-
-                return null;
-               
+                return ContentManager.Load<Effect>("Effects/GrassShader"+EffectSuffix);
             }
         }
 
@@ -60,11 +52,7 @@ namespace FSO.LotView
         {
             get
             {
-                if (ContentManager != null)
                 return ContentManager.Load<Texture2D>("Textures/gridTexture");
-
-
-                return null;
             }
         }
     }

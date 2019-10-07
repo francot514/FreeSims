@@ -24,13 +24,6 @@ namespace FSO.LotView
         private World World;
         public GraphicsDevice Device;
 
-        private float _PreciseZoom = 1f;
-        public float PreciseZoom
-        {
-            get { return _PreciseZoom; }
-            set { _PreciseZoom = value; InvalidatePreciseZoom(); }
-        }
-
         /// <summary>
         /// Creates a new WorldState instance.
         /// </summary>
@@ -49,12 +42,6 @@ namespace FSO.LotView
             Zoom = WorldZoom.Near;
             Rotation = WorldRotation.TopLeft;
             Level = 1;
-        }
-
-        protected void InvalidatePreciseZoom()
-        {
-            InvalidateCamera();
-            World.InvalidatePreciseZoom();
         }
 
         public void SetDimensions(Vector2 dim)
@@ -85,7 +72,6 @@ namespace FSO.LotView
 
         private int _WorldSize;
 
-        public bool DrawRoofs;
         /// <summary>
         /// Gets or sets size of world.
         /// </summary>
@@ -101,8 +87,16 @@ namespace FSO.LotView
             }
         }
 
-        private bool _BuildMode;
-        public bool BuildMode
+        public bool DrawRoofs;
+
+        public int SilentBuildMode
+        {
+            get { return _BuildMode; }
+            set { _BuildMode = value; }
+        }
+
+        private int _BuildMode;
+        public int BuildMode
         {
             get
             {
@@ -126,12 +120,34 @@ namespace FSO.LotView
         }
 
         /// <summary>
+        /// Set level without invalidating.
+        /// </summary>
+        public sbyte SilentLevel
+        {
+            get { return _Level; }
+            set { _Level = value; }
+        }
+
+        private float _PreciseZoom = 1f;
+        public float PreciseZoom
+        {
+            get { return _PreciseZoom; }
+            set { _PreciseZoom = value; InvalidatePreciseZoom(); }
+        }
+
+        public float SilentPreciseZoom
+        {
+            get { return _PreciseZoom; }
+            set { _PreciseZoom = value; InvalidateCamera(); }
+        }
+
+        /// <summary>
         /// What zoom level is being displayed
         /// </summary>
         private WorldZoom _Zoom;
         public WorldZoom Zoom {
             get{ return _Zoom; }
-            set{ _Zoom = value; InvalidateZoom(); }
+            set{ var old = _Zoom; _Zoom = value; if (value != old) InvalidateZoom(); }
         }
 
         /// <summary>
@@ -161,6 +177,11 @@ namespace FSO.LotView
             set { _Rotation = value; }
         }
 
+        /// <summary>
+        /// Draw entities even if they are out of world. (for thumbnails)
+        /// </summary>
+        public bool DrawOOB;
+
         private Vector2 _CenterTile = Vector2.Zero;
         public Vector2 CenterTile
         {
@@ -173,6 +194,12 @@ namespace FSO.LotView
             WorldSpace.Invalidate();
             InvalidateCamera();
             World.InvalidateZoom();
+        }
+
+        protected void InvalidatePreciseZoom()
+        {
+            InvalidateCamera();
+            World.InvalidatePreciseZoom();
         }
 
         protected void InvalidateRotation()
@@ -208,6 +235,7 @@ namespace FSO.LotView
             WorldCamera.CenterTile = CenterTile;
             WorldCamera.Zoom = Zoom;
             WorldCamera.Rotation = Rotation;
+            WorldCamera.PreciseZoom = PreciseZoom;
         }
     }
 
