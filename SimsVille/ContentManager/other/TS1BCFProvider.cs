@@ -122,12 +122,12 @@ namespace FSO.Content.TS1
             return (T)BaseProvider.Get(name, typeof(T));
         }
 
-        public T Get(ulong id)
+        public T Get(ulong id, bool ts1)
         {
             throw new NotImplementedException();
         }
 
-        public T Get(uint type, uint fileID)
+        public T Get(uint type, uint fileID, bool ts1)
         {
             throw new NotImplementedException();
         }

@@ -293,7 +293,7 @@ namespace FSO.Content
 
         #region IContentProvider<Wall> Members
 
-        public Wall Get(ulong id)
+        public Wall Get(ulong id, bool ts1)
         {
             if (ById.ContainsKey((ushort)id))
             {
@@ -320,7 +320,7 @@ namespace FSO.Content
             }
         }
 
-        public Wall Get(uint type, uint fileID)
+        public Wall Get(uint type, uint fileID, bool ts1)
         {
             return null;
         }
@@ -351,9 +351,9 @@ namespace FSO.Content
 
         #region IContentReference<Wall> Members
 
-        public Wall Get()
+        public Wall Get(bool ts1)
         {
-            return Provider.Get(ID);
+            return Provider.Get(ID, ts1);
         }
 
         #endregion

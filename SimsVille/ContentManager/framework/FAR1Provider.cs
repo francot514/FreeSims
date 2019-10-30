@@ -64,7 +64,7 @@ namespace FSO.Content.Framework
         /// <param name="type">The TypeID of the archive.</param>
         /// <param name="fileID">The FileID of the archive.</param>
         /// <returns>A FAR3 archive.</returns>
-        public T Get(uint type, uint fileID)
+        public T Get(uint type, uint fileID, bool ts1)
         {
             return default(T);
         }
@@ -74,7 +74,7 @@ namespace FSO.Content.Framework
         /// </summary>
         /// <param name="id">The ID of the file.</param>
         /// <returns>A file.</returns>
-        public T Get(ulong id)
+        public T Get(ulong id, bool ts1)
         {
             return default(T);
         }
@@ -186,7 +186,9 @@ namespace FSO.Content.Framework
                 if (farPath.Contains("Expansion") || farPath.Contains("Global") || farPath.Contains("Objects"))
                     Epfile = false;
 
-                var archive = new FAR1Archive(ContentManager.GetPath(farPath),Epfile);
+                string dirpath = Epfile ? ContentManager.GetPath(farPath) : farPath;
+
+                var archive = new FAR1Archive(dirpath, Epfile);
                 var entries = archive.GetAllFarEntries();
 
                 foreach (var entry in entries)
@@ -201,17 +203,18 @@ namespace FSO.Content.Framework
                         var ext = Path.GetExtension(entry.Filename).ToLowerInvariant();
                         if (!EntriesByName.ContainsKey(entry.Filename))
                         {
-                        
-							EntriesByName[entry.Filename] = referenceItem;
-							List<Far1ProviderEntry<T>> group = null;
-							if (!EntriesOfType.TryGetValue(ext, out group))
-							{
-								group = new List<Far1ProviderEntry<T>>();
-								EntriesOfType[ext] = group;
-							}
-							group.Add(referenceItem);
-						
-						}
+                            //System.Diagnostics.Debug.WriteLine("Duplicate! " + entry.Filename);
+                       
+                            EntriesByName[entry.Filename] = referenceItem;
+                            List<Far1ProviderEntry<T>> group = null;
+                            if (!EntriesOfType.TryGetValue(ext, out group))
+                            {
+                                group = new List<Far1ProviderEntry<T>>();
+                                EntriesOfType[ext] = group;
+                            }
+                            group.Add(referenceItem);
+
+                        }
                     }
                 }
             }
@@ -242,7 +245,7 @@ namespace FSO.Content.Framework
 
         #region IContentReference<T> Members
 
-        public T Get()
+        public T Get(bool ts1)
         {
             return this.Provider.Get(this);
         }

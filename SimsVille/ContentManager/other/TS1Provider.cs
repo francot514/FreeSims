@@ -94,7 +94,7 @@ namespace FSO.Content.Framework
             }
         }
 
-        public T Get(ulong id)
+        public T Get(ulong id, bool ts1)
         {
             throw new NotImplementedException();
         }
@@ -110,7 +110,7 @@ namespace FSO.Content.Framework
             return default(T);
         }
 
-        public T Get(uint type, uint fileID)
+        public T Get(uint type, uint fileID, bool ts1)
         {
             throw new NotImplementedException();
         }

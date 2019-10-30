@@ -19,6 +19,7 @@ using FSO.Files.Formats.OTF;
 using System.Collections.Concurrent;
 using System.IO;
 using FSO.Common;
+using FSO.SimAntics.Engine;
 
 namespace FSO.Content
 {
@@ -459,7 +460,7 @@ namespace FSO.Content
                 iff.RuntimeInfo.UseCase = IffUseCase.Object;
                 if (sprites != null) sprites.RuntimeInfo.UseCase = IffUseCase.ObjectSprites;
 
-                return new GameObjectResource(iff, sprites, tuning, reference.FileName);
+                return new GameObjectResource(iff, sprites, tuning, reference.FileName, reference.EpObject);
             
         }
     
@@ -468,12 +469,12 @@ namespace FSO.Content
 
         #region IContentProvider<GameObject> Members
 
-        public GameObject Get(uint id)
+        public GameObject Get(uint id, bool ts1)
         {
-            return Get((ulong)id);
+            return Get((ulong)id, ts1);
         }
 
-        public GameObject Get(ulong id)
+        public GameObject Get(ulong id, bool ts1)
         {
             if (Cache.ContainsKey(id))
             {
@@ -539,7 +540,7 @@ namespace FSO.Content
                         iff.RuntimeInfo.UseCase = IffUseCase.Object;
                         if (sprites != null) sprites.RuntimeInfo.UseCase = IffUseCase.ObjectSprites;
 
-                        resource = new GameObjectResource(iff, sprites, tuning, reference.FileName);
+                        resource = new GameObjectResource(iff, sprites, tuning, reference.FileName, ts1);
 
 
                         lock (ProcessedFiles)
@@ -550,7 +551,7 @@ namespace FSO.Content
                         var piffModified = PIFFRegistry.GetOBJDRewriteNames();
                         foreach (var name in piffModified)
                         {
-                            ProcessedFiles.GetOrAdd(name, GenerateResource(new GameObjectReference(this) { FileName = name.Substring(0, name.Length - 4), Source = GameObjectSource.Far }));
+                            ProcessedFiles.GetOrAdd(name, GenerateResource(new GameObjectReference(this) { FileName = name.Substring(0, name.Length - 4), Source = GameObjectSource.Far, EpObject = ts1 }));
                         }
 
                     }
@@ -577,9 +578,9 @@ namespace FSO.Content
             }
         }
 
-        public GameObject Get(uint type, uint fileID)
+        public GameObject Get(uint type, uint fileID, bool ts1)
         {
-            return Get(fileID);
+            return Get(fileID, ts1);
         }
 
         public List<IContentReference<GameObject>> List()
@@ -700,9 +701,9 @@ namespace FSO.Content
 
         #region IContentReference<GameObject> Members
 
-        public GameObject Get()
+        public GameObject Get(bool ts1)
         {
-            return Provider.Get(ID);
+            return Provider.Get(ID, ts1);
         }
 
         #endregion
@@ -800,7 +801,7 @@ namespace FSO.Content
             get { return Iff; }
         }
 
-        public GameObjectResource(Files.Formats.IFF.IffFile iff, Files.Formats.IFF.IffFile sprites, OTFFile tuning, string iname)
+        public GameObjectResource(Files.Formats.IFF.IffFile iff, Files.Formats.IFF.IffFile sprites, OTFFile tuning, string iname, bool ts1)
         {
             this.Iff = iff;
             this.Sprites = sprites;
@@ -811,7 +812,7 @@ namespace FSO.Content
             var GLOBChunks = iff.List<GLOB>();
             if (GLOBChunks != null && GLOBChunks[0].Name != "")
             {
-                var sg = FSO.Content.Content.Get().WorldObjectGlobals.Get(GLOBChunks[0].Name);
+                var sg = FSO.Content.Content.Get().WorldObjectGlobals.Get(GLOBChunks[0].Name, ts1);
                 if (sg != null) SemiGlobal = sg.Resource; //used for tuning constant fetching.
             }
 
@@ -855,8 +856,17 @@ namespace FSO.Content
                     }
                 }
             }
+
         }
 
+
+        public override void Recache()
+        {
+            base.Recache();
+
+           
+
+        }
         /// <summary>
         /// Gets a game object's resource based on the ID found in the object's OTF.
         /// </summary>

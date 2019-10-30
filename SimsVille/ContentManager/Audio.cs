@@ -163,8 +163,8 @@ namespace FSO.Content
                 else
                     return dat; //either wav or mp3.
             }
-            else
-                Debug.WriteLine("Couldn't find sound!");
+            //else
+                //Debug.WriteLine("Couldn't find sound!");
             return null;
         }
 
