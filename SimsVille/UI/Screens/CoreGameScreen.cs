@@ -610,8 +610,8 @@ namespace FSO.Client.UI.Screens
 
             VMWorldActivator activator = new VMWorldActivator(vm, World);
 
-            var headPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(gizmo.SelectedCharInfo.Head, 16));
-            var bodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(gizmo.SelectedCharInfo.Body, 16));
+            var headPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(gizmo.SelectedCharInfo.Head, 16), false);
+            var bodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(gizmo.SelectedCharInfo.Body, 16), false);
             var HeadID = headPurchasable != null ? headPurchasable.OutfitID :
                 Convert.ToUInt64(gizmo.SelectedCharInfo.Head, 16);
             var BodyID = bodyPurchasable != null ? bodyPurchasable.OutfitID :
@@ -738,13 +738,13 @@ namespace FSO.Client.UI.Screens
             exporter.SaveHouse(vm, housePath + ".xml");
             var marshal = vm.Save();
 
-            if (marshal != null)
-            using (var output = new FileStream(Path.Combine(FSOEnvironment.UserDir, "Houses/" + lotName + ".fsov"), FileMode.Create))
-                {
-                    marshal.SerializeInto(new BinaryWriter(output));
-                }
+           // if (marshal != null)
+            //using (var output = new FileStream(Path.Combine(FSOEnvironment.UserDir, "Houses/" + lotName + ".fsov"), FileMode.Create))
+              //  {
+                //    marshal.SerializeInto(new BinaryWriter(output));
+                //}
 
-            Texture2D lotThumb = World.GetLotThumb(GameFacade.GraphicsDevice, null);
+            Texture2D lotThumb = World.GetLotThumb(GameFacade.GraphicsDevice);
 
             if (lotThumb != null)
                 using (var output = File.Open(housePath + ".png", FileMode.OpenOrCreate))
@@ -753,7 +753,7 @@ namespace FSO.Client.UI.Screens
                 }
          
 
-            if (vm.GlobalLink != null) ((VMTSOGlobalLinkStub)vm.GlobalLink).Database.Save();
+            //if (vm.GlobalLink != null) ((VMTSOGlobalLinkStub)vm.GlobalLink).Database.Save();
         }
 
         public void CloseInbox()

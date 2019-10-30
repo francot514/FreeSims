@@ -369,12 +369,12 @@ namespace FSO.Client.UI.Panels
 
             Enum.TryParse(charInfo.Appearance, out type);
 
-            var headPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Head, 16));
-            var bodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Body, 16));
+            var headPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Head, 16), false);
+            var bodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Body, 16), false);
             Outfit HeadOutfit = Content.Content.Get().AvatarOutfits.Get(headPurchasable != null ? headPurchasable.OutfitID :
-                Convert.ToUInt64(charInfo.Head, 16));
+                Convert.ToUInt64(charInfo.Head, 16), false);
             Outfit BodyOutfit = Content.Content.Get().AvatarOutfits.Get(bodyPurchasable != null ? bodyPurchasable.OutfitID : 
-                Convert.ToUInt64(charInfo.Body, 16));
+                Convert.ToUInt64(charInfo.Body, 16), false);
 
             sim = new UISim(charInfo.ObjID, true)
             {

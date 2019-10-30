@@ -235,6 +235,30 @@ namespace FSO.Client.UI.Controls.Catalog
 
                     }
 
+
+                    if (Directory.Exists(AppDomain.CurrentDomain.BaseDirectory + "/Content/Objects"))
+                    {
+
+                        var opackingslip = new XmlDocument();
+
+                        opackingslip.Load("Content/npc.xml");
+                        var dobjectInfos = opackingslip.GetElementsByTagName("P");
+
+                        foreach (XmlNode objectInfo in dobjectInfos)
+                        {
+                            sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
+                            if (Category < 0) continue;
+                            _Catalog[Category].Add(new UICatalogElement()
+                            {
+                                GUID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16),
+                                Category = Category,
+                                Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
+                                Name = objectInfo.Attributes["n"].Value
+                            });
+                        }
+
+                    }
+
                     if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/Downloads"))
                     {
 
@@ -458,7 +482,7 @@ namespace FSO.Client.UI.Controls.Catalog
         public Texture2D GetObjIcon(uint GUID)
         {
             if (!IconCache.ContainsKey(GUID)) {
-                var obj = Content.Content.Get().WorldObjects.Get(GUID);
+                var obj = Content.Content.Get().WorldObjects.Get(GUID, false);
                 if (obj == null)
                 {
                     IconCache[GUID] = null;

@@ -88,6 +88,7 @@ namespace FSO.Client.UI.Panels
         /// </summary>
         public UILabel TimeText { get; set; }
         public UILabel MoneyText { get; set; }
+        private UILabel FloorNumLabel;
 
         private UIDestroyablePanel Panel;
         public int CurrentPanel;
@@ -122,6 +123,16 @@ namespace FSO.Client.UI.Panels
             MoneyText.Caption = "§0";
             MoneyText.CaptionStyle = TimeText.CaptionStyle.Clone();
             MoneyText.CaptionStyle.Shadow = true;
+
+            var temp = new UILabel();
+            temp.X = SecondFloorButton.X + 7;
+            temp.Y = SecondFloorButton.Y - 14;
+            temp.Caption = "1";
+            temp.CaptionStyle = temp.CaptionStyle.Clone();
+            temp.CaptionStyle.Size = 7;
+            temp.CaptionStyle.Shadow = true;
+            Add(temp);
+            FloorNumLabel = temp;
 
             CurrentPanel = -1;
 
@@ -317,6 +328,9 @@ namespace FSO.Client.UI.Panels
                     HouseModeButton.Disabled = BuyModeButton.Disabled;
                 }
 
+                var level = ((CoreGameScreen)(Parent)).LotController.World.State.Level.ToString();
+                if (FloorNumLabel.Caption != level) FloorNumLabel.Caption = level;
+
                 if (CurrentPanel == 2 && BuyModeButton.Disabled || CurrentPanel == 3 && BuildModeButton.Disabled) SetPanel(-1);
             }
 
@@ -399,7 +413,7 @@ namespace FSO.Client.UI.Panels
                 Game.LotController.QueryPanel.Active = false;
                 Game.LotController.QueryPanel.Visible = false;
                 Game.LotController.LiveMode = true;
-                Game.vm.Context.World.State.BuildMode = false;
+                Game.vm.Context.World.State.BuildMode = 0;
             }
 
             if (CurrentPanel != -1)
@@ -438,7 +452,7 @@ namespace FSO.Client.UI.Panels
                         Panel = new UIBuildMode(Game.LotController);
 
                         //enable air tile graphics
-                        Game.vm.Context.World.State.BuildMode = true;
+                        Game.vm.Context.World.State.BuildMode = 1;
 
                         Game.LotController.LiveMode = false;
                         Panel.X = 177;
@@ -480,7 +494,8 @@ namespace FSO.Client.UI.Panels
                 WallsDownButton.Visible = (mode == 0);
                 WallsCutawayButton.Visible = (mode == 1);
                 WallsUpButton.Visible = (mode == 2);
-                RoofButton.Visible = (mode == 3);
+                RoofButton.Visible = (mode == 3);           
+                ((CoreGameScreen)(Parent)).LotController.World.State.DrawRoofs = (mode == 3);
             } else {
                 WallsDownButton.Visible = false;
                 WallsCutawayButton.Visible = false;
@@ -507,6 +522,7 @@ namespace FSO.Client.UI.Panels
 
             BackgroundMatchmaker.Visible = isCityMode;
             Background.Visible = isLotMode;
+            FloorNumLabel.Visible = isLotMode;
 
             UpdateWallsMode();
 

@@ -94,6 +94,7 @@ namespace FSO.Client.UI.Panels
         //world required for drawing thumbnails
         public LotView.World World;
         public UIImage Thumbnail;
+        public int InInventory = 0;
 
         private bool _Active;
         public bool Active

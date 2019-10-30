@@ -297,7 +297,7 @@ namespace FSO.Client.UI.Panels
 
             if (OldSelection != -1) Catalog.SetActive(OldSelection, false);
             Catalog.SetActive(selection, true);
-            BuyItem = vm.Context.CreateObjectInstance(item.GUID, LotTilePos.OUT_OF_WORLD, Direction.NORTH, true);
+            BuyItem = vm.Context.CreateObjectInstance(item.GUID, LotTilePos.OUT_OF_WORLD, Direction.NORTH, true, false);
             if (BuyItem == null) return; //uh
             QueryPanel.SetInfo(LotController.vm, BuyItem.Objects[0], false);
             QueryPanel.Mode = 1;
@@ -310,7 +310,7 @@ namespace FSO.Client.UI.Panels
 
         private ObjectCatalogItem GenCatItem(uint GUID)
         {
-            var obj = Content.Content.Get().WorldObjects.Get(GUID);
+            var obj = Content.Content.Get().WorldObjects.Get(GUID, false);
             if (obj == null)
             {
                 return new ObjectCatalogItem()
@@ -430,6 +430,7 @@ namespace FSO.Client.UI.Panels
         public void SetMode(int mode)
         {
             if (!Roommate) mode = 2;
+            QueryPanel.InInventory = (mode == 2) ? 1 : 0;
             CatBg.Visible = (mode == 1);
             ProductCatalogSlider.Visible = (mode == 1);
             ProductCatalogNextPageButton.Visible = (mode == 1);

@@ -103,7 +103,7 @@ namespace FSO.Client.UI.Panels
 
             CategoryMap = new Dictionary<UIButton, int>
             {
-                { TerrainButton, 29 },
+                { TerrainButton, 10 },
                 { WaterButton, 5 },
                 { WallButton, 7 },
                 { WallpaperButton, 8 },
@@ -114,7 +114,7 @@ namespace FSO.Client.UI.Panels
                 { FloorButton, 9 },
                 { DoorButton, 0 },
                 { WindowButton, 1 },
-                { RoofButton, 28 },
+                { RoofButton, 6 },
                 { HandButton, 28 },
             };
 
@@ -219,25 +219,21 @@ namespace FSO.Client.UI.Panels
 
         public void ChangeCategory(UIElement elem)
         {
-            TerrainButton.Selected = false;
-            WaterButton.Selected = false;
-            WallButton.Selected = false;
-            WallpaperButton.Selected = false;
-            StairButton.Selected = false;
-            FireplaceButton.Selected = false;
-
-            PlantButton.Selected = false;
-            FloorButton.Selected = false;
-            DoorButton.Selected = false;
-            WindowButton.Selected = false;
-            RoofButton.Selected = false;
-            HandButton.Selected = false;
+            QueryPanel.InInventory = 0;
+            foreach (var btn in CategoryMap.Keys)
+                btn.Selected = false;
 
             UIButton button = (UIButton)elem;
             button.Selected = true;
             if (!CategoryMap.ContainsKey(button)) return;
             CurrentCategory = UICatalog.Catalog[CategoryMap[button]];
             Catalog.SetCategory(CurrentCategory);
+
+            var isRoof = CategoryMap[button] == 6;
+            RoofShallowBtn.Visible = isRoof;
+            RoofSteepBtn.Visible = isRoof;
+            RoofSlider.Visible = isRoof;
+            RoofSlider.Value = 1.25f - LotController.vm.Context.Architecture.RoofPitch;
 
             int total = Catalog.TotalPages();
             OldSelection = -1;
@@ -254,6 +250,13 @@ namespace FSO.Client.UI.Panels
             }
 
             PreviousPageButton.Disabled = true;
+
+            var showsubtools = CategoryMap[button] != 10;
+            SubToolBg.Visible = showsubtools;
+            SubtoolsSlider.Visible = showsubtools;
+            PreviousPageButton.Visible = showsubtools;
+            NextPageButton.Visible = showsubtools;
+
             return;
         }
 
