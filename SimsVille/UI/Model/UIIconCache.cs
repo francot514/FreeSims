@@ -67,7 +67,7 @@ namespace FSO.Client.UI.Model
             if (!AvatarHeadCache.TryGetValue(headOft, out result))
             {
                 var ofts = Content.Content.Get().AvatarOutfits;
-                var oft = ofts.Get(headOft);
+                var oft = ofts.Get(headOft, false);
                 if (oft == null) return null;
                 else
                 {

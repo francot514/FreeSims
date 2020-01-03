@@ -375,5 +375,11 @@ namespace SimsVille.UI.Model
         }
 
 
+        public override void Dispose()
+        {
+         
+
+        }
+
     }
 }
