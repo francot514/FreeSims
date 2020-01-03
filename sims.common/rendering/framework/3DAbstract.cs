@@ -54,6 +54,8 @@ namespace FSO.Common.Rendering.Framework
             DeviceReset(m_Device);
         }
 
+        public abstract void Dispose();
+
         protected GraphicsDevice m_Device; 
 
         public abstract void DeviceReset(GraphicsDevice Device);

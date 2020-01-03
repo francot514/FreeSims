@@ -13,8 +13,8 @@ namespace FSO.Common.Content
 {
     public interface IContentProvider <T>
     {
-        T Get(ulong id);
-        T Get(uint type, uint fileID);
+        T Get(ulong id, bool ts1);
+        T Get(uint type, uint fileID, bool ts1);
         List<IContentReference<T>> List();
     }
 }
