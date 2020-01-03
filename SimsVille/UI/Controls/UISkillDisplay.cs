@@ -21,7 +21,7 @@ using FSO.Common.Utils;
 using FSO.Client;
 using FSO.SimAntics;
 
-namespace TSOVille.Code.UI.Controls
+namespace FSO.Client.UI.Controls
 {
     /// <summary>
     /// The motive display used in live mode. Labels, values and increment rate indicators can be custom set.

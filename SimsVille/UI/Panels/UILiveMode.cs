@@ -20,7 +20,7 @@ using FSO.SimAntics.NetPlay.EODs.Model;
 using FSO.LotView.Components;
 using FSO.LotView;
 using FSO.Common;
-using TSOVille.Code.UI.Controls;
+
 
 namespace FSO.Client.UI.Panels
 {
