@@ -103,6 +103,22 @@ namespace FSO.Client.UI.Framework
             return Children;
         }
 
+        public List<UIElement> ChildrenWithinIdRange(int min, int max)
+        {
+            var result = new List<UIElement>();
+            foreach (var child in Children)
+            {
+                if (child.ID != null)
+                {
+                    if (Convert.ToInt32(child.ID) >= min && Convert.ToInt32(child.ID) <= max)
+                    {
+                        result.Add(child);
+                    }
+                }
+            }
+            return result;
+        }
+
         /// <summary>
         /// 
         /// </summary>
