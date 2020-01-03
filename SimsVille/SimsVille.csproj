@@ -270,6 +270,7 @@
     <Compile Include="SimsAntics\NetPlay\EODs\Handlers\VMEODStubPlugin.cs" />
     <Compile Include="SimsAntics\NetPlay\EODs\Model\VMEODEvent.cs" />
     <Compile Include="SimsAntics\NetPlay\EODs\Model\VMEODPluginThreadState.cs" />
+    <Compile Include="SimsAntics\NetPlay\EODs\Utils\EODLobby.cs" />
     <Compile Include="SimsAntics\NetPlay\EODs\VMEODHost.cs" />
     <Compile Include="SimsAntics\NetPlay\EODs\VMEODServer.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMBlueprintRestoreCmd.cs" />
@@ -387,7 +388,10 @@
     <Compile Include="UI\Controls\UIPersonIcon.cs" />
     <Compile Include="UI\Controls\UIProgressBar.cs" />
     <Compile Include="UI\Controls\UIRectangle.cs" />
+    <Compile Include="UI\Controls\UIRelationshipBar.cs" />
     <Compile Include="UI\Controls\UISim.cs" />
+    <Compile Include="UI\Controls\UISkillBar.cs" />
+    <Compile Include="UI\Controls\UISkillDisplay.cs" />
     <Compile Include="UI\Controls\UISlider.cs" />
     <Compile Include="UI\Controls\UITextBox.cs" />
     <Compile Include="UI\Controls\UITextEdit.cs" />
@@ -484,6 +488,7 @@
     <Compile Include="World\components\FloorComponent.cs" />
     <Compile Include="World\components\ObjectComponent.cs" />
     <Compile Include="World\components\RoofComponent.cs" />
+    <Compile Include="World\components\SubWorldComponent.cs" />
     <Compile Include="World\components\TerrainComponent.cs" />
     <Compile Include="World\components\WallComponent.cs" />
     <Compile Include="World\Model\AvatarDisplayFlags.cs" />
@@ -504,6 +509,7 @@
     <Compile Include="World\Model\XmlHouse.cs" />
     <Compile Include="World\utils\DGRPRenderer.cs" />
     <Compile Include="World\utils\IsometricTileIterator.cs" />
+    <Compile Include="World\utils\TerrainParallaxVertex.cs" />
     <Compile Include="World\utils\TerrainVertex.cs" />
     <Compile Include="World\utils\WorldCamera.cs" />
     <Compile Include="World\utils\_2DDrawGroup.cs" />
@@ -534,9 +540,6 @@
     <Reference Include="OpenTK, Version=1.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Dependencies\OpenTK.dll</HintPath>
-    </Reference>
-    <Reference Include="ScintillaNET">
-      <HintPath>Dependencies\ScintillaNET.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
