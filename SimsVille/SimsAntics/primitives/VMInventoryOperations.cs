@@ -1,6 +1,8 @@
 ﻿using FSO.Files.Utils;
+using FSO.LotView.Model;
 using FSO.SimAntics.Engine;
 using FSO.SimAntics.Engine.Scopes;
+using FSO.SimAntics.Engine.Utils;
 using FSO.SimAntics.Model.TSOPlatform;
 using FSO.SimAntics.NetPlay.Model.Commands;
 using System;
@@ -121,6 +123,8 @@ namespace FSO.SimAntics.Primitives
                         });
                     }
                     return VMPrimitiveExitCode.CONTINUE_NEXT_TICK;
+
+              
             }
             return VMPrimitiveExitCode.GOTO_TRUE;
         }
@@ -158,13 +162,29 @@ namespace FSO.SimAntics.Primitives
         AddStackObjToInventory = 1, //true/false. Original game doesn't expect false?
         RemoveTemp0ObjOfTypeFromInventory = 2, //true/false. Original game doesnt expect false?
         CountObjectsOfType = 3, //result in temp 0
+
+        FSOCreateObjectOfTypeOOW = 4, // scope/data is index to access. if index is out of range, goes to last object. if no object, returns false. id in temp 0
+        FSOCopyObjectOfTypeOOW = 5, // same as above, but does not claim the object. id in temp 0.
+        FSOSaveStackObj = 6, //same as add, but does not delete the object afterwards
+        FSOCountAllObjectsOfType = 7, //includes placed objects
     }
+
+    public enum VMInventoryRestoreType : byte
+    {
+        Normal,
+        CreateOOW,
+        CopyOOW
+    }
+
 
     public class VMInventoryOpState : VMAsyncState
     {
         public bool Success;
         public bool WriteTemp0;
         public short Temp0Value;
+        public uint ObjectPersistID;
+        public VMVariableScope WriteScope = VMVariableScope.INVALID;
+        public short WriteData;
 
         public override void Deserialize(BinaryReader reader)
         {
@@ -172,6 +192,22 @@ namespace FSO.SimAntics.Primitives
             Success = reader.ReadBoolean();
             WriteTemp0 = reader.ReadBoolean();
             Temp0Value = reader.ReadInt16();
+
+
+            if (Version > 34)
+            {
+                ObjectPersistID = reader.ReadUInt32();
+                WriteScope = (VMVariableScope)reader.ReadByte();
+                WriteData = reader.ReadInt16();
+            }
+            else
+            {
+                if (WriteTemp0)
+                {
+                    WriteScope = VMVariableScope.Temps;
+                    WriteData = 0;
+                }
+            }
         }
 
         public override void SerializeInto(BinaryWriter writer)

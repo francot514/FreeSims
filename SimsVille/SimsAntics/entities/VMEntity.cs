@@ -238,13 +238,13 @@ namespace FSO.SimAntics
         /// See: TSO.Files.formats.iff.chunks.TTAB
         /// </summary>
         /// <param name="obj">GameObject instance with a tree table to use.</param>
-        public void UseTreeTableOf(GameObject obj) //manually set the tree table for an object. Used for multitile objects, which inherit this from the master.
+        public void UseTreeTableOf(GameObject obj, bool ts1) //manually set the tree table for an object. Used for multitile objects, which inherit this from the master.
         {
             if (TreeTable != null) return;
             var GLOBChunks = obj.Resource.List<GLOB>();
             GameGlobal SemiGlobal = null;
 
-            if (GLOBChunks != null && GLOBChunks[0].Name != "") SemiGlobal = FSO.Content.Content.Get().WorldObjectGlobals.Get(GLOBChunks[0].Name);
+            if (GLOBChunks != null && GLOBChunks[0].Name != "") SemiGlobal = FSO.Content.Content.Get().WorldObjectGlobals.Get(GLOBChunks[0].Name, ts1);
 
             TreeTable = obj.Resource.Get<TTAB>(obj.OBJ.TreeTableID);
             if (TreeTable != null) TreeTableStrings = obj.Resource.Get<TTAs>(obj.OBJ.TreeTableID);
@@ -255,9 +255,9 @@ namespace FSO.SimAntics
             }
         }
 
-        public void UseSemiGlobalTTAB(string sgFile, ushort id)
+        public void UseSemiGlobalTTAB(string sgFile, ushort id, bool ts1)
         {
-            GameGlobal obj = FSO.Content.Content.Get().WorldObjectGlobals.Get(sgFile);
+            GameGlobal obj = FSO.Content.Content.Get().WorldObjectGlobals.Get(sgFile, ts1);
             if (obj == null) return;
 
             TreeTable = obj.Resource.Get<TTAB>(id);
@@ -1169,9 +1169,9 @@ namespace FSO.SimAntics
 
             if (input.MasterGUID != 0)
             {
-                var masterDef = FSO.Content.Content.Get().WorldObjects.Get(input.MasterGUID);
+                var masterDef = FSO.Content.Content.Get().WorldObjects.Get(input.MasterGUID, false);
                 MasterDefinition = masterDef.OBJ;
-                UseTreeTableOf(masterDef);
+                UseTreeTableOf(masterDef, false);
             }
 
             else MasterDefinition = null;

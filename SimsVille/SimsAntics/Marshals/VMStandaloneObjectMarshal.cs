@@ -113,7 +113,7 @@ namespace FSO.SimAntics.Marshals
             foreach (var ent in Entities)
             {
                 VMEntity realEnt;
-                var objDefinition = FSO.Content.Content.Get().WorldObjects.Get(ent.GUID);
+                var objDefinition = FSO.Content.Content.Get().WorldObjects.Get(ent.GUID, false);
 
                 var worldObject = vm.Context.MakeObjectComponent(objDefinition);
                 var obj = new VMGameObject(objDefinition, worldObject);

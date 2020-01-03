@@ -474,7 +474,7 @@ namespace FSO.SimAntics
 
         public ObjectComponent MakeObjectComponent(GameObject obj)
         {
-            if (UseWorld) return World.MakeObjectComponent(obj);
+           // if (UseWorld) return World.MakeObjectComponent(obj);
             return new ObjectComponent(obj);
         }
 
@@ -882,21 +882,21 @@ namespace FSO.SimAntics
             return newGroup;
         }
 
-        public VMMultitileGroup CreateObjectInstance(UInt32 GUID, LotTilePos pos, Direction direction, bool ghostImage)
+        public VMMultitileGroup CreateObjectInstance(UInt32 GUID, LotTilePos pos, Direction direction, bool ghostImage, bool ts1)
         {
-            return CreateObjectInstance(GUID, pos, direction, 0, 0, ghostImage);
+            return CreateObjectInstance(GUID, pos, direction, 0, 0, ghostImage, ts1);
         }
 
-        public VMMultitileGroup CreateObjectInstance(UInt32 GUID, LotTilePos pos, Direction direction)
+        public VMMultitileGroup CreateObjectInstance(UInt32 GUID, LotTilePos pos, Direction direction, bool ts1)
         {
-            return CreateObjectInstance(GUID, pos, direction, 0, 0, false);
+            return CreateObjectInstance(GUID, pos, direction, 0, 0, false, ts1);
         }
 
-        public VMMultitileGroup CreateObjectInstance(UInt32 GUID, LotTilePos pos, Direction direction, short MainStackOBJ, short MainParam, bool ghostImage)
+        public VMMultitileGroup CreateObjectInstance(UInt32 GUID, LotTilePos pos, Direction direction, short MainStackOBJ, short MainParam, bool ghostImage, bool ts1)
         {
 
             VMMultitileGroup group = new VMMultitileGroup();
-            var objDefinition = FSO.Content.Content.Get().WorldObjects.Get(GUID);
+            var objDefinition = FSO.Content.Content.Get().WorldObjects.Get(GUID, ts1);
             if (objDefinition == null)
             {
                 return null;
@@ -912,7 +912,7 @@ namespace FSO.SimAntics
                 {
                     if (objd[i].MasterID == master && objd[i].SubIndex != -1) //if sub-part of this object, make it!
                     {
-                        var subObjDefinition = FSO.Content.Content.Get().WorldObjects.Get(objd[i].GUID);
+                        var subObjDefinition = FSO.Content.Content.Get().WorldObjects.Get(objd[i].GUID, ts1);
                         if (subObjDefinition != null)
                         {
                             var worldObject = new ObjectComponent(subObjDefinition);
@@ -921,7 +921,7 @@ namespace FSO.SimAntics
                             if (UseWorld) Blueprint.AddObject(worldObject);
 
                             vmObject.MasterDefinition = objDefinition.OBJ;
-                            vmObject.UseTreeTableOf(objDefinition);
+                            vmObject.UseTreeTableOf(objDefinition, ts1);
 
                             vmObject.MainParam = MainParam;
                             vmObject.MainStackOBJ = MainStackOBJ;

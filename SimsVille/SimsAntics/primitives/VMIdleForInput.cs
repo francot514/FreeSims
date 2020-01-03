@@ -30,6 +30,7 @@ namespace FSO.SimAntics.Primitives
                 //TODO: does this forcefully end the rest of the idle? (force a true return, must loop back to run again)
             }
 
+            if (context.Thread.Queue.Count > 0)
             if (context.ActionTree && context.Thread.Queue[0].Cancelled)
             {
                 context.Caller.SetFlag(VMEntityFlags.NotifiedByIdleForInput, true);
@@ -39,6 +40,7 @@ namespace FSO.SimAntics.Primitives
             if (context.Thread.Interrupt)
             {
                 context.Thread.Interrupt = false;
+
                 return VMPrimitiveExitCode.GOTO_TRUE;
             }
 

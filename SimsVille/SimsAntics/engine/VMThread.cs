@@ -166,11 +166,11 @@ namespace FSO.SimAntics.Engine
         /// </summary>
         public bool AttemptPush()
         {
-            int priorityCompare = int.MinValue;
-            if (ActiveQueueBlock > -1) priorityCompare = this.Queue[ActiveQueueBlock].Priority;
+            //int priorityCompare = int.MinValue;
+            //if (ActiveQueueBlock > -1) priorityCompare = this.Queue[ActiveQueueBlock].Priority;
             
             QueueDirty = true;
-            while (Queue.Count > ActiveQueueBlock + 1)
+            while (Queue.Count > 0)
             {
                 var item = Queue[0];
                 if (item.Cancelled) Entity.SetFlag(VMEntityFlags.InteractionCanceled, true);

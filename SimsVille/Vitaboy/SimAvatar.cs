@@ -129,7 +129,7 @@ namespace FSO.Vitaboy
             {
                 var HandgroupID = m_Handgroup.GetHandgroup();
                 if (HandgroupID.FileID == 0) HandgroupID.FileID = (int)(158913789970>>32);
-                var Handgroup = FSO.Content.Content.Get().AvatarHandgroups.Get(HandgroupID.TypeID, HandgroupID.FileID);
+                var Handgroup = FSO.Content.Content.Get().AvatarHandgroups.Get(HandgroupID.TypeID, HandgroupID.FileID, false);
 
                 FSO.Common.Content.ContentID LeftID = null;
                 FSO.Common.Content.ContentID RightID = null;

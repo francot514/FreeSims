@@ -261,6 +261,7 @@ namespace FSO.SimAntics
                 WorldUI.SignalFloorChange();
             }
 
+
             var clock = Context.Clock;
             SetTimeOfDay(clock.Hours/24.0 + clock.Minutes/(24.0*60) + clock.Seconds/(24.0*60*60));
 

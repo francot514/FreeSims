@@ -120,6 +120,8 @@ namespace FSO.SimAntics.Utils
             return this.Blueprint;
         }
 
+
+
         public Blueprint LoadFromIff(Files.Formats.IFF.IffFile iff)
         {
             var simi = iff.Get<SIMI>(1);
@@ -181,8 +183,8 @@ namespace FSO.SimAntics.Utils
                 arch.Walls[1] = RemapWalls(DecodeWalls(iff.Get<ARRY>(102).TransposeData), wallDict, floorDict);
             }
             //objects as 103
-            //arch.Terrain.GrassState = iff.Get<ARRY>(6).TransposeData.Select(x => (byte)(127 - x)).ToArray();
-            //arch.Terrain.DarkType = Content.Model.TerrainType.SAND;
+            //Blueprint.Terrain.GrassState = iff.Get<ARRY>(6).TransposeData.Select(x => (byte)(127 - x)).ToArray();
+            //Blueprint.Terrain.DarkType = Content.Model.TerrainType.SAND;
             //arch.Terrain.LightType = Content.Model.TerrainType.GRASS;
             arch.SignalRedraw();
             //targetgrass is 7
@@ -205,7 +207,7 @@ namespace FSO.SimAntics.Utils
             //arch.Terrain.GrassState = ResizeGrass(arch.Terrain.GrassState, size);
             //arch.Terrain.Heights = Array.ConvertAll(ResizeGrass(DecodeHeights(iff.Get<ARRY>(0).TransposeData), size), x => (short)(x * 10));
             //arch.Terrain.RegenerateCenters();
-            //arch.RoofStyle = (uint)Content.Content.Get().WorldRoofs.NameToID(hous.RoofName.ToLowerInvariant() + ".bmp");
+            arch.RoofStyle = (uint)Content.Content.Get().WorldRoofs.NameToID(hous.RoofName.ToLowerInvariant() + ".bmp");
 
             if (VM.UseWorld)
             {
@@ -262,13 +264,13 @@ namespace FSO.SimAntics.Utils
             var content = Content.Content.Get();
             foreach (var controller in ControllerObjects)
             {
-                VM.Context.CreateObjectInstance(controller, LotTilePos.OUT_OF_WORLD, Direction.NORTH);
+                VM.Context.CreateObjectInstance(controller, LotTilePos.OUT_OF_WORLD, Direction.NORTH, false);
             }
             var ents = new List<Tuple<VMEntity, OBJM.MappedObject>>();
             foreach (var obj in objm.ObjectData.Values)
             {
                 if (ControllerObjects.Contains(obj.GUID)) continue;
-                var res = content.WorldObjects.Get(obj.GUID);
+                var res = content.WorldObjects.Get(obj.GUID, false);
                 if (res == null) continue; //failed to load this object
                 var objd = res.OBJ;
                 if (res.OBJ.MasterID != 0)
@@ -313,12 +315,14 @@ namespace FSO.SimAntics.Utils
 
                 LotTilePos pos = LotTilePos.OUT_OF_WORLD;
                 var dir = (Direction)(1 << obj.Direction);
-                var nobj = VM.Context.CreateObjectInstance(obj.GUID, pos, dir).BaseObject;
-                if (nobj == null) continue;
-                if (obj.ContainerID == 0 && obj.ArryX != 0 && obj.ArryY != 0)
-                    nobj.SetPosition(LotTilePos.FromBigTile((short)(obj.ArryX), (short)(obj.ArryY), (sbyte)obj.ArryLevel), dir, VM.Context);
+                var nobj = VM.Context.CreateObjectInstance(obj.GUID, pos, dir, true);
 
-                ents.Add(new Tuple<VMEntity, OBJM.MappedObject>(nobj, obj));
+
+                if (nobj.Objects.Count == 0) continue;
+                if (obj.ContainerID == 0 && obj.ArryX != 0 && obj.ArryY != 0)
+                    nobj.BaseObject.SetPosition(LotTilePos.FromBigTile((short)(obj.ArryX), (short)(obj.ArryY), (sbyte)obj.ArryLevel), dir, VM.Context);
+
+                ents.Add(new Tuple<VMEntity, OBJM.MappedObject>(nobj.BaseObject, obj));
             }
 
             //place objects in slots
@@ -447,7 +451,7 @@ namespace FSO.SimAntics.Utils
                     if (dict.TryGetValue((byte)wall.BottomRightPattern, out newID))
                         walls[i].BottomRightPattern = newID;
                 }
-                if ((wall.Segments & WallSegments.AnyDiag) > 0)
+                if ((wall.Segments & WallSegments.VerticalDiag) > 0)
                 {
                     //diagonally split floors
                     if (wall.TopLeftPattern != 0)
@@ -524,7 +528,7 @@ namespace FSO.SimAntics.Utils
                     BottomRightPattern = (ushort)(data[i + 7])
                 };
 
-                if ((tile.Segments & WallSegments.AnyDiag) == 0)
+                if ((tile.Segments & WallSegments.VerticalDiag) == 0)
                 {
                     if (!ValidWallStyles.Contains(tile.TopLeftStyle)) tile.TopLeftStyle = 1;
                     if (!ValidWallStyles.Contains(tile.TopRightStyle)) tile.TopRightStyle = 1;
@@ -553,7 +557,7 @@ namespace FSO.SimAntics.Utils
                     BottomRightPattern = (ushort)(data[i + 12] | (data[i + 13] << 8))
                 };
 
-                if ((tile.Segments & WallSegments.AnyDiag) == 0)
+                if ((tile.Segments & WallSegments.VerticalDiag) == 0)
                 {
                     if (!ValidWallStyles.Contains(tile.TopLeftStyle)) tile.TopLeftStyle = 1;
                     if (!ValidWallStyles.Contains(tile.TopRightStyle)) tile.TopRightStyle = 1;
@@ -611,16 +615,17 @@ namespace FSO.SimAntics.Utils
 
         public VMAvatar CreateAvatar()
         {
-            return (VMAvatar)VM.Context.CreateObjectInstance(VMAvatar.TEMPLATE_PERSON, LotTilePos.OUT_OF_WORLD, Direction.NORTH).Objects[0];
+            return (VMAvatar)VM.Context.CreateObjectInstance(VMAvatar.TEMPLATE_PERSON, LotTilePos.OUT_OF_WORLD, Direction.NORTH, false).Objects[0];
         }
 
 
-        public VMAvatar CreateAvatar(uint guid, XmlCharacter xml, bool visitor, short id)
+        public VMAvatar CreateAvatar(VM vm, uint guid, XmlCharacter xml, bool visitor, short id)
         {
 
-            VMAvatar avatar = (VMAvatar)VM.Context.CreateObjectInstance(guid, LotTilePos.OUT_OF_WORLD, Direction.NORTH).Objects[0];
+            VMAvatar avatar = (VMAvatar)vm.Context.CreateObjectInstance(guid, LotTilePos.OUT_OF_WORLD, Direction.NORTH, false).Objects[0];
             avatar.Visitor = visitor;
-            var mailbox = VM.Entities.First(x => (x.Object.OBJ.GUID == 0xEF121974 || x.Object.OBJ.GUID == 0x1D95C9B0));
+            var mailbox = vm.Entities.First(x => (x.Object.OBJ.GUID == 0xEF121974 || x.Object.OBJ.GUID == 0x1D95C9B0
+            || x.Object.OBJ.GUID == 0x74E7FFA9 || x.Object.OBJ.GUID == 0x865A6812));
 
 
             avatar.SetAvatarData(xml);
@@ -639,7 +644,7 @@ namespace FSO.SimAntics.Utils
         public void CreateObject(XmlHouseDataObject obj){
             LotTilePos pos = (obj.Level == 0) ? LotTilePos.OUT_OF_WORLD : LotTilePos.FromBigTile((short)obj.X, (short)obj.Y, (sbyte)obj.Level);
             
-            var mojb = VM.Context.CreateObjectInstance(obj.GUIDInt, pos, obj.Direction);
+            var mojb = VM.Context.CreateObjectInstance(obj.GUIDInt, pos, obj.Direction, false);
 
             if (mojb == null) return;
 

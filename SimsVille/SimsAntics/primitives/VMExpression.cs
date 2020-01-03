@@ -240,6 +240,9 @@ namespace FSO.SimAntics.Engine.Primitives
                             lhsList.AddLast((short)rhsValue);
                             break;
                         case 2:
+                            throw new VMSimanticsException("Unknown list push destination: " + operand.LhsData, context);                       
+
+                        default:
                             lhsValue = VMMemory.GetBigVariable(context, operand.LhsOwner, operand.LhsData);
                             rhsValue = VMMemory.GetBigVariable(context, operand.RhsOwner, operand.RhsData);
                             lhsValue |= rhsValue;
@@ -263,6 +266,9 @@ namespace FSO.SimAntics.Engine.Primitives
                             rhsList.RemoveLast();
                             break;
                         case 2:
+                            throw new VMSimanticsException("Unknown list pop source: " + operand.LhsData, context);
+
+                        default:
                             lhsValue = VMMemory.GetBigVariable(context, operand.LhsOwner, operand.LhsData);
                             rhsValue = VMMemory.GetBigVariable(context, operand.RhsOwner, operand.RhsData);
                             lhsValue ^= rhsValue;

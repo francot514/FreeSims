@@ -33,7 +33,11 @@ namespace FSO.SimAntics.Engine.Utils
                     return context.Caller.GetAttribute((ushort)data);
 
                 case VMVariableScope.StackObjectAttributes: //1
-                    return context.StackObject.GetAttribute((ushort)data);
+
+                    if (context.StackObject != null)
+                        return context.StackObject.GetAttribute((ushort)data);
+                    else
+                        return 0;
 
                 case VMVariableScope.TargetObjectAttributes: //2
                     throw new VMSimanticsException("Target Object is Deprecated!", context);
@@ -136,7 +140,7 @@ namespace FSO.SimAntics.Engine.Utils
 
                 case VMVariableScope.NeighborInStackObject: //24
 
-                     return 0;
+                     return 1;
 
                 case VMVariableScope.Local: //25
                     return (short)context.Locals[data];
@@ -163,7 +167,7 @@ namespace FSO.SimAntics.Engine.Utils
                     //Neighbour neighbour = Content.Content.Get().TS1Neighborhood.GetNeighborByID(context.Caller.ObjectID);
 
                     //return (neighbour != null) ? neighbour.PersonData.ElementAt(data) : (short)0;
-                    return 0;
+                    return 1;
 
                 case VMVariableScope.JobData: //33 jobdata(temp0, temp1), used a few times to test if a person is at work but that isn't relevant for tso...
                     throw new VMSimanticsException("Should not be used, but if this shows implement an empty shell to return ideal values.", context);
@@ -595,7 +599,10 @@ namespace FSO.SimAntics.Engine.Utils
                     return true;
 
                 case VMVariableScope.StackObjectAttributes: //1
-                    context.StackObject.SetAttribute((ushort)data, value);
+
+                    if (context.StackObject != null)
+                       context.StackObject.SetAttribute((ushort)data, value);
+
                     return true;
 
                 case VMVariableScope.TargetObjectAttributes: //2
@@ -605,7 +612,11 @@ namespace FSO.SimAntics.Engine.Utils
                     return context.Caller.SetValue((VMStackObjectVariable)data, value);
 
                 case VMVariableScope.StackObject: //4
-                    return context.StackObject.SetValue((VMStackObjectVariable)data, value);
+
+                    if (context.StackObject != null)
+                        return context.StackObject.SetValue((VMStackObjectVariable)data, value);
+                    else
+                        return true;
 
                 case VMVariableScope.TargetObject: //5
                     throw new VMSimanticsException("Target Object is Deprecated!", context);

@@ -120,7 +120,7 @@ namespace FSO.SimAntics.NetPlay.Model.Commands
                 var catalog = Content.Content.Get().WorldCatalog;
                 var item = catalog.GetItemByGUID(GUID);
 
-                CreatedGroup = vm.Context.CreateObjectInstance(GUID, LotTilePos.OUT_OF_WORLD, dir);
+                CreatedGroup = vm.Context.CreateObjectInstance(GUID, LotTilePos.OUT_OF_WORLD, dir, false);
                 if (CreatedGroup == null) return false;
                 CreatedGroup.ChangePosition(new LotTilePos(x, y, level), dir, vm.Context);
 

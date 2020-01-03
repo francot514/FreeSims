@@ -165,7 +165,7 @@ namespace FSO.SimAntics
         /// </summary>
         public void Init()
         {
-            Context.Globals = FSO.Content.Content.Get().WorldObjectGlobals.Get("global");
+            Context.Globals = FSO.Content.Content.Get().WorldObjectGlobals.Get("global", false);
             PlatformState = new VMTSOLotState();
             PlatformState.ActivateValidator(this);
             GlobalState = new short[33];
@@ -530,7 +530,7 @@ namespace FSO.SimAntics
             var clientJoin = (Context.Architecture == null);
             var oldWorld = Context.World;
             Context = new VMContext(input.Context, Context);
-            Context.Globals = FSO.Content.Content.Get().WorldObjectGlobals.Get("global");
+            Context.Globals = FSO.Content.Content.Get().WorldObjectGlobals.Get("global", false);
             Context.VM = this;
             Context.Architecture.RegenRoomMap();
             Context.RegeneratePortalInfo();
@@ -556,7 +556,7 @@ namespace FSO.SimAntics
             foreach (var ent in input.Entities)
             {
                 VMEntity realEnt;
-                var objDefinition = FSO.Content.Content.Get().WorldObjects.Get(ent.GUID);
+                var objDefinition = FSO.Content.Content.Get().WorldObjects.Get(ent.GUID, TS1);
                 if (ent is VMAvatarMarshal)
                 {
                     var avatar = new VMAvatar(objDefinition);

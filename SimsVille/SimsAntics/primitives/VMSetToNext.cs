@@ -141,7 +141,7 @@ namespace FSO.SimAntics.Primitives
                             case VMSetToNextSearchType.NeighborId:
                                 //var next = Content.Content.Get().TS1Neighborhood.SetToNext(targetValue);
                                 //if (next < 0) return VMPrimitiveExitCode.GOTO_FALSE;
-                                //VMMemory.SetVariable(context, operand.TargetOwner, operand.TargetData, 0);
+                                VMMemory.SetVariable(context, operand.TargetOwner, operand.TargetData, 1);
                                     return VMPrimitiveExitCode.GOTO_TRUE;
                             case VMSetToNextSearchType.ObjectWithCategoryEqualToSP0:
                                 found = (temp.Object.OBJ.FunctionFlags == context.Args[0]); //I'm assuming that means "Stack parameter 0", that category means function and that it needs to be exactly the same (no subsets)
@@ -149,7 +149,7 @@ namespace FSO.SimAntics.Primitives
                             case VMSetToNextSearchType.NeighborOfType:
                                 //var nexta = Content.Content.Get().TS1Neighborhood.SetToNext(targetValue, operand.GUID);
                                 //if (nexta < 0) return VMPrimitiveExitCode.GOTO_FALSE;
-                                //VMMemory.SetVariable(context, operand.TargetOwner, operand.TargetData, 0);
+                                VMMemory.SetVariable(context, operand.TargetOwner, operand.TargetData, 1);
                                  return VMPrimitiveExitCode.GOTO_TRUE;
                             case VMSetToNextSearchType.Career:
                                 return VMPrimitiveExitCode.GOTO_TRUE;

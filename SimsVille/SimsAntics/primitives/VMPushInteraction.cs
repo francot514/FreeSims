@@ -57,10 +57,12 @@ namespace FSO.SimAntics.Engine.Primitives
             action.Mode = mode;
             action.Priority = priority;
             action.Flags |= TTABFlags.MustRun;
-            if (operand.PushHeadContinuation) action.Flags |= TTABFlags.Leapfrog;
+            if (operand.PushTailContinuation) action.Flags |= TTABFlags.FSOPushTail;
+            if (operand.PushHeadContinuation) action.Flags |= TTABFlags.FSOPushHead;
 
             if (context.StackObject != null)
                 context.StackObject.Thread.EnqueueAction(action);
+
 
             return VMPrimitiveExitCode.GOTO_TRUE;
         }
@@ -82,6 +84,21 @@ namespace FSO.SimAntics.Engine.Primitives
         public bool PushHeadContinuation
         {
             get { return (Flags & 4) > 0; }
+            set
+            {
+                if (value) Flags |= 4;
+                else Flags &= unchecked((byte)~4);
+            }
+        }
+
+        public bool PushTailContinuation
+        {
+            get { return (Flags & 128) > 0; }
+            set
+            {
+                if (value) Flags |= 128;
+                else Flags &= unchecked((byte)~128);
+            }
         }
 
         #region VMPrimitiveOperand Members

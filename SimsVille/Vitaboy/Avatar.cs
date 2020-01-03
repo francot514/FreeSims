@@ -121,7 +121,7 @@ namespace FSO.Vitaboy
             int i = 0;
             foreach (var bindingReference in appearance.Bindings)
             {
-                var binding = bindingReference.RealBinding ?? FSO.Content.Content.Get().AvatarBindings.Get(bindingReference.TypeID, bindingReference.FileID);
+                var binding = bindingReference.RealBinding ?? FSO.Content.Content.Get().AvatarBindings.Get(bindingReference.TypeID, bindingReference.FileID, false);
                 if (binding == null) { continue; }
                 if ((i++ == 0) && texOverride != null)
                 {
@@ -156,7 +156,7 @@ namespace FSO.Vitaboy
         {
             var content = FSO.Content.Content.Get();
             var instance = new AvatarBindingInstance();
-            instance.Mesh = content.AvatarMeshes.Get(binding.MeshTypeID, binding.MeshFileID);
+            instance.Mesh = content.AvatarMeshes.Get(binding.MeshTypeID, binding.MeshFileID, false);
 
             if (binding.MeshName != null)
             {
@@ -165,15 +165,15 @@ namespace FSO.Vitaboy
             }
             else
             {
-                instance.Mesh = content.AvatarMeshes.Get(binding.MeshTypeID, binding.MeshFileID);
-                instance.Texture = content.AvatarTextures.Get(binding.TextureTypeID, binding.TextureFileID);
+                instance.Mesh = content.AvatarMeshes.Get(binding.MeshTypeID, binding.MeshFileID, false);
+                instance.Texture = content.AvatarTextures.Get(binding.TextureTypeID, binding.TextureFileID, false);
             }
             
             if (instance.Mesh == null)
-                instance.Mesh =  content.TS1AvatarMeshes.Get(binding.MeshTypeID, binding.MeshFileID);
+                instance.Mesh =  content.TS1AvatarMeshes.Get(binding.MeshTypeID, binding.MeshFileID, false);
 
             if (instance.Texture == null)
-                instance.Texture = content.TS1AvatarTextures.Get(binding.TextureFileID);
+                instance.Texture = content.TS1AvatarTextures.Get(binding.TextureFileID, false);
 
             instance.Mesh.Prepare(Skeleton.RootBone);
 

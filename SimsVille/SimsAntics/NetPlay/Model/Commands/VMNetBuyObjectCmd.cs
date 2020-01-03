@@ -62,7 +62,7 @@ namespace FSO.SimAntics.NetPlay.Model.Commands
             var catalog = Content.Content.Get().WorldCatalog;
             var item = catalog.GetItemByGUID(GUID);
 
-            var group = vm.Context.CreateObjectInstance(GUID, new LotTilePos(x, y, level), dir);
+            var group = vm.Context.CreateObjectInstance(GUID, new LotTilePos(x, y, level), dir, false);
             if (group == null) return false;
             group.ExecuteEntryPoint(11, vm.Context); //User Placement
             if (group.Objects.Count == 0) return false;

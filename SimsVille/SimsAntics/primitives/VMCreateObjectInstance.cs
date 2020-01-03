@@ -100,7 +100,7 @@ namespace FSO.SimAntics.Engine.Primitives
 
             var mobj = context.VM.Context.CreateObjectInstance(operand.GUID, tpos, dir,
                 (operand.PassObjectIds && context.StackObject != null) ? (context.StackObject.ObjectID) : (short)0,
-                (operand.PassTemp0) ? (context.Thread.TempRegisters[0]) : (operand.PassObjectIds ? context.Caller.ObjectID : (short)0) , false);
+                (operand.PassTemp0) ? (context.Thread.TempRegisters[0]) : (operand.PassObjectIds ? context.Caller.ObjectID : (short)0) , false, false);
 
             if (mobj == null) return VMPrimitiveExitCode.GOTO_FALSE;
             var obj = mobj.Objects[0];
