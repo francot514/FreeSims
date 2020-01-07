@@ -35,13 +35,14 @@ namespace SimsNet
         private int TicksSinceSave;
         private static int SaveTickFreq = 60 * 60; //save every minute for safety
         private int Port;
-        private bool TS1;
+        private bool TS1, Dedicated;
 
         public VMInstance(int port)
         {
             VM.UseWorld = false;
             Port = port;
             TS1 = false;
+            Dedicated = false;
             ResetVM();
         }
 
@@ -170,6 +171,8 @@ namespace SimsNet
             else
             {
 
+
+
                     if (File.Exists(path))
                     {
                         HouseInfo = new IffFile(path);
@@ -188,9 +191,9 @@ namespace SimsNet
                     }
                   
 
-                    vm.Context.Clock.Hours = 8;
+                    vm.Context.Clock.Hours = 10;
 
-                    vm.MyUID = uint.MaxValue - 1;
+                vm.MyUID = uint.MaxValue - 1;
 
             }
               
@@ -209,6 +212,8 @@ namespace SimsNet
                     ActorUID = uint.MaxValue - 1,
                     Name = "server"
                 });
+            else if (host == 2)
+                Dedicated = true;
         }
 
         private void CleanLot()
@@ -323,7 +328,9 @@ namespace SimsNet
                 {
                     state.CloseNet(VMCloseNetReason.Unspecified);
                     Console.WriteLine(e.ToString());
-                    SaveLot();
+
+                    if (!TS1 && !Dedicated)
+                        SaveLot();
                     Thread.Sleep(500);
 
                     ResetVM();
@@ -334,6 +341,7 @@ namespace SimsNet
                 if (TicksSinceSave > SaveTickFreq)
                 {
                     //quick and dirty periodic save
+                    if (!TS1)
                     SaveLot();
                     TicksSinceSave = 0;
                 }
