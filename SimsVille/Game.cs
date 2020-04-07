@@ -44,7 +44,8 @@ namespace FSO.Client
            // Graphics.HardwareModeSwitch = false;
             Graphics.ApplyChanges();
 
-			Console.WriteLine(IsActive);
+	    Console.WriteLine("Project FreeSims Started...");
+            Console.WriteLine("SimsVille loading... ");
 
             //disabled for now. It's a hilarious mess and is causing linux to freak out.
             //Log.UseSensibleDefaults();
