@@ -1,0 +1,10 @@
+version: 1.0.{build}
+image: 
+- Visual Studio 2017
+- Ubuntu
+configuration: Release
+environment:
+  Unsafe: /unsafe
+build:
+  project: SimsVille/SimsVille.csproj
+  verbosity: minimal
