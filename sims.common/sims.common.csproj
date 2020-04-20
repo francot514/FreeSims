@@ -77,10 +77,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Content\ContentID.cs" />
-    <Compile Include="Content\IContent.cs" />
-    <Compile Include="Content\IContentProvider.cs" />
-    <Compile Include="Content\IContentReference.cs" />
+    <Compile Include="content\ContentID.cs" />
+    <Compile Include="content\IContent.cs" />
+    <Compile Include="content\IContentProvider.cs" />
+    <Compile Include="content\IContentReference.cs" />
     <Compile Include="FSOEnvironment.cs" />
     <Compile Include="IniConfig.cs" />
     <Compile Include="Log.cs" />
