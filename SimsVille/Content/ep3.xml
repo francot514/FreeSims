@@ -1,13 +1,11 @@
   <Items>
+	<P g="0xB65EF43B" n="CarTaxi" s="-1" p="0" m="2" i="-1" />
     <P g="0xEA2F9B26" n="DeskPhone" s="15" p="89" m="0" i="0" />
     <P g="0xE6E7F18B" n="Doors3SP2" s="0" p="199" m="5" i="-1" />
     <P g="0xE636AA91" n="Doors3SP2" s="0" p="159" m="6" i="-1" />
     <P g="0xDCBD47A7" n="DTController" s="-1" p="0" m="0" i="0" />
     <P g="0x92534734" n="DTController" s="-1" p="486" m="0" i="0" />
     <P g="0xC4F7C6A" n="DTController" s="-1" p="0" m="0" i="0" />
-    <P g="0xE771CBD7" n="DTController" s="-1" p="0" m="0" i="0" />
-    <P g="0x73DA1AE5" n="DTController" s="-1" p="0" m="0" i="0" />
-    <P g="0xCF045E9E" n="DTController" s="-1" p="0" m="0" i="0" />
     <P g="0x378EE399" n="gift_Chocolates" s="-1" p="0" m="0" i="0" />
     <P g="0x630E394" n="gift_lolipop" s="-1" p="0" m="0" i="0" />
     <P g="0x6589E3EC" n="gift_necklace" s="-1" p="0" m="0" i="0" />
@@ -19,9 +17,10 @@
     <P g="0x8FFBE3F2" n="gift_YellowRose" s="-1" p="0" m="0" i="0" />
     <P g="0xA6F31853" n="GoDowntownPhonePlugin" s="-1" p="0" m="0" i="0" />
     <P g="0x34900A3A" n="hdsi_prude" s="-1" p="0" m="0" i="0" />
-	<P g="4699596D" n="FoodCounter" s="18" p="3400" m="1" i="-1" />
-    <P g="F219D380" n="FoodCounter" s="18" p="2100" m="2" i="-1" />
-    <P g="DFBB8259" n="FoodCounter" s="18" p="4800" m="3" i="-1" />
+	<P g="0x4699596D" n="FoodCounter" s="18" p="3400" m="1" i="-1" />
+    <P g="0xF219D380" n="FoodCounter" s="18" p="2100" m="2" i="-1" />
+    <P g="0xDFBB8259" n="FoodCounter" s="18" p="4800" m="3" i="-1" />
+	<P g="0xC55CDEBC" n="npcsocials" s="-1" p="0" m="0" i="0" />
     <P g="0x1AAE27FF" n="NPC_Barmaid" s="-1" p="0" m="0" i="0" />
     <P g="0x8B4FFB84" n="NPC_Barmaid_Drk" s="-1" p="0" m="0" i="0" />
     <P g="0xA9CCFB8C" n="NPC_Barmaid_Med" s="-1" p="0" m="0" i="0" />
@@ -79,10 +78,11 @@
     <P g="0xD9BBFC57" n="NPC_Waitress_Drk" s="-1" p="0" m="0" i="0" />
     <P g="0xF0EFFC50" n="NPC_Waitress_Med" s="-1" p="0" m="0" i="0" />
     <P g="0x7D4A0F76" n="parkgrill" s="14" p="249" m="0" i="0" />
-    <P g="0x2171B7B" n="PedMarkers" s="-1" p="0" m="0" i="0" />
-    <P g="0xBC17335C" n="PedMarkers" s="-1" p="0" m="0" i="0" />
-    <P g="0xA7247E8F" n="PedMarkers" s="-1" p="0" m="0" i="0" />
-    <P g="0xEA1B8926" n="PedMarkers" s="-1" p="0" m="0" i="0" />
     <P g="0x74E7FFA9" n="PhonePay" s="-1" p="553" m="0" i="0" />
     <P g="0xFD06E3F9" n="TragicClownHD" s="-1" p="0" m="0" i="0" />
+	<P g="0xEE8DC760" n="RentalShackHD" s="18" p="200" m="1" i="-1" />
+	<P g="0xEE8D8F6A" n="RentalShackHD" s="-1" p="0" m="1" i="0" />
+	<P g="0xEE8DDFF7" n="RentalShackHD" s="-1" p="0" m="1" i="256" />
+	<P g="0xEEB1A0CD" n="RentalShackHD" s="-1" p="0" m="1" i="1" />
+	<P g="0xEEB18DA8" n="RentalShackHD" s="-1" p="0" m="1" i="257" />
   </Items>

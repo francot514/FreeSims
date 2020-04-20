@@ -45,10 +45,10 @@ namespace FSO.Content.Framework
         /// <param name="type">The TypeID of the file to get.</param>
         /// <param name="fileID">The FileID of the file to get.</param>
         /// <returns>A file of the specified type.</returns>
-        public T Get(uint type, uint fileID)
+        public T Get(uint type, uint fileID, bool ts1)
         {
             var fileIDLong = ((ulong)fileID) << 32;
-            return Get(fileIDLong | type);
+            return Get(fileIDLong | type, ts1);
         }
 
         /// <summary>
@@ -56,7 +56,7 @@ namespace FSO.Content.Framework
         /// </summary>
         /// <param name="id">The ID of the asset.</param>
         /// <returns>A file of the specified type.</returns>
-        public T Get(ulong id)
+        public T Get(ulong id, bool ts1)
         {
             lock (Cache)
             {
@@ -129,9 +129,9 @@ namespace FSO.Content.Framework
             this.Provider = provider;
         }
 
-        public T Get()
+        public T Get(bool ts1)
         {
-            return Provider.Get(ID);
+            return Provider.Get(ID, ts1);
         }
     }
 }

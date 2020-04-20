@@ -6,11 +6,12 @@
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{FBCDEE0E-D16A-4FFC-B118-5744C0A59B44}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>FSO.Client</RootNamespace>
     <AssemblyName>SimsVille</AssemblyName>
     <FileAlignment>512</FileAlignment>
+    <MonoGamePlatform>Linux</MonoGamePlatform>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -89,6 +90,44 @@
     <Compile Include="ContentManager\WorldObjectProvider.cs" />
     <Compile Include="ContentManager\WorldRoofProvider.cs" />
     <Compile Include="ContentManager\WorldWallProvider.cs" />
+    <Compile Include="Debug\ActionQueue.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Debug\ActionQueue.Designer.cs">
+      <DependentUpon>ActionQueue.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Debug\content\ContentBrowser.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Debug\content\ContentBrowser.Designer.cs">
+      <DependentUpon>ContentBrowser.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Debug\content\preview\IContentPreview.cs" />
+    <Compile Include="Debug\content\preview\MeshPreviewComponent.cs" />
+    <Compile Include="Debug\content\preview\TexturePreview.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Debug\content\preview\TexturePreview.Designer.cs">
+      <DependentUpon>TexturePreview.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Debug\content\preview\VMRoutineInspector.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Debug\content\preview\VMRoutineInspector.Designer.cs">
+      <DependentUpon>VMRoutineInspector.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Debug\controls\VMRoutineDisplay.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Debug\controls\VMRoutineDisplay.Designer.cs">
+      <DependentUpon>VMRoutineDisplay.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Debug\Simantics.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Debug\Simantics.Designer.cs">
+      <DependentUpon>Simantics.cs</DependentUpon>
+    </Compile>
     <Compile Include="GameContent\AppearancesFileIDs.cs" />
     <Compile Include="GameContent\BindingFileIDs.cs" />
     <Compile Include="GameContent\CitiesFileIDs.cs" />
@@ -134,40 +173,42 @@
     <Compile Include="Network\UIPacketSenders.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SimsAntics\Engine\Routing\VMRectRouter.cs" />
-    <Compile Include="SimsAntics\Engine\scopes\VMAnimationScope.cs" />
-    <Compile Include="SimsAntics\Engine\scopes\VMSlotScope.cs" />
-    <Compile Include="SimsAntics\Engine\scopes\VMSuitScope.cs" />
-    <Compile Include="SimsAntics\Engine\scopes\VMVariableScope.cs" />
-    <Compile Include="SimsAntics\Engine\translator\VMInstruction.cs" />
-    <Compile Include="SimsAntics\Engine\translator\VMRoutine.cs" />
-    <Compile Include="SimsAntics\Engine\translator\VMTranslator.cs" />
-    <Compile Include="SimsAntics\Engine\TSOGlobalLink\IVMTSOGlobalLink.cs" />
-    <Compile Include="SimsAntics\Engine\TSOGlobalLink\VMTSOGlobalLinkStub.cs" />
-    <Compile Include="SimsAntics\Engine\TSOGlobalLink\VMTSOStandaloneDatabase.cs" />
-    <Compile Include="SimsAntics\Engine\VMActionCallback.cs" />
-    <Compile Include="SimsAntics\Engine\VMAmbientSound.cs" />
-    <Compile Include="SimsAntics\Engine\VMChangeActionString.cs" />
-    <Compile Include="SimsAntics\Engine\VMDialogHandler.cs" />
-    <Compile Include="SimsAntics\Engine\VMMemory.cs" />
-    <Compile Include="SimsAntics\Engine\VMPrimitiveExitCode.cs" />
-    <Compile Include="SimsAntics\Engine\VMPrimitiveHandler.cs" />
-    <Compile Include="SimsAntics\Engine\VMPrimitiveOperand.cs" />
-    <Compile Include="SimsAntics\Engine\VMPrimitiveRegistration.cs" />
-    <Compile Include="SimsAntics\Engine\VMQueuedAction.cs" />
-    <Compile Include="SimsAntics\Engine\VMRouteFinder.cs" />
-    <Compile Include="SimsAntics\Engine\VMRoutingFrame.cs" />
-    <Compile Include="SimsAntics\Engine\VMSimanticsException.cs" />
-    <Compile Include="SimsAntics\Engine\VMSlotParser.cs" />
-    <Compile Include="SimsAntics\Engine\VMStackFrame.cs" />
-    <Compile Include="SimsAntics\Engine\VMSuitProvider.cs" />
-    <Compile Include="SimsAntics\Engine\VMThread.cs" />
-    <Compile Include="SimsAntics\Engine\VMTS1MotiveDecay.cs" />
-    <Compile Include="SimsAntics\Entities\VMAvatar.cs" />
-    <Compile Include="SimsAntics\Entities\VMAvatarMotiveDecay.cs" />
-    <Compile Include="SimsAntics\Entities\VMEntity.cs" />
-    <Compile Include="SimsAntics\Entities\VMGameObject.cs" />
-    <Compile Include="SimsAntics\Entities\VMMultitileGroup.cs" />
+    <Compile Include="Game.cs" />
+    <Compile Include="SimsAntics\engine\Routing\VMRectRouter.cs" />
+    <Compile Include="SimsAntics\engine\scopes\VMAnimationScope.cs" />
+    <Compile Include="SimsAntics\engine\scopes\VMSlotScope.cs" />
+    <Compile Include="SimsAntics\engine\scopes\VMSuitScope.cs" />
+    <Compile Include="SimsAntics\engine\scopes\VMVariableScope.cs" />
+    <Compile Include="SimsAntics\engine\translator\VMInstruction.cs" />
+    <Compile Include="SimsAntics\engine\translator\VMRoutine.cs" />
+    <Compile Include="SimsAntics\engine\translator\VMTranslator.cs" />
+    <Compile Include="SimsAntics\engine\TSOGlobalLink\IVMTSOGlobalLink.cs" />
+    <Compile Include="SimsAntics\engine\TSOGlobalLink\VMInventoryRestoreObject.cs" />
+    <Compile Include="SimsAntics\engine\TSOGlobalLink\VMTSOGlobalLinkStub.cs" />
+    <Compile Include="SimsAntics\engine\TSOGlobalLink\VMTSOStandaloneDatabase.cs" />
+    <Compile Include="SimsAntics\engine\VMActionCallback.cs" />
+    <Compile Include="SimsAntics\engine\VMAmbientSound.cs" />
+    <Compile Include="SimsAntics\engine\VMChangeActionString.cs" />
+    <Compile Include="SimsAntics\engine\VMDialogHandler.cs" />
+    <Compile Include="SimsAntics\engine\VMMemory.cs" />
+    <Compile Include="SimsAntics\engine\VMPrimitiveExitCode.cs" />
+    <Compile Include="SimsAntics\engine\VMPrimitiveHandler.cs" />
+    <Compile Include="SimsAntics\engine\VMPrimitiveOperand.cs" />
+    <Compile Include="SimsAntics\engine\VMPrimitiveRegistration.cs" />
+    <Compile Include="SimsAntics\engine\VMQueuedAction.cs" />
+    <Compile Include="SimsAntics\engine\VMRouteFinder.cs" />
+    <Compile Include="SimsAntics\engine\VMRoutingFrame.cs" />
+    <Compile Include="SimsAntics\engine\VMSimanticsException.cs" />
+    <Compile Include="SimsAntics\engine\VMSlotParser.cs" />
+    <Compile Include="SimsAntics\engine\VMStackFrame.cs" />
+    <Compile Include="SimsAntics\engine\VMSuitProvider.cs" />
+    <Compile Include="SimsAntics\engine\VMThread.cs" />
+    <Compile Include="SimsAntics\engine\VMTS1MotiveDecay.cs" />
+    <Compile Include="SimsAntics\entities\VMAvatar.cs" />
+    <Compile Include="SimsAntics\entities\VMAvatarMotiveDecay.cs" />
+    <Compile Include="SimsAntics\entities\VMEntity.cs" />
+    <Compile Include="SimsAntics\entities\VMGameObject.cs" />
+    <Compile Include="SimsAntics\entities\VMMultitileGroup.cs" />
     <Compile Include="SimsAntics\Marshals\Threads\VMQueuedActionMarshal.cs" />
     <Compile Include="SimsAntics\Marshals\Threads\VMRoutingFrameMarshal.cs" />
     <Compile Include="SimsAntics\Marshals\Threads\VMStackFrameMarshal.cs" />
@@ -181,38 +222,44 @@
     <Compile Include="SimsAntics\Marshals\VMMarshal.cs" />
     <Compile Include="SimsAntics\Marshals\VMMultitileGroupMarshal.cs" />
     <Compile Include="SimsAntics\Marshals\VMRuntimeHeadlineMarshal.cs" />
-    <Compile Include="SimsAntics\Model\DynamicTuning.cs" />
-    <Compile Include="SimsAntics\Model\Routing\VMFreeList.cs" />
-    <Compile Include="SimsAntics\Model\Routing\VMObstacle.cs" />
-    <Compile Include="SimsAntics\Model\Routing\VMRouteFailCode.cs" />
-    <Compile Include="SimsAntics\Model\Routing\VMWalkableRect.cs" />
-    <Compile Include="SimsAntics\Model\Sound\VMSoundEntry.cs" />
-    <Compile Include="SimsAntics\Model\Sound\VMSoundTransfer.cs" />
-    <Compile Include="SimsAntics\Model\TSOPlatform\VMAsyncState.cs" />
-    <Compile Include="SimsAntics\Model\TSOPlatform\VMTSOAvatarState.cs" />
-    <Compile Include="SimsAntics\Model\TSOPlatform\VMTSOEntityState.cs" />
-    <Compile Include="SimsAntics\Model\TSOPlatform\VMTSOLotState.cs" />
-    <Compile Include="SimsAntics\Model\TSOPlatform\VMTSOObjectState.cs" />
-    <Compile Include="SimsAntics\Model\VMAnimationState.cs" />
-    <Compile Include="SimsAntics\Model\VMArchitectureCommand.cs" />
-	<Compile Include="SimsAntics\Model\VMArchitectureTerrain.cs" />
-    <Compile Include="SimsAntics\Model\VMBHAVOwnerPair.cs" />
-    <Compile Include="SimsAntics\Model\VMBudget.cs" />
-    <Compile Include="SimsAntics\Model\VMDialogInfo.cs" />
-    <Compile Include="SimsAntics\Model\VMGenericTSOCallMode.cs" />
-    <Compile Include="SimsAntics\Model\VMHeadlineRenderer.cs" />
-    <Compile Include="SimsAntics\Model\VMMotive.cs" />
-    <Compile Include="SimsAntics\Model\VMMotiveChange.cs" />
-    <Compile Include="SimsAntics\Model\VMPersonDataVariable.cs" />
-    <Compile Include="SimsAntics\Model\VMPlacementError.cs" />
-    <Compile Include="SimsAntics\Model\VMPlatformState.cs" />
-    <Compile Include="SimsAntics\Model\VMRoomInfo.cs" />
-    <Compile Include="SimsAntics\Model\VMRoomMap.cs" />
-    <Compile Include="SimsAntics\Model\VMRuntimeHeadline.cs" />
-    <Compile Include="SimsAntics\Model\VMSetToNextCache.cs" />
-    <Compile Include="SimsAntics\Model\VMStackObjectDefinitionVariable.cs" />
-    <Compile Include="SimsAntics\Model\VMStackObjectVariable.cs" />
-    <Compile Include="SimsAntics\Model\VMTuningCache.cs" />
+    <Compile Include="SimsAntics\Marshals\VMStandaloneObjectMarshal.cs" />
+    <Compile Include="SimsAntics\model\DynamicTuning.cs" />
+    <Compile Include="SimsAntics\model\Routing\VMFreeList.cs" />
+    <Compile Include="SimsAntics\model\Routing\VMObstacle.cs" />
+    <Compile Include="SimsAntics\model\Routing\VMRouteFailCode.cs" />
+    <Compile Include="SimsAntics\model\Routing\VMWalkableRect.cs" />
+    <Compile Include="SimsAntics\model\Sound\VMSoundEntry.cs" />
+    <Compile Include="SimsAntics\model\Sound\VMSoundTransfer.cs" />
+    <Compile Include="SimsAntics\model\TSOPlatform\VMAbstractValidator.cs" />
+    <Compile Include="SimsAntics\model\TSOPlatform\VMAsyncState.cs" />
+    <Compile Include="SimsAntics\model\TSOPlatform\VMDefaultValidator.cs" />
+    <Compile Include="SimsAntics\model\TSOPlatform\VMTSOAvatarState.cs" />
+    <Compile Include="SimsAntics\model\TSOPlatform\VMTSOEntityState.cs" />
+    <Compile Include="SimsAntics\model\TSOPlatform\VMTSOLotState.cs" />
+    <Compile Include="SimsAntics\model\TSOPlatform\VMTSOObjectState.cs" />
+    <Compile Include="SimsAntics\model\VMAnimationState.cs" />
+    <Compile Include="SimsAntics\model\VMArchitectureCommand.cs" />
+    <Compile Include="SimsAntics\model\VMBHAVOwnerPair.cs" />
+    <Compile Include="SimsAntics\model\VMBudget.cs" />
+    <Compile Include="SimsAntics\model\VMBuildableAreaInfo.cs" />
+    <Compile Include="SimsAntics\model\VMDialogInfo.cs" />
+    <Compile Include="SimsAntics\model\VMGenericTSOCallMode.cs" />
+    <Compile Include="SimsAntics\model\VMHeadlineRenderer.cs" />
+    <Compile Include="SimsAntics\model\VMInventoryItem.cs" />
+    <Compile Include="SimsAntics\model\VMMotive.cs" />
+    <Compile Include="SimsAntics\model\VMMotiveChange.cs" />
+    <Compile Include="SimsAntics\model\VMObjectQueries.cs" />
+    <Compile Include="SimsAntics\model\VMPersonDataVariable.cs" />
+    <Compile Include="SimsAntics\model\VMPlacementError.cs" />
+    <Compile Include="SimsAntics\model\VMPlaceRequestFlags.cs" />
+    <Compile Include="SimsAntics\model\VMPlatformState.cs" />
+    <Compile Include="SimsAntics\model\VMRoomInfo.cs" />
+    <Compile Include="SimsAntics\model\VMRoomMap.cs" />
+    <Compile Include="SimsAntics\model\VMRuntimeHeadline.cs" />
+    <Compile Include="SimsAntics\model\VMSetToNextCache.cs" />
+    <Compile Include="SimsAntics\model\VMStackObjectDefinitionVariable.cs" />
+    <Compile Include="SimsAntics\model\VMStackObjectVariable.cs" />
+    <Compile Include="SimsAntics\model\VMTuningCache.cs" />
     <Compile Include="SimsAntics\NetPlay\Drivers\VMClientDriver.cs" />
     <Compile Include="SimsAntics\NetPlay\Drivers\VMServerDriver.cs" />
     <Compile Include="SimsAntics\NetPlay\EODs\Handlers\Data\VMEODSignsData.cs" />
@@ -223,15 +270,16 @@
     <Compile Include="SimsAntics\NetPlay\EODs\Handlers\VMEODStubPlugin.cs" />
     <Compile Include="SimsAntics\NetPlay\EODs\Model\VMEODEvent.cs" />
     <Compile Include="SimsAntics\NetPlay\EODs\Model\VMEODPluginThreadState.cs" />
+    <Compile Include="SimsAntics\NetPlay\EODs\Utils\EODLobby.cs" />
     <Compile Include="SimsAntics\NetPlay\EODs\VMEODHost.cs" />
     <Compile Include="SimsAntics\NetPlay\EODs\VMEODServer.cs" />
-    <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetVisitorCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMBlueprintRestoreCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMChangePermissionsCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMGenericDialogCommand.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetArchitectureCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetAyncResponseCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetBuyObjectCmd.cs" />
+    <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetChangeControlCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetChatCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetDeleteObjectCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetDialogResponseCmd.cs" />
@@ -240,10 +288,16 @@
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetGotoCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetInteractionCancelCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetInteractionCmd.cs" />
+    <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetLockCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetMoveObjectCmd.cs" />
+    <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetPlaceInventoryCmd.cs" />
+    <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetSendToInventoryCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetSetRoofCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetSimJoinCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetSimLeaveCmd.cs" />
+    <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetUpdateInventoryCmd.cs" />
+    <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetUpdatePersistStateCmd.cs" />
+    <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetVisitorCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMRequestResyncCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMStateSyncCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\VMChatEvent.cs" />
@@ -275,6 +329,7 @@
     <Compile Include="SimsAntics\primitives\VMGotoRoutingSlot.cs" />
     <Compile Include="SimsAntics\primitives\VMGrab.cs" />
     <Compile Include="SimsAntics\primitives\VMIdleForInput.cs" />
+    <Compile Include="SimsAntics\primitives\VMInventoryOperations.cs" />
     <Compile Include="SimsAntics\primitives\VMInvokePlugin.cs" />
     <Compile Include="SimsAntics\primitives\VMLookTowards.cs" />
     <Compile Include="SimsAntics\primitives\VMNotifyOutOfIdle.cs" />
@@ -309,7 +364,6 @@
     <Compile Include="SimsAntics\VMArchitecture.cs" />
     <Compile Include="SimsAntics\VMClock.cs" />
     <Compile Include="SimsAntics\VMContext.cs" />
-    <Compile Include="Game.cs" />
     <Compile Include="UI\Controls\Catalog\UICatalog.cs" />
     <Compile Include="UI\Controls\Catalog\UICatalogFloorResProvider.cs" />
     <Compile Include="UI\Controls\Catalog\UICatalogItem.cs" />
@@ -334,7 +388,10 @@
     <Compile Include="UI\Controls\UIPersonIcon.cs" />
     <Compile Include="UI\Controls\UIProgressBar.cs" />
     <Compile Include="UI\Controls\UIRectangle.cs" />
+    <Compile Include="UI\Controls\UIRelationshipBar.cs" />
     <Compile Include="UI\Controls\UISim.cs" />
+    <Compile Include="UI\Controls\UISkillBar.cs" />
+    <Compile Include="UI\Controls\UISkillDisplay.cs" />
     <Compile Include="UI\Controls\UISlider.cs" />
     <Compile Include="UI\Controls\UITextBox.cs" />
     <Compile Include="UI\Controls\UITextEdit.cs" />
@@ -360,6 +417,7 @@
     <Compile Include="UI\Model\Neighborhood.cs" />
     <Compile Include="UI\Model\SlicedTextureRef.cs" />
     <Compile Include="UI\Model\UIElementState.cs" />
+    <Compile Include="UI\Model\UIIconCache.cs" />
     <Compile Include="UI\Model\UIMusic.cs" />
     <Compile Include="UI\Model\UISounds.cs" />
     <Compile Include="UI\Panels\EODs\EODLiveModeOpt.cs" />
@@ -430,6 +488,7 @@
     <Compile Include="World\components\FloorComponent.cs" />
     <Compile Include="World\components\ObjectComponent.cs" />
     <Compile Include="World\components\RoofComponent.cs" />
+    <Compile Include="World\components\SubWorldComponent.cs" />
     <Compile Include="World\components\TerrainComponent.cs" />
     <Compile Include="World\components\WallComponent.cs" />
     <Compile Include="World\Model\AvatarDisplayFlags.cs" />
@@ -450,6 +509,7 @@
     <Compile Include="World\Model\XmlHouse.cs" />
     <Compile Include="World\utils\DGRPRenderer.cs" />
     <Compile Include="World\utils\IsometricTileIterator.cs" />
+    <Compile Include="World\utils\TerrainParallaxVertex.cs" />
     <Compile Include="World\utils\TerrainVertex.cs" />
     <Compile Include="World\utils\WorldCamera.cs" />
     <Compile Include="World\utils\_2DDrawGroup.cs" />
@@ -482,7 +542,9 @@
       <HintPath>Dependencies\OpenTK.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.XML" />
     <Reference Include="Tao.Sdl, Version=1.2.13.0, Culture=neutral, PublicKeyToken=9c7a200e36c0094e, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -509,7 +571,29 @@
     <None Include="UI\Framework\Parser\UIScript.egt" />
     <None Include="UI\Framework\Parser\UIScript.grm" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="Debug\ActionQueue.resx">
+      <DependentUpon>ActionQueue.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Debug\content\ContentBrowser.resx">
+      <DependentUpon>ContentBrowser.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Debug\content\preview\TexturePreview.resx">
+      <DependentUpon>TexturePreview.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Debug\content\preview\VMRoutineInspector.resx">
+      <DependentUpon>VMRoutineInspector.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Debug\controls\VMRoutineDisplay.resx">
+      <DependentUpon>VMRoutineDisplay.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Debug\Simantics.resx">
+      <DependentUpon>Simantics.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

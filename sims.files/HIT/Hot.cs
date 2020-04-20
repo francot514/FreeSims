@@ -45,6 +45,7 @@ namespace FSO.Files.HIT
 
         public Dictionary<uint, Track> Tracks = new Dictionary<uint, Track>();
         public Dictionary<uint, Hitlist> Hitlists = new Dictionary<uint, Hitlist>();
+        public Dictionary<uint, Patch> Patches = new Dictionary<uint, Patch>();
         public Dictionary<uint, uint> TrackData = new Dictionary<uint, uint>();
         public Dictionary<string, EVTEntry> Events = new Dictionary<string, EVTEntry>();
         private Dictionary<string, int> EventMappingEquate = new Dictionary<string, int>();
@@ -234,6 +235,12 @@ namespace FSO.Files.HIT
 
                                     Tracks[tid] = trk;
                                     break;
+
+                                case HotReadMode.Patch:
+                                    var pid = uint.Parse(Params[0]);
+                                    var patch = new Patch(Params[1]);
+                                    Patches[pid] = patch;
+                                    break;
                                 case HotReadMode.GlobalHitList:
                                     var hid = uint.Parse(Params[0]);
                                     try
@@ -263,7 +270,7 @@ namespace FSO.Files.HIT
         private int HSMConst(string input)
         {
             int result = 0;
-            AsmNames?.Constants?.TryGetValue(input, out result);
+            AsmNames.Constants.TryGetValue(input, out result);
             return result;
         }
 

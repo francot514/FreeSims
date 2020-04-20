@@ -8,6 +8,7 @@ using FSO.SimAntics.NetPlay.Model;
 using FSO.SimAntics.NetPlay;
 using FSO.SimAntics.Engine.TSOGlobalLink;
 using FSO.SimAntics.Model.TSOPlatform;
+using FSO.SimAntics.Entities;
 
 namespace FSO.SimAntics.Engine.TSOTransaction
 {
@@ -182,6 +183,50 @@ namespace FSO.SimAntics.Engine.TSOTransaction
         public void SavePluginPersist(VM vm, uint objectPID, uint pluginID, byte[] data)
         {
             Database.SavePluginPersist(objectPID, pluginID, data);
+        }
+
+
+        public void MoveToInventory(VM vm, VMMultitileGroup obj, VMAsyncInventorySaveCallback callback)
+        {
+            callback(true, obj.BaseObject.PersistID);
+            //todo: nice stub for this using database?
+        }
+
+        public void PurchaseFromOwner(VM vm, VMMultitileGroup obj, uint purchaserPID, VMAsyncInventorySaveCallback callback, VMAsyncTransactionCallback tcallback)
+        {
+            callback(true, obj.BaseObject.PersistID);
+            //todo: nice stub for this using database?
+        }
+
+        public void RetrieveFromInventory(VM vm, uint objectPID, uint ownerPID, bool setOnLot, VMAsyncInventoryRetrieveCallback callback)
+        {
+            //todo: nice stub for this using database?
+            callback(0, null);
+        }
+
+        public void ForceInInventory(VM vm, uint objectPID, VMAsyncInventorySaveCallback callback)
+        {
+            //todo: nice stub for this using database?
+        }
+
+        public void DeleteObject(VM vm, uint objectPID, VMAsyncDeleteObjectCallback callback)
+        {
+            //todo: delete local data
+        }
+
+        public void UpdateObjectPersist(VM vm, VMMultitileGroup obj, VMAsyncInventorySaveCallback callback)
+        {
+        }
+
+        public void RetrieveFromInventoryByType(VM vm, uint ownerPID, uint guid, int index, bool setOnLot, VMAsyncInventoryRetrieveCallback callback)
+        {
+
+        }
+
+
+        public void ConsumeInventory(VM vm, uint ownerPID, uint guid, int mode, short num, VMAsyncInventoryConsumeCallback callback)
+        {
+            //todo: nice stub for this using database?
         }
     }
 }

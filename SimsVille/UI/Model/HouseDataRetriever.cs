@@ -61,9 +61,9 @@ namespace SimsVille.UI.Model
             
             try
             {
-                if (File.Exists(@"Houses/" + name.ToString() + ".png"))
+                if (File.Exists("Content/Houses/" + name.ToString() + ".png"))
                 HouseImg = Texture2D.FromStream(GfxDevice,
-                new FileStream(@"Houses/" + name.ToString() + ".png", FileMode.Open, FileAccess.Read, FileShare.Read)); 
+                new FileStream("Content/Houses/" + name.ToString() + ".png", FileMode.Open, FileAccess.Read, FileShare.Read)); 
                 
 
             } catch (Exception) {

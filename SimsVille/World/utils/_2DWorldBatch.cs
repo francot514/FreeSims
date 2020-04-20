@@ -22,7 +22,7 @@ namespace FSO.LotView.Utils
     /// Similar to SpriteBatch but has additional features that target
     /// world object rendering in this game such as zbuffers.
     /// </summary>
-    public class _2DWorldBatch
+    public class _2DWorldBatch : IDisposable
     {
         protected Matrix World;
         protected Matrix View;
@@ -57,10 +57,7 @@ namespace FSO.LotView.Utils
         private float ScreenWidth;
         private float ScreenHeight;
 
-        private int NumBuffers;
-
-        private SurfaceFormat[] SurfaceFormats;
-        private bool[] AlwaysDS;
+        private List<RenderTarget2D> Buffers = new List<RenderTarget2D>();
 
         public void SetScroll(Vector2 scroll)
         {
@@ -95,6 +92,9 @@ namespace FSO.LotView.Utils
 
             ResetMatrices(device.Viewport.Width, device.Viewport.Height);
 
+            ScreenWidth = device.Viewport.Width;
+            ScreenHeight = device.Viewport.Height;
+
             for (var i = 0; i < numBuffers; i++)
             {
                 int width = device.Viewport.Width + scrollBuffer;
@@ -110,6 +110,10 @@ namespace FSO.LotView.Utils
                         width = 1024;
                         height = 1024;
                         break;
+                    case 11:
+                        width = 1024;
+                        height = 1024;
+                        break;
                 }
                 if (numBuffers == 2 && i == 1) width = height = 1024; //special case, thumb only. 
                 Buffers.Add(
@@ -117,59 +121,8 @@ namespace FSO.LotView.Utils
                     (alwaysDS[i] || (!FSOEnvironment.UseMRT && !FSOEnvironment.SoftwareDepth))?DepthFormat.Depth24Stencil8:DepthFormat.None)
                 );
             }
-
-            ScrollBuffer = scrollBuffer;
-            NumBuffers = numBuffers;
-            SurfaceFormats = surfaceFormats;
-            AlwaysDS = alwaysDS;
-
         }
-
-        public void GenBuffers(int bwidth, int bheight)
-        {
-            foreach (var buffer in Buffers)
-            {
-                buffer.Dispose();
-            }
-            Buffers.Clear();
-
-            ResetMatrices(bwidth, bheight);
-
-            ScreenWidth = bwidth;
-            ScreenHeight = bheight;
-
-            for (var i = 0; i < NumBuffers; i++)
-            {
-
-                int width = bwidth + ScrollBuffer;
-                int height = bheight + ScrollBuffer;
-
-                switch (i)
-                {
-                    case 2: //World2D.BUFFER_OBJID
-                        width = 1;
-                        height = 1;
-                        break;
-                    case 3: //World2D.BUFFER_THUMB
-                    case 4:
-                        width = 1024;
-                        height = 1024;
-                        break;
-                    case 5:
-                        width = 576;
-                        height = 576;
-                        break;
-                }
-
-                if (NumBuffers == 2) width = height = 1024; //special case, thumb only. 
-                var depthformat = FSOEnvironment.SoftwareDepth ? DepthFormat.Depth24Stencil8 : DepthFormat.Depth24; //stencil is used for software depth
-                Buffers.Add(
-                    PPXDepthEngine.CreateRenderTarget(Device, 1, 0, SurfaceFormats[i], width, height,
-                    (AlwaysDS[i] || (!FSOEnvironment.UseMRT && !FSOEnvironment.SoftwareDepth)) ? depthformat : DepthFormat.None)
-                );
-            }
-        }
-
+        
         public _2DSprite NewSprite(_2DBatchRenderMode mode)
         {
             if (SpriteIndex >= SpritePool.Count)
@@ -189,7 +142,12 @@ namespace FSO.LotView.Utils
 
         public void Draw(_2DSprite sprite)
         {
-            sprite.AbsoluteDestRect = new Rectangle((int)(sprite.DestRect.X + PxOffset.X), (int)(sprite.DestRect.Y + PxOffset.Y), sprite.DestRect.Width, sprite.DestRect.Height);
+            var x = sprite.DestRect.X;
+            var y = sprite.DestRect.Y;
+            var width = sprite.DestRect.Width;
+            var height = sprite.DestRect.Height;
+
+            sprite.AbsoluteDestRect = new Rectangle((int)(x + PxOffset.X), (int)(y + PxOffset.Y), width, height);
             sprite.AbsoluteWorldPosition = sprite.WorldPosition + WorldOffset;
             sprite.AbsoluteTilePosition = sprite.TilePosition + TileOffset; 
             sprite.ObjectID = ObjectID;
@@ -215,7 +173,7 @@ namespace FSO.LotView.Utils
 
         public void DrawScrollBuffer(ScrollBuffer buffer, Vector2 offset, Vector3 tileOffset, WorldState state)
         {
-            var offsetDiff = buffer.PxOffset - offset;
+            var offsetDiff = (buffer.PxOffset - offset) * state.PreciseZoom;
             var tOff = buffer.WorldPosition - tileOffset;
             var spr = new _2DSprite
             {
@@ -294,15 +252,13 @@ namespace FSO.LotView.Utils
             );
         }
 
-        private List<RenderTarget2D> Buffers = new List<RenderTarget2D>();
-
-
         public void End() { End(null, true); }
         /// <summary>
         /// Processes the accumulated draw commands and paints the screen. Optionally outputs to a vertex cache.
         /// </summary>
         public void End(List<_2DDrawBuffer> cache, bool outputDepth)
         {
+            if (WorldCamera == null) return;
             var effect = this.Effect;
             if (cache == null)
             {
@@ -621,6 +577,11 @@ namespace FSO.LotView.Utils
         {
             LastHeight = height;
             LastWidth = width;
+            height = (int)(height/PreciseZoom);
+            width = (int)(width/PreciseZoom);
+
+            transX += (int)(ScreenWidth - (ScreenWidth / PreciseZoom)) / 2;
+            transY -= (int)(ScreenHeight - (ScreenHeight / PreciseZoom)) / 2;
             this.World = Matrix.Identity;
             this.View = new Matrix(
                 1.0f, 0.0f, 0.0f, 0.0f,
@@ -662,10 +623,26 @@ namespace FSO.LotView.Utils
             }
         }
 
+        public void ClearTextureCache()
+        {
+            lock (_TextureCache)
+            {
+                _TextureCache.Clear();
+            }
+        }
+
         private Dictionary<IWorldTextureProvider, WorldTexture> _WorldTextureCache = new Dictionary<IWorldTextureProvider, WorldTexture>();
         public WorldTexture GetWorldTexture(IWorldTextureProvider item)
         {
             return item.GetWorldTexture(this.Device);
+        }
+
+        public void Dispose()
+        {
+            foreach (var buf in Buffers)
+            {
+                buf.Dispose();
+            }
         }
     }
 

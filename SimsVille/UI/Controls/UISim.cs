@@ -95,12 +95,12 @@ namespace FSO.Client.UI.Controls
                 {
                     try
                     {
-                        return Content.Content.Get().AvatarOutfits.Get(m_HeadOutfitID);
+                        return Content.Content.Get().AvatarOutfits.Get(m_HeadOutfitID, false);
                     }
                     catch (KeyNotFoundException)
                     {
                         var alert = UIScreen.ShowAlert(new UIAlertOptions { Title = "Error", Message = "Failed to find head with ID: " + m_HeadOutfitID.ToString("X") }, false);
-                        return Content.Content.Get().AvatarOutfits.Get(PROXY_HEAD);
+                        return Content.Content.Get().AvatarOutfits.Get(PROXY_HEAD, false);
                     }
                 }
 
@@ -117,12 +117,12 @@ namespace FSO.Client.UI.Controls
                 {
                     try
                     {
-                        return Content.Content.Get().AvatarOutfits.Get(m_BodyOutfitID);
+                        return Content.Content.Get().AvatarOutfits.Get(m_BodyOutfitID, false);
                     }
                     catch (KeyNotFoundException)
                     {
                         var alert = UIScreen.ShowAlert(new UIAlertOptions { Title = "Error", Message = "Failed to find body with ID: " + m_BodyOutfitID.ToString("X") }, false);
-                        return Content.Content.Get().AvatarOutfits.Get(PROXY_BODY);
+                        return Content.Content.Get().AvatarOutfits.Get(PROXY_BODY, false);
                     }
                 }
 

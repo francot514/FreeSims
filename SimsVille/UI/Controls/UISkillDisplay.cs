@@ -16,14 +16,12 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TSOVille.Code.UI.Framework;
-using TSOVille.Code.UI.Framework.Parser;
-using TSOVille.Code.UI.Model;
-using TSO.Common.rendering.framework.model;
-using TSO.Common.rendering.framework.io;
-using TSOVille.Code.Utils;
+using FSO.Client.UI.Framework;
+using FSO.Common.Utils;
+using FSO.Client;
+using FSO.SimAntics;
 
-namespace TSOVille.Code.UI.Controls
+namespace FSO.Client.UI.Controls
 {
     /// <summary>
     /// The motive display used in live mode. Labels, values and increment rate indicators can be custom set.
@@ -47,6 +45,14 @@ namespace TSOVille.Code.UI.Controls
             Filler = TextureUtils.TextureFromColor(GameFacade.GraphicsDevice, Color.White);
         }
 
+        public void UpdateSkills(VMAvatar avatar)
+        {
+
+            SkillValues[0] = avatar.GetPersonData(FSO.SimAntics.Model.VMPersonDataVariable.CookingSkill);
+            SkillValues[1] = avatar.GetPersonData(FSO.SimAntics.Model.VMPersonDataVariable.CharismaSkill);
+        }
+
+
         private void DrawSkill(UISpriteBatch batch, int x, int y, int skill)
         {
             double p = (SkillValues[skill]  / 1000.0);
@@ -60,6 +66,8 @@ namespace TSOVille.Code.UI.Controls
             batch.Draw(Filler, LocalRect(x+(int)(60 * p), y, 1, 5), Color.Black); 
             var style = TextStyle.DefaultLabel.Clone();
             style.Size = 8;
+
+            
 
             var temp = style.Color;
             style.Color = Color.Black;

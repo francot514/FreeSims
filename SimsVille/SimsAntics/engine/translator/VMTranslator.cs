@@ -13,7 +13,7 @@ using FSO.SimAntics.Primitives;
 
 namespace FSO.SimAntics.Engine
 {
-    public class VMTranslator
+    public static class VMTranslator
     {
         public static VMRoutine Assemble(VM vm, BHAV bhav){
             var context = vm.Context;

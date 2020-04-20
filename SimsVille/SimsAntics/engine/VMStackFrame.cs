@@ -138,7 +138,7 @@ namespace FSO.SimAntics.Engine
 
         public virtual void Load(VMStackFrameMarshal input, VMContext context)
         {
-            CodeOwner = FSO.Content.Content.Get().WorldObjects.Get(input.CodeOwnerGUID);
+            CodeOwner = FSO.Content.Content.Get().WorldObjects.Get(input.CodeOwnerGUID,false);
 
             BHAV bhav = null;
             if (input.RoutineID >= 8192) bhav = ScopeResource.SemiGlobal.Get<BHAV>(input.RoutineID);

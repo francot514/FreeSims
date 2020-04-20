@@ -176,7 +176,7 @@ namespace FSO.Content
 
         #region IContentProvider<Floor> Members
 
-        public Floor Get(ulong id)
+        public Floor Get(ulong id, bool ts1)
         {
             if (ById.ContainsKey((ushort)id))
             {
@@ -204,7 +204,7 @@ namespace FSO.Content
             }
         }
 
-        public Floor Get(uint type, uint fileID)
+        public Floor Get(uint type, uint fileID, bool ts1)
         {
             return null;
         }
@@ -235,9 +235,9 @@ namespace FSO.Content
 
         #region IContentReference<Floor> Members
 
-        public Floor Get()
+        public Floor Get(bool ts1)
         {
-            return Provider.Get(ID);
+            return Provider.Get(ID, ts1);
         }
 
         #endregion

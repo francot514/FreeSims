@@ -15,6 +15,7 @@ using FSO.SimAntics.Utils;
 using FSO.SimAntics.Marshals;
 using FSO.SimAntics.NetPlay.Model;
 using FSO.Content;
+using FSO.Files.Formats.IFF.Chunks;
 
 namespace FSO.SimAntics
 {
@@ -40,14 +41,16 @@ namespace FSO.SimAntics
 
         public List<VMArchitectureCommand> Commands;
 
+        public Rectangle BuildableArea;
+        public bool[] FineBuildableArea;
+        public int BuildableFloors;
+
         public VMRoomMap[] Rooms;
         public List<VMRoom> RoomData;
         public event ArchitectureEvent WallsChanged;
-        public VMArchitectureTerrain Terrain;
 
         public uint RoofStyle = 16;
         public float RoofPitch = 0.66f;
-        public bool TerrainDirty = true;
 
         public VMContext Context; //used for access to objects
 
@@ -251,29 +254,13 @@ namespace FSO.SimAntics
                 for (int i = 1; i < Stories; i++)
                     RegenerateSupported(i + 1);
             }
-
-            if (TerrainDirty)
-            {
-                Terrain.RegenerateCenters();
-                if (VM.UseWorld)
-                {
-                    WorldUI.Altitude = Terrain.Heights;
-
-                    WorldUI.AltitudeCenters = Terrain.Centers;
-                    WorldUI.Terrain.UpdateTerrain(Terrain.LightType, Terrain.DarkType, Terrain.Heights, Terrain.GrassState);
-
-                }
-                TerrainDirty = false;
-            }
-
-
-
             if (VM.UseWorld && Redraw)
             {
                 LastTestCost = SimulateCommands(Commands, true);
                 WorldUI.SignalWallChange();
                 WorldUI.SignalFloorChange();
             }
+
 
             var clock = Context.Clock;
             SetTimeOfDay(clock.Hours/24.0 + clock.Minutes/(24.0*60) + clock.Seconds/(24.0*60*60));
@@ -282,6 +269,8 @@ namespace FSO.SimAntics
             Redraw = false;
             WallsDirty = false;
         }
+
+        
 
         public int SimulateCommands(List<VMArchitectureCommand> commands, bool visualChange)
         {
@@ -467,6 +456,18 @@ namespace FSO.SimAntics
             ));
 
             return cost;
+        }
+
+        public void UpdateBuildableArea(Rectangle area, int floors)
+        {
+            //notify the lotview this has changed too, so it can be drawn.
+            BuildableArea = area;
+            BuildableFloors = floors;
+            if (VM.UseWorld)
+            {
+                WorldUI.BuildableArea = BuildableArea;
+               // WorldUI.Terrain.TerrainDirty = true;
+            }
         }
 
         private WallReference GetPatternRef(ushort id)

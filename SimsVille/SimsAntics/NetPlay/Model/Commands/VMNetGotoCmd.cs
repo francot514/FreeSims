@@ -25,7 +25,7 @@ namespace FSO.SimAntics.NetPlay.Model.Commands
 
         public override bool Execute(VM vm)
         {
-            VMEntity callee = vm.Context.CreateObjectInstance(GOTO_GUID, new LotTilePos(x, y, level), Direction.NORTH).Objects[0];
+            VMEntity callee = vm.Context.CreateObjectInstance(GOTO_GUID, new LotTilePos(x, y, level), Direction.NORTH, false).Objects[0];
             VMEntity caller = vm.Entities.FirstOrDefault(vx => vx.PersistID == ActorUID);
             //TODO: check if net user owns caller!
             if (callee == null || callee.Position == LotTilePos.OUT_OF_WORLD || caller == null) return false;

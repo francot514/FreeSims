@@ -14,7 +14,7 @@ namespace FSO.Common.Content
 {
     public interface IContentReference<T>
     {
-        T Get();
+        T Get(bool ts1);
     }
 
     public interface IContentReference

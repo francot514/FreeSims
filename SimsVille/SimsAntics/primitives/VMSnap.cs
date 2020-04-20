@@ -93,6 +93,8 @@ namespace FSO.SimAntics.Primitives
             if (entity is VMAvatar) entity.RadianDirection = radDir;
             return true;
         }
+
+
     }
 
     public class VMSnapOperand : VMPrimitiveOperand

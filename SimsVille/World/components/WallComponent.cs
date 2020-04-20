@@ -151,8 +151,7 @@ namespace FSO.LotView.Components
                         if (comp.Segments != 0)
                         {
                             comp = RotateWall(world.Rotation, comp, x, y, level);
-                            var alt = blueprint.GetAltitude(x, y);
-                            var tilePosition = new Vector3(x, y, (level-1) * 2.95f+ alt);
+                            var tilePosition = new Vector3(x, y, (level-1) * 2.95f);
                             world._2D.OffsetPixel(world.WorldSpace.GetScreenFromTile(tilePosition));
                             world._2D.OffsetTile(tilePosition);
                             var myCuts = Cuts[off];
@@ -203,7 +202,12 @@ namespace FSO.LotView.Components
 
                                     //draw overlay if exists
 
-                                    if (overlayID != 0) world._2D.Draw(GetWallSprite(GetPattern(overlayID), null, 0, down, world));
+                                    if (overlayID != 0)
+                                    {
+                                        var spr = GetWallSprite(GetPattern(overlayID), null, 0, down, world);
+                                        spr.Room = 1;
+                                        world._2D.Draw(spr);
+                                    }
 
                                     var contOff = tilePosition + RotateOffset(world.Rotation, new Vector3(0, -1, 0));
 
@@ -337,7 +341,12 @@ namespace FSO.LotView.Components
                                 {
                                     world._2D.Draw(_Sprite);
 
-                                    if (overlayID != 0) world._2D.Draw(GetWallSprite(GetPattern(overlayID), null, 1, down, world));
+                                    if (overlayID != 0)
+                                    {
+                                        var spr = GetWallSprite(GetPattern(overlayID), null, 1, down, world);
+                                        spr.Room = 1;
+                                        world._2D.Draw(spr);
+                                    }
                                     var contOff = tilePosition + RotateOffset(world.Rotation, new Vector3(-1, 0, 0));
                                     if (comp.TopRightThick)
                                     {
@@ -473,18 +482,23 @@ namespace FSO.LotView.Components
                                 {
                                     world._2D.Draw(_Sprite);
 
-                                    if (overlayID != 0) world._2D.Draw(GetWallSprite(GetPattern(overlayID), null, 2, down, world));
+                                    if (overlayID != 0)
+                                    {
+                                        var spr = GetWallSprite(GetPattern(overlayID), null, 2, down, world);
+                                        spr.Room = 1;
+                                        world._2D.Draw(spr);
+                                    }
 
                                     //draw diagonally cut floors
                                     if (comp.TopLeftPattern != 0)
                                     {
-                                        var floor = GetFloorSprite(floorContent.Get(comp.TopLeftPattern), 0, world, 3);
+                                        var floor = GetFloorSprite(floorContent.Get(comp.TopLeftPattern, false), 0, world, 3);
                                         floor.Room = (ushort)(TileRoom >> roomSide);
                                         if (floor.Pixel != null) world._2D.Draw(floor);
                                     }
                                     if (comp.TopLeftStyle != 0)
                                     {
-                                        var floor = GetFloorSprite(floorContent.Get(comp.TopLeftStyle), 0, world, 2);
+                                        var floor = GetFloorSprite(floorContent.Get(comp.TopLeftStyle, false), 0, world, 2);
                                         floor.Room = (ushort)(TileRoom >> (16-roomSide));
                                         if (floor.Pixel != null) world._2D.Draw(floor);
                                     }
@@ -527,18 +541,22 @@ namespace FSO.LotView.Components
                                 {
                                     world._2D.Draw(_Sprite);
 
-                                    if (overlayID != 0) world._2D.Draw(GetWallSprite(GetPattern(overlayID), null, 3, down, world));
-
+                                    if (overlayID != 0)
+                                    {
+                                        var spr = GetWallSprite(GetPattern(overlayID), null, 3, down, world);
+                                        spr.Room = 1;
+                                        world._2D.Draw(spr);
+                                    }
                                     //draw diagonally cut floors
                                     if (comp.TopLeftPattern != 0)
                                     {
-                                        var floor = GetFloorSprite(floorContent.Get(comp.TopLeftPattern), 0, world, 1);
+                                        var floor = GetFloorSprite(floorContent.Get(comp.TopLeftPattern, false), 0, world, 1);
                                         floor.Room = (ushort)(TileRoom >> roomSide);
                                         if (floor.Pixel != null) world._2D.Draw(floor);
                                     }
                                     if (comp.TopLeftStyle != 0)
                                     {
-                                        var floor = GetFloorSprite(floorContent.Get(comp.TopLeftStyle), 0, world, 0);
+                                        var floor = GetFloorSprite(floorContent.Get(comp.TopLeftStyle, false), 0, world, 0);
                                         floor.Room = (ushort)(TileRoom >> (16-roomSide));
                                         if (floor.Pixel != null) world._2D.Draw(floor);
                                     }
@@ -554,12 +572,12 @@ namespace FSO.LotView.Components
                         if (UpJunctions[off] == 0)
                         {
                             flags = DownJunctions[off];
-                            yOff = 0.3f + (level - 1) * 2.95f + blueprint.GetAltitude(x, y);
+                            yOff = 0.3f + (level - 1) * 2.95f; ;
                         }
                         else
                         {
                             flags = UpJunctions[off];
-                            yOff = level * 2.95f + blueprint.GetAltitude(x, y);
+                            yOff = level * 2.95f;
                         }
 
                         if (flags > 0 && JunctionMap.ContainsKey(flags)) //there is a junction here! if the junction map contains the unrotated junction, it will contain the rotated junction.
@@ -825,7 +843,7 @@ namespace FSO.LotView.Components
 
         private Wall GetPattern(ushort id)
         {
-            if (!WallCache.ContainsKey(id)) WallCache.Add(id, Content.Content.Get().WorldWalls.Get(id));
+            if (!WallCache.ContainsKey(id)) WallCache.Add(id, Content.Content.Get().WorldWalls.Get(id, false));
             return WallCache[id];
         }
 

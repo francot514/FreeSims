@@ -44,6 +44,8 @@ namespace FSO.SimAntics
 
         public VMEntityRTTI RTTI;
         public bool GhostImage;
+        public bool Reseted;
+        public bool Portal => EntryPoints[15].ActionFunction != 0;
         public VMMultitileGroup GhostOriginal; //Ignore collisions/slots from any of these objects.
 
         //own properties (for instance)
@@ -129,6 +131,18 @@ namespace FSO.SimAntics
             }
         }
 
+        public bool GetBadObjects()
+        {
+
+            bool badobject = false;
+
+            if (Object.OBJ.GUID == 0xA7888650 || Object.OBJ.GUID == 0xA7C2E4B1)
+                badobject = true;
+
+           return badobject;
+
+        }
+
         public bool GetBadNames()
         {
             string name = this.ToString();
@@ -166,6 +180,7 @@ namespace FSO.SimAntics
         public VMEntity(GameObject obj)
         {
             this.Object = obj;
+            GameGlobal GlobalResource = null;
             /** 
              * For some reason, in the aquarium object (maybe others) the numAttributes is set to 0
              * but it should be 4. There are 4 entries in the label table. Go figure?
@@ -188,9 +203,9 @@ namespace FSO.SimAntics
 
             var test = obj.Resource.List<OBJf>();
 
-            SemiGlobal = obj.Resource.SemiGlobal;
+            var GLOBChunks = obj.Resource.List<GLOB>();
 
-           
+            SemiGlobal = obj.Resource.SemiGlobal;
 
             Slots = obj.Resource.Get<SLOT>(obj.OBJ.SlotID); //containment slots are dealt with in the avatar and object classes respectively.
 
@@ -223,13 +238,13 @@ namespace FSO.SimAntics
         /// See: TSO.Files.formats.iff.chunks.TTAB
         /// </summary>
         /// <param name="obj">GameObject instance with a tree table to use.</param>
-        public void UseTreeTableOf(GameObject obj) //manually set the tree table for an object. Used for multitile objects, which inherit this from the master.
+        public void UseTreeTableOf(GameObject obj, bool ts1) //manually set the tree table for an object. Used for multitile objects, which inherit this from the master.
         {
             if (TreeTable != null) return;
             var GLOBChunks = obj.Resource.List<GLOB>();
             GameGlobal SemiGlobal = null;
 
-            if (GLOBChunks != null && GLOBChunks[0].Name != "") SemiGlobal = FSO.Content.Content.Get().WorldObjectGlobals.Get(GLOBChunks[0].Name);
+            if (GLOBChunks != null && GLOBChunks[0].Name != "") SemiGlobal = FSO.Content.Content.Get().WorldObjectGlobals.Get(GLOBChunks[0].Name, ts1);
 
             TreeTable = obj.Resource.Get<TTAB>(obj.OBJ.TreeTableID);
             if (TreeTable != null) TreeTableStrings = obj.Resource.Get<TTAs>(obj.OBJ.TreeTableID);
@@ -240,9 +255,9 @@ namespace FSO.SimAntics
             }
         }
 
-        public void UseSemiGlobalTTAB(string sgFile, ushort id)
+        public void UseSemiGlobalTTAB(string sgFile, ushort id, bool ts1)
         {
-            GameGlobal obj = FSO.Content.Content.Get().WorldObjectGlobals.Get(sgFile);
+            GameGlobal obj = FSO.Content.Content.Get().WorldObjectGlobals.Get(sgFile, ts1);
             if (obj == null) return;
 
             TreeTable = obj.Resource.Get<TTAB>(id);
@@ -453,6 +468,8 @@ namespace FSO.SimAntics
             this.Thread.BlockingState = null;
             this.Thread.EODConnection = null;
 
+            Reseted = false;
+
             if (EntryPoints[3].ActionFunction != 0) ExecuteEntryPoint(3, context, true); //Reset
             if (!GhostImage) ExecuteEntryPoint(1, context, false); //Main
         }
@@ -573,6 +590,39 @@ namespace FSO.SimAntics
 
         }
 
+        private VMPlacementError IndividualUserMovable(VMContext context, bool deleting)
+        {
+            if (this is VMAvatar) return VMPlacementError.CantBePickedup;
+            var movementFlags = (VMMovementFlags)GetValue(VMStackObjectVariable.MovementFlags);
+            if ((movementFlags & VMMovementFlags.PlayersCanMove) == 0) return VMPlacementError.CantBePickedup;
+            if (deleting && (movementFlags & VMMovementFlags.PlayersCanDelete) == 0) return VMPlacementError.ObjectNotOwnedByYou;
+            if (context.IsUserOutOfBounds(Position)) return VMPlacementError.CantBePickedupOutOfBounds;
+            if (IsInUse(context, true)) return VMPlacementError.InUse;
+            var total = TotalSlots();
+            for (int i = 0; i < total; i++)
+            {
+                var item = GetSlot(i);
+                if (item != null &&
+                    (deleting || item is VMAvatar || item.IsUserMovable(context, deleting) != VMPlacementError.Success)) return VMPlacementError.CantBePickedup;
+            }
+            return VMPlacementError.Success;
+        }
+
+        public VMPlacementError IsUserMovable(VMContext context, bool deleting)
+        {
+            foreach (var obj in MultitileGroup.Objects)
+            {
+                var result = obj.IndividualUserMovable(context, deleting);
+                if (result != VMPlacementError.Success) return result;
+            }
+            return VMPlacementError.Success;
+        }
+
+        public void FetchTreeByName(VMContext context)
+        {
+            TreeByName = Object.Resource.TreeByName;
+        }
+
         public bool IsDynamicSpriteFlagSet(ushort index)
         {
             return (index > 63)? ((DynamicSpriteFlags2 & ((ulong)0x1 << (index-64))) > 0) :
@@ -681,7 +731,16 @@ namespace FSO.SimAntics
                     if (UseWorld) WorldUI.Visible = value == 0;
                     break;
 
-
+                case VMStackObjectVariable.Category:
+                    if (Thread != null)
+                    {
+                        Thread.Context.SetToNextCache.RemoveCategory(this, ObjectData[(short)var]);
+                        Thread.Context.SetToNextCache.RegisterCategory(this, value);
+                    }
+                    break;
+               // case VMStackObjectVariable.CurrentValue:
+                 //   MultitileGroup.InitialPrice = value;
+                   // break;
             }
 
             if ((short)var > 79) throw new Exception("Object Data out of range!");
@@ -731,7 +790,9 @@ namespace FSO.SimAntics
                 caller.ObjectData[(int)VMStackObjectVariable.HideInteraction] = 0;
                 if (action != null) action.Flags &= ~TTABFlags.MustRun;
                 var actionStrings = caller.Thread.CheckAction(action);
-                if (caller.ObjectData[(int)VMStackObjectVariable.HideInteraction] == 1 && !includeHidden) continue;
+                if ((caller.ObjectData[(int)VMStackObjectVariable.Hidden] == 1 ||
+                    caller.ObjectData[(int)VMStackObjectVariable.HideInteraction] == 1 ||
+                    caller.Position == LotTilePos.OUT_OF_WORLD) && !includeHidden) continue;
 
                 if (actionStrings != null)
                 {
@@ -1108,9 +1169,9 @@ namespace FSO.SimAntics
 
             if (input.MasterGUID != 0)
             {
-                var masterDef = FSO.Content.Content.Get().WorldObjects.Get(input.MasterGUID);
+                var masterDef = FSO.Content.Content.Get().WorldObjects.Get(input.MasterGUID, false);
                 MasterDefinition = masterDef.OBJ;
-                UseTreeTableOf(masterDef);
+                UseTreeTableOf(masterDef, false);
             }
 
             else MasterDefinition = null;
@@ -1227,6 +1288,17 @@ namespace FSO.SimAntics
         ArchitectualWindow = 1 << 14,
         ArchitectualDoor = 1 << 15
     }
+
+    [Flags]
+    public enum VMMovementFlags
+    {
+        SimsCanMove = 1, //only cleared by payphone...
+        PlayersCanMove = 1 << 1,
+        SelfPropelled = 1 << 2, //unused
+        PlayersCanDelete = 1 << 3,
+        StaysAfterEvict = 1 << 4
+    }
+
     public class VMPieMenuInteraction
     {
         public string Name;

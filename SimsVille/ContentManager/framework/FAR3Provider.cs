@@ -65,7 +65,7 @@ namespace FSO.Content.Framework
         public T Get(ContentID ID)
         {
             if (ID == null) return default(T);
-            return Get(ID.TypeID, ID.FileID);
+            return Get(ID.TypeID, ID.FileID, false);
         }
 
         /// <summary>
@@ -74,10 +74,10 @@ namespace FSO.Content.Framework
         /// <param name="type">The TypeID of the archive.</param>
         /// <param name="fileID">The FileID of the archive.</param>
         /// <returns>A FAR3 archive.</returns>
-        public T Get(uint Type, uint FileID)
+        public T Get(uint Type, uint FileID, bool ts1)
         {
             var fileIDLong = ((ulong)FileID) << 32;
-            return Get(fileIDLong | Type);
+            return Get(fileIDLong | Type, false);
         }
 
         /// <summary>
@@ -85,9 +85,19 @@ namespace FSO.Content.Framework
         /// </summary>
         /// <param name="id">The ID of the file.</param>
         /// <returns>A file.</returns>
-        public T Get(ulong ID)
+        public T Get(ulong ID, bool ts1)
         {
             return ResolveById(ID);
+        }
+
+        public string GetNameByID(ulong ID)
+        {
+            Far3ProviderEntry<T> entry = null;
+            if (EntriesById.TryGetValue(ID, out entry))
+            {
+                return entry.ToString();
+            }
+            return "unnamed";
         }
 
         protected virtual T ResolveById(ulong id)
@@ -226,7 +236,7 @@ namespace FSO.Content.Framework
 
         #region IContentReference<T> Members
 
-        public T Get()
+        public T Get(bool ts1)
         {
             return this.Provider.Get(this);
         }

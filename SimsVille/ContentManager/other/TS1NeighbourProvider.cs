@@ -163,7 +163,7 @@ namespace FSO.Content.TS1
             short[] dat = null;
             if (!TypeAttributes.TypeAttributesByGUID.TryGetValue(guid, out dat))
             {
-                var obj = ContentManager.WorldObjects.Get(guid);
+                var obj = ContentManager.WorldObjects.Get(guid, false);
                 if (obj == null) return;
                 dat = new short[32];
                 TypeAttributes.TypeAttributesByGUID[guid] = dat;

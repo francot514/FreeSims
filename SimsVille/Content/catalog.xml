@@ -36,7 +36,7 @@
 <P g="0x01603053" s="-1" p="0" n="Bed - Single - Antique - middle"></P>
 <P g="0x01656B1A" s="-1" p="0" n="Trees - Barrel Palm - Right"></P>
 <P g="0x01769B4E" s="-1" p="0" n="Door - Pirate - part 2"></P>
-<P g="0x018B8CC1" s="-1" p="825" n="Tent"></P>
+<P g="0x018B8CC1" s="18" p="825" n="Tent"></P>
 <P g="0x019CB939" s="-1" p="20" n="Door Diagonal"></P>
 <P g="0x01A0FD79" s="-1" p="20" n="Door - Cafe"></P>
 <P g="0x01B9E3E7" s="-1" p="0" n="Food - McD McFlurry"></P>
@@ -524,7 +524,7 @@
 <P g="0x2188E576" s="-1" p="0" n="Mystic Tree - Right"></P>
 <P g="0x218E9FCF" s="7" p="60" n="Column - Arch - Moroccan"></P>
 <P g="0x21C7E0B8" s="-1" p="0" n="Duck - Vacation"></P>
-<P g="0x21CDDF6B" s="-1" p="888" n="Fishing Pier"></P>
+<P g="0x21CDDF6B" s="18" p="888" n="Fishing Pier"></P>
 <P g="0x21E4BABC" s="2" p="200" n="Stair - Spiral - Indoor"></P>
 <P g="0x21E5A8B2" s="-1" p="0" n="Duck - Vacation - Reserve Tile"></P>
 <P g="0x21E65BBF" s="18" p="45" n="Trash - Castle Barrel"></P>
@@ -568,17 +568,17 @@
 <P g="0x242A033A" s="-1" p="0" n="Food Counter - Cart - B"></P>
 <P g="0x242A1280" s="-1" p="0" n="Food Counter - Cart - A"></P>
 <P g="0x242A3752" s="-1" p="0" n="Food Counter - Ice Cream - B"></P>
-<P g="0x242A4868" s="-1" p="8000" n="Food Counter - Cart - Hot Dogs"></P>
+<P g="0x242A4868" s="18" p="2100" n="Food Counter - Cart - Hot Dogs"></P>
 <P g="0x242A650D" s="-1" p="3200" n="Food Counter - Cheap"></P>
 <P g="0x242A67CF" s="-1" p="0" n="Food Counter - Ice Cream - A"></P>
 <P g="0x242CDFDB" s="-1" p="0" n="Fishing Pier - A"></P>
 <P g="0x243A5D42" s="-1" p="0" n="Food Counter - Cheap - A"></P>
 <P g="0x243ECFF3" s="-1" p="0" n="Stair - Spiral - Iron - Middle Hi"></P>
 <P g="0x2454D328" s="19" p="235" n="Lamp - Table - French"></P>
-<P g="0x245B2FC5" s="14" p="8000" n="Food Counter - Ice Cream"></P>
+<P g="0x245B2FC5" s="18" p="3400" n="Food Counter - Ice Cream"></P>
 <P g="0x245CAADF" s="14" p="18000" n="Tub - Love - Hot Date"></P>
 <P g="0x246C31A1" s="-1" p="0" n="NPC - Downtown - Cart Vendor - Female Medium"></P>
-<P g="0x246FEF64" s="-1" p="570" n="Front Desk - Vacation"></P>
+<P g="0x246FEF64" s="18" p="570" n="Front Desk - Vacation"></P>
 <P g="0x24728D89" s="-1" p="0" n="FoodCounter - Coffee - Reserve B"></P>
 <P g="0x2478D764" s="2" p="250" n="Stair - Spiral - Iron"></P>
 <P g="0x2480B876" s="-1" p="0" n="Fishing Pier - E"></P>
@@ -616,10 +616,11 @@
 <P g="0x252A42E7" s="-1" p="0" n="Rug - Vegas - G"></P>
 <P g="0x2535DFC5" s="-1" p="0" n="Front Desk - Lodge - Reserve A"></P>
 <P g="0x253C1A5E" s="14" p="600" n="Barbecue"></P>
+<P g="0x3B04C9EA" s="14" p="300" n="Vacation Barbecue"></P>
 <P g="0x253F4AC3" s="-1" p="0" n="Barbecue - Back Left - Grill"></P>
 <P g="0x254233AD" s="12" p="1500" n="Sofa - Bamboo"></P>
 <P g="0x254DBB22" s="-1" p="0" n="Front Desk - Beach - Reserve B"></P>
-<P g="0x255098F9" s="13" p="480" n="Food Counter - Pastry"></P>
+<P g="0x255098F9" s="-1" p="0" n="Food Counter - Pastry"></P>
 <P g="0x2565A0DE" s="-1" p="0" n="Front Desk - Beach - Reserve C"></P>
 <P g="0x2565AE77" s="-1" p="0" n="Christmas Tree - Left"></P>
 <P g="0x2584A0B6" s="-1" p="0" n="FoodCounter - Pastry - A"></P>
@@ -716,10 +717,8 @@
 <P g="0x284B9D96" s="-1" p="0" n="Koi Pond - H"></P>
 <P g="0x284BC982" s="-1" p="1" n="Display Counter Top - Pet Treats"></P>
 <P g="0x285EA0E7" s="-1" p="0" n="Souvenir Cabinet - Wall Nice - Part B"></P>
-<P g="0x285FD532" s="20" p="260" n="Pet - Food Bowl - Cheap"></P>
 <P g="0x2869B6B8" s="-1" p="1" n="Display Counter Top - Collars"></P>
 <P g="0x28738C2C" s="-1" p="0" n="Koi Pond - I"></P>
-<P g="0x28779D38" s="20" p="1550" n="Pet - Food Bowl - Expensive"></P>
 <P g="0x287CC8A3" s="18" p="4499" n="Bar - Beach"></P>
 <P g="0x287DCF21" s="-1" p="0" n="Table Gift Shop - Right"></P>
 <P g="0x2882F5E6" s="-1" p="0" n="Bar - Beach - Reserve A"></P>
@@ -732,7 +731,7 @@
 <P g="0x28B5F86E" s="-1" p="0" n="Sofa - Bench - Vacation - Left"></P>
 <P g="0x28BAC98E" s="-1" p="522" n="Snowman F High"></P>
 <P g="0x28C681FD" s="-1" p="0" n="Window - Lodge - Large - D"></P>
-<P g="0x28C6E8D9" s="-1" p="9999" n="Koi Pond"></P>
+<P g="0x28C6E8D9" s="17" p="9999" n="Koi Pond"></P>
 <P g="0x28CD98E9" s="17" p="980" n="Curtains - French Lace"></P>
 <P g="0x28D7D554" s="-1" p="0" n="Stereo - Expensive - Left"></P>
 <P g="0x28DAB844" s="-1" p="0" n="Koi Pond - E"></P>
@@ -857,7 +856,6 @@
 <P g="0x2B91C9A5" s="-1" p="0" n="Front Desk - Lodge - A"></P>
 <P g="0x2B91D254" s="-1" p="0" n="Koi Pond - J"></P>
 <P g="0x2BABBB09" s="-1" p="0" n="Snowman - Part G"></P>
-<P g="0x2BABD2BC" s="3" p="10" n="GardenPlot"></P>
 <P g="0x2BAFC9A8" s="-1" p="0" n="Koi Pond - K"></P>
 <P g="0x2BC0E508" s="-1" p="0" n="Window - Lodge - Large - A"></P>
 <P g="0x2BC1D43C" s="-1" p="1" n="Painting - Cafe - Art"></P>
@@ -1920,7 +1918,6 @@
 <P g="0x70D41E29" s="-1" p="0" n="Window Storm - part 1"></P>
 <P g="0x70E7B9A5" s="3" p="140" n="Trees - PricklyPear"></P>
 <P g="0x70EC0DBA" s="-1" p="0" n="Dining Table - Retro 1 - B"></P>
-<P g="0x70F69082" s="-1" p="0" n="NPC Controller"></P>
 <P g="0x71024F76" s="-1" p="0" n="Bed - Single - Antique - top"></P>
 <P g="0x711330BC" s="-1" p="0" n="Recliner - Vacation - Part B"></P>
 <P g="0x712A674A" s="-1" p="0" n="Dining Table - Vegas - C"></P>
@@ -2144,6 +2141,8 @@
 <P g="0x868E6C47" s="-1" p="0" n="Door - Warehouse - part 1"></P>
 <P g="0x86A37AF6" s="-1" p="0" n="Rug - Castle 2 - C"></P>
 <P g="0x86E0BBB5" s="14" p="50" n="Phone - Table"></P>
+<P g="0x285FD532" s="20" p="260" n="Pet - Food Bowl - Cheap"></P>
+<P g="0x28779D38" s="20" p="1550" n="Pet - Food Bowl - Expensive"></P>
 <P g="0x86FDCC05" s="-1" p="0" n="Job Finder"></P>
 <P g="0x8728A60E" s="-1" p="0" n="Basketball - Standard - Empty Middle Tile"></P>
 <P g="0x8729188A" s="-1" p="0" n="Night Club - Dance Platform - Modern - A"></P>
@@ -2489,7 +2488,7 @@
 <P g="0xAD52FC7B" s="-1" p="0" n="Window French - part 2"></P>
 <P g="0xAE5D190C" s="-1" p="0" n="Dining Table - Castle - D"></P>
 <P g="0xAE82D89F" s="-1" p="0" n="Job Object - Paper Chase (LBM) - Tile 1"></P>
-<P g="0xAED879C5" s="-1" p="0" n="Phone Line"></P>
+
 <P g="0xAEEA3353" s="22" p="0" n="Restaurant - Ticket Holder - Diner"></P>
 <P g="0xAEF42AF1" s="-1" p="0" n="Restaurant - Table - Swank - C"></P>
 <P g="0xAF169672" s="-1" p="0" n="Trees - Prune - Front"></P>
@@ -3090,7 +3089,6 @@
 <P g="0xFBA5ACD8" s="-1" p="2415" n="Counter Display - Toys"></P>
 <P g="0xFBCDFC45" s="-1" p="5100" n="Counter Display - Jewelry"></P>
 <P g="0xFBE586B7" s="-1" p="0" n="Painting - Mondrian - Left"></P>
-<P g="0xFC49430F" s="-1" p="36000" n="Pet - Food Bowl - Everfull"></P>
 <P g="0xFC736A63" s="-1" p="0" n="Sprinkler - Large - D"></P>
 <P g="0xFC8D548B" s="15" p="10000" n="Television - Expensive"></P>
 <P g="0xFC9DA31F" s="14" p="9500" n="Food Counter - McDonalds FoodKiosk"></P>

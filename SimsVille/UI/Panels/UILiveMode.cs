@@ -21,6 +21,7 @@ using FSO.LotView.Components;
 using FSO.LotView;
 using FSO.Common;
 
+
 namespace FSO.Client.UI.Panels
 {
     /// <summary>
@@ -79,6 +80,8 @@ namespace FSO.Client.UI.Panels
         //normal stuff
         public UIButton MoodPanelButton;
 
+        public UISkillDisplay Skills;
+
         public UIButton PreviousPageButton { get; set; }
         public UIButton NextPageButton { get; set; }
 
@@ -88,12 +91,16 @@ namespace FSO.Client.UI.Panels
         public UIPersonGrid PersonGrid;
 
         UILotControl LotController;
-        private VMAvatar SelectedAvatar
+        public VMAvatar SelectedAvatar
         {
             get
             {
                 return (LotController.ActiveEntity != null && LotController.ActiveEntity is VMAvatar) ? (VMAvatar)LotController.ActiveEntity : null;
             }
+            set
+            {
+            }
+
         }
         private VMAvatar LastSelected;
         private EODLiveModeOpt LastEODConfig;
@@ -123,13 +130,14 @@ namespace FSO.Client.UI.Panels
 
             EODCloseButton.OnButtonClick += EODCloseButton_OnButtonClick;
 
+            MotivesLabel.Caption = "Character Data";
             MotivesLabel.CaptionStyle = MotivesLabel.CaptionStyle.Clone();
             MotivesLabel.CaptionStyle.Shadow = true;
             MotivesLabel.Alignment = TextAlignment.Left;
             MotivesLabel.Position -= new Vector2(0, 5);
 
             PeopleListBg = new UIImage(PeopleListBackgroundImg);
-            PeopleListBg.Position = new Microsoft.Xna.Framework.Vector2(375, 38);
+            PeopleListBg.Position = new Microsoft.Xna.Framework.Vector2(545, 38);
             this.AddAt(1, PeopleListBg);
 
             Divider = new UIImage(DividerImg);
@@ -149,7 +157,7 @@ namespace FSO.Client.UI.Panels
 
             PersonGrid = new UIPersonGrid(LotController.vm);
             Add(PersonGrid);
-            PersonGrid.Position = new Vector2(409, 51);
+            PersonGrid.Position = new Vector2(609, 51);
             if (small800) {
                 PersonGrid.Columns = 4;
                 PersonGrid.DrawPage();
@@ -206,11 +214,19 @@ namespace FSO.Client.UI.Panels
             EODImage = script.Create<UIImage>("EODButtonImageSize");
             Add(EODImage);
 
+            NextPageButton.Position += new Vector2(170, 0);
             NextPageButton.OnButtonClick += (UIElement btn) => { PersonGrid.NextPage(); };
             DefaultNextPagePos = NextPageButton.Position;
+            PreviousPageButton.Position += new Vector2(170, 0);
             PreviousPageButton.OnButtonClick += (UIElement btn) => { PersonGrid.PreviousPage(); };
 
             MsgWinTextEntry.Items.Add(new UIListBoxItem("", ""));
+
+
+            Skills = new UISkillDisplay();
+            Skills.Position = new Vector2(334, 65);
+            //Skills.Position = new Vector2(334 + (0 % 3) * 140, 65 + 60 * (0 / 3));
+            Add(Skills);
 
             EODCloseBase = EODCloseButton.Position;
             EODHelpBase = EODHelpButton.Position;
@@ -381,6 +397,8 @@ namespace FSO.Client.UI.Panels
                 }
                 
                 UpdateMotives();
+                Skills.UpdateSkills(SelectedAvatar);
+
             }
 
             if (LastEODConfig != LotController.EODs.DisplayMode)
@@ -424,6 +442,14 @@ namespace FSO.Client.UI.Panels
             MotiveDisplay.MotiveValues[5] = SelectedAvatar.GetMotiveData(VMMotive.Fun);
             MotiveDisplay.MotiveValues[6] = SelectedAvatar.GetMotiveData(VMMotive.Social);
             MotiveDisplay.MotiveValues[7] = SelectedAvatar.GetMotiveData(VMMotive.Room);
+        }
+
+        private void InitLabel(UILabel label)
+        {
+            label.CaptionStyle = label.CaptionStyle.Clone();
+            label.CaptionStyle.Color = Color.White;
+            label.CaptionStyle.Size = 15;
+            Add(label);
         }
     }
 }

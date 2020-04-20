@@ -10,6 +10,7 @@ namespace FSO.SimAntics.Marshals
     public class VMGameObjectMarshal : VMEntityMarshal
     {
         public Direction Direction;
+        public bool Disabled;
 
         public VMGameObjectMarshal() { }
         public VMGameObjectMarshal(int version) : base(version) { }

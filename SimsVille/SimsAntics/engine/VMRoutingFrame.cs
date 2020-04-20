@@ -772,7 +772,7 @@ namespace FSO.SimAntics.Engine
                                     if (CanShooAvatar((VMAvatar)result.Object))
                                     {
                                         AvatarsToConsider.Remove((VMAvatar)result.Object);
-                                        VMEntity callee = VM.Context.CreateObjectInstance(GOTO_GUID, new LotTilePos(result.Object.Position), Direction.NORTH).Objects[0];
+                                        VMEntity callee = VM.Context.CreateObjectInstance(GOTO_GUID, new LotTilePos(result.Object.Position), Direction.NORTH, false).Objects[0];
                                         if (colRoute != null)
                                         {
                                             colRoute.State = VMRoutingFrameState.SHOOED;

@@ -129,5 +129,11 @@ namespace FSO.Common.Rendering.Framework
             for (int i = 0; i < m_Elements.Count; i++)
                 m_Elements[i].DeviceReset(Device);
         }
+
+        public override void Dispose()
+        {
+
+        }
+
     }
 }

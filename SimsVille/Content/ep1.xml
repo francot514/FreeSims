@@ -2,7 +2,7 @@
     <P g="663EAFFC" n="bedheart" s="12" p="4500" m="1" i="-1" />
     <P g="17579980" n="beds2" s="12" p="3650" m="1" i="-1" />
     <P g="0x6C1BB706" n="CrystalBall" s="17" p="760" m="0" i="0" />
-    <P g="0xFB701275" n="CrystalBall" s="17" p="300" m="0" i="-1" />
+    <P g="0xFB701275" n="CrystalBall" s="-1" p="0" m="0" i="-1" />
     <P g="0x1E1E9BCD" n="Genie" s="-1" p="0" m="0" i="0" />
     <P g="0xC772A09E" n="Genie2" s="-1" p="0" m="0" i="0" />
     <P g="0xA76F6A5E" n="GenieGoldPile" s="17" p="2300" m="0" i="0" />
@@ -15,10 +15,12 @@
     <P g="0xE4D07D66" n="NPCRobotSI" s="-1" p="0" m="0" i="0" />
     <P g="0xD6337E2" n="Officer2" s="-1" p="0" m="0" i="0" />
     <P g="0xB40A3DA" n="Robot" s="-1" p="0" m="0" i="0" />
-    <P g="0x7B21053A" n="RobotDock" s="17" p="15000" m="1" i="-1" />
+    <P g="0x7B21053A" n="RobotDock" s="17" p="15000" m="1" i="0" />
+	<P g="0xB08E36E0" n="RobotDock" s="-1" p="0" m="1" i="-1" />
+	<P g="0x91A49D7D" n="RobotDock" s="-1" p="0" m="1" i="-1" />
     <P g="0x60344A9B" n="TragicClown" s="-1" p="0" m="0" i="0" />
     <P g="0x7A655BED" n="TrClownGen" s="-1" p="0" m="0" i="0" />
     <P g="0x3C4815BB" n="TrClownHole" s="-1" p="0" m="0" i="0" />
     <P g="0x5425E7B0" n="TrClownSI" s="-1" p="0" m="0" i="0" />
-    <P g="0x49F9C16F" n="VooDooDoll" s="-1" p="65" m="0" i="0" />
+    <P g="0x49F9C16F" n="VooDooDoll" s="17" p="65" m="0" i="0" />
   </Items>

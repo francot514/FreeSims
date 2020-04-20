@@ -16,10 +16,10 @@ using FSO.SimAntics.Engine;
             public List<VMEntity> Objects;
             public List<VMEntity> Entities;
             public List<VMAvatar> Visitors;
-            private VMEntity Target;
+            public VMEntity Target, Subject;
             private TTAB TreeTableSelected;
             private List<string> interactionList;
-
+            public int SelectedID;
 
 
             public VMFreeWill(VM vm)
@@ -75,7 +75,7 @@ using FSO.SimAntics.Engine;
                     foreach (var interaction in entity.TreeTable.Interactions)
                     {
 
-                       if (interaction.Flags == TTABFlags.AllowDogs)
+                       if (interaction.Flags == TTABFlags.TS1AllowDogs || interaction.Flags == TTABFlags.TS1AllowCats)
                          interactionList.Add(entity.TreeTableStrings.GetString((int)interaction.TTAIndex));
                     }
 
@@ -83,7 +83,9 @@ using FSO.SimAntics.Engine;
                     foreach (var interaction in entity.TreeTable.Interactions)
                     {
 
-                        if (!interaction.Debug || !interaction.WhenDead || !interaction.Leapfrog)
+                        if (!interaction.Debug || !interaction.WhenDead || !interaction.Leapfrog 
+                            || !interaction.AllowGhosts || !interaction.AllowCSRs || !interaction.AllowConsecutive
+                            || !interaction.AllowDogs || !interaction.AllowCats)
                             interactionList.Add(entity.TreeTableStrings.GetString((int)interaction.TTAIndex));
                     }
                 }
@@ -145,7 +147,8 @@ using FSO.SimAntics.Engine;
             public void RunAction(VMEntity entity)
             {
 
-                bool PetAction = entity.Object.GUID == VMAvatar.DOG_TEMPLATE ? true : false;
+                bool PetAction = entity.Object.GUID == VMAvatar.DOG_TEMPLATE ||
+                entity.Object.GUID == VMAvatar.CAT_TEMPLATE ? true : false;
 
                 if (Objects.Count > 0)
                 {

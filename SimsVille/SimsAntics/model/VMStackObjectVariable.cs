@@ -55,7 +55,7 @@ namespace FSO.SimAntics.Model
         EatingSurfaceValue = 38,
         DirtyLevel = 39,
         FlagField2 = 40,
-        Unused41 = 41,
+        CurrentValue = 41,
         PlacementFlags = 42,
         MovementFlags = 43,
         MaximumGrade = 44,

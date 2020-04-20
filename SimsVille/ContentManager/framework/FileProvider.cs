@@ -26,6 +26,7 @@ namespace FSO.Content.Framework
         protected Dictionary<string, T> Cache;
         protected List<FileContentReference<T>> Items;
         private Regex FilePattern;
+        public string[] Files;
 
         /// <summary>
         /// Creates a new instance of FileProvider.
@@ -40,6 +41,13 @@ namespace FSO.Content.Framework
             this.FilePattern = filePattern;
         }
 
+        public FileProvider(Content contentManager, IContentCodec<T> codec, string[] files)
+        {
+            this.ContentManager = contentManager;
+            this.Codec = codec;
+            this.Files = files;
+        }
+
         /// <summary>
         /// Initiates loading of files of this type.
         /// </summary>
@@ -52,6 +60,7 @@ namespace FSO.Content.Framework
             lock (Cache)
             {
                 List<string> matchedFiles = new List<string>();
+                if (FilePattern != null)
                 foreach (var file in ContentManager.AllFiles)
                 {
                     if (FilePattern.IsMatch(file))
@@ -59,6 +68,13 @@ namespace FSO.Content.Framework
                         matchedFiles.Add(file);
                     }
                 }
+                else
+                {
+                    foreach (var file in Files)
+                        matchedFiles.Add(file);
+
+                }
+
                 foreach (var file in matchedFiles)
                 {
                     var name = Path.GetFileName(file).ToLowerInvariant();
@@ -99,12 +115,12 @@ namespace FSO.Content.Framework
 
         #region IContentProvider<T> Members
 
-        public T Get(ulong id)
+        public T Get(ulong id, bool ts1)
         {
             throw new NotImplementedException();
         }
 
-        public T Get(uint type, uint fileID)
+        public T Get(uint type, uint fileID, bool ts1)
         {
             throw new NotImplementedException();
         }
@@ -133,7 +149,7 @@ namespace FSO.Content.Framework
 
         #region IContentReference<T> Members
 
-        public T Get(){
+        public T Get(bool ts1){
             return this.Provider.Get(Name);
         }
 

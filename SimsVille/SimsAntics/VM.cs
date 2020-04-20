@@ -67,7 +67,7 @@ namespace FSO.SimAntics
         public int LastSpeedMultiplier;
         private int LastFrameSpeed = 1;
 
-
+        public List<VMInventoryItem> MyInventory = new List<VMInventoryItem>();
         public List<VMEntity> Entities = new List<VMEntity>();
         public HashSet<VMEntity> SoundEntities = new HashSet<VMEntity>();
 
@@ -165,8 +165,9 @@ namespace FSO.SimAntics
         /// </summary>
         public void Init()
         {
-            Context.Globals = FSO.Content.Content.Get().WorldObjectGlobals.Get("global");
+            Context.Globals = FSO.Content.Content.Get().WorldObjectGlobals.Get("global", false);
             PlatformState = new VMTSOLotState();
+            PlatformState.ActivateValidator(this);
             GlobalState = new short[33];
             GlobalState[20] = 255; //Game Edition. Basically, what "expansion packs" are running. Let's just say all of them.
             GlobalState[25] = 4; //as seen in EA-Land edith's simulator globals, this needs to be set for people to do their idle interactions.
@@ -353,6 +354,27 @@ namespace FSO.SimAntics
             entity.Dead = true;
         }
 
+        public static void DeleteFromObjList(List<VMEntity> list, VMEntity entity)
+        {
+            if (list.Count == 0) { return; }
+            int id = entity.ObjectID;
+            int max = list.Count;
+            int min = 0;
+            while (max > min)
+            {
+                int mid = (max + min) / 2;
+                int nid = list[mid].ObjectID;
+                if (id < nid) max = mid;
+                else if (id == nid)
+                {
+                    list.RemoveAt(mid); //found it
+                    return;
+                }
+                else min = mid + 1;
+            }
+            //list.RemoveAt(min);
+        }
+
         /// <summary>
         /// Finds the next free object ID and remembers it for use when making another object.
         /// </summary>
@@ -508,7 +530,7 @@ namespace FSO.SimAntics
             var clientJoin = (Context.Architecture == null);
             var oldWorld = Context.World;
             Context = new VMContext(input.Context, Context);
-            Context.Globals = FSO.Content.Content.Get().WorldObjectGlobals.Get("global");
+            Context.Globals = FSO.Content.Content.Get().WorldObjectGlobals.Get("global", false);
             Context.VM = this;
             Context.Architecture.RegenRoomMap();
             Context.RegeneratePortalInfo();
@@ -534,7 +556,7 @@ namespace FSO.SimAntics
             foreach (var ent in input.Entities)
             {
                 VMEntity realEnt;
-                var objDefinition = FSO.Content.Content.Get().WorldObjects.Get(ent.GUID);
+                var objDefinition = FSO.Content.Content.Get().WorldObjects.Get(ent.GUID, TS1);
                 if (ent is VMAvatarMarshal)
                 {
                     var avatar = new VMAvatar(objDefinition);

@@ -196,7 +196,10 @@ namespace FSO.SimAntics.Engine.Primitives
                             result = lhsValue == rhsValue;
                             break;
                         case VMExpressionOperator.LessThan:
-                            result = lhsValue < rhsValue;
+                            if (rhsValue == 1024 && operand.LhsData == (int)(VMStackObjectVariable.Room) && operand.LhsOwner == VMVariableScope.MyObject)
+                                //HACK: see below. ts1 needs this one
+                                result = context.Caller.Position.Level - (context.Callee.Position.Level - context.Callee.Object.OBJ.LevelOffset) <= 0;
+                            else result = lhsValue < rhsValue;
                             break;
                         case VMExpressionOperator.GreaterThan:
                             result = lhsValue > rhsValue;
@@ -237,7 +240,14 @@ namespace FSO.SimAntics.Engine.Primitives
                             lhsList.AddLast((short)rhsValue);
                             break;
                         case 2:
-                            throw new VMSimanticsException("Unknown list push destination: "+operand.LhsData, context);
+                            throw new VMSimanticsException("Unknown list push destination: " + operand.LhsData, context);                       
+
+                        default:
+                            lhsValue = VMMemory.GetBigVariable(context, operand.LhsOwner, operand.LhsData);
+                            rhsValue = VMMemory.GetBigVariable(context, operand.RhsOwner, operand.RhsData);
+                            lhsValue |= rhsValue;
+                            VMMemory.SetBigVariable(context, operand.LhsOwner, operand.LhsData, lhsValue);
+                            break;
                     }
                     return VMPrimitiveExitCode.GOTO_TRUE;
 
@@ -256,10 +266,21 @@ namespace FSO.SimAntics.Engine.Primitives
                             rhsList.RemoveLast();
                             break;
                         case 2:
-                            throw new VMSimanticsException("Unknown list pop source: "+operand.LhsData, context);
+                            throw new VMSimanticsException("Unknown list pop source: " + operand.LhsData, context);
+
+                        default:
+                            lhsValue = VMMemory.GetBigVariable(context, operand.LhsOwner, operand.LhsData);
+                            rhsValue = VMMemory.GetBigVariable(context, operand.RhsOwner, operand.RhsData);
+                            lhsValue ^= rhsValue;
+                            VMMemory.SetBigVariable(context, operand.LhsOwner, operand.LhsData, lhsValue);
+                            break;
                     }
 
                     VMMemory.SetBigVariable(context, operand.LhsOwner, operand.LhsData, lhsValue);
+                    return VMPrimitiveExitCode.GOTO_TRUE;
+                case VMExpressionOperator.TS1AssignSqrtRHS:
+                    rhsValue = VMMemory.GetBigVariable(context, operand.RhsOwner, operand.RhsData);
+                    setResult = VMMemory.SetBigVariable(context, operand.LhsOwner, operand.LhsData, (short)Math.Sqrt(rhsValue));
                     return VMPrimitiveExitCode.GOTO_TRUE;
 
                 default:
@@ -329,6 +350,7 @@ namespace FSO.SimAntics.Engine.Primitives
         NotEqualTo = 16,
         DecAndGreaterThan = 17,
         Push = 18,
-        Pop = 19
+        Pop = 19,
+        TS1AssignSqrtRHS = 20
     }
 }

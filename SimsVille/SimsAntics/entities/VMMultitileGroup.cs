@@ -26,6 +26,7 @@ namespace FSO.SimAntics.Entities
         public bool MultiTile;
         public string Name = "";
         public int Price;
+        public int SalePrice = -1;
         public List<VMEntity> Objects = new List<VMEntity>();
         public List<LotTilePos> Offsets = new List<LotTilePos>();
 
@@ -217,6 +218,22 @@ namespace FSO.SimAntics.Entities
 
                 sub.Direction = direction;
                 sub.VisualPosition = pos + off;
+            }
+        }
+
+        public void LoadGhost(VMMultitileGroupMarshal input, VMContext context, VMEntity[] objs)
+        {
+            MultiTile = input.MultiTile;
+            Name = input.Name;
+
+            Objects = new List<VMEntity>();
+            for (int i = 0; i < input.Objects.Length; i++)
+            {
+                var obj = objs[i];
+                if (obj == null) continue;
+                Objects.Add(obj);
+                Offsets.Add(input.Offsets[i]);
+                obj.MultitileGroup = this;
             }
         }
 

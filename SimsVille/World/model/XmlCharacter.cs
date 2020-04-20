@@ -31,6 +31,10 @@ namespace tso.world.Model
         [XmlElement("appearance")]
         public string Appearance { get; set; }
 
+        [XmlArray("characterdata")]
+        [XmlArrayItem("data")]
+        public List<XmlCharacterData> Data { get; set; }
+
         public static XmlCharacter Parse(string xmlFilePath)
         {
             XmlSerializer serialize = new XmlSerializer(typeof(XmlCharacter));
@@ -51,5 +55,20 @@ namespace tso.world.Model
                 serialize.Serialize(writer, data);
             }
         }
+    }
+
+    public class XmlCharacterData
+    {
+
+        [XmlAttribute("id")]
+        public int Id { get; set; }
+
+        [XmlAttribute("name")]
+        public string Name { get; set; }
+
+        [XmlAttribute("value")]
+        public int Value { get; set; }
+
+
     }
 }

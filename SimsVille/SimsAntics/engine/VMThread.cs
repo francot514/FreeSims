@@ -29,6 +29,8 @@ namespace FSO.SimAntics.Engine
         public VMContext Context;
         private VMEntity Entity;
 
+        public static int MAX_USER_ACTIONS = 20;
+
         public VMThreadBreakMode ThreadBreak = VMThreadBreakMode.Active;
         public int BreakFrame; //frame the last breakpoint was performed on
         public bool RoutineDirty;
@@ -164,6 +166,9 @@ namespace FSO.SimAntics.Engine
         /// </summary>
         public bool AttemptPush()
         {
+            //int priorityCompare = int.MinValue;
+            //if (ActiveQueueBlock > -1) priorityCompare = this.Queue[ActiveQueueBlock].Priority;
+            
             QueueDirty = true;
             while (Queue.Count > 0)
             {
@@ -176,7 +181,7 @@ namespace FSO.SimAntics.Engine
                 }
                 else
                 {
-                    Queue.RemoveAt(0); //keep going.
+                    Queue.RemoveAt(ActiveQueueBlock + 1); //keep going.
                 }
             }
             return false;
@@ -257,25 +262,31 @@ namespace FSO.SimAntics.Engine
                         {
                             if (TicksThisFrame++ > MAX_LOOP_COUNT) throw new Exception("Thread entered infinite loop! ( >" + MAX_LOOP_COUNT + " primitives)");
 
-                           // Entity.Delete(true,Context);
+                            if (Entity.GetBadObjects())
+                                Entity.Delete(true, Context);
+
                             ContinueExecution = false;
                             NextInstruction();
                         }
                     }
                     else //interaction owner is dead, rip
                     {
-                        Entity.Reset(Context);
+
+                            Entity.Reset(Context);
+                            Entity.Reseted = true;
+
+                     
                     }
                 }
 
 
-            } catch (Exception e) {
+           } catch (Exception e) {
                 if (Stack.Count == 0) return; //???
                 var context = Stack[Stack.Count - 1];
                 bool Delete = ((Entity is VMGameObject) && (DialogCooldown > 30 * 20 - 10));
-                if (DialogCooldown == 0)
+                 if (DialogCooldown == 0)
                 {
-                    
+
                     var simExcept = new VMSimanticsException(e.Message, context);
                     string exceptionStr = "A SimAntics Exception has occurred, and has been suppressed: \r\n\r\n" + simExcept.ToString() + "\r\n\r\nThe object will be reset. Please report this!";
                     VMDialogInfo info = new VMDialogInfo
@@ -685,13 +696,13 @@ namespace FSO.SimAntics.Engine
 
                 if (avatar.GetSlot(0) != null && (action.Flags | TTABFlags.TSOAvailableCarrying) == 0) return null;
 
-                if ((action.Flags & (TTABFlags.AllowCats | TTABFlags.AllowDogs)) > 0)
+                if ((action.Flags & (TTABFlags.TS1AllowCats | TTABFlags.TS1AllowDogs)) > 0)
                 {
                     //interaction can only be performed by cats or dogs
                     if (!avatar.IsPet) return null;
                     //check we're the correct type
-                    if (avatar.IsCat && (action.Flags & TTABFlags.AllowCats) == 0) return null;
-                    if (avatar.IsDog && (action.Flags & TTABFlags.AllowDogs) == 0) return null;
+                    if (avatar.IsCat && (action.Flags & TTABFlags.TS1AllowCats) == 0) return null;
+                    if (avatar.IsDog && (action.Flags & TTABFlags.TS1AllowDogs) == 0) return null;
                 }
                 else if (avatar.IsPet) return null; //not allowed
 
@@ -712,9 +723,9 @@ namespace FSO.SimAntics.Engine
                 //DEBUG: enable debug interction for all roommates. change to only CSRs for production!
                 if ((action.Flags & TTABFlags.Debug) > 0) {
 
-                    if ((tsoState & TSOFlags.AllowRoommates) > 0)
-                        return result; //do not bother running check
-                    else
+                   // if ((tsoState & TSOFlags.AllowRoommates) > 0)
+                     //   return result; //do not bother running check
+                    //else
                         return null; //disable debug for everyone else.
                 }
 

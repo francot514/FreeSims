@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("SimsLib")]
+[assembly: AssemblyTitle("Sims.files")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("SimsLib")]
-[assembly: AssemblyCopyright("Copyright ©  2010")]
+[assembly: AssemblyProduct("Sims.files")]
+[assembly: AssemblyCopyright("Copyright ©  2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("97db5061-8f10-4ca0-8470-f42601031d4e")]
+[assembly: Guid("d419bbed-82a6-49a1-84b7-dd99c5aa15d3")]
 
 // Version information for an assembly consists of the following four values:
 //

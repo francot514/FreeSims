@@ -78,7 +78,7 @@ namespace FSO.Client.UI.Panels
             if (Main.SelectedCharInfo != null)
             {
 
-                ((CoreGameScreen)(Parent.Parent)).InitTestLot(SearchText.CurrentText, SearchText.CurrentText, false, ((UIGizmoTop100)(Parent)).TS1);
+                ((CoreGameScreen)(Parent.Parent)).InitTestLot(SearchText.CurrentText, SearchText.CurrentText, false, Main.TS1);
             }
             else
             {
@@ -103,7 +103,7 @@ namespace FSO.Client.UI.Panels
         public UIGizmo Main;
         public UIImage Background; //public so we can disable visibility when not selected... workaround to stop background mouse blocking still happening when panel is hidden
         public bool Selected;
-        public bool TS1;
+        
 
         public UIGizmoTop100(UIScript script, UIGizmo parent)
         {
@@ -202,11 +202,11 @@ namespace FSO.Client.UI.Panels
                 if (Main.SelectedCharInfo != null){
 
                     if (((UIXMLLotEntry)Top100ResultList.SelectedItem.Data).Path.Contains(".iff"))
-                        TS1 = true;
+                        Main.TS1 = true;
                     else if (((UIXMLLotEntry)Top100ResultList.SelectedItem.Data).Path.Contains(".xml"))
-                        TS1 = false;
+                        Main.TS1 = false;
 
-                    ((CoreGameScreen)(Parent.Parent)).InitTestLot(((UIXMLLotEntry)Top100ResultList.SelectedItem.Data).Path, ((UIXMLLotEntry)Top100ResultList.SelectedItem.Data).Filename, true, TS1);
+                    ((CoreGameScreen)(Parent.Parent)).InitTestLot(((UIXMLLotEntry)Top100ResultList.SelectedItem.Data).Path, ((UIXMLLotEntry)Top100ResultList.SelectedItem.Data).Filename, true, Main.TS1);
 
                 }
                 else
@@ -279,6 +279,7 @@ namespace FSO.Client.UI.Panels
 
         public UIGizmoTab TabV;
         public XmlCharacter SelectedCharInfo;
+        public bool TS1;
         public UISim SimBox;
 
         public UIGizmo()
@@ -368,12 +369,12 @@ namespace FSO.Client.UI.Panels
 
             Enum.TryParse(charInfo.Appearance, out type);
 
-            var headPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Head, 16));
-            var bodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Body, 16));
+            var headPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Head, 16), false);
+            var bodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Body, 16), false);
             Outfit HeadOutfit = Content.Content.Get().AvatarOutfits.Get(headPurchasable != null ? headPurchasable.OutfitID :
-                Convert.ToUInt64(charInfo.Head, 16));
+                Convert.ToUInt64(charInfo.Head, 16), false);
             Outfit BodyOutfit = Content.Content.Get().AvatarOutfits.Get(bodyPurchasable != null ? bodyPurchasable.OutfitID : 
-                Convert.ToUInt64(charInfo.Body, 16));
+                Convert.ToUInt64(charInfo.Body, 16), false);
 
             sim = new UISim(charInfo.ObjID, true)
             {

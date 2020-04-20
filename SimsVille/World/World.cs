@@ -36,16 +36,23 @@ namespace FSO.LotView
 
         /** How many pixels from each edge of the screen before we start scrolling the view **/
         public int ScrollBounds = 20;
+        public uint FrameCounter = 0;
+        public uint LastCacheClear = 0;
         public static bool DirectX = false;
+        public float Opacity = 1f;
+
+        public int SmoothZoomTimer = -1;
+        public float SmoothZoomFrom = 1f;
 
         public WorldState State;
+        public bool UseBackbuffer = true;
         protected bool HasInitGPU;
         protected bool HasInitBlueprint;
         protected bool HasInit;
 
         private World2D _2DWorld = new World2D();
         private World3D _3DWorld = new World3D();
-        private Blueprint Blueprint;
+        protected Blueprint Blueprint;
 
         public sbyte Stories
         {
@@ -76,7 +83,7 @@ namespace FSO.LotView
             State._2D.AmbientLight = State.AmbientLight;
 
             PPXDepthEngine.InitGD(layer.Device);
-            if (FSOEnvironment.SoftwareDepth) PPXDepthEngine.InitScreenTargets(layer.Device);
+            PPXDepthEngine.InitScreenTargets(layer.Device);
 
             base.Camera = State.Camera;
 
@@ -84,7 +91,7 @@ namespace FSO.LotView
             HasInit = HasInitGPU & HasInitBlueprint;
         }
 
-        public void InitBlueprint(Blueprint blueprint)
+        public virtual void InitBlueprint(Blueprint blueprint)
         {
             this.Blueprint = blueprint;
             _2DWorld.Init(blueprint);
@@ -101,7 +108,16 @@ namespace FSO.LotView
             foreach (var item in Blueprint.Objects){
                 item.OnZoomChanged(State);
             }
+            foreach (var sub in Blueprint.SubWorlds) sub.State.Zoom = State.Zoom;
             Blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.ZOOM));
+
+            State._2D?.ClearTextureCache();
+        }
+
+        public void InvalidatePreciseZoom()
+        {
+            if (Blueprint == null) { return; }
+            Blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.PRECISE_ZOOM));
         }
 
         public void InvalidateRotation()
@@ -112,7 +128,10 @@ namespace FSO.LotView
             {
                 item.OnRotationChanged(State);
             }
+            foreach (var sub in Blueprint.SubWorlds) sub.State.Rotation = State.Rotation;
             Blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.ROTATE));
+
+            State._2D?.ClearTextureCache();
         }
 
         public void InvalidateScroll()
@@ -128,19 +147,7 @@ namespace FSO.LotView
         public void InvalidateFloor()
         {
             if (Blueprint == null) { return; }
-
             Blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.LEVEL_CHANGED));
-        }
-
-         public void GameResized()
-        {
-            PPXDepthEngine.InitScreenTargets();
-            var newSize = PPXDepthEngine.GetWidthHeight();
-            State._2D.GenBuffers(newSize.X, newSize.Y);
-            State.SetDimensions(newSize.ToVector2());
-
-            if (Blueprint != null)
-                Blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.ZOOM));
         }
 
         public bool TestScroll(UpdateState state)
@@ -245,6 +252,27 @@ namespace FSO.LotView
                     case CursorType.ArrowRight:
                         scrollVector = basis[0];
                         break;
+
+                    case CursorType.ArrowUpLeft:
+                        scrollVector = -basis[1] - basis[0];
+                        scrollVector *= new Vector2(1, 0.5f);
+                        break;
+
+                    case CursorType.ArrowUpRight:
+                        scrollVector = basis[0] - basis[1];
+                        scrollVector *= new Vector2(1, 0.5f);
+                        break;
+
+                    case CursorType.ArrowDownLeft:
+                        scrollVector = basis[1] - basis[0];
+                        scrollVector *= new Vector2(1, 0.5f);
+                        break;
+
+                    case CursorType.ArrowDownRight:
+                        scrollVector = basis[1] + basis[0];
+                        scrollVector *= new Vector2(1, 0.5f);
+                        break;
+
                 }
 
                 /** We need to scroll **/
@@ -291,10 +319,20 @@ namespace FSO.LotView
                     output[0] = new Vector2(1, 1);
                     break;
             }
-            int multiplier = (1 << (3 - (int)State.Zoom));
+            int multiplier = ((1 << (3 - (int)State.Zoom)) * 3) / 2;
             output[0] *= multiplier;
             output[1] *= multiplier;
             return output;
+        }
+
+        public void InitiateSmoothZoom(WorldZoom zoom)
+        {
+            SmoothZoomTimer = 0;
+            var curScale = (1 << (3 - (int)State.Zoom));
+            var zoomScale = (1 << (3 - (int)zoom));
+
+            SmoothZoomFrom = (float)zoomScale / curScale;
+            State.PreciseZoom = SmoothZoomFrom;
         }
 
         public override void Update(UpdateState state)
@@ -309,6 +347,21 @@ namespace FSO.LotView
 
                 State.CenterTile -= (State.ScrollAnchor.Level - 1) * State.WorldSpace.GetTileFromScreen(new Vector2(0, 230)) / (1 << (3 - (int)State.Zoom));
             }
+
+            if (SmoothZoomTimer > -1)
+            {
+                SmoothZoomTimer++;
+                if (SmoothZoomTimer >= 15)
+                {
+                    State.PreciseZoom = 1f;
+                    SmoothZoomTimer = -1;
+                }
+                else
+                {
+                    var p = Math.Sin((SmoothZoomTimer / 30.0) * Math.PI);
+                    State.PreciseZoom = (float)((p) + (1 - p) * SmoothZoomFrom);
+                }
+            }
         }
 
         /// <summary>
@@ -317,9 +370,26 @@ namespace FSO.LotView
         /// <param name="device"></param>
         public override void PreDraw(GraphicsDevice device)
         {
+            //bound the scroll so we can't see gray space.
+            float boundfactor = 0.5f;
+            switch (State.Zoom)
+            {
+                case WorldZoom.Near:
+                    boundfactor = 1.20f; break;
+                case WorldZoom.Medium:
+                    boundfactor = 1.05f; break;
+            }
+            boundfactor *= Blueprint?.Width ?? 64;
+            var off = 0.5f * (Blueprint?.Width ?? 64);
+            var tile = State.CenterTile;
+            tile = new Vector2(Math.Min(boundfactor + off, Math.Max(off - boundfactor, tile.X)), Math.Min(boundfactor + off, Math.Max(off - boundfactor, tile.Y)));
+            if (tile != State.CenterTile) State.CenterTile = tile;
+
             base.PreDraw(device);
             if (HasInit == false) { return; }
-
+            State._2D.PreciseZoom = State.PreciseZoom;
+            State.OutsideColor = Blueprint.OutsideColor;
+            foreach (var sub in Blueprint.SubWorlds) sub.PreDraw(device, State);
             if (Blueprint != null)
             {
                 foreach (var ent in Blueprint.Objects)
@@ -339,7 +409,7 @@ namespace FSO.LotView
             _3DWorld.PreDraw(device, State);
             State._3D.End();
 
-            if (FSOEnvironment.SoftwareDepth)
+            if (UseBackbuffer)
             {
 
                 PPXDepthEngine.SetPPXTarget(null, null, true);
@@ -357,13 +427,16 @@ namespace FSO.LotView
         public override void Draw(GraphicsDevice device){
             if (HasInit == false) { return; }
 
-            if (FSOEnvironment.SoftwareDepth)
+            FrameCounter++;
+            if (FrameCounter < LastCacheClear + 60*60)
             {
-                PPXDepthEngine.DrawBackbuffer();
-                return;
+                State._2D.ClearTextureCache();
             }
-
-            InternalDraw(device);
+            if (!UseBackbuffer)
+                InternalDraw(device);
+            else
+                PPXDepthEngine.DrawBackbuffer();
+            return;
         }
 
         private void InternalDraw(GraphicsDevice device)
@@ -374,6 +447,7 @@ namespace FSO.LotView
             State._2D.Begin(this.State.Camera);
 
             var pxOffset = -State.WorldSpace.GetScreenOffset();
+            //State._2D.PreciseZoom = State.PreciseZoom;
             State._2D.ResetMatrices(device.Viewport.Width, device.Viewport.Height);
             _3DWorld.DrawBefore2D(device, State);
 
@@ -389,12 +463,6 @@ namespace FSO.LotView
             State._2D.OutputDepth = false;
         }
 
-        public void InvalidatePreciseZoom()
-        {
-            if (Blueprint == null) { return; }
-            Blueprint.Damage.Add(new BlueprintDamage(BlueprintDamageType.PRECISE_ZOOM));
-        }
-
         /// <summary>
         /// Gets the ID of the object at a given position.
         /// </summary>
@@ -408,13 +476,7 @@ namespace FSO.LotView
             return _2DWorld.GetObjectIDAtScreenPos(x, y, gd, State);
         }
 
-        public Texture2D GetLotThumb(GraphicsDevice gd, Action<Texture2D> rooflessCallback)
-        {
-            State._2D.Begin(this.State.Camera);
-            return _2DWorld.GetLotThumb(gd, State, rooflessCallback);
-        }
-
-        /// <summary>
+         /// <summary>
         /// Gets an object group's thumbnail provided an array of objects.
         /// </summary>
         /// <param name="objects">The object components to draw.</param>
@@ -425,6 +487,29 @@ namespace FSO.LotView
         {
             State._2D.Begin(this.State.Camera);
             return _2DWorld.GetObjectThumb(objects, positions, gd, State);
+        }
+
+        public Texture2D GetLotThumb(GraphicsDevice gd)
+        {
+            State._2D.Begin(this.State.Camera);
+            return _2DWorld.GetLotThumb(gd, State);
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            State.AmbientLight.Dispose();
+            if (State._2D != null) State._2D.Dispose();
+            if (_2DWorld != null) _2DWorld.Dispose();
+            if (Blueprint != null)
+            {
+                foreach (var world in Blueprint.SubWorlds)
+                {
+                    world.Dispose();
+                }
+                //Blueprint.Terrain?.Dispose();
+                Blueprint.RoofComp?.Dispose();
+            }
         }
     }
 }

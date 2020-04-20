@@ -5,7 +5,7 @@
  */
 
 using System;
-using System.Collections.Generic;   
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using FSO.LotView.Components;
@@ -29,6 +29,7 @@ using FSO.SimAntics.Engine;
 using FSO.SimAntics.Primitives;
 using FSO.Client.GameContent;
 using tso.world.Model;
+using FSO.Client.UI.Model;
 
 namespace FSO.SimAntics
 {
@@ -38,11 +39,13 @@ namespace FSO.SimAntics
         public static uint TEMPLATE_NPC = 0x7FD96B56;
         public static uint NPC_MAID = 0xC61931DC;
         public static uint NPC_GARDENER = 0xD62B91B4;
-        public static uint DOG_TEMPLATE = 0x5F0C674C;
+        public static uint DOG_TEMPLATE = 0x3AC5D780;
+        public static uint CAT_TEMPLATE = 0x3762D78D;
 
         public SimAvatar Avatar;
 
         /** Animation vars **/
+        public VMTSOAvatarState AvatarState;
 
         public List<VMAnimationState> Animations;
         public VMAnimationState CurrentAnimationState {
@@ -91,7 +94,7 @@ namespace FSO.SimAntics
             set
             {
                 _BodyOutfit = value;
-                Avatar.Body = FSO.Content.Content.Get().AvatarOutfits.Get(value);
+                Avatar.Body = FSO.Content.Content.Get().AvatarOutfits.Get(value, false);
                 if (AvatarType == VMAvatarType.Adult || AvatarType == VMAvatarType.Child) Avatar.Handgroup = Avatar.Body;
             }
             get
@@ -106,7 +109,7 @@ namespace FSO.SimAntics
             set
             {
                 _HeadOutfit = value;
-                Avatar.Head = (_HeadOutfit == 0)?null:FSO.Content.Content.Get().AvatarOutfits.Get(value);
+                Avatar.Head = (_HeadOutfit == 0)?null:FSO.Content.Content.Get().AvatarOutfits.Get(value, false);
             }
             get
             {
@@ -192,7 +195,8 @@ namespace FSO.SimAntics
         public VMAvatar(GameObject obj)
             : base(obj)
         {
-            PlatformState = new VMTSOAvatarState(); //todo: ts1 switch
+            AvatarState = new VMTSOAvatarState(); //todo: ts1 switch
+            PlatformState = AvatarState;
             BodyStrings = Object.Resource.Get<STR>(Object.OBJ.BodyStringID);
             Visitor = false;
             SetAvatarType(BodyStrings);
@@ -234,8 +238,8 @@ namespace FSO.SimAntics
             {
                 case VMAvatarType.Adult:
                     Avatar = new SimAvatar(FSO.Content.Content.Get().AvatarSkeletons.Get("adult.skel"));
-                    Avatar.Head = FSO.Content.Content.Get().AvatarOutfits.Get(SetAvatarRandomOutfit(1));
-                    Avatar.Body = FSO.Content.Content.Get().AvatarOutfits.Get(SetAvatarRandomOutfit(0));
+                    Avatar.Head = FSO.Content.Content.Get().AvatarOutfits.Get(SetAvatarRandomOutfit(1), false);
+                    Avatar.Body = FSO.Content.Content.Get().AvatarOutfits.Get(SetAvatarRandomOutfit(0), false);
                     Avatar.Handgroup = Avatar.Body;
 
                     break;
@@ -373,8 +377,8 @@ namespace FSO.SimAntics
                 AppearanceType type;
                 Enum.TryParse(charInfo.Appearance, out type);
 
-                var headPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Head, 16));
-                var bodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Body, 16));
+                var headPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Head, 16), false);
+                var bodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(charInfo.Body, 16), false);
 
                 Name = charInfo.Name;
                 SkinTone = type;
@@ -387,9 +391,9 @@ namespace FSO.SimAntics
                     SetPersonData(VMPersonDataVariable.Gender, 1);
 
                 Outfit HeadOutfit = Content.Content.Get().AvatarOutfits.Get(headPurchasable != null ? headPurchasable.OutfitID :
-                Convert.ToUInt64(charInfo.Head, 16));
+                Convert.ToUInt64(charInfo.Head, 16), false);
                 Outfit BodyOutfit = Content.Content.Get().AvatarOutfits.Get(bodyPurchasable != null ? bodyPurchasable.OutfitID :
-                Convert.ToUInt64(charInfo.Body, 16));
+                Convert.ToUInt64(charInfo.Body, 16), false);
                 Avatar.Head = HeadOutfit;
                 Avatar.Body = BodyOutfit;
                 Avatar.Handgroup = Avatar.Body;
@@ -408,7 +412,11 @@ namespace FSO.SimAntics
                 MotiveData[i] = 75;
             }
 
-
+            if (charInfo.Data.Count > 0)
+            {
+                SetPersonData(VMPersonDataVariable.CookingSkill, (short)(charInfo.Data[0].Value));
+                SetPersonData(VMPersonDataVariable.CharismaSkill, (short)(charInfo.Data[1].Value));
+            }
         }
 
         public void InitBodyData(VMContext context)
@@ -462,7 +470,7 @@ namespace FSO.SimAntics
             SetPersonData(VMPersonDataVariable.CharismaSkill, 1000);
             SetPersonData(VMPersonDataVariable.LogicSkill, 1000);
             SetPersonData(VMPersonDataVariable.BodySkill, 1000);
-
+            
             SetPersonData(VMPersonDataVariable.NumOutgoingFriends, 100);
             SetPersonData(VMPersonDataVariable.IncomingFriends, 100);
         }
@@ -912,12 +920,20 @@ namespace FSO.SimAntics
 
         public override Texture2D GetIcon(GraphicsDevice gd, int store)
         {
+            var icon = new Texture2D(gd, 0, 0);
+
             if (Avatar.Head == null && Avatar.Body == null) return null;
             Outfit ThumbOutfit = (Avatar.Head == null) ? Avatar.Body : Avatar.Head;
             var AppearanceID = ThumbOutfit.GetAppearance(Avatar.Appearance);
             var Appearance = FSO.Content.Content.Get().AvatarAppearances.Get(AppearanceID);
 
-            return FSO.Content.Content.Get().AvatarThumbnails.Get(Appearance.ThumbnailTypeID, Appearance.ThumbnailFileID).Get(gd);
+            if (IsPet)
+                icon = UIIconCache.GetObject(this);
+            else
+                icon = FSO.Content.Content.Get().AvatarThumbnails.Get(Appearance.ThumbnailTypeID, Appearance.ThumbnailFileID, false).Get(gd);
+     
+            
+            return icon;
         }
 
         #region VM Marshalling Functions
@@ -1002,18 +1018,18 @@ namespace FSO.SimAntics
             BodyOutfit = input.BodyOutfit;
             HeadOutfit = input.HeadOutfit;
 
-            var headPurchasable = Content.Content.Get().AvatarPurchasables.Get(input.BodyOutfit);
-            var bodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(input.HeadOutfit);
+            var headPurchasable = Content.Content.Get().AvatarPurchasables.Get(input.BodyOutfit, false);
+            var bodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(input.HeadOutfit, false);
 
             Outfit Head = Content.Content.Get().AvatarOutfits.Get(headPurchasable != null ? headPurchasable.OutfitID :
-            BodyOutfit);
+            HeadOutfit, false);
             Outfit Body = Content.Content.Get().AvatarOutfits.Get(bodyPurchasable != null ? bodyPurchasable.OutfitID :
-            HeadOutfit);
+            BodyOutfit, false);
 
 
             Avatar.Head = Head;
             Avatar.Body = Body;
-            Avatar.Handgroup = Avatar.Body;
+            //Avatar.Handgroup = Avatar.Body;
             
         }
         #endregion

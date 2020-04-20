@@ -10,7 +10,8 @@ using System.IO;
 using System.Text;
 using System.Collections.Concurrent;
 using System.Globalization;
-using TSO.Files.FAR3;
+using FSO.Files.FAR3;
+
 
 namespace TSO.Files
 {

@@ -1,4 +1,5 @@
-﻿using FSO.SimAntics.Model.TSOPlatform;
+﻿using FSO.SimAntics.Entities;
+using FSO.SimAntics.Model.TSOPlatform;
 using FSO.SimAntics.NetPlay.Model.Commands;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,14 @@ namespace FSO.SimAntics.Engine.TSOTransaction
         void QueueArchitecture(VMNetArchitectureCmd cmd);
         void LoadPluginPersist(VM vm, uint objectPID, uint pluginID, VMAsyncPluginLoadCallback callback);
         void SavePluginPersist(VM vm, uint objectPID, uint pluginID, byte[] data);
+        void MoveToInventory(VM vm, VMMultitileGroup obj, VMAsyncInventorySaveCallback callback);
+        void ForceInInventory(VM vm, uint objectPID, VMAsyncInventorySaveCallback callback);
+        void UpdateObjectPersist(VM vm, VMMultitileGroup obj, VMAsyncInventorySaveCallback callback);
+        void PurchaseFromOwner(VM vm, VMMultitileGroup obj, uint purchaserPID, VMAsyncInventorySaveCallback callback, VMAsyncTransactionCallback tcallback);
+        void RetrieveFromInventoryByType(VM vm, uint ownerPID, uint guid, int index, bool setOnLot, VMAsyncInventoryRetrieveCallback callback);
+        void RetrieveFromInventory(VM vm, uint objectPID, uint ownerPID, bool setOnLot, VMAsyncInventoryRetrieveCallback callback);
+        void ConsumeInventory(VM vm, uint ownerPID, uint guid, int mode, short num, VMAsyncInventoryConsumeCallback callback);
+        void DeleteObject(VM vm, uint objectPID, VMAsyncDeleteObjectCallback callback);
 
         void Tick(VM vm);
     }
@@ -24,4 +33,10 @@ namespace FSO.SimAntics.Engine.TSOTransaction
     public delegate void VMAsyncTransactionCallback(bool success, int transferAmount, uint uid1, uint budget1, uint uid2, uint budget2);
     public delegate void VMAsyncAvatarCallback(uint persistID, VMTSOAvatarPermissions permissions); //TODO: VMPersistAvatarBlock
     public delegate void VMAsyncPluginLoadCallback(byte[] data); //null if none available
+
+    public delegate void VMAsyncInventorySaveCallback(bool success, uint objid); //todo: failure reasons
+    public delegate void VMAsyncInventoryRetrieveCallback(uint guid, byte[] data);
+    public delegate void VMAsyncInventoryConsumeCallback(bool success, int result); //todo: failure reasons
+    public delegate void VMAsyncDeleteObjectCallback(bool success); //todo: failure reasons
+
 }

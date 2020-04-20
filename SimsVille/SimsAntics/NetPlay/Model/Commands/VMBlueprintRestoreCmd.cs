@@ -16,6 +16,7 @@ using FSO.Common;
 using FSO.SimAntics.Primitives;
 using FSO.Vitaboy;
 using FSO.Files.Formats.IFF;
+using FSO.SimAntics.Model.TSOPlatform;
 
 namespace FSO.SimAntics.NetPlay.Model.Commands
 {
@@ -73,25 +74,27 @@ namespace FSO.SimAntics.NetPlay.Model.Commands
                 uint vsimID = (0);
                 Enum.TryParse(Char.Appearance, out type);
 
-                var vheadPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(Char.Head, 16));
-                var vbodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(Char.Body, 16));
+                var vheadPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(Char.Head, 16), false);
+                var vbodyPurchasable = Content.Content.Get().AvatarPurchasables.Get(Convert.ToUInt64(Char.Body, 16), false);
                 var vHeadID = vheadPurchasable != null ? vheadPurchasable.OutfitID :
                     Convert.ToUInt64(Char.Head, 16);
                 var vBodyID = vbodyPurchasable != null ? vbodyPurchasable.OutfitID :
                     Convert.ToUInt64(Char.Body, 16);
 
-                VMAvatar visitor = vm.Activator.CreateAvatar
-                    (Convert.ToUInt32(Char.ObjID, 16), Char, true, Convert.ToInt16(Char.Id));
+              VMAvatar visitor = vm.Activator.CreateAvatar
+                (vm, Convert.ToUInt32(Char.ObjID, 16), Char, true, Convert.ToInt16(Char.Id));
 
-                if (!vm.Entities.Contains(visitor))
-                    vm.SendCommand(new VMNetVisitorCmd
+               if (!vm.Entities.Contains(visitor))
+                    vm.SendCommand(new VMNetSimJoinCmd
                     {
                         ActorUID = vsimID,
                         HeadID = vHeadID,
                         BodyID = vBodyID,
                         SkinTone = (byte)type,
                         Gender = Char.Gender == "male" ? true : false,
-                        Name = Char.Name
+                        Name = Char.Name,
+                        Permissions = VMTSOAvatarPermissions.Visitor
+                        
 
                     });
             }

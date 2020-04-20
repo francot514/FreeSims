@@ -1,17 +1,16 @@
-﻿using System;
+﻿using FSO.LotView.Model;
+using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Microsoft.Xna.Framework;
+using System.Threading.Tasks;
 using Microsoft.Xna.Framework.Graphics;
-using FSO.LotView.Model;
-using FSO.LotView;
 using FSO.LotView.Utils;
 using FSO.Common.Utils;
 
-namespace tso.world.Components
+namespace FSO.LotView.Components
 {
-    
     public class RoofComponent : WorldComponent, IDisposable
     {
         public Blueprint blueprint;
@@ -36,38 +35,28 @@ namespace tso.world.Components
         public RoofComponent(Blueprint bp)
         {
             blueprint = bp;
-            RoofRects = new List<RoofRect>[bp.Stories];
-            Drawgroups = new RoofDrawGroup[bp.Stories];
+            RoofRects = new List<RoofRect>[bp.Stories - 1];
+            Drawgroups = new RoofDrawGroup[bp.Stories - 1];
             this.Effect = WorldContent.GrassEffect;
         }
 
         public void RegenRoof(GraphicsDevice device)
         {
-            var roofs = FSO.Content.Content.Get().WorldRoofs;
-
-            if (roofs.Count > 0)
+            var roofs = Content.Content.Get().WorldRoofs;
+            Texture = roofs.Get(roofs.IDToName((int)RoofStyle)).Get(device);
+            for (int i=1; i<blueprint.Stories; i++)
             {
-                Texture = roofs.Get(roofs.IDToName((int)RoofStyle)).Get(device);
-                for (int i=1; i<=blueprint.Stories; i++)
-                {
-                    RegenRoof((sbyte)(i + 1), device);
-                }
-
+                RegenRoof((sbyte)(i + 1), device);
             }
         }
 
         public void RemeshRoof(GraphicsDevice device)
         {
-            var roofs = FSO.Content.Content.Get().WorldRoofs;
-
-            if (roofs.Count > 0)
+            var roofs = Content.Content.Get().WorldRoofs;
+            Texture = roofs.Get(roofs.IDToName((int)RoofStyle)).Get(device);
+            for (int i = 1; i < blueprint.Stories; i++)
             {
-                Texture = roofs.Get(roofs.IDToName((int)RoofStyle)).Get(device);
-                for (int i = 1; i < blueprint.Stories; i++)
-                {
-                    MeshRects((sbyte)(i + 1), device);
-                }
-
+                MeshRects((sbyte)(i + 1), device);
             }
         }
 
@@ -113,7 +102,7 @@ namespace tso.world.Components
         {
             var rects = RoofRects[level-2];
             if (rects == null) return;
-            if (Drawgroups[level - 2] != null && Drawgroups[level - 2].NumPrimitives > 0)
+            if (Drawgroups[level - 2] != null)
             {
                 Drawgroups[level - 2].VertexBuffer.Dispose();
                 Drawgroups[level - 2].IndexBuffer.Dispose();
@@ -190,14 +179,11 @@ namespace tso.world.Components
             }
             
             var result = new RoofDrawGroup();
-            if (numPrimitives > 0)
-            {
-                result.VertexBuffer = new VertexBuffer(device, typeof(TerrainVertex), Geom.Length, BufferUsage.None);
-                if (Geom.Length > 0) result.VertexBuffer.SetData(Geom);
+            result.VertexBuffer = new VertexBuffer(device, typeof(TerrainVertex), Geom.Length, BufferUsage.None);
+            if (Geom.Length > 0) result.VertexBuffer.SetData(Geom);
 
-                result.IndexBuffer = new IndexBuffer(device, IndexElementSize.ThirtyTwoBits, sizeof(int) * Indexes.Length, BufferUsage.None);
-                if (Geom.Length > 0) result.IndexBuffer.SetData(Indexes);
-            }
+            result.IndexBuffer = new IndexBuffer(device, IndexElementSize.ThirtyTwoBits, sizeof(int) * Indexes.Length, BufferUsage.None);
+            if (Geom.Length > 0) result.IndexBuffer.SetData(Indexes);
 
             result.NumPrimitives = numPrimitives;
 
@@ -206,7 +192,7 @@ namespace tso.world.Components
 
         private Vector3 ToWorldPos(int x, int y, int z, int level, float pitch)
         {
-            return new Vector3((x / 16f) * 3f, (z * pitch / 16f) * 3f + ((level - 1) * 2.95f * 3f) + blueprint.GetAltitude(x / 16, y / 16) * 3, (y / 16f) * 3f);
+            return new Vector3((x/16f) * 3f, (z * pitch / 16f) * 3f + ((level -1)* 2.95f * 3f), (y / 16f) * 3f);
         }
 
         private static Point[] advanceByDir = new Point[]
@@ -391,7 +377,7 @@ namespace tso.world.Components
 
         public bool IndoorsOrFloor(int x, int y, int level)
         {
-            return level <= blueprint.Stories && (TileIndoors(x,y,level) || blueprint.GetFloor((short)x, (short)y, (sbyte)level).Pattern != 0);
+            return TileIndoors(x,y,level) || blueprint.GetFloor((short)x, (short)y, (sbyte)level).Pattern != 0;
         }
 
         public bool IsRoofable(LotTilePos pos)
@@ -462,7 +448,7 @@ namespace tso.world.Components
         {
             foreach (var buf in Drawgroups)
             {
-                if (buf != null && buf.NumPrimitives > 0)
+                if (buf != null)
                 {
                     buf.IndexBuffer.Dispose();
                     buf.VertexBuffer.Dispose();
@@ -495,8 +481,8 @@ namespace tso.world.Components
                         world._3D.ApplyCamera(Effect);
                         Effect.Parameters["World"].SetValue(Matrix.Identity);
                         Effect.Parameters["DiffuseColor"].SetValue(new Vector4(world.OutsideColor.R / 255f, world.OutsideColor.G / 255f, world.OutsideColor.B / 255f, 1.0f));
-                        //Effect.Parameters["UseTexture"].SetValue(true);
-                        //Effect.Parameters["BaseTex"].SetValue(Texture);
+                        Effect.Parameters["UseTexture"].SetValue(true);
+                        Effect.Parameters["BaseTex"].SetValue(Texture);
 
                         device.SetVertexBuffer(dg.VertexBuffer);
                         device.Indices = dg.IndexBuffer;
@@ -505,7 +491,8 @@ namespace tso.world.Components
                         foreach (var pass in Effect.CurrentTechnique.Passes)
                         {
                             pass.Apply();
-                            device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0 ,0 , 0, dg.NumPrimitives);
+                            device.DrawPrimitives(PrimitiveType.TriangleList, 0, dg.NumPrimitives);
+                            //device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 0, 0, dg.NumPrimitives);
                         }
                     });
                 }
@@ -520,6 +507,4 @@ namespace tso.world.Components
         public VertexBuffer VertexBuffer;
         public int NumPrimitives;
     }
-
-                                 
 }

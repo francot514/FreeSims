@@ -10,7 +10,7 @@ namespace FSO.SimAntics.Model
     {
         private VMContext Context;
         private Dictionary<int, List<VMEntity>> TileToObjects = new Dictionary<int, List<VMEntity>>();
-
+        private Dictionary<short, List<VMEntity>> ObjectsByCategory = new Dictionary<short, List<VMEntity>>();
         private Dictionary<uint, List<VMEntity>> ObjectsByGUID = new Dictionary<uint, List<VMEntity>>();
         public List<VMEntity> Avatars = new List<VMEntity>();
 
@@ -23,6 +23,29 @@ namespace FSO.SimAntics.Model
         {
             if (pos == LotTilePos.OUT_OF_WORLD) return -1;
             return pos.TileX + pos.TileY * Context.Architecture.Width + (pos.Level - 1) * Context.Architecture.Width * Context.Architecture.Height;
+        }
+
+        public void RegisterCategory(VMEntity obj, short category)
+        {
+            List<VMEntity> tile = null;
+            ObjectsByCategory.TryGetValue(category, out tile);
+            if (tile == null)
+            {
+                tile = new List<VMEntity>();
+                ObjectsByCategory.Add(category, tile);
+            }
+            //debug check: use if things are going weird
+            //if (!tile.Contains(obj))
+            VM.AddToObjList(tile, obj);
+        }
+
+        public void RemoveCategory(VMEntity obj, short category)
+        {
+            List<VMEntity> tile = null;
+            ObjectsByCategory.TryGetValue(category, out tile);
+            if (tile == null) return; //???
+            VM.DeleteFromObjList(tile, obj);
+            if (tile.Count == 0) ObjectsByCategory.Remove(category);
         }
 
         public void RegisterObjectPos(VMEntity ent)
@@ -115,6 +138,13 @@ namespace FSO.SimAntics.Model
         {
             List<VMEntity> tile = null;
             ObjectsByGUID.TryGetValue(guid, out tile);
+            return tile;
+        }
+
+        public List<VMEntity> GetObjectsByCategory(short category)
+        {
+            List<VMEntity> tile = null;
+            ObjectsByCategory.TryGetValue(category, out tile);
             return tile;
         }
     }

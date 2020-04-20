@@ -72,10 +72,8 @@ namespace FSO.Client
                 Files.Formats.IFF.Chunks.STR.DefaultLangCode = (Files.Formats.IFF.Chunks.STRLangCode)GlobalSettings.Default.Language;
 
                 GlobalSettings.Default.StartupPath = path;
-                string DocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Sims Ville";
-                if (!Directory.Exists(DocumentsPath))
-                    Directory.CreateDirectory(DocumentsPath);
-                GlobalSettings.Default.DocumentsPath = DocumentsPath;
+           
+                
                 GlobalSettings.Default.Save();
                 return true;
             }
