@@ -8,3 +8,12 @@ environment:
 build:
   project: SimsVille/SimsVille.csproj
   verbosity: minimal
+  
+for:
+-
+  matrix:
+    only:
+      - image: Ubuntu
+
+  build_script:
+  - echo Ubuntu build script
