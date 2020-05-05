@@ -12,6 +12,9 @@ namespace FSO.Files.Formats.IFF.Chunks
     {
         public Dictionary<uint, short[]> TypeAttributesByGUID = new Dictionary<uint, short[]>();
 
+        public uint Version;
+        public int Offset;
+
         public override void Read(IffFile iff, Stream stream)
         {
             using (var io = IoBuffer.FromStream(stream, ByteOrder.LITTLE_ENDIAN))

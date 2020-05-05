@@ -26,7 +26,7 @@ namespace FSO.Files.Formats.IFF.Chunks
         public Dictionary<short, List<InventoryItem>> InventoryByID = new Dictionary<short, List<InventoryItem>>();
 
         public uint Version;
-
+        public int Offset;
         /// <summary>
         /// Reads a NGBH chunk from a stream.
         /// </summary>

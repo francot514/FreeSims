@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using FSO.Files.Formats.IFF.Chunks;
 
 namespace FileParser.Data.Sims
 {
@@ -9,6 +10,9 @@ namespace FileParser.Data.Sims
     {
         public int ID, Offset, Chunks;
         public string Name;
+        public ARRY[] Arrys;
+        public OBJM ObjectMap;
+        public OBJT ObjectTable;
 
         public House(int id)
         {

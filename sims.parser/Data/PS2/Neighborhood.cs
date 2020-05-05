@@ -10,7 +10,7 @@ namespace FileParser.Data.Sims
         public int Offset, Chunks;
         public NGBH Main;
         public NBRS Scores;
-        //public TTAT Tables;
+        public TATT Tables;
         public List<FAMI> Families;
 
         public Neighborhood()
@@ -18,7 +18,7 @@ namespace FileParser.Data.Sims
             Families = new List<FAMI>();
             Main = new NGBH();
             Scores = new NBRS();
-            //Tables = new TTAT();
+            Tables = new TATT();
 
         }
 

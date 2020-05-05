@@ -102,14 +102,16 @@ namespace FileParser
 
                 Items[0] = SimsGame.DefaultNgh.Neighborhood.Main.ChunkLabel;
                 Items[1] = SimsGame.DefaultNgh.Neighborhood.Scores.ChunkLabel;
-                //Items[2] = SimsGame.DefaultNgh.Neighborhood.Tables.Name;
+                Items[2] = SimsGame.DefaultNgh.Neighborhood.Tables.ChunkLabel;
 
                 for (int i = 0; i < Items.Length; i++)
                     if (Items[i] != null)
                         listBox1.Items.Add(Items[i]);
 
 
+                label6.Text = SimsGame.DefaultNgh.Houses.Count.ToString();
 
+                label8.Text = SimsGame.DefaultNgh.Neighborhood.Families.Count.ToString();
             }
 
 
