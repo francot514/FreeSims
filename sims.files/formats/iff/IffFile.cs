@@ -60,6 +60,7 @@ namespace FSO.Files.Formats.IFF
             {"SIMI", typeof(SIMI) },
             {"TATT", typeof(TATT) },
             {"HOUS", typeof(HOUS) },
+            {"THMB", typeof(THMB) },
             {"PIFF", typeof(PIFF) }
         };
 
@@ -103,7 +104,8 @@ namespace FSO.Files.Formats.IFF
                 var identifier = io.ReadCString(60, false).Replace("\0", "");
                 if (identifier != "IFF FILE 2.5:TYPE FOLLOWED BY SIZE JAMIE DOORNBOS & MAXIS 1")
                 {
-                    throw new Exception("Invalid iff file!");
+                    if (identifier != "IFF FILE 2.0:TYPE FOLLOWED BY SIZE JAMIE DOORNBOS & MAXIS 1") //house11.iff, seems to read fine
+                        throw new Exception("Invalid iff file!");
                 }
 
                 var rsmpOffset = io.ReadUInt32();

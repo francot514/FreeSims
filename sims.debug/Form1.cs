@@ -37,28 +37,30 @@ namespace sims.debug
             
         }
 
-        private void LoadHouses(string path)
+        private void LoadHouse(string path)
         {
-            Housedir = path + "/Houses";
+           
 
             
 
-            DirectoryInfo housedirinfo = new DirectoryInfo(Housedir);
-            label5.Text = housedirinfo.Name;
+            FileInfo housefile = new FileInfo(path);
+            label5.Text = housefile.Name;
 
+            IffFile iff = new IffFile(path);
 
-            foreach (FileInfo file in housedirinfo.GetFiles())
-                if (file.Extension == ".iff" && file.Name.Contains("House") && !file.Name.Contains("House00") && !file.Name.Contains("House11"))
-                {
+            foreach (BMP bmp in iff.List<BMP>())
+                if (bmp.ChunkID == 512)
+                    pictureBox1.BackgroundImage = bmp.GetBitmap();
 
+            foreach (OBJT obj in iff.List<OBJT>())
+            {
+                var entries = obj.Entries;
 
-                    string house = file.Name.Split('_')[0];
+                foreach (OBJTEntry entry in entries)
+                    if (entry.Name != null)
+                        listBox4.Items.Add(entry.Name);
+            }
 
-                    listBox3.Items.Add(file.Name);
-
-
-
-                }
         }
 
         private void LoadFamilies(string path)
@@ -431,11 +433,18 @@ namespace sims.debug
         private void loadToolStripMenuItem_Click(object sender, EventArgs e)
         {
 
-            listBox3.Items.Clear();
-            int current = comboBox1.SelectedIndex;
+            openFileDialog1.InitialDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            openFileDialog1.Filter = "Sims file (*.iff)|*.iff|All Files (*.*)|*.*";
+            openFileDialog1.FilterIndex = 1;
 
-            if (current == 0)
-                LoadHouses(Userpath);
+            if (this.openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                if (openFileDialog1.FileName.Contains("House"))
+                    LoadHouse(openFileDialog1.FileName);
+
+
+
+            }
 
         }
 
