@@ -91,6 +91,7 @@
     <Compile Include="formats\iff\chunks\SPR2.cs" />
     <Compile Include="formats\iff\chunks\SPR2FrameEncoder.cs" />
     <Compile Include="formats\iff\chunks\STR.cs" />
+    <Compile Include="formats\iff\chunks\THMB.cs" />
     <Compile Include="formats\iff\chunks\TPRP.cs" />
     <Compile Include="formats\iff\chunks\TTAB.cs" />
     <Compile Include="formats\iff\chunks\TTAs.cs" />
