@@ -79,7 +79,11 @@ namespace TSO.HIT
 
         public float GetVolFactor()
         {
-            return VM?.GetMasterVolume(VolGroup) ?? 1f;
+
+            if (VM != null)
+                return VM.GetMasterVolume(VolGroup);
+                    
+            return 1f;
         }
 
         public void RemoveOwner(int id)

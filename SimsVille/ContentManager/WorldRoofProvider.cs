@@ -1,4 +1,5 @@
-﻿using FSO.Content.Codecs;
+﻿using FSO.Common;
+using FSO.Content.Codecs;
 using FSO.Content.Framework;
 using FSO.Content.Model;
 using System;
@@ -13,6 +14,8 @@ namespace FSO.Content
 {
     public class WorldRoofProvider : FileProvider<ITextureRef>
     {
+        public string RoofsPath = "housedata" + Path.DirectorySeparatorChar +
+                "Roofs";
 
         public List<string> Roofs;
 
@@ -20,13 +23,18 @@ namespace FSO.Content
         {
 
             Roofs = new List<string>();
-            DirectoryInfo roofsDir = new DirectoryInfo(ContentManager.GetPath("housedata/roofs/"));
-
-            if (roofsDir.GetFiles().Count() > 0)
+            
+            if (Directory.Exists(Path.Combine(contentManager.BasePath, RoofsPath)))
             {
+               DirectoryInfo roofsDir = new DirectoryInfo(Path.Combine(contentManager.BasePath, RoofsPath));
+
+                if (roofsDir.GetFiles().Count() > 0)
+                {
 
                 foreach (var file in roofsDir.GetFiles())
-                    Roofs.Add("housedata/roofs/" + file.Name);
+                   Roofs.Add(Path.Combine(RoofsPath, file.Name));
+
+                }
 
             }
 
