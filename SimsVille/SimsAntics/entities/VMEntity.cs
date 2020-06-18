@@ -304,7 +304,7 @@ namespace FSO.SimAntics
                 Thread.Tick();
                 if (SoundThreads.Count > 0) TickSounds();
             }
-            if (Headline != null)
+            if (Headline != null && HeadlineRenderer != null)
             {
                 var over = HeadlineRenderer.Update();
                 if (over)

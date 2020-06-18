@@ -176,6 +176,12 @@ namespace TSO.HIT
             }
         }
 
+        public HITThread()
+        {
+
+
+        }
+
         public HITThread(HITFile Src, HITVM VM)
         {
             this.Src = Src;
@@ -192,6 +198,8 @@ namespace TSO.HIT
             Stack = new Stack<int>();
             audContent = FSO.Content.Content.Get().Audio;
         }
+
+        
 
         public HITThread(uint TrackID)
         {
@@ -463,7 +471,9 @@ namespace TSO.HIT
 
         public override void Dispose()
         {
-            InterruptWaiter?.Unblock();
+            if (InterruptWaiter != null)
+                InterruptWaiter.Unblock();
+
             foreach (var note in Notes) note.instance.Dispose();
         }
 

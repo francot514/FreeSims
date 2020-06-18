@@ -172,15 +172,15 @@ namespace TSO.HIT
                 if (aevt.Dead) ActiveEvents.Remove(evt); //if the last event is dead, remove and make a new one
                 else
                 {
-                    if ((aevt as HITThread)?.InterruptBlocker != null)
+                    if (aevt != null && ((HITThread)(aevt)).InterruptBlocker != null)
                     {
                         //we can stop this thread - steal its waiter
-                        (aevt as HITThread).Dead = true;
-                        InterruptBlocker = (aevt as HITThread).InterruptBlocker;
+                        ((HITThread)(aevt)).Dead = true;
+                        InterruptBlocker = ((HITThread)(aevt)).InterruptBlocker;
                     }
-                    else if ((aevt as HITThread)?.Interruptable == true)
+                    else if (aevt != null && ((HITThread)(aevt)).Interruptable == true)
                     {
-                        InterruptBlocker = (aevt as HITThread);
+                        InterruptBlocker = ((HITThread)(aevt));
                     }
                     else return aevt; //an event of this type is already alive - here, take it.
                 }
