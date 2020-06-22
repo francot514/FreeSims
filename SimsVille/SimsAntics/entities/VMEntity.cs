@@ -45,7 +45,7 @@ namespace FSO.SimAntics
         public VMEntityRTTI RTTI;
         public bool GhostImage;
         public bool Reseted;
-        public bool Portal => EntryPoints[15].ActionFunction != 0;
+        public bool Portal;
         public VMMultitileGroup GhostOriginal; //Ignore collisions/slots from any of these objects.
 
         //own properties (for instance)
@@ -185,6 +185,10 @@ namespace FSO.SimAntics
              * For some reason, in the aquarium object (maybe others) the numAttributes is set to 0
              * but it should be 4. There are 4 entries in the label table. Go figure?
              */
+
+            if (EntryPoints != null && EntryPoints.Length > 0)
+            Portal = EntryPoints[15].ActionFunction != 0;
+
             ObjectData = new short[80];
             MeToObject = new Dictionary<ushort, List<short>>();
             SoundThreads = new List<VMSoundEntry>();
