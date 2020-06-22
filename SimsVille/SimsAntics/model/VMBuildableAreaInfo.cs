@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static FSO.Content.WorldObjectCatalog;
+
 
 namespace FSO.SimAntics.Model
 {
@@ -116,7 +116,7 @@ namespace FSO.SimAntics.Model
             return sizeMode * Math.Max(1, lotInfo.Roommates.Count);
         }
 
-        public static int GetDiscountFor(ObjectCatalogItem item, VM vm)
+        public static int GetDiscountFor(WorldObjectCatalog.ObjectCatalogItem item, VM vm)
         {
             if (vm == null || vm.TS1 || vm.TSOState.PropertyCategory != 5) return 0;
             var guid = item.GUID;
