@@ -31,7 +31,7 @@ namespace sims.debug
             foreach (DirectoryInfo dir in dirinfo.GetDirectories())
                 listBox1.Items.Add(dir.FullName);
 
-            FileInfo file = new FileInfo(AppDomain.CurrentDomain.BaseDirectory + "/Objects/Objects.far");
+            FileInfo file = new FileInfo(AppDomain.CurrentDomain.BaseDirectory + "GameData/Objects/Objects.far");
             if (File.Exists(file.FullName))
                 listBox2.Items.Add(file.FullName);
             
@@ -395,15 +395,23 @@ namespace sims.debug
         private void button6_Click(object sender, EventArgs e)
         {
 
-            string current = listBox3.SelectedItem.ToString();
-            string userdata = comboBox1.SelectedItem.ToString();
+            string current = "";
+            if (listBox3.SelectedItem != null)
+                current = listBox3.SelectedItem.ToString();
+            string userdata = "";
+            if (listBox1.SelectedItem != null)
+             userdata = comboBox1.SelectedItem.ToString();
 
 
-            var iff = new IffFile(userdata + "/Houses" + current + ".iff");
+            var iff = new IffFile(Userpath + "/" + userdata + "/Houses/" + current);
 
             var simi = iff.Get<SIMI>(326);
 
-           // int value = simi.ArchitectureValue();
+            // int value = simi.ArchitectureValue();
+            var obj = iff.Get<OBJT>(0);
+
+            var bmp = iff.Get<BMP>(512);
+
 
             //int rooms = simi.Rooms();
 
@@ -428,6 +436,16 @@ namespace sims.debug
 
                     }
             }
+        }
+
+        private void listBox4_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string current = listBox4.SelectedItem.ToString();
+
+
+            IffFile file = new IffFile(AppDomain.CurrentDomain.BaseDirectory + current + ".iff");
+
+
         }
 
         private void loadToolStripMenuItem_Click(object sender, EventArgs e)

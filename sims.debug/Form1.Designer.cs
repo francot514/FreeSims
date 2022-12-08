@@ -48,6 +48,7 @@
             this.listBox1 = new System.Windows.Forms.ListBox();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.label9 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.listBox4 = new System.Windows.Forms.ListBox();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
@@ -59,7 +60,6 @@
             this.label5 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.label9 = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -268,6 +268,15 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Houses";
             // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(158, 117);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(19, 13);
+            this.label9.TabIndex = 23;
+            this.label9.Text = "00";
+            // 
             // label8
             // 
             this.label8.AutoSize = true;
@@ -284,6 +293,7 @@
             this.listBox4.Name = "listBox4";
             this.listBox4.Size = new System.Drawing.Size(155, 95);
             this.listBox4.TabIndex = 22;
+            this.listBox4.SelectedIndexChanged += new System.EventHandler(this.listBox4_SelectedIndexChanged);
             // 
             // pictureBox1
             // 
@@ -362,15 +372,6 @@
             this.label4.Size = new System.Drawing.Size(52, 13);
             this.label4.TabIndex = 0;
             this.label4.Text = "Directory:";
-            // 
-            // label9
-            // 
-            this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(158, 117);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(19, 13);
-            this.label9.TabIndex = 23;
-            this.label9.Text = "00";
             // 
             // Form1
             // 
