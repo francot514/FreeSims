@@ -43,6 +43,7 @@ namespace SimsNet
             Port = port;
             TS1 = false;
             Dedicated = false;
+            WorldContent content = new WorldContent(); 
             ResetVM();
         }
 
@@ -60,6 +61,7 @@ namespace SimsNet
 
         public void ResetVM()
         {
+            
             VMNetDriver driver;
             driver = new VMServerDriver(Port, NetClosed);
 
