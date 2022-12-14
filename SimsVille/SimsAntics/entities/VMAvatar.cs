@@ -72,7 +72,7 @@ namespace FSO.SimAntics
         public Vector3 Velocity; //used for 60 fps walking animation
         public bool Visitor;
         private VMMotiveChange[] MotiveChanges = new VMMotiveChange[16];
-        private VMAvatarMotiveDecay MotiveDecay;
+        private VMTS1MotiveDecay MotiveDecay;
         private short[] PersonData = new short[100];
         private short[] MotiveData = new short[16];
         private VMEntity HandObject;
@@ -210,7 +210,7 @@ namespace FSO.SimAntics
             }
 
 
-            MotiveDecay = new VMAvatarMotiveDecay();
+            MotiveDecay = new VMTS1MotiveDecay();
             for (int i = 0; i < 16; i++)
             {
                 MotiveChanges[i] = new VMMotiveChange();
@@ -479,7 +479,7 @@ namespace FSO.SimAntics
         {
             base.Reset(context);
             if (Animations != null) Animations.Clear();
-            if (Headline != null)
+            if (Headline != null && HeadlineRenderer != null)
             {
                 HeadlineRenderer.Dispose();
                 Headline = null;
@@ -920,7 +920,7 @@ namespace FSO.SimAntics
 
         public override Texture2D GetIcon(GraphicsDevice gd, int store)
         {
-            var icon = new Texture2D(gd, 0, 0);
+            var icon = new Texture2D(gd, 1, 1);
 
             if (Avatar.Head == null && Avatar.Body == null) return null;
             Outfit ThumbOutfit = (Avatar.Head == null) ? Avatar.Body : Avatar.Head;
@@ -952,7 +952,7 @@ namespace FSO.SimAntics
                 MessageTimeout = MessageTimeout,
 
                 MotiveChanges = MotiveChanges,
-                MotiveDecay = MotiveDecay,
+               // MotiveDecay = MotiveDecay,
                 PersonData = PersonData,
                 MotiveData = MotiveData,
                 HandObject = (HandObject == null) ? (short)0 : HandObject.ObjectID,
@@ -982,7 +982,7 @@ namespace FSO.SimAntics
             MessageTimeout = input.MessageTimeout;
 
             MotiveChanges = input.MotiveChanges;
-            MotiveDecay = input.MotiveDecay;
+           // MotiveDecay = input.MotiveDecay;
             PersonData = input.PersonData;
             MotiveData = input.MotiveData;
             RadianDirection = input.RadianDirection;

@@ -91,7 +91,7 @@ namespace SimsVille.UI.Model
         public void LoadContent()
         {
 
-            Stream stream = File.Open("Content/nhood.png", FileMode.Open);
+            Stream stream = File.Open("Content/nhood.png", FileMode.Open, FileAccess.ReadWrite);
             TerrainImage = Texture2D.FromStream(m_GraphicsDevice, stream);
 
             Shader2D = GameFacade.Game.Content.Load<Effect>("Effects\\colorpoly2d");
@@ -345,8 +345,8 @@ namespace SimsVille.UI.Model
 
                 LotTileEntry lot = m_HousesData.LotTileData[i];
 
-               // if (m_HousesData.HousesImages[i] != null)
-                 //   sbatch.Draw(m_HousesData.HousesImages[i], new Rectangle(lot.x, lot.y, 256, 256), Color.White);       
+                if (m_HousesData.HousesImages[i] != null)
+                    sbatch.Draw(m_HousesData.HousesImages[i], new Rectangle(lot.x, lot.y, 256, 256), Color.White);       
 
 
             }

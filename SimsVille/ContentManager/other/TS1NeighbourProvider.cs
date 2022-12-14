@@ -15,12 +15,12 @@ namespace FSO.Content.TS1
     /// </summary>
     public class TS1NeighborhoodProvider
     {
-        public Files.Formats.IFF.IffFile MainResource;
-        public Files.Formats.IFF.IffFile LotLocations;
-        public Files.Formats.IFF.IffFile StreetNames;
-        public Files.Formats.IFF.IffFile NeighbourhoodDesc;
-        public Files.Formats.IFF.IffFile STDesc;
-        public Files.Formats.IFF.IffFile MTDesc;
+        public IffFile MainResource;
+        public IffFile LotLocations;
+        public IffFile StreetNames;
+        public IffFile NeighbourhoodDesc;
+        public IffFile STDesc;
+        public IffFile MTDesc;
         public Dictionary<short, short> ZoningDictionary = new Dictionary<short, short>();
         public NBRS Neighbors;
         public NGBH Neighborhood;
@@ -52,12 +52,12 @@ namespace FSO.Content.TS1
             //simitone shouldn't modify existing ts1 data, since our house saves are incompatible.
             //therefore we should copy to the simitone user data.
 
-            var userPath = FSOEnvironment.ContentDir;
+            var userPath = FSOEnvironment.SimsCompleteDir;
 
                
             UserPath = userPath;
 
-            MainResource = new Files.Formats.IFF.IffFile(Path.Combine(UserPath, "Neighborhood.iff"));
+            MainResource = new Files.Formats.IFF.IffFile(Path.Combine(UserPath, "UserData/Neighborhood.iff"));
 
             Neighbors = MainResource.List<NBRS>().FirstOrDefault();
             Neighborhood = MainResource.List<NGBH>().FirstOrDefault();

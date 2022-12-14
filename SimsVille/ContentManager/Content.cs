@@ -72,6 +72,8 @@ namespace FSO.Content
             TS1Global = new TS1Provider(this);
             TS1AvatarTextures = new TS1AvatarTextureProvider(TS1Global);
             TS1AvatarMeshes = new TS1BMFProvider(TS1Global);
+            //Jobs = new TS1JobProvider(TS1Global);
+            Neighborhood = new TS1NeighborhoodProvider(this);
 
             WorldObjects = new WorldObjectProvider(this);
             WorldFloors = new WorldFloorProvider(this);
@@ -218,6 +220,8 @@ namespace FSO.Content
         public TS1Provider TS1Global;
         public TS1AvatarTextureProvider TS1AvatarTextures;
         public TS1BMFProvider TS1AvatarMeshes;
+        TS1JobProvider Jobs;
+        TS1NeighborhoodProvider Neighborhood;
 
         /** Audio **/
         public Audio Audio;

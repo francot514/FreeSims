@@ -32,6 +32,7 @@ namespace FSO.Files.Formats.IFF
         private static Dictionary<string, Type> CHUNK_TYPES = new Dictionary<string, Type>()
         {
             {"STR#", typeof(STR)},
+            {"CARR", typeof(CARR) },
             {"CTSS", typeof(CTSS)},
             {"PALT", typeof(PALT)},
             {"OBJD", typeof(OBJD)},

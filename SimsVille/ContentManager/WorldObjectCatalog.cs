@@ -223,6 +223,32 @@ namespace FSO.Content
 
             }
 
+            if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/Deluxe"))
+            {
+
+                var deluxepackingslip = new XmlDocument();
+
+                deluxepackingslip.Load("Content/deluxe.xml");
+                var deluxeobjectInfos = deluxepackingslip.GetElementsByTagName("P");
+
+                foreach (XmlNode objectInfo in deluxeobjectInfos)
+                {
+                    sbyte Category = Convert.ToSByte(objectInfo.Attributes["s"].Value);
+                    uint guid = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
+                    if (Category < 0) continue;
+                    var item = new ObjectCatalogItem()
+                    {
+                        GUID = guid,
+                        Category = Category,
+                        Price = Convert.ToUInt32(objectInfo.Attributes["p"].Value),
+                        Name = objectInfo.Attributes["n"].Value
+                    };
+                    ItemsByCategory[Category].Add(item);
+                    ItemsByGUID[guid] = item;
+                }
+
+            }
+
             //load and build Content Objects into catalog
             if (File.Exists(Path.Combine(FSOEnvironment.ContentDir, "Objects/catalog_downloads.xml")))
             {

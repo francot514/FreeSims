@@ -338,6 +338,38 @@ namespace FSO.Content
 
             }
 
+            if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/Deluxe"))
+            {
+
+                string DeluxeFile = FSOEnvironment.SimsCompleteDir + "/Deluxe/Deluxe.far";
+                FarFiles.Add(DeluxeFile);
+                SpriteFiles.Add(DeluxeFile);
+
+
+
+                var deluxeobjects = new XmlDocument();
+                deluxeobjects.Load("Content/deluxe.xml");
+                var deluxeInfos = deluxeobjects.GetElementsByTagName("P");
+
+                foreach (XmlNode objectInfo in deluxeInfos)
+                {
+                    ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
+
+                    if (!Entries.ContainsKey(FileID))
+                        Entries.Add(FileID, new GameObjectReference(this)
+                        {
+                            ID = FileID,
+                            FileName = objectInfo.Attributes["n"].Value,
+                            Source = GameObjectSource.Far,
+                            Group = Convert.ToInt16(objectInfo.Attributes["m"].Value),
+                            SubIndex = Convert.ToInt16(objectInfo.Attributes["i"].Value),
+                            EpObject = true
+
+                        });
+                }
+
+            }
+
             if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/Downloads"))
             {
                 DirectoryInfo downloadsDir = new DirectoryInfo(FSOEnvironment.SimsCompleteDir + "/Downloads");

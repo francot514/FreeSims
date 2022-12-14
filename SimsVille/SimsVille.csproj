@@ -83,6 +83,7 @@
     <Compile Include="ContentManager\other\TS1AvatarTextureProvider.cs" />
     <Compile Include="ContentManager\other\TS1BCFProvider.cs" />
     <Compile Include="ContentManager\other\TS1BMFProvider.cs" />
+    <Compile Include="ContentManager\other\TS1JobProvider.cs" />
     <Compile Include="ContentManager\other\TS1NeighbourProvider.cs" />
     <Compile Include="ContentManager\other\TS1Provider.cs" />
     <Compile Include="ContentManager\ResAction.cs" />

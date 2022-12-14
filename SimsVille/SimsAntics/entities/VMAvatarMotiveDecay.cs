@@ -152,7 +152,7 @@ namespace FSO.SimAntics.Entities
             }
             moodSum += roomScore;
 
-            avatar.SetMotiveData(VMMotive.Mood, (short)(moodSum / 8));
+           avatar.SetMotiveData(VMMotive.Mood, (short)(moodSum / 8));
         }
 
         public int ToFixed1000(float input)

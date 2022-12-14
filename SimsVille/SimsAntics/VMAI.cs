@@ -187,7 +187,9 @@ using FSO.SimAntics.Engine;
 
 
                     if (Visitors[i].Thread.Queue.Count < 2 ||
-                        Visitors[i].Thread.Queue[0].Priority == (short)VMQueuePriority.Idle)
+                        Visitors[i].Thread.Queue[0].Priority == (short)VMQueuePriority.Idle ||
+                        Visitors[i].Thread.Queue[1].Priority == (short)VMQueuePriority.Idle )
+
                     {
                         RunAction(Visitors[i]);
                     }

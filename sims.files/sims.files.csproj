@@ -69,6 +69,7 @@
     <Compile Include="formats\iff\chunks\BCON.cs" />
     <Compile Include="formats\iff\chunks\BHAV.cs" />
     <Compile Include="formats\iff\chunks\BMP.cs" />
+    <Compile Include="formats\iff\chunks\CARR.cs" />
     <Compile Include="formats\iff\chunks\CTSS.cs" />
     <Compile Include="formats\iff\chunks\DGRP.cs" />
     <Compile Include="formats\iff\chunks\FAMI.cs" />
