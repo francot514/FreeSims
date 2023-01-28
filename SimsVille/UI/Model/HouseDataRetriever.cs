@@ -20,6 +20,8 @@ using Microsoft.Xna.Framework.Graphics;
 using System.IO;
 using tso.world.Model;
 using FSO.Client.Rendering.City;
+using FSO.Files.Formats.IFF;
+using FSO.Files.Formats.IFF.Chunks;
 
 namespace SimsVille.UI.Model
 {
@@ -61,14 +63,25 @@ namespace SimsVille.UI.Model
             
             try
             {
+                
                 if (File.Exists("Content/Houses/" + name.ToString() + ".png"))
                 HouseImg = Texture2D.FromStream(GfxDevice,
                 new FileStream("Content/Houses/" + name.ToString() + ".png", FileMode.Open, FileAccess.Read, FileShare.Read)); 
                 
 
             } catch (Exception) {
-            }
 
+                if (File.Exists("Content/Houses/" + name.ToString() + ".iff"))
+                {
+                    IffFile HouseFile = new IffFile("Content/Houses/" + name.ToString() + ".iff");
+
+                    BMP bmp = HouseFile.Get<BMP>(512);
+
+                    HouseImg = Texture2D.FromStream(GfxDevice,new MemoryStream(bmp.ChunkData, true));
+
+                }
+
+            }
             return HouseImg;
         }
 
