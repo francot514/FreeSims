@@ -13,7 +13,7 @@ Each user create a Sim, and add him to neighborhood, also the user can have thei
    
     -Windows
     MonoGame: 3.6 or higher
-    OpenTK 1.1
+    OpenTK 1.2
     
     -Linux
     OpenGL 3.0
