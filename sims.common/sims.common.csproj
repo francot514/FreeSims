@@ -139,6 +139,7 @@
     <Compile Include="utils\Promise.cs" />
     <Compile Include="utils\TextureGenerator.cs" />
     <Compile Include="utils\TextureUtils.cs" />
+    <Compile Include="utils\TS1Curve.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
