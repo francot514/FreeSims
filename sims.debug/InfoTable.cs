@@ -46,6 +46,9 @@ namespace sims.debug
         [XmlAttribute("i")]
         public string SubIndex;
 
+        [XmlAttribute("l")]
+        public string Layer;
+
     }
 
     
