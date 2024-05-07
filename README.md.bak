@@ -19,10 +19,6 @@ Each user create a Sim, and add him to neighborhood, also the user can have thei
     OpenGL 3.0
     SDL2
 	
-## Installation
-
-Original cd game needed, install it in default path and run Simsville.
-	
 # Screenshots
 
 ![Screenshot](preview.png)
