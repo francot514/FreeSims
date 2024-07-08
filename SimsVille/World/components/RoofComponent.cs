@@ -37,7 +37,8 @@ namespace FSO.LotView.Components
             blueprint = bp;
             RoofRects = new List<RoofRect>[bp.Stories - 1];
             Drawgroups = new RoofDrawGroup[bp.Stories - 1];
-            this.Effect = WorldContent.GrassEffect;
+
+            
         }
 
         public void RegenRoof(GraphicsDevice device)
@@ -62,6 +63,7 @@ namespace FSO.LotView.Components
 
         public void RegenRoof(sbyte level, GraphicsDevice device)
         {
+            this.Effect = WorldContent.GrassEffect;
             //algorithm overview:
             // 1. divide each tile into 4.
             // 2. find tile that IsRoofable

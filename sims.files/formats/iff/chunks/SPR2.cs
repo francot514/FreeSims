@@ -24,6 +24,33 @@ namespace FSO.Files.Formats.IFF.Chunks
         public SPR2Frame[] Frames = new SPR2Frame[0];
         public uint DefaultPaletteID;
 
+        private int _FloorCopy;
+        public int FloorCopy
+        {
+            get
+            {
+                return _FloorCopy;
+            }
+            set
+            {
+                if (value > 0 && _FloorCopy == 0)
+                {
+                    foreach (var frame in Frames)
+                    {
+                        if (frame.Decoded && frame.PixelData != null)
+                        {
+                            if (value == 1) frame.FloorCopys();
+                            if (value == 2) frame.FloorCopyWater();
+                        }
+                    }
+                }
+                _FloorCopy = value;
+            }
+        }
+        
+
+
+
         /// <summary>
         /// Reads a SPR2 chunk from a stream.
         /// </summary>
@@ -113,6 +140,14 @@ namespace FSO.Files.Formats.IFF.Chunks
         private byte[] AlphaData;
         public byte[] ZBufferData;
         public byte[] PalData;
+        public bool Decoded
+        {
+            get
+            {
+                return ToDecode == null;
+            }
+        }
+
 
         private Texture2D ZCache;
         private Texture2D PixelCache;
@@ -131,6 +166,100 @@ namespace FSO.Files.Formats.IFF.Chunks
         public SPR2Frame(SPR2 parent)
         {
             this.Parent = parent;
+        }
+
+        public void FloorCopys()
+        {
+            if (Width % 2 != 0)
+            {
+                var target = new Color[(Width + 1) * Height];
+                for (int y = 0; y < Height; y++)
+                {
+                    Array.Copy(PixelData, y * Width, target, y * (Width + 1), Width);
+                }
+                PixelData = target;
+                Width += 1;
+            }
+            var ndat = new Color[PixelData.Length];
+            int hw = (Width) / 2;
+            int hh = (Height) / 2;
+            int idx = 0;
+            for (int y = 0; y < Height; y++)
+            {
+                for (int x = 0; x < Width; x++)
+                {
+                    var xp = (x + hw) % Width;
+                    var yp = (y + hh) % Height;
+                    var rep = PixelData[xp + yp * Width];
+                    if (rep.A >= 254) ndat[idx] = rep;
+                    else ndat[idx] = PixelData[idx];
+                    idx++;
+                }
+            }
+            PixelData = ndat;
+        }
+
+        public void FloorCopyWater()
+        {
+            if (Width % 2 != 0)
+            {
+                var target = new Color[(Width + 1) * Height];
+                for (int y = 0; y < Height; y++)
+                {
+                    Array.Copy(PixelData, y * Width, target, y * (Width + 1), Width);
+                }
+                PixelData = target;
+                Width += 1;
+            }
+            var ndat = new Color[PixelData.Length];
+            int hw = (Width) / 2;
+            int hh = (Height) / 2;
+            int idx = 0;
+
+            var palette = Parent.ChunkParent.Get<PALT>(this.PaletteID);
+            var transparentPixel = palette.Colors[TransparentColorIndex];
+            transparentPixel.A = 0;
+
+            for (int y = 0; y < Height; y++)
+            {
+                for (int x = 0; x < Width; x++)
+                {
+                    var dat = PixelData[x + y * Width];
+                    if (dat.PackedValue == 0 || dat.PackedValue == transparentPixel.PackedValue)
+                    {
+                        if (x < hw)
+                        {
+                            for (int j = x; j < Width; j++)
+                            {
+                                var rep = PixelData[j + y * Width];
+                                if (!(rep.PackedValue == 0 || rep.PackedValue == transparentPixel.PackedValue))
+                                {
+                                    ndat[idx] = rep;
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            for (int j = x; j >= 0; j--)
+                            {
+                                var rep = PixelData[j + y * Width];
+                                if (!(rep.PackedValue == 0 || rep.PackedValue == transparentPixel.PackedValue))
+                                {
+                                    ndat[idx] = rep;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        ndat[idx] = PixelData[idx];
+                    }
+                    idx++;
+                }
+            }
+            PixelData = ndat;
         }
 
         /// <summary>
@@ -481,7 +610,7 @@ namespace FSO.Files.Formats.IFF.Chunks
             var palt = new Color[256];
             int i = 0;
             foreach (var c in colors)
-                palt[i++] = new Color(c.R, c.G, c.B, 255);
+                palt[i++] = new Color(c.R, c.G, c.B, (byte)255);
 
             return palt;
         }

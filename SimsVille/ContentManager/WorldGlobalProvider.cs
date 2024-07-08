@@ -84,18 +84,18 @@ namespace FSO.Content
                     return Cache[filename];
                 }
 
-                if (!ts1)
-                {
-
-                    filepath = Path.Combine(Content.Get().BasePath, "objectdata/globals/" + filename + ".iff");
-
+                //if (!ts1)
+                //{
+                string basepath = Content.Get().BasePath;
+                filepath = Path.Combine(basepath, "objectdata/globals/" + filename + ".iff");
+                    
                     //if we can't load this let it throw an exception...
                     //probably sanity check this when we add user objects.
-                    if (File.Exists(filepath))
+                if (File.Exists(filepath))
                     iff = new Files.Formats.IFF.IffFile(filepath);
 
 
-                }
+                //}
 
 
                 if (GlobalFar != null && iff == null)

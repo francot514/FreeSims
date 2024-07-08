@@ -479,7 +479,7 @@ namespace FSO.SimAntics
         {
             base.Reset(context);
             if (Animations != null) Animations.Clear();
-            if (Headline != null)
+            if (Headline != null && HeadlineRenderer != null)
             {
                 HeadlineRenderer.Dispose();
                 Headline = null;
@@ -756,6 +756,8 @@ namespace FSO.SimAntics
             switch (variable)
             {
                 case VMPersonDataVariable.Priority:
+
+                    if (Thread != null)
                     if (Thread.Queue.Count != 0 && Thread.Stack.LastOrDefault().ActionTree)
                     {
                         Thread.Queue[0].Priority = value;
@@ -920,7 +922,7 @@ namespace FSO.SimAntics
 
         public override Texture2D GetIcon(GraphicsDevice gd, int store)
         {
-            var icon = new Texture2D(gd, 0, 0);
+            var icon = new Texture2D(gd, 1, 1);
 
             if (Avatar.Head == null && Avatar.Body == null) return null;
             Outfit ThumbOutfit = (Avatar.Head == null) ? Avatar.Body : Avatar.Head;

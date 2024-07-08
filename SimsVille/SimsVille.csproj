@@ -12,6 +12,8 @@
     <AssemblyName>SimsVille</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <MonoGamePlatform>Linux</MonoGamePlatform>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -22,6 +24,7 @@
     <DefineConstants>DEBUG;TRACE;LINUX</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -31,6 +34,7 @@
     <DefineConstants>TRACE;LINUX</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
@@ -53,7 +57,11 @@
     <Compile Include="ContentManager\ChangeManager.cs" />
     <Compile Include="ContentManager\codecs\AnimationCodec.cs" />
     <Compile Include="ContentManager\codecs\AppearanceCodec.cs" />
+    <Compile Include="ContentManager\codecs\BCFCodec.cs" />
     <Compile Include="ContentManager\codecs\BindingCodec.cs" />
+    <Compile Include="ContentManager\codecs\BMFCodec.cs" />
+    <Compile Include="ContentManager\codecs\CFPCodec.cs" />
+    <Compile Include="ContentManager\codecs\CMXCodex.cs" />
     <Compile Include="ContentManager\codecs\CollectionCodec.cs" />
     <Compile Include="ContentManager\codecs\HandgroupCodec.cs" />
     <Compile Include="ContentManager\codecs\IffCodec.cs" />
@@ -61,9 +69,13 @@
     <Compile Include="ContentManager\codecs\OTFCodec.cs" />
     <Compile Include="ContentManager\codecs\OutfitCodec.cs" />
     <Compile Include="ContentManager\codecs\PurchasableOutfitCodec.cs" />
+    <Compile Include="ContentManager\codecs\SFXCodec.cs" />
     <Compile Include="ContentManager\codecs\SkeletonCodec.cs" />
+    <Compile Include="ContentManager\codecs\SKNCodec.cs" />
+    <Compile Include="ContentManager\codecs\SmartCodec.cs" />
     <Compile Include="ContentManager\codecs\TextureCodec.cs" />
     <Compile Include="ContentManager\Content.cs" />
+    <Compile Include="ContentManager\framework\CompositeProvider.cs" />
     <Compile Include="ContentManager\framework\FAR1Provider.cs" />
     <Compile Include="ContentManager\framework\FAR3Provider.cs" />
     <Compile Include="ContentManager\framework\FileProvider.cs" />
@@ -73,12 +85,15 @@
     <Compile Include="ContentManager\model\AudioReference.cs" />
     <Compile Include="ContentManager\model\AudioType.cs" />
     <Compile Include="ContentManager\model\Floor.cs" />
+    <Compile Include="ContentManager\model\IAudioProvider.cs" />
     <Compile Include="ContentManager\model\TextureRef.cs" />
     <Compile Include="ContentManager\model\Wall.cs" />
     <Compile Include="ContentManager\model\WallStyle.cs" />
+    <Compile Include="ContentManager\other\TS1Audio.cs" />
     <Compile Include="ContentManager\other\TS1AvatarTextureProvider.cs" />
     <Compile Include="ContentManager\other\TS1BCFProvider.cs" />
     <Compile Include="ContentManager\other\TS1BMFProvider.cs" />
+    <Compile Include="ContentManager\other\TS1JobProvider.cs" />
     <Compile Include="ContentManager\other\TS1NeighbourProvider.cs" />
     <Compile Include="ContentManager\other\TS1Provider.cs" />
     <Compile Include="ContentManager\ResAction.cs" />

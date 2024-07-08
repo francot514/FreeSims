@@ -241,6 +241,16 @@ namespace FSO.Content.Framework
             return this.Provider.Get(this);
         }
 
+        public object GetThrowawayGeneric()
+        {
+            throw new NotImplementedException();
+        }
+
+        public object GetGeneric()
+        {
+            return Get(true);
+        }
+
         #endregion
 
         /// <summary>

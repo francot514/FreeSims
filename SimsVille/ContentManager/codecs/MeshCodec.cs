@@ -21,7 +21,7 @@ namespace FSO.Content.Codecs
     {
         #region IContentCodec<Mesh> Members
 
-        public Mesh Decode(System.IO.Stream stream)
+        public override object GenDecode(System.IO.Stream stream)
         {
             var mesh = new Mesh();
             mesh.Read(stream, false);

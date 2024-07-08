@@ -53,10 +53,10 @@ namespace FSO.Content
 
             WithSprites = withSprites;
 
-            for (int i = 1; i <= 9; i++)
-                SpriteFiles.Add("objectdata/objects/objspf" + i + ".far");
+            //for (int i = 1; i <= 9; i++)
+                //SpriteFiles.Add("objectdata/objects/objspf" + i + ".far");
 
-            FarFiles.Add("objectdata/objects/objiff.far");
+            //FarFiles.Add("objectdata/objects/objiff.far");
 
             /** Load packingslip **/
             Entries = new Dictionary<ulong, GameObjectReference>();
@@ -338,6 +338,38 @@ namespace FSO.Content
 
             }
 
+            if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/Deluxe"))
+            {
+
+                string DeluxeFile = FSOEnvironment.SimsCompleteDir + "/Deluxe/Deluxe.far";
+                FarFiles.Add(DeluxeFile);
+                SpriteFiles.Add(DeluxeFile);
+
+
+
+                var deluxeobjects = new XmlDocument();
+                deluxeobjects.Load("Content/deluxe.xml");
+                var deluxeInfos = deluxeobjects.GetElementsByTagName("P");
+
+                foreach (XmlNode objectInfo in deluxeInfos)
+                {
+                    ulong FileID = Convert.ToUInt32(objectInfo.Attributes["g"].Value, 16);
+
+                    if (!Entries.ContainsKey(FileID))
+                        Entries.Add(FileID, new GameObjectReference(this)
+                        {
+                            ID = FileID,
+                            FileName = objectInfo.Attributes["n"].Value,
+                            Source = GameObjectSource.Far,
+                            Group = Convert.ToInt16(objectInfo.Attributes["m"].Value),
+                            SubIndex = Convert.ToInt16(objectInfo.Attributes["i"].Value),
+                            EpObject = true
+
+                        });
+                }
+
+            }
+
             if (Directory.Exists(FSOEnvironment.SimsCompleteDir + "/Downloads"))
             {
                 DirectoryInfo downloadsDir = new DirectoryInfo(FSOEnvironment.SimsCompleteDir + "/Downloads");
@@ -420,6 +452,17 @@ namespace FSO.Content
             
         }
 
+
+        public GameObject Get(string name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public GameObject Get(ContentID id)
+        {
+            throw new NotImplementedException();
+        }
+
         private GameObjectResource GenerateResource(GameObjectReference reference)
         {
             
@@ -472,6 +515,22 @@ namespace FSO.Content
         public GameObject Get(uint id, bool ts1)
         {
             return Get((ulong)id, ts1);
+        }
+
+        public GameObject Get(string name, bool ts1)
+        {
+            var entry = Entries[0];
+
+            for (int i = 0; i < Entries.Count; i++)
+                if (Entries[(ulong)i].Name == name)
+                {
+                    entry = Entries[(ulong)i];
+                    return Get((ulong)Entries[(ulong)i].ID, ts1);
+                }
+           
+
+            return Get((ulong)entry.ID, ts1);
+
         }
 
         public GameObject Get(ulong id, bool ts1)
@@ -704,6 +763,16 @@ namespace FSO.Content
         public GameObject Get(bool ts1)
         {
             return Provider.Get(ID, ts1);
+        }
+
+        public object GetThrowawayGeneric()
+        {
+            throw new NotImplementedException();
+        }
+
+        public object GetGeneric()
+        {
+            return Get(true);
         }
 
         #endregion

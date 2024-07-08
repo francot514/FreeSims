@@ -17,6 +17,7 @@ using System.Text;
 using System.Diagnostics;
 using Microsoft.Xna.Framework.Audio;
 using FSO.Files.HIT;
+using FSO.Content;
 
 namespace TSO.HIT
 {
@@ -176,6 +177,12 @@ namespace TSO.HIT
             }
         }
 
+        public HITThread()
+        {
+
+
+        }
+
         public HITThread(HITFile Src, HITVM VM)
         {
             this.Src = Src;
@@ -190,8 +197,10 @@ namespace TSO.HIT
             Owners = new List<int>();
 
             Stack = new Stack<int>();
-            audContent = FSO.Content.Content.Get().Audio;
+            audContent = (Audio)FSO.Content.Content.Get().Audio;
         }
+
+        
 
         public HITThread(uint TrackID)
         {
@@ -199,7 +208,7 @@ namespace TSO.HIT
             Notes = new List<HITNoteEntry>();
             NotesByChannel = new Dictionary<SoundEffectInstance, HITNoteEntry>();
 
-            audContent = FSO.Content.Content.Get().Audio;
+            audContent = (Audio)FSO.Content.Content.Get().Audio;
             SetTrack(TrackID);
 
             Patch = ActiveTrack.SoundID;
@@ -231,7 +240,8 @@ namespace TSO.HIT
 
         public void LoadHitlist(uint id)
         {
-            Hitlist = audContent.GetHitlist(id);
+            Hitlist = audContent.GetHitlist(id,null);
+            
         }
 
         public uint HitlistChoose() //returns a random id from the hitlist
@@ -463,7 +473,9 @@ namespace TSO.HIT
 
         public override void Dispose()
         {
-            InterruptWaiter?.Unblock();
+            if (InterruptWaiter != null)
+                InterruptWaiter.Unblock();
+
             foreach (var note in Notes) note.instance.Dispose();
         }
 

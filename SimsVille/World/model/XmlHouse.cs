@@ -205,6 +205,8 @@ namespace FSO.LotView.Model
         BottomRight = 4,
         BottomLeft = 8,
         HorizontalDiag = 16,
-        VerticalDiag = 32
+        VerticalDiag = 32,
+        AnyDiag = 0x30,
+        AnyAdj = 0xF
     }
 }

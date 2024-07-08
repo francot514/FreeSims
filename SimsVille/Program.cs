@@ -50,7 +50,7 @@ namespace FSO.Client
             UseDX = MonogameLinker.Link(useDX);
 
 
-            var path = gameLocator.FindTheSimsOnline();
+            var path = gameLocator.FindTheSimsComplete();
 
             if (UseDX) GlobalSettings.Default.AntiAlias = false;
 
@@ -71,7 +71,7 @@ namespace FSO.Client
                 GlobalSettings.Default.Language = 1;
                 Files.Formats.IFF.Chunks.STR.DefaultLangCode = (Files.Formats.IFF.Chunks.STRLangCode)GlobalSettings.Default.Language;
 
-                GlobalSettings.Default.StartupPath = path;
+                GlobalSettings.Default.StartupPath = AppDomain.CurrentDomain.BaseDirectory;
            
                 
                 GlobalSettings.Default.Save();

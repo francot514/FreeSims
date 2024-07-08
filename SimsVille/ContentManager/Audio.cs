@@ -20,13 +20,15 @@ using FSO.Files.XA;
 using FSO.Files.UTK;
 using FSO.Files.HIT;
 using Microsoft.Xna.Framework.Audio;
+using FSO.Content.Interfaces;
+using TSO.HIT.model;
 
 namespace FSO.Content
 {
     /// <summary>
     /// Manager for the audio content.
     /// </summary>
-    public class Audio
+    public class Audio : IAudioProvider 
     {
         private Content ContentManager;
 
@@ -44,6 +46,7 @@ namespace FSO.Content
         public DBPFFile Hitlists; //HitListsTemp.dat
 
         public Dictionary<uint, Track> TracksById;
+        public Dictionary<uint, Track> TracksByBackupId;
         private Dictionary<uint, Hitlist> HitlistsById;
 
 
@@ -65,6 +68,15 @@ namespace FSO.Content
                 return _MusicModes;
             }
         }
+        private Dictionary<string, HITEventRegistration> _Events;
+        public Dictionary<string, HITEventRegistration> Events
+        {
+            get
+            {
+                return _Events;
+            }
+        }
+
 
         public Audio(Content contentManager)
         {
@@ -79,7 +91,7 @@ namespace FSO.Content
             this.Stations = new List<AudioReference>();
             this.StationsById = new Dictionary<uint, AudioReference>();
             this.Modes = new List<AudioReference>();
-
+            TracksByBackupId = new Dictionary<uint, Track>();
             var stationsRegEx = new Regex(@"music/stations/.*\.mp3");
 
             foreach (var file in ContentManager.AllFiles)
@@ -186,7 +198,7 @@ namespace FSO.Content
         /// </summary>
         /// <param name="InstanceID">The InstanceID of the Hitlist.</param>
         /// <returns>A Hitlist instance.</returns>
-        public Hitlist GetHitlist(uint InstanceID)
+        public Hitlist GetHitlist(uint InstanceID, HITResourceGroup group)
         {
             if (HitlistsById.ContainsKey(InstanceID)) return HitlistsById[InstanceID];
 
@@ -205,6 +217,50 @@ namespace FSO.Content
             }
 
             return null; //found nothing :'(
+        }
+
+        public SoundEffect GetSFX(Patch patch)
+        {
+            return null;
+        }
+
+        public Patch GetPatch(uint id, HITResourceGroup group)
+        {
+            return new Patch(id);
+        }
+
+        public Track GetTrack(uint value, uint fallback, HITResourceGroup group)
+        {
+            if (TracksById.ContainsKey(value))
+            {
+                return TracksById[value];
+            }
+            else
+            {
+                if ((fallback != 0) && TracksById.ContainsKey(fallback))
+                {
+                    return TracksById[fallback];
+                }
+                else
+                {
+                    if (TracksByBackupId.ContainsKey(value))
+                    {
+                        return TracksByBackupId[value];
+                    }
+                    else
+                    {
+                        if (TracksByBackupId.ContainsKey(fallback))
+                        {
+                            return TracksByBackupId[fallback];
+                        }
+                        else
+                        {
+                            Console.WriteLine("Couldn't find track: " + value + ", with alternative " + fallback);
+                        }
+                    }
+                }
+            }
+            return null;
         }
 
         /// <summary>

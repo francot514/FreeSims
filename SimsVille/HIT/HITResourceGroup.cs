@@ -14,5 +14,6 @@ namespace TSO.HIT.model
         public EVT evt;
         public HITFile hit;
         public HSM hsm;
+        public Hot hot;
     }
 }

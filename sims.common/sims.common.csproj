@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>TSO.Common</RootNamespace>
     <AssemblyName>Common</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
@@ -32,6 +32,7 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -42,6 +43,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -50,6 +52,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MonoGame.Framework, Version=3.1.2.0, Culture=neutral, processorArchitecture=MSIL">
@@ -126,6 +129,7 @@
     <Compile Include="rendering\vitaboy\Skeleton.cs" />
     <Compile Include="rendering\vitaboy\VitaboyVertex.cs" />
     <Compile Include="utils\Callback.cs" />
+    <Compile Include="utils\CurLoader.cs" />
     <Compile Include="utils\DirectionUtils.cs" />
     <Compile Include="utils\DotPath.cs" />
     <Compile Include="utils\FileUtils.cs" />
@@ -135,6 +139,7 @@
     <Compile Include="utils\Promise.cs" />
     <Compile Include="utils\TextureGenerator.cs" />
     <Compile Include="utils\TextureUtils.cs" />
+    <Compile Include="utils\TS1Curve.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

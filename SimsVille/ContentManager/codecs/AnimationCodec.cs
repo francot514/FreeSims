@@ -20,7 +20,7 @@ namespace FSO.Content.Codecs
     {
         #region IContentCodec<Animation> Members
 
-        public Animation Decode(System.IO.Stream stream)
+        public override object GenDecode(System.IO.Stream stream)
         {
             var ani = new Animation();
             ani.Read(stream, false);

@@ -89,7 +89,7 @@ namespace FSO.Client
             PlatformID pid = os.Platform;
             GameFacade.Linux = (pid == PlatformID.MacOSX || pid == PlatformID.Unix);
 
-            FSO.Content.Content.Init(GlobalSettings.Default.StartupPath, GraphicsDevice);
+            FSO.Content.Content.Init(FSOEnvironment.SimsCompleteDir, GraphicsDevice);
             base.Initialize();
 
             GameFacade.GameThread = Thread.CurrentThread;

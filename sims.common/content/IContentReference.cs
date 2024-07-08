@@ -12,7 +12,7 @@ using System.IO;
 
 namespace FSO.Common.Content
 {
-    public interface IContentReference<T>
+    public interface IContentReference<T> : IContentReference
     {
         T Get(bool ts1);
     }

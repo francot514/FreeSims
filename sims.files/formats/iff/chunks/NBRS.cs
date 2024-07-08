@@ -29,6 +29,7 @@ namespace FSO.Files.Formats.IFF.Chunks
         public Dictionary<uint, short> DefaultNeighbourByGUID = new Dictionary<uint, short>();
 
         public uint Version;
+        public int Offset;
 
         /// <summary>
         /// Reads a NBRS chunk from a stream.

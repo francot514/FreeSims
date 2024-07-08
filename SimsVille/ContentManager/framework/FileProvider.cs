@@ -11,6 +11,7 @@ using System.Text;
 using FSO.Common.Content;
 using System.Text.RegularExpressions;
 using System.IO;
+using FSO.Content.Codecs;
 
 namespace FSO.Content.Framework
 {
@@ -22,11 +23,14 @@ namespace FSO.Content.Framework
     {
         protected Content ContentManager;
         protected Dictionary<string, string> EntriesByName;
+        protected Dictionary<ulong, string> EntryNamesById;
         protected IContentCodec<T> Codec;
         protected Dictionary<string, T> Cache;
         protected List<FileContentReference<T>> Items;
         private Regex FilePattern;
         public string[] Files;
+        public bool UseTS1;
+        public bool UseContent;
 
         /// <summary>
         /// Creates a new instance of FileProvider.
@@ -56,10 +60,13 @@ namespace FSO.Content.Framework
             this.Items = new List<FileContentReference<T>>();
             this.Cache = new Dictionary<string, T>();
             this.EntriesByName = new Dictionary<string, string>();
+            this.EntryNamesById = new Dictionary<ulong, string>();
 
             lock (Cache)
             {
                 List<string> matchedFiles = new List<string>();
+                var files = UseContent ? ContentManager.ContentFiles : (UseTS1 ? ContentManager.TS1AllFiles : ContentManager.AllFiles);
+                var basePath = UseTS1 ? ContentManager.BasePath : ContentManager.BasePath;
                 if (FilePattern != null)
                 foreach (var file in ContentManager.AllFiles)
                 {
@@ -113,21 +120,58 @@ namespace FSO.Content.Framework
             }
         }
 
+
+        public T ThrowawayGet(string name)
+        {
+            if (EntriesByName.ContainsKey(name))
+            {
+                var fullPath = UseContent ? ("Content/" + EntriesByName[name]) : (UseTS1 ? Path.Combine(ContentManager.BasePath, EntriesByName[name]) : ContentManager.GetPath(EntriesByName[name]));
+                using (var reader = File.OpenRead(fullPath))
+                {
+                    T item;
+                    if (Codec == null) item = (T)SmartCodec.Decode(reader, Path.GetExtension(fullPath));
+                    else item = Codec.Decode(reader);
+                    return item;
+                }
+            }
+            return default(T);
+        }
+
         #region IContentProvider<T> Members
+
+
+
+        public T Get(ContentID id)
+        {
+            throw new NotImplementedException();
+        }
+        protected virtual T ResolveById(ulong id)
+        {
+            string entry = null;
+            if (EntryNamesById.TryGetValue(id, out entry))
+            {
+                return Get(entry);
+            }
+            return default(T);
+        }
+
 
         public T Get(ulong id, bool ts1)
         {
-            throw new NotImplementedException();
+            return ResolveById(id);
         }
 
         public T Get(uint type, uint fileID, bool ts1)
         {
-            throw new NotImplementedException();
+            var fileIDLong = ((ulong)fileID) << 32;
+            return Get(fileIDLong | type, true);
+
         }
+
 
         public List<IContentReference<T>> List()
         {
-            throw new NotImplementedException();
+            return new List<IContentReference<T>>(Items);
         }
 
         #endregion
@@ -153,6 +197,16 @@ namespace FSO.Content.Framework
             return this.Provider.Get(Name);
         }
 
+
+        public object GetThrowawayGeneric()
+        {
+            throw new NotImplementedException();
+        }
+
+        public object GetGeneric()
+        {
+            return Get(true);
+        }
         #endregion
     }
 }

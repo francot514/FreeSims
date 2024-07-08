@@ -84,6 +84,17 @@ namespace FSO.Content.Framework
             }
         }
 
+
+        public T Get(string name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public T Get(ContentID id)
+        {
+            throw new NotImplementedException();
+        }
+
         #region IContentProvider Members
         public void Init()
         {
@@ -132,6 +143,16 @@ namespace FSO.Content.Framework
         public T Get(bool ts1)
         {
             return Provider.Get(ID, ts1);
+        }
+
+        public object GetThrowawayGeneric()
+        {
+            throw new NotImplementedException();
+        }
+
+        public object GetGeneric()
+        {
+            return Get(true);
         }
     }
 }

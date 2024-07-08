@@ -27,6 +27,7 @@ namespace FSO.Files.Formats.IFF.Chunks
         //this is not a typical family number - it is unique between user created families, but -1 for townies.
         //i believe it is an alternate family UID that basically runs on an auto increment to obtain its value.
         //(in comparison with the ChunkID as family that is used ingame, which appears to fill spaces as they are left)
+        public int Offset;
         public int FamilyNumber;
         public int Budget;
         public int NetWorth;

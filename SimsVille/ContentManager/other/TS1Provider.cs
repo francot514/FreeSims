@@ -39,7 +39,30 @@ namespace FSO.Content.Framework
         {
             var entries = FarProvider.GetEntriesForExtension(ext);
             var result = new Dictionary<string, IContentReference>();
+            string[] folders = null;
 
+            if (BareFoldersByExtension.TryGetValue(ext, out folders))
+            {
+                foreach (var folder in folders)
+                {
+                    var test = Manager.TS1AllFiles;
+                    var regexStr = folder + ".*\\" + ext;
+                    FileProvider<object> provider;
+                    if (!FileProvidersByRegex.TryGetValue(regexStr, out provider))
+                    {
+                        var regex = new Regex(regexStr);
+                        provider = new FileProvider<object>(Manager, null, regex);
+                        provider.UseTS1 = true;
+                        provider.Init();
+                        FileProvidersByRegex[regexStr] = provider;
+                    }
+                    var entries2 = provider.List();
+                    foreach (var entry in entries2)
+                    {
+                        result[entry.ToString()] = (IContentReference)entry;
+                    }
+                }
+            }
 
             if (entries == null) return result;
             foreach (var entry in entries)

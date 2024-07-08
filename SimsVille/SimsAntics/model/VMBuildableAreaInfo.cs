@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static FSO.Content.WorldObjectCatalog;
+
 
 namespace FSO.SimAntics.Model
 {
@@ -116,13 +116,13 @@ namespace FSO.SimAntics.Model
             return sizeMode * Math.Max(1, lotInfo.Roommates.Count);
         }
 
-        public static int GetDiscountFor(ObjectCatalogItem item, VM vm)
+        public static int GetDiscountFor(WorldObjectCatalog.ObjectCatalogItem item, VM vm)
         {
             if (vm == null || vm.TS1 || vm.TSOState.PropertyCategory != 5) return 0;
             var guid = item.GUID;
             var catalog = Content.Content.Get().WorldCatalog;
-            var sameItem = vm.Entities.Count(x => x == x.MultitileGroup.BaseObject && (x.Object.OBJ.GUID == guid || x.MasterDefinition?.GUID == guid));
-            var catItems = vm.Entities.Count(x => x == x.MultitileGroup.BaseObject && item.Category == catalog.GetItemByGUID((x.MasterDefinition == null) ? x.Object.OBJ.GUID : x.MasterDefinition.GUID)?.Category);
+            var sameItem = vm.Entities.Count(x => x == x.MultitileGroup.BaseObject && (x.Object.OBJ.GUID == guid || x.MasterDefinition.GUID == guid));
+            var catItems = vm.Entities.Count(x => x == x.MultitileGroup.BaseObject && item.Category == catalog.GetItemByGUID((x.MasterDefinition == null) ? x.Object.OBJ.GUID : x.MasterDefinition.GUID).Category);
             sameItem = Math.Min(3, sameItem);
             catItems = Math.Min(10, catItems);
             return sameItem * 10 + catItems * 3;

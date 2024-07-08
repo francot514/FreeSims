@@ -15,6 +15,8 @@ namespace FSO.Common.Content
     {
         T Get(ulong id, bool ts1);
         T Get(uint type, uint fileID, bool ts1);
+        T Get(ContentID id);
+        T Get(string name);
         List<IContentReference<T>> List();
     }
 }

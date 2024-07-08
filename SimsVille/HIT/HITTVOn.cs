@@ -23,7 +23,7 @@ namespace FSO.HIT.Events
     /// 
     /// Also supports streaming MP3 audio.
     /// </summary>
-    public class HITTVOn : HITSound
+    public class HITTVOn : HITThread
     {
         private string Station;
         private Dictionary<string, SoundEffect> SFXCache = new Dictionary<string, SoundEffect>();

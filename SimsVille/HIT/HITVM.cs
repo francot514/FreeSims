@@ -55,19 +55,19 @@ namespace TSO.HIT
             var content = FSO.Content.Content.Get();
             Events = new Dictionary<string, HITEventRegistration>();
 
-            newmain = LoadHitGroup(content.GetPath("sounddata/newmain.hit"), content.GetPath("sounddata/eventlist.txt"), content.GetPath("sounddata/newmain.hsm"));
-            relationships = LoadHitGroup(content.GetPath("sounddata/relationships.hit"), content.GetPath("sounddata/relationships.evt"), content.GetPath("sounddata/relationships.hsm"));
-            tsoep5 = LoadHitGroup(content.GetPath("sounddata/tsoep5.hit"), content.GetPath("sounddata/tsoep5.evt"), content.GetPath("sounddata/tsoep5.hsm"));
-            tsov2 = LoadHitGroup(content.GetPath("sounddata/tsov2.hit"), content.GetPath("sounddata/tsov2.evt"), null); //tsov2 has no hsm file
-            tsov3 = LoadHitGroup(content.GetPath("sounddata/tsov3.hit"), content.GetPath("sounddata/tsov3.evt"), content.GetPath("sounddata/tsov3.hsm"));
-            turkey = LoadHitGroup(content.GetPath("sounddata/turkey.hit"), content.GetPath("sounddata/turkey.evt"), content.GetPath("sounddata/turkey.hsm"));
+            //newmain = LoadHitGroup(content.GetPath("sounddata/newmain.hit"), content.GetPath("sounddata/eventlist.txt"), content.GetPath("sounddata/newmain.hsm"));
+            //relationships = LoadHitGroup(content.GetPath("sounddata/relationships.hit"), content.GetPath("sounddata/relationships.evt"), content.GetPath("sounddata/relationships.hsm"));
+            //tsoep5 = LoadHitGroup(content.GetPath("sounddata/tsoep5.hit"), content.GetPath("sounddata/tsoep5.evt"), content.GetPath("sounddata/tsoep5.hsm"));
+            //tsov2 = LoadHitGroup(content.GetPath("sounddata/tsov2.hit"), content.GetPath("sounddata/tsov2.evt"), null); //tsov2 has no hsm file
+            //tsov3 = LoadHitGroup(content.GetPath("sounddata/tsov3.hit"), content.GetPath("sounddata/tsov3.evt"), content.GetPath("sounddata/tsov3.hsm"));
+           //turkey = LoadHitGroup(content.GetPath("sounddata/turkey.hit"), content.GetPath("sounddata/turkey.evt"), content.GetPath("sounddata/turkey.hsm"));
 
-            RegisterEvents(newmain);
-            RegisterEvents(relationships);
-            RegisterEvents(tsoep5);
-            RegisterEvents(tsov2);
-            RegisterEvents(tsov3);
-            RegisterEvents(turkey);
+            //RegisterEvents(newmain);
+            //RegisterEvents(relationships);
+            //RegisterEvents(tsoep5);
+            //RegisterEvents(tsov2);
+            //RegisterEvents(tsov3);
+            //RegisterEvents(turkey);
 
             Globals = new int[36];
             Threads = new List<HITSound>();
@@ -172,15 +172,15 @@ namespace TSO.HIT
                 if (aevt.Dead) ActiveEvents.Remove(evt); //if the last event is dead, remove and make a new one
                 else
                 {
-                    if ((aevt as HITThread)?.InterruptBlocker != null)
+                    if (aevt != null && ((HITThread)(aevt)).InterruptBlocker != null)
                     {
                         //we can stop this thread - steal its waiter
-                        (aevt as HITThread).Dead = true;
-                        InterruptBlocker = (aevt as HITThread).InterruptBlocker;
+                        ((HITThread)(aevt)).Dead = true;
+                        InterruptBlocker = ((HITThread)(aevt)).InterruptBlocker;
                     }
-                    else if ((aevt as HITThread)?.Interruptable == true)
+                    else if (aevt != null && ((HITThread)(aevt)).Interruptable == true)
                     {
-                        InterruptBlocker = (aevt as HITThread);
+                        InterruptBlocker = ((HITThread)(aevt));
                     }
                     else return aevt; //an event of this type is already alive - here, take it.
                 }
@@ -254,7 +254,7 @@ namespace TSO.HIT
 
                     return thread;
                 }
-                else if (TrackID != 0 && content.Audio.TracksById.ContainsKey(TrackID))
+                else if (TrackID != 0 && content.Audio.GetTrack(TrackID,1, evtent.ResGroup) != null)
                 {
                     var thread = new HITThread(TrackID);
                     Threads.Add(thread);

@@ -668,7 +668,13 @@ namespace FSO.SimAntics.Engine.Utils
                     return ((VMAvatar)context.StackObject).SetMotiveData((VMMotive)context.Thread.TempRegisters[data], value);
 
                 case VMVariableScope.MyPersonData: //18
-                    return ((VMAvatar)context.Caller).SetPersonData((VMPersonDataVariable)data, value);
+
+                    VMAvatar avatar = new VMAvatar(context.Caller.Object);
+
+
+                    return (avatar).SetPersonData((VMPersonDataVariable)data, value);
+
+
 
                 case VMVariableScope.StackObjectPersonData: //19
                     return ((VMAvatar)context.StackObject).SetPersonData((VMPersonDataVariable)data, value);

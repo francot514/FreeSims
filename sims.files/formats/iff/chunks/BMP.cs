@@ -9,8 +9,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Drawing;
 using FSO.Files.Utils;
 using Microsoft.Xna.Framework.Graphics;
+
 
 namespace FSO.Files.Formats.IFF.Chunks
 {
@@ -30,12 +32,22 @@ namespace FSO.Files.Formats.IFF.Chunks
         {
             data = new byte[stream.Length];
             stream.Read(data, 0, (int)stream.Length);
+
+            
         }
+
+        public Image GetBitmap()
+        {
+            return Bitmap.FromStream(new MemoryStream(data));
+        }
+
+
 
         public Texture2D GetTexture(GraphicsDevice device)
         {
             return Texture2D.FromStream(device, new MemoryStream(data));
         }
+
     }
 
 

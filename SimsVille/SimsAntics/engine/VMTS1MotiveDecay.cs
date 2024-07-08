@@ -9,7 +9,7 @@ using System.IO;
 
 namespace FSO.SimAntics.Entities
 {
-    public class VMTS1MotiveDecay : VMIMotiveDecay
+    public class VMMotiveDecay : VMIMotiveDecay
     {
         public static float[] Constants = new float[]
         {

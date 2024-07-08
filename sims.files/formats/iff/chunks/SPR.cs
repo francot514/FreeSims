@@ -26,7 +26,7 @@ namespace FSO.Files.Formats.IFF.Chunks
         public ushort PaletteID;
         private List<uint> Offsets;
         public ByteOrder ByteOrd;
-
+        public bool WallStyle;
         /// <summary>
         /// Reads a SPR chunk from a stream.
         /// </summary>
@@ -263,6 +263,7 @@ namespace FSO.Files.Formats.IFF.Chunks
             DecodeIfRequired();
             if (PixelCache == null)
             {
+                var mip = !Parent.WallStyle;
                 PixelCache = new Texture2D(device, Math.Max(1,Width), Math.Max(1,Height));
                 if (Width*Height > 0) PixelCache.SetData<Color>(this.Data);
                 else PixelCache.SetData<Color>(new Color[] { Color.Transparent });

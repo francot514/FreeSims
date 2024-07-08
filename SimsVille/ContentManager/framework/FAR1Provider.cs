@@ -14,6 +14,8 @@ using System.Text.RegularExpressions;
 using FSO.Common.Content;
 using FSO.Files.FAR1;
 using FSO.Files.Utils;
+using FSO.Common;
+using FSO.Content.Codecs;
 
 namespace FSO.Content.Framework
 {
@@ -99,12 +101,6 @@ namespace FSO.Content.Framework
             return default(T);
         }
 
-        /// <summary>
-        /// Gets an archive based on its filename, but avoids the cache entirely. 
-        /// Used for quick accesses to data that will not be reused soon, and will be released manually. (walls, floors)
-        /// </summary>
-        /// <param name="Filename">The name of the archive to get.</param>
-        /// <returns>A FAR3 archive.</returns>
         public T ThrowawayGet(string filename)
         {
             if (!EntriesByName.ContainsKey(filename))
@@ -120,6 +116,17 @@ namespace FSO.Content.Framework
             return default(T);
         }
 
+        public T Get(ContentID id)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Gets an archive based on its filename, but avoids the cache entirely. 
+        /// Used for quick accesses to data that will not be reused soon, and will be released manually. (walls, floors)
+        /// </summary>
+        /// <param name="Filename">The name of the archive to get.</param>
+        /// <returns>A FAR3 archive.</returns>
         public T Get(Far1ProviderEntry<T> entry)
         {
             lock (Cache)
@@ -133,6 +140,7 @@ namespace FSO.Content.Framework
                 using (var stream = new MemoryStream(data, false))
                 {
                     T result = this.Codec.Decode(stream);
+                    if (Codec == null) result = (T)SmartCodec.Decode(stream, Path.GetExtension(entry.FarEntry.Filename));
                     if (result is IFileInfoUtilizer) ((IFileInfoUtilizer)result).SetFilename(entry.FarEntry.Filename);
                     this.Cache.Add(entry.FarEntry.Filename, result);
                     return result;
@@ -145,6 +153,8 @@ namespace FSO.Content.Framework
             byte[] data = entry.Archive.GetEntry(entry.FarEntry);
             using (var stream = new MemoryStream(data, false))
             {
+                if (Codec == null) return (T)SmartCodec.Decode(stream, Path.GetExtension(entry.FarEntry.Filename));
+
                 T result = this.Codec.Decode(stream);
                 return result;
             }
@@ -183,23 +193,36 @@ namespace FSO.Content.Framework
 
             foreach (var farPath in FarFiles){
 
-                if (farPath.Contains("Expansion") || farPath.Contains("Global") || farPath.Contains("Objects"))
+                
+                if (farPath.Contains("Expansion") || farPath.Contains("Global") || farPath.Contains("Objects")
+                    || farPath.Contains("Deluxe") || farPath.Contains("Textures") || farPath.Contains("Skins"))
                     Epfile = false;
 
                 string dirpath = Epfile ? ContentManager.GetPath(farPath) : farPath;
 
-                var archive = new FAR1Archive(dirpath, Epfile);
-                var entries = archive.GetAllFarEntries();
+                //if (Epfile)
+                //{
+                string dpath = "";
+                if (dirpath.Contains("C:") || dirpath.Contains("D:"))
+                    dpath = dirpath;
+                else
+                    dpath = FSOEnvironment.SimsCompleteDir + dirpath;
+                    var archive = new FAR1Archive(dpath, Epfile);
+                    var entries = archive.GetAllFarEntries();
 
-                foreach (var entry in entries)
+                    foreach (var entry in entries)
                 {
                     var referenceItem = new Far1ProviderEntry<T>(this)
                     {
                         Archive = archive,
                         FarEntry = entry
                     };
-                    if (entry.Filename != null)
+
+
+                    if (entry.Filename != null)       
                     {
+
+                        Console.WriteLine(entry.Filename);
                         var ext = Path.GetExtension(entry.Filename).ToLowerInvariant();
                         if (!EntriesByName.ContainsKey(entry.Filename))
                         {
@@ -216,6 +239,8 @@ namespace FSO.Content.Framework
 
                         }
                     }
+                //}
+
                 }
             }
         }
@@ -248,6 +273,16 @@ namespace FSO.Content.Framework
         public T Get(bool ts1)
         {
             return this.Provider.Get(this);
+        }
+
+        public object GetThrowawayGeneric()
+        {
+            return this.Provider.ThrowawayGet(this);
+        }
+
+        public object GetGeneric()
+        {
+            return Get(true);
         }
 
         #endregion

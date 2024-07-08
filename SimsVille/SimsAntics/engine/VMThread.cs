@@ -260,7 +260,10 @@ namespace FSO.SimAntics.Engine
                         ContinueExecution = true;
                         while (ContinueExecution)
                         {
-                            if (TicksThisFrame++ > MAX_LOOP_COUNT) throw new Exception("Thread entered infinite loop! ( >" + MAX_LOOP_COUNT + " primitives)");
+                            if (TicksThisFrame++ >  MAX_LOOP_COUNT)
+
+                                //  Entity.Reset(Context); // 
+                                throw new Exception("Thread entered infinite loop! ( >" + MAX_LOOP_COUNT + " primitives)");
 
                             if (Entity.GetBadObjects())
                                 Entity.Delete(true, Context);
@@ -281,10 +284,12 @@ namespace FSO.SimAntics.Engine
 
 
            } catch (Exception e) {
+
+                //Code
                 if (Stack.Count == 0) return; //???
                 var context = Stack[Stack.Count - 1];
                 bool Delete = ((Entity is VMGameObject) && (DialogCooldown > 30 * 20 - 10));
-                 if (DialogCooldown == 0)
+                if (DialogCooldown == 0)
                 {
 
                     var simExcept = new VMSimanticsException(e.Message, context);
@@ -305,6 +310,7 @@ namespace FSO.SimAntics.Engine
                 context.Caller.Reset(context.VM.Context);
 
                 if (Delete) Entity.Delete(true, context.VM.Context);
+
             }
 
         }

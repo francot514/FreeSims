@@ -81,6 +81,11 @@ namespace FSO.Vitaboy
                 for (var i = 0; i < boneCount; i++)
                 {
                     Bone bone = ReadBone(io, bcf);
+                    if (bone == null)
+                    {
+                        i--;
+                        continue;
+                    }
                     bone.Index = i;
                     Bones[i] = bone;
                 }
@@ -106,9 +111,9 @@ namespace FSO.Vitaboy
             if (!bcf) bone.Unknown = reader.ReadInt32();
             bone.Name = reader.ReadPascalString();
             bone.ParentName = reader.ReadPascalString();
-            bone.HasProps = reader.ReadByte();
+            bone.HasProps = reader.ReadByte() > 0;
             if (bcf && bone.Name == "") return null;
-            if (bone.HasProps != 0)
+            if (bone.HasProps)
             {
                 var propertyCount = reader.ReadInt32();
                 var property = new PropertyListItem();

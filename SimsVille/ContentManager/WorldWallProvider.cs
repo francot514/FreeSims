@@ -34,16 +34,25 @@ namespace FSO.Content
         private Dictionary<ushort, WallStyle> StyleById;
         public Dictionary<string, ushort> DynamicWallFromID;
         private Files.Formats.IFF.IffFile WallGlobals;
+        private IffFile BuildGlobals;
 
         public Dictionary<ushort, WallReference> Entries;
 
-        public FAR1Provider<Files.Formats.IFF.IffFile> Walls;
+        public IContentProvider<Files.Formats.IFF.IffFile> Walls;
 
         public int NumWalls;
 
         public WorldWallProvider(Content contentManager)
         {
             this.ContentManager = contentManager;
+
+            WallStyleToIndex = WallStyleIDs.ToDictionary(x => x, x => Array.IndexOf(WallStyleIDs, x));
+
+            this.Entries = new Dictionary<ushort, WallReference>();
+            this.ById = new Dictionary<ushort, Wall>();
+            this.DynamicWallFromID = new Dictionary<string, ushort>();
+            this.StyleById = new Dictionary<ushort, WallStyle>();
+            this.WallStyles = new List<WallStyle>();
         }
 
         public ushort[] WallStyleIDs =
@@ -66,23 +75,172 @@ namespace FSO.Content
 
         public Dictionary<ushort, int> WallStyleToIndex;
 
+        private void InitGlobals()
+        {
+            /** Get wall styles from globals file **/
+            var styleStrs = BuildGlobals.Get<STR>(0x81);
+            ushort wallID = 1;
+            for (ushort i = 2; i < 512; i += 2)
+            {
+                var far = WallGlobals.Get<SPR>((ushort)(i));
+                var medium = WallGlobals.Get<SPR>((ushort)(i + 512));
+                var near = WallGlobals.Get<SPR>((ushort)(i + 1024));
+
+                var fard = WallGlobals.Get<SPR>((ushort)(i + 1));
+                var mediumd = WallGlobals.Get<SPR>((ushort)(i + 513));
+                var neard = WallGlobals.Get<SPR>((ushort)(i + 1025));
+
+                if (far != null)
+                {
+                    near.WallStyle = true; medium.WallStyle = true; far.WallStyle = true;
+                }
+
+                if (fard == null)
+                { //no walls down, just render exactly the same
+                    fard = far;
+                    mediumd = medium;
+                    neard = near;
+                }
+                else
+                {
+                    neard.WallStyle = true; mediumd.WallStyle = true; fard.WallStyle = true;
+                }
+
+                string name = null, description = null;
+                int price = -1;
+                int buyIndex = -1;
+                WallStyleToIndex.TryGetValue(wallID, out buyIndex);
+
+                if (buyIndex != -1)
+                {
+                    price = int.Parse(styleStrs.GetString(buyIndex * 3));
+                    name = styleStrs.GetString(buyIndex * 3 + 1);
+                    description = styleStrs.GetString(buyIndex * 3 + 2);
+                }
+
+                this.AddWallStyle(new WallStyle
+                {
+                    ID = wallID,
+                    WallsUpFar = far,
+                    WallsUpMedium = medium,
+                    WallsUpNear = near,
+                    WallsDownFar = fard,
+                    WallsDownMedium = mediumd,
+                    WallsDownNear = neard,
+
+                    Price = price,
+                    Name = name,
+                    Description = description
+                });
+
+                wallID++;
+            }
+
+            DynamicStyleID = 256; //styles loaded from objects start at 256. The objd reference is dynamically altered to reference this new id, 
+            //so only refresh wall cache at same time as obj cache! (do this on lot unload)
+
+            /** Get wall patterns from globals file **/
+            var wallStrs = BuildGlobals.Get<STR>(0x83);
+
+            wallID = 0;
+            for (ushort i = 0; i < 256; i++)
+            {
+                var far = WallGlobals.Get<SPR>((ushort)(i + 1536));
+                var medium = WallGlobals.Get<SPR>((ushort)(i + 1536 + 256));
+                var near = WallGlobals.Get<SPR>((ushort)(i + 1536 + 512));
+
+                this.AddWall(new Wall
+                {
+                    ID = wallID,
+                    Far = far,
+                    Medium = medium,
+                    Near = near,
+                });
+
+                if (i > 0 && i < (wallStrs.Length / 3) + 1)
+                {
+                    Entries.Add(wallID, new WallReference(this)
+                    {
+                        ID = wallID,
+                        FileName = "global",
+
+                        Name = wallStrs.GetString((i - 1) * 3 + 1),
+                        Price = int.Parse(wallStrs.GetString((i - 1) * 3 + 0)),
+                        Description = wallStrs.GetString((i - 1) * 3 + 2)
+                    });
+                }
+
+                wallID++;
+            }
+
+            Junctions = new Wall
+            {
+                ID = wallID,
+                Far = WallGlobals.Get<SPR>(4096),
+                Medium = WallGlobals.Get<SPR>(4097),
+                Near = WallGlobals.Get<SPR>(4098),
+            };
+
+            wallID = 256;
+        }
+
+        public void InitTS1()
+        {
+            var wallGlobalsPath = Path.Combine(ContentManager.BasePath, "GameData/walls.iff");
+            WallGlobals = new IffFile(wallGlobalsPath);
+
+            var buildGlobalsPath = Path.Combine(ContentManager.BasePath, "GameData/Build.iff");
+            BuildGlobals = new IffFile(buildGlobalsPath);
+
+            InitGlobals();
+
+            //load *.wll iffs from both the TS1 provider and folder
+
+            ushort wallID = 256;
+            var files = new FileProvider<IffFile>(ContentManager, new IffCodec(), new Regex(".*/Walls.*\\.wll"));
+            files.UseTS1 = true;
+            var ts1 = new TS1SubProvider<IffFile>(ContentManager.TS1Global, ".wll");
+            files.Init();
+            ts1.Init();
+            var compo = new CompositeProvider<IffFile>(new List<IContentProvider<IffFile>>() {
+                ts1,
+                files
+                });
+
+            Walls = compo;
+            var all = compo.ListGeneric();
+            foreach (var entry in all)
+            {
+                var iff = (IffFile)entry.GetThrowawayGeneric();
+                DynamicWallFromID[Path.GetFileNameWithoutExtension(entry.ToString().Replace('\\', '/')).ToLowerInvariant()] = wallID;
+                var catStrings = iff.Get<STR>(0);
+
+                Entries.Add(wallID, new WallReference(this)
+                {
+                    ID = wallID,
+                    FileName = Path.GetFileName(entry.ToString().Replace('\\', '/')).ToLowerInvariant(),
+
+                    Name = catStrings.GetString(0),
+                    Price = int.Parse(catStrings.GetString(1)),
+                    Description = catStrings.GetString(2)
+                });
+
+                wallID++;
+            }
+            NumWalls = wallID;
+        }
+
         /// <summary>
         /// Initiates loading of walls.
         /// </summary>
         public void Init()
         {
-            WallStyleToIndex = WallStyleIDs.ToDictionary(x => x, x => Array.IndexOf(WallStyleIDs, x));
+           
 
-            this.Entries = new Dictionary<ushort, WallReference>();
-            this.ById = new Dictionary<ushort, Wall>();
-            this.DynamicWallFromID = new Dictionary<string, ushort>();
-            this.StyleById = new Dictionary<ushort, WallStyle>();
-            this.WallStyles = new List<WallStyle>();
-
-            var wallGlobalsPath = ContentManager.GetPath("objectdata/globals/walls.iff");
+            var wallGlobalsPath = ContentManager.GetPath(Path.Combine("GameData","walls.iff"));
             WallGlobals = new Files.Formats.IFF.IffFile(wallGlobalsPath);
 
-            var buildGlobalsPath = ContentManager.GetPath("objectdata/globals/build.iff");
+            var buildGlobalsPath = ContentManager.GetPath(Path.Combine("GameData","build.iff"));
             var buildGlobals = new Files.Formats.IFF.IffFile(buildGlobalsPath); //todo: centralize?
 
             /** Get wall styles from globals file **/
@@ -225,7 +383,7 @@ namespace FSO.Content
             }
 
             this.Walls = new FAR1Provider<Files.Formats.IFF.IffFile>(ContentManager, new IffCodec(), new Regex(".*/walls.*\\.far"));
-            Walls.Init();
+            //Walls.Init();
             NumWalls = wallID;
         }
 
@@ -256,6 +414,16 @@ namespace FSO.Content
             StyleById.Add(wall.ID, wall);
         }
 
+
+        public Wall Get(string name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Wall Get(ContentID id)
+        {
+            throw new NotImplementedException();
+        }
         /// <summary>
         /// Gets a wallstyle instance from WorldWallProvider.
         /// </summary>
@@ -279,7 +447,7 @@ namespace FSO.Content
             }
             else
             {
-                var iff = this.Walls.ThrowawayGet(Entries[(ushort)id].FileName);
+                var iff = this.Walls.Get(Entries[(ushort)id].FileName);
                 var spr = iff.Get<SPR>(1793);
                 return (spr == null)?null:spr.Frames[2].GetTexture(device);
             }
@@ -354,6 +522,16 @@ namespace FSO.Content
         public Wall Get(bool ts1)
         {
             return Provider.Get(ID, ts1);
+        }
+
+        public object GetThrowawayGeneric()
+        {
+            throw new NotImplementedException();
+        }
+
+        public object GetGeneric()
+        {
+            return Get(true);
         }
 
         #endregion
