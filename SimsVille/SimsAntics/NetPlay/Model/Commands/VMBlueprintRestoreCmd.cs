@@ -82,7 +82,7 @@ namespace FSO.SimAntics.NetPlay.Model.Commands
                     Convert.ToUInt64(Char.Body, 16);
 
               VMAvatar visitor = vm.Activator.CreateAvatar
-                (vm, Convert.ToUInt32(Char.ObjID, 16), Char, true, Convert.ToInt16(Char.Id));
+                (Convert.ToUInt32(Char.ObjID, 16), Char, true, Convert.ToInt16(Char.Id));
 
                if (!vm.Entities.Contains(visitor))
                     vm.SendCommand(new VMNetSimJoinCmd
