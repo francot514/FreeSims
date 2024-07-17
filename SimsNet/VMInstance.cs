@@ -35,6 +35,7 @@ namespace SimsNet
         private int TicksSinceSave;
         private static int SaveTickFreq = 60 * 60; //save every minute for safety
         private int Port;
+        private string LotName;
         private bool TS1, Dedicated;
 
         public VMInstance(int port)
@@ -81,9 +82,9 @@ namespace SimsNet
 
             if (lot == 1)
             {
-
+                LotName = Settings.Default.DebugLot;
                 if (Settings.Default.DebugLot != String.Empty)
-                    path = AppDomain.CurrentDomain.BaseDirectory + "Content/Houses/" + Settings.Default.DebugLot;
+                    path = AppDomain.CurrentDomain.BaseDirectory + "Content/Houses/" + LotName;
                 else
                     path = AppDomain.CurrentDomain.BaseDirectory + "Content/Houses/empty_lot.xml";
 
@@ -92,7 +93,8 @@ namespace SimsNet
             {
 
                     Console.WriteLine("Specify lot name");
-                    path = AppDomain.CurrentDomain.BaseDirectory + "Content/Houses/" + Console.ReadLine() + ".xml";
+                    LotName = Console.ReadLine();
+                    path = AppDomain.CurrentDomain.BaseDirectory + "Content/Houses/" + LotName + ".xml";
 
 
             }
@@ -100,7 +102,8 @@ namespace SimsNet
             {
 
                     Console.WriteLine("Specify house name");
-                    path = AppDomain.CurrentDomain.BaseDirectory + "Content/Houses/" + Console.ReadLine() + ".iff";
+                    LotName = Console.ReadLine();
+                    path = AppDomain.CurrentDomain.BaseDirectory + "Content/Houses/" + LotName + ".iff";
                     TS1 = true;
 
             }
