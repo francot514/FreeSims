@@ -27,6 +27,7 @@ namespace FSO.Common.Rendering.Framework
         public abstract void Add(_3DComponent item);
         public abstract void Update(UpdateState Time);
         public abstract void Draw(GraphicsDevice device);
+        public object Controller { get; internal set; }
 
         public virtual void PreDraw(GraphicsDevice device)
         {
@@ -53,6 +54,21 @@ namespace FSO.Common.Rendering.Framework
         {
             DeviceReset(m_Device);
         }
+
+        public void SetController(object controller)
+        {
+            this.Controller = controller;
+        }
+
+        public T FindController<T>()
+        {
+            if (Controller is T)
+            {
+                return (T)Controller;
+            }
+            return default(T);
+        }
+
 
         public abstract void Dispose();
 
