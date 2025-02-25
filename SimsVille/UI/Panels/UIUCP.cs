@@ -140,6 +140,7 @@ namespace FSO.Client.UI.Panels
             LiveModeButton.OnButtonClick += new ButtonClickDelegate(LiveModeButton_OnButtonClick);
             BuyModeButton.OnButtonClick += new ButtonClickDelegate(BuyModeButton_OnButtonClick);
             BuildModeButton.OnButtonClick += BuildModeButton_OnButtonClick;
+            HouseModeButton.OnButtonClick += (btn) => { SetPanel(4); };
 
             ZoomOutButton.OnButtonClick += new ButtonClickDelegate(ZoomControl);
             ZoomInButton.OnButtonClick += new ButtonClickDelegate(ZoomControl);
@@ -407,7 +408,8 @@ namespace FSO.Client.UI.Panels
             BuyModeButton.Selected = false;
             BuildModeButton.Selected = false;
             LiveModeButton.Selected = false;
-            
+            HouseModeButton.Selected = false;
+
             if (Game.InLot)
             {
                 Game.LotController.QueryPanel.Active = false;
@@ -428,6 +430,19 @@ namespace FSO.Client.UI.Panels
                 if (Game.InLot) Game.LotController.PanelActive = true;
                 switch (newPanel)
                 {
+                    case 4:
+                        if (!Game.InLot) break; //not ingame
+                        Panel = new UIHouseMode(Game.LotController);
+
+                        //enable grid
+                        Game.LotController.World.State.BuildMode = 1;
+
+                        Panel.X = 177;
+                        Panel.Y = 87;
+                        this.Add(Panel);
+                        HouseModeButton.Selected = true;
+                        SetFocus(UCPFocusMode.ActiveTab);
+                        break;
                     case 5:
                         Panel = new UIOptions();
                         Panel.X = 177;

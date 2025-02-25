@@ -39,6 +39,7 @@ namespace FSO.Client.UI.Framework
             }
         }
 
+
         public static UIAlert ShowAlert(UIAlertOptions options, bool modal)
         {
             var alert = new UIAlert(options);

@@ -285,6 +285,7 @@
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetAyncResponseCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetBuyObjectCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetChangeControlCmd.cs" />
+    <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetChangeLotSizeCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetChatCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetDeleteObjectCmd.cs" />
     <Compile Include="SimsAntics\NetPlay\Model\Commands\VMNetDialogResponseCmd.cs" />
@@ -390,6 +391,7 @@
     <Compile Include="UI\Controls\UIListBox.cs" />
     <Compile Include="UI\Controls\UIMotiveDisplay.cs" />
     <Compile Include="UI\Controls\UIPaginationBar.cs" />
+    <Compile Include="UI\Controls\UIPersonButton.cs" />
     <Compile Include="UI\Controls\UIPersonIcon.cs" />
     <Compile Include="UI\Controls\UIProgressBar.cs" />
     <Compile Include="UI\Controls\UIRectangle.cs" />
@@ -447,17 +449,21 @@
     <Compile Include="UI\Panels\UIExitDialog.cs" />
     <Compile Include="UI\Panels\UIGameTitle.cs" />
     <Compile Include="UI\Panels\UIGizmo.cs" />
+    <Compile Include="UI\Panels\UIHouseMode.cs" />
     <Compile Include="UI\Panels\UIInbox.cs" />
     <Compile Include="UI\Panels\UIInteractionQueue.cs" />
+    <Compile Include="UI\Panels\UIJobInfo.cs" />
     <Compile Include="UI\Panels\UILiveMode.cs" />
     <Compile Include="UI\Panels\UILoginDialog.cs" />
     <Compile Include="UI\Panels\UILoginProgress.cs" />
     <Compile Include="UI\Panels\UILotControl.cs" />
     <Compile Include="UI\Panels\UIMessage.cs" />
     <Compile Include="UI\Panels\UIMessageController.cs" />
+    <Compile Include="UI\Panels\UIModMenu.cs" />
     <Compile Include="UI\Panels\UIObjectHolder.cs" />
     <Compile Include="UI\Panels\UIOptions.cs" />
     <Compile Include="UI\Panels\UIPersonGrid.cs" />
+    <Compile Include="UI\Panels\UIPersonPage.cs" />
     <Compile Include="UI\Panels\UIPieMenu.cs" />
     <Compile Include="UI\Panels\UIPropertyLog.cs" />
     <Compile Include="UI\Panels\UIQueryPanel.cs" />
@@ -484,6 +490,7 @@
     <Compile Include="Utils\MonogameLinker.cs" />
     <Compile Include="Utils\ThreeDMesh.cs" />
     <Compile Include="Utils\UIUtils.cs" />
+    <Compile Include="Utils\ValuePointer.cs" />
     <Compile Include="Vitaboy\AdultVitaboyModel.cs" />
     <Compile Include="Vitaboy\Animator.cs" />
     <Compile Include="Vitaboy\Avatar.cs" />

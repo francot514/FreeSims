@@ -1084,7 +1084,54 @@ namespace FSO.Client.UI.Framework
         }
 
         public delegate void AsyncHandler();
-    
+
+        public object Controller { get; set; }
+
+        public void SetController(object controller)
+        {
+            this.Controller = controller;
+        }
+
+        public T FindController<T>()
+        {
+            var target = this;
+            while (target != null)
+            {
+                if (target.Controller is T)
+                {
+                    return (T)target.Controller;
+                }
+                target = target.Parent;
+            }
+
+            if (Parent != null)
+            {
+                return Parent.FindController<T>();
+            }
+            return default(T);
+        }
+
+        public T FindParent<T>() where T : UIElement
+        {
+            var target = this;
+            while (target != null)
+            {
+                if (target is T)
+                {
+                    return (T)target;
+                }
+                target = target.Parent;
+            }
+
+            if (Parent != null)
+            {
+                return Parent.FindParent<T>();
+            }
+            return default(T);
+        }
+
+
+
     }
 
 }
