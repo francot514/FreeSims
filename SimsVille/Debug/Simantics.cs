@@ -50,12 +50,16 @@ namespace FSO.Debug
                 }
 
                 if (search.Length > 0){
-                    var toString = entity.ToString().ToLowerInvariant();
+                    var toString = entity.Name.ToString().ToLowerInvariant();
                     if (toString.IndexOf(search) == -1){
                         continue;
                     }
                 }
+
+                if (entity.BadName)
+                    continue;
                 items.Add(entity);
+
             }
 
             entityList.Items.Clear();
@@ -113,6 +117,7 @@ namespace FSO.Debug
                 }
             }
 
+          
             interactionList.Items.Clear();
             if (entity.TreeTable != null)
             {
