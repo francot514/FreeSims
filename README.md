@@ -21,7 +21,7 @@ Each user create a Sim, and add him to neighborhood, also the user can have thei
 	
 ## Installation
 
-Original cd game needed, install it in default path and run Simsville.
+Original game needed, works with Complete Collection or Legacy Collection, install it in default path and run Simsville.
 	
 # Screenshots
 
