@@ -13,6 +13,8 @@ namespace FileParser.Data.Sims
         public ARRY[] Arrys;
         public OBJM ObjectMap;
         public OBJT ObjectTable;
+        public SIMI SimInfo;
+        public HOUS HousesScore;
 
         public House(int id)
         {

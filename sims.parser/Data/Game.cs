@@ -83,7 +83,9 @@ namespace FileParser.Data
                     for (int i = 0; i < count; i++)
                     {
                        DefaultNgh.Neighborhood.Families[i].Offset = BitConverter.ToInt32(reader.ReadBytes(4), 0);
-
+                        DefaultNgh.Houses[i].SimInfo = new SIMI();
+                        DefaultNgh.Houses[i].HousesScore = new HOUS();
+                        
 
                     }
 
