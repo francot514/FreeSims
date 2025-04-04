@@ -124,7 +124,6 @@
     <Compile Include="utils\IoWriter.cs" />
     <Compile Include="utils\ITextureProvider.cs" />
     <Compile Include="utils\IWorldTextureProvider.cs" />
-    <Compile Include="utils\Tuning.cs" />
     <Compile Include="utils\WorldTexture.cs" />
     <Compile Include="UTK\UTKFile2.cs" />
     <Compile Include="XA\XAFile.cs" />
