@@ -223,9 +223,11 @@ namespace SimsVille.UI.Model
                                      //{ m_LotCost.ToString(), CurrentUIScr.ucp.MoneyText.Caption });
 
                                      AlertOptions.Message = m_CurrentLot.x.ToString() + " " + m_CurrentLot.y.ToString();
-                                     //AlertOptions.Buttons = UIAlertButtons.YesNo;
+                                     AlertOptions.Buttons[0] = new UIAlertButton();
+                                     AlertOptions.Buttons[0].Type = UIAlertButtonType.OK;
 
-                                     
+
+
 
                                  }
 
@@ -348,10 +350,7 @@ namespace SimsVille.UI.Model
                 if (m_HousesData.HousesImages[i] != null)
                     sbatch.Draw(m_HousesData.HousesImages[i], new Rectangle(lot.x, lot.y, 256, 256), Color.White);       
 
-
             }
-
-            //Draw2DPoly();
 
         }
 
