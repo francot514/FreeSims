@@ -146,28 +146,31 @@ namespace SimsNet
                         // JobLevel = jobLevel,
                         // XMLData = File.ReadAllBytes(path)
                         //});
-
-                        using (var stream = new MemoryStream(File.ReadAllBytes(path)))
+                        if (File.Exists(path))
                         {
-                            lotInfo = XmlHouseData.Parse(stream);
+                            using (var stream = new MemoryStream(File.ReadAllBytes(path)))
+                            {
+                                lotInfo = XmlHouseData.Parse(stream);
+                            }
+
+                            VMWorldActivator activator = new VMWorldActivator(vm, vm.Context.World);
+
+                            vm.Activator = activator;
+
+                            var blueprint = activator.LoadFromXML(lotInfo);
+
+                            if (VM.UseWorld)
+                            {
+                                vm.Context.World.InitBlueprint(blueprint);
+                                vm.Context.Blueprint = blueprint;
+                            }
+
+
+                            vm.Context.Clock.Hours = 10;
+
+                            vm.MyUID = uint.MaxValue - 1;
+
                         }
-
-                        VMWorldActivator activator = new VMWorldActivator(vm, vm.Context.World);
-
-                        vm.Activator = activator;
-
-                        var blueprint = activator.LoadFromXML(lotInfo);
-
-                        if (VM.UseWorld)
-                        {
-                            vm.Context.World.InitBlueprint(blueprint);
-                            vm.Context.Blueprint = blueprint;
-                        }
-
-
-                        vm.Context.Clock.Hours = 10;
-
-                        vm.MyUID = uint.MaxValue - 1;
 
 
                     }
