@@ -105,7 +105,7 @@ namespace SimsNet
                     
 
             FSO.Content.Content.Init(path, null);
-            Console.WriteLine("Success!");
+            Console.WriteLine("Success loading content!");
 
 
             Console.WriteLine("Starting VM server...");

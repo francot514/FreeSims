@@ -301,7 +301,7 @@ namespace SimsNet
 
         public void SaveLot()
         {
-            string filename = Path.GetFileName(Settings.Default.DebugLot);
+            string filename = Path.GetFileName(LotName);
             var exporter = new VMWorldExporter();
             exporter.SaveHouse(state, Path.Combine(AppDomain.CurrentDomain.BaseDirectory + "Content/Houses/" + filename));
 
