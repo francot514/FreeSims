@@ -268,7 +268,8 @@ namespace sims.debug
 
                 file = listBox1.SelectedItem.ToString();
 
-            CreateTableFile(file);
+            if (file != String.Empty)
+                CreateTableFile(file);
 
             
                 
@@ -285,25 +286,33 @@ namespace sims.debug
 
                 file = listBox1.SelectedItem.ToString();
 
-            CreateCatalogFile(file);
+            if (file != String.Empty)
+                CreateCatalogFile(file);
         }
 
         private void button3_Click(object sender, EventArgs e)
         {
 
+            
             List<FarEntry> Resource = new List<FarEntry>();
-            FAR1Archive Archive = new FAR1Archive("UIGraphics.far", false);
-                    //m_Archives.Add(path, Archive);
-             Resource = Archive.GetAllFarEntries();
 
-             foreach (var entry in Resource)
+            if (File.Exists(("UIGraphics/UIGraphics.far"))
+            {
+                    FAR1Archive Archive = new FAR1Archive("UIGraphics/UIGraphics.far", false);
+                    //m_Archives.Add(path, Archive);
+                    Resource = Archive.GetAllFarEntries();
+
+                foreach (var entry in Resource)
                  {
 
                      if (entry.Filename.Contains(".bmp"))
                      listBox1.Items.Add(entry.Filename + "" + entry.DataLength);
 
 
-                 }
+
+                }
+
+            }
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -314,9 +323,11 @@ namespace sims.debug
             RoofTable roofs = new RoofTable();
             roofs.Items = new List<RoofItem>();
 
-            DirectoryInfo dir = new DirectoryInfo("Roofs");
+            if (Directory.Exists("Roofs"))
+            {
+                DirectoryInfo dir = new DirectoryInfo("Roofs");
 
-            foreach (FileInfo file in dir.GetFiles())
+                foreach (FileInfo file in dir.GetFiles())
                 if (file.Extension == ".bmp")
                 {
                     name = Path.GetFileNameWithoutExtension(file.Name);
@@ -334,6 +345,8 @@ namespace sims.debug
                     id++;
 
                 }
+
+            }
 
             RoofTable.Save("roofs.xml", roofs);
 
