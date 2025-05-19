@@ -40,7 +40,11 @@ public class VMWorldActivator
 
 	public Blueprint LoadFromXML(XmlHouseData model)
 	{
-		Blueprint = new Blueprint(model.Size, model.Size);
+
+        var size = 0;
+        if (size == 0) size = model.Size;
+
+        Blueprint = new Blueprint(model.Size, model.Size);
 		VM.Context.Blueprint = Blueprint;
 		VM.Context.Architecture = new VMArchitecture(model.Size, model.Size, Blueprint, VM.Context);
 		VMArchitecture arch = VM.Context.Architecture;
@@ -82,7 +86,7 @@ public class VMWorldActivator
 			foreach (XmlSoundData obj in model.Sounds)
 			{
 				VM.Context.Ambience.SetAmbience(VM.Context.Ambience.GetAmbienceFromGUID(obj.ID), obj.On == 1);
-				World.State.WorldSize = model.Size;
+				
 			}
 			Blueprint.Terrain = CreateTerrain(model);
 		}
@@ -92,7 +96,10 @@ public class VMWorldActivator
 		testObject.Y = 0;
 		testObject.Level = 1;
 		testObject.Dir = 0;
-		CreateObject(testObject);
+
+        if (VM.UseWorld) World.State.WorldSize = size;
+
+        CreateObject(testObject);
 		arch.Tick();
 		return Blueprint;
 	}
