@@ -296,7 +296,7 @@ namespace sims.debug
             
             List<FarEntry> Resource = new List<FarEntry>();
 
-            if (File.Exists(("UIGraphics/UIGraphics.far"))
+            if (File.Exists(("UIGraphics/UIGraphics.far")))
             {
                     FAR1Archive Archive = new FAR1Archive("UIGraphics/UIGraphics.far", false);
                     //m_Archives.Add(path, Archive);
@@ -359,7 +359,7 @@ namespace sims.debug
             int current = comboBox1.SelectedIndex;
 
             
-            Userpath = "UserData/";
+            Userpath = "UserData";
 
         }
 
@@ -375,10 +375,10 @@ namespace sims.debug
             {
                 if (current == 0)
                 {
-                    dir = new DirectoryInfo(Userpath + "Houses");
+                    dir = new DirectoryInfo(Userpath + "/Houses");
 
-                    foreach (FileInfo file in dir.GetFiles())
-
+                    if (dir.Exists)
+                        foreach (FileInfo file in dir.GetFiles())
                         if (file.Extension == ".iff")
                             listBox3.Items.Add(file.Name);
 
@@ -386,9 +386,10 @@ namespace sims.debug
 
                 else if (current == 1)
                 {
-                    dir = new DirectoryInfo(Userpath + "Families");
+                    dir = new DirectoryInfo(Userpath + "/Families");
 
-                    foreach (FileInfo file in dir.GetFiles())
+                    if (dir.Exists)
+                        foreach (FileInfo file in dir.GetFiles())
                         if (file.Extension == ".iff")
                             listBox3.Items.Add(file.Name);
 
@@ -416,7 +417,7 @@ namespace sims.debug
              userdata = comboBox1.SelectedItem.ToString();
 
 
-            var iff = new IffFile(Userpath + "/" + userdata + "/Houses/" + current);
+            var iff = new IffFile(Userpath + "/Houses/" + current);
 
             var simi = iff.Get<SIMI>(326);
 
@@ -458,6 +459,11 @@ namespace sims.debug
 
             IffFile file = new IffFile(AppDomain.CurrentDomain.BaseDirectory + current + ".iff");
 
+
+        }
+
+        private void tabPage2_Click(object sender, EventArgs e)
+        {
 
         }
 
