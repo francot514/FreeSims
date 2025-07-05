@@ -64,7 +64,7 @@ namespace FileParser
                         CDReader cd = new CDReader(isoStream, true);
                         Stream fileStream = cd.OpenFile(@"default.ngh", FileMode.Open);
 
-                        
+                        BinaryReader reader = new BinaryReader(fileStream);
 
                         MessageBox.Show("Iso found " + cd.VolumeLabel);
 
