@@ -52,7 +52,7 @@ namespace SimsNet
 
             GameStartProxy Proxy = new GameStartProxy();
 
-            if (Proxy != null)
+            if (Proxy != null && useDX)
                 return true;
 
 
