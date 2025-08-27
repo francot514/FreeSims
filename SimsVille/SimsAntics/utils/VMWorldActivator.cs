@@ -99,6 +99,7 @@ public class VMWorldActivator
 
         if (VM.UseWorld) World.State.WorldSize = size;
 
+
         CreateObject(testObject);
 		arch.Tick();
 		return Blueprint;
@@ -177,6 +178,17 @@ public class VMWorldActivator
 		OBJM objm = iff.Get<OBJM>(1);
 		OBJT objt = iff.Get<OBJT>(0);
 		int l = 0;
+
+		objm.Prepare((ushort typeID) =>
+            {
+                var entry = objt.Entries[typeID - 1];
+                return new OBJMResource()
+                {
+                    OBJD = content.WorldObjects.Get(entry.GUID)?.OBJ,
+                    OBJT = entry
+                };
+            });
+		
 		for (int k = 0; k < objm.IDToOBJT.Length; k += 2)
 		{
 			if (objm.IDToOBJT[k] != 0 && objm.ObjectData.TryGetValue(objm.IDToOBJT[k], out var target))
