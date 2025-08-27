@@ -52,6 +52,13 @@ namespace FSO.Files.Utils
             }
         }
 
+        public bool HasBytes(int count)
+        {
+
+            return Stream.Position < Stream.Length - (count - 1);
+
+        }
+
         /// <summary>
         /// Skips a number of bytes in the current stream, starting from the current position.
         /// </summary>
