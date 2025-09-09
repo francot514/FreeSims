@@ -17,6 +17,7 @@ using FSO.SimAntics.Entities;
 using FSO.SimAntics.Model;
 using Microsoft.Xna.Framework;
 using tso.world.Model;
+using static FSO.Files.Formats.IFF.Chunks.OBJM;
 
 public class VMWorldActivator
 {
@@ -99,7 +100,6 @@ public class VMWorldActivator
 
         if (VM.UseWorld) World.State.WorldSize = size;
 
-
         CreateObject(testObject);
 		arch.Tick();
 		return Blueprint;
@@ -177,23 +177,25 @@ public class VMWorldActivator
 		VM.Context.RegeneratePortalInfo();
 		OBJM objm = iff.Get<OBJM>(1);
 		OBJT objt = iff.Get<OBJT>(0);
-		int l = 0;
 
-		objm.Prepare((ushort typeID) =>
+        objm.Prepare((ushort typeID) =>
+        {
+            var entry = objt.Entries[typeID - 1];
+            return new OBJMResource()
             {
-                var entry = objt.Entries[typeID - 1];
-                return new OBJMResource()
-                {
-                    OBJD = content.WorldObjects.Get(entry.GUID)?.OBJ,
-                    OBJT = entry
-                };
-            });
-		
-		for (int k = 0; k < objm.IDToOBJT.Length; k += 2)
+                OBJD = Content.Get().WorldObjects.Get(entry.GUID, false)?.OBJ,
+                OBJT = entry
+            };
+        });
+
+        var target = objm.ObjectData[0];
+        int l = 0;
+		for (ushort k = 0; k < objm.IDToOBJT.Count; k += 2)
 		{
-			if (objm.IDToOBJT[k] != 0 && objm.ObjectData.TryGetValue(objm.IDToOBJT[k], out var target))
+			if (objm.IDToOBJT[(ushort)k] != 0 && objm.ObjectData.TryGetValue(objm.IDToOBJT[(ushort)k], out target))
 			{
-				OBJTEntry entry = objt.Entries[objm.IDToOBJT[k + 1] - 1];
+                
+                OBJTEntry entry = objt.Entries[objm.IDToOBJT[k] - 1];
 				target.Name = entry.Name;
 				target.GUID = entry.GUID;
 			}
