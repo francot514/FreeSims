@@ -55,6 +55,7 @@ namespace sims.debug
             foreach (OBJT obj in iff.List<OBJT>())
             {
                 var entries = obj.Entries;
+                label9.Text = entries.Count.ToString();
 
                 foreach (OBJTEntry entry in entries)
                     if (entry.Name != null)
@@ -496,3 +497,4 @@ namespace sims.debug
 
     }
 }
+
