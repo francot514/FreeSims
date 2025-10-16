@@ -185,7 +185,7 @@ namespace FSO.LotView
         public void LightChange(short roomID, bool important)
         {
             Dirty |= BlueprintGlobalChanges.LIGHTING_CHANGED;
-            if (!RoomLightInvalid.TryGetValue(roomID, out var existingImportant) || (!existingImportant && important))
+            if (!RoomLightInvalid.ContainsKey(roomID) || important)
             {
                 RoomLightInvalid[roomID] = important;
             }
