@@ -47,7 +47,7 @@ namespace FSO.LotView.LMap
             if (comp != null)
             {
                 var bounds = comp.GetParticleBounds();
-                if (bounds != default)
+                if (bounds != null)
                 {
                     var mid = (bounds.Min + bounds.Max) / 2;
                     mid.X = Math.Min(0.35f, Math.Max(-0.35f, mid.X));
