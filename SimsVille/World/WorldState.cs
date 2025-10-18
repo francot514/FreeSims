@@ -4,18 +4,33 @@
  * http://mozilla.org/MPL/2.0/. 
  */
 
+using FSO.Common.Rendering.Framework.Camera;
+using FSO.LotView.Components;
+using FSO.LotView.Platform;
+using FSO.LotView.Utils;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using FSO.Common.Rendering.Framework.Camera;
-using Microsoft.Xna.Framework;
-using FSO.LotView.Utils;
-using Microsoft.Xna.Framework.Graphics;
-using FSO.LotView.Components;
 
 namespace FSO.LotView
 {
+
+    public enum CameraRenderMode
+    {
+        _2D = 1,
+        _2DRotate = 2, //2d camera, but must render with 3d instead
+        _3D = 3
+    }
+
+    public enum ComponentRenderMode
+    {
+        _2D = 1,
+        _3D = 2,
+        Both = 3
+    }
     /// <summary>
     /// Holds state information retaining to world.
     /// </summary>
@@ -23,7 +38,12 @@ namespace FSO.LotView
     {
         private World World;
         public GraphicsDevice Device;
-
+        public CameraRenderMode CameraMode = CameraRenderMode._2D;
+        public IWorldPlatform Platform;
+        public Matrix ViewProjection;
+        public bool ForceImmediate;
+        public Texture2D OutsidePx;
+        //public LMapBatch Light;
         /// <summary>
         /// Creates a new WorldState instance.
         /// </summary>
@@ -290,6 +310,12 @@ namespace FSO.LotView
             WorldPxHeight = dim.Y;
         }
 
+        public float GetDepthFromTile(Vector3 tile)
+        {
+            var pos = GetScreenFromTile(tile);
+            return pos.Y + tile.Z * OneUnitDistance * 2;
+        }
+
         /// <summary>
         /// Gets the offset for the screen based on the scroll position
         /// </summary>
@@ -385,6 +411,8 @@ namespace FSO.LotView
         /// </summary>
         /// <param name="tile">The tile to get screen coordinates from.</param>
         /// <returns>Tile's position in screen coordinates.</returns>
+        /// 
+
         public Vector2 GetScreenFromTile(Vector2 tile)
         {
             return GetScreenFromTile(new Vector3(tile.X, tile.Y, 0.0f));
