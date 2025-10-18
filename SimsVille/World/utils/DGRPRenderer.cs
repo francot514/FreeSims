@@ -4,13 +4,14 @@
  * http://mozilla.org/MPL/2.0/. 
  */
 
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.LotView.Model;
+using FSO.Vitaboy;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Microsoft.Xna.Framework;
-using FSO.Files.Formats.IFF.Chunks;
-using FSO.LotView.Model;
 
 namespace FSO.LotView.Utils
 {
@@ -26,6 +27,7 @@ namespace FSO.LotView.Utils
     public class DGRPRenderer
     {
         private DGRP DrawGroup;
+        protected OBJD Source;
         public Rectangle Bounding;
         private List<DGRPRendererItem> Items = new List<DGRPRendererItem>();
         public ulong DynamicSpriteFlags = 0x00000000;
@@ -35,9 +37,10 @@ namespace FSO.LotView.Utils
 
         public ushort Room;
 
-        public DGRPRenderer(DGRP group)
+        public DGRPRenderer(DGRP group, OBJD source)
         {
             this.DrawGroup = group;
+            this.Source = source;
         }
 
         /// <summary>
@@ -53,11 +56,11 @@ namespace FSO.LotView.Utils
             {
                 DrawGroup = value;
                 _TextureDirty = true;
-                _Dirty = true;
+               
             }
         }
 
-        private bool _Dirty = true;
+        protected ComponentRenderMode _Dirty = ComponentRenderMode.Both;
         private bool _TextureDirty = true;
 
         private Direction _Direction;
@@ -73,7 +76,7 @@ namespace FSO.LotView.Utils
             set{
                 _Direction = value;
                 _TextureDirty = true;
-                _Dirty = true;
+                
             }
         }
 
@@ -97,16 +100,35 @@ namespace FSO.LotView.Utils
             }
         }
 
+        public static BoundingBox RectangleToBoundingBox(Rectangle rect, float minZ, float maxZ)
+        {
+            // Create the minimum and maximum Vector3 points for the BoundingBox
+            Vector3 minPoint = new Vector3(rect.X, rect.Y, minZ);
+            Vector3 maxPoint = new Vector3(rect.X + rect.Width, rect.Y + rect.Height, maxZ);
+
+            // Construct the BoundingBox
+            return new BoundingBox(minPoint, maxPoint);
+        }
+
+        public BoundingBox? GetBounds()
+        {
+            if ((_Dirty == ComponentRenderMode._3D) && DrawGroup != null)
+            {
+                
+            }
+            return RectangleToBoundingBox(Bounding, 0, 5);
+        }
+
         public void InvalidateRotation()
         {
             _TextureDirty = true;
-            _Dirty = true;
+            _Dirty = ComponentRenderMode.Both;
         }
 
         public void InvalidateZoom()
         {
             _TextureDirty = true;
-            _Dirty = true;
+            _Dirty = ComponentRenderMode.Both;
         }
 
         public void InvalidateScroll()
@@ -117,7 +139,7 @@ namespace FSO.LotView.Utils
         public void ValidateSprite(WorldState world)
         {
             if (DrawGroup == null) return;
-            if (_Dirty)
+            if (_Dirty == ComponentRenderMode._2D)
             {
                 if (_TextureDirty)
                 {
@@ -198,7 +220,7 @@ namespace FSO.LotView.Utils
                 }
                 Bounding = new Rectangle(minX, minY, maxX - minX, maxY - minY);
 
-                _Dirty = false;
+                _Dirty = ComponentRenderMode.Both;
             }
         }
 
