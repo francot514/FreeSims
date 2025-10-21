@@ -74,7 +74,7 @@ namespace FSO.Common
                 using (var stream = new StreamWriter(File.Open(ActivePath, FileMode.Create, FileAccess.Write)))
                 {
                     stream.WriteLine("# FreeSO Settings File. Properties are self explanatory.");
-                    var props = this.GetType().GetProperties();
+                    //var props = this.GetType().GetProperties();
                     //foreach (var prop in props)
                     //{
                         //if (prop.Name == "Default" || prop.Name == "DefaultValues") continue;

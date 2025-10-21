@@ -52,6 +52,13 @@ namespace FSO.Files.Utils
             }
         }
 
+        public bool HasBytes(int count)
+        {
+
+            return Stream.Position < Stream.Length - (count - 1);
+
+        }
+
         /// <summary>
         /// Skips a number of bytes in the current stream, starting from the current position.
         /// </summary>
@@ -70,9 +77,6 @@ namespace FSO.Files.Utils
         {
             Reader.BaseStream.Seek(offset, origin);
         }
-
-        public long Position => Stream.Position;
-
 
         /// <summary>
         /// Reads a variable length unsigned integer from the current stream.

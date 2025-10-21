@@ -35,29 +35,25 @@ namespace FSO.Files.Formats.IFF.Chunks
     public class OBJTEntry
     {
         public uint GUID;
-        public ushort Unknown1a;
-        public ushort InitTreeVersion;
-        public ushort Unknown2a;
-        public ushort MainTreeVersion;
-        public ushort TypeID;
-        public OBJDType OBJDType;
+        public uint Unknown1;
+        public uint Unknown2;
+        public ushort Unknown3;
+        public ushort Unknown4;
+        public int Unknown5;
         public string Name;
         public OBJTEntry(IoBuffer io, int version)
         {
             //16 bytes of data
             GUID = io.ReadUInt32();
             if (GUID == 0) return;
-            Unknown1a = io.ReadUInt16(); //likely number of attributes
-            InitTreeVersion = io.ReadUInt16();
-            Unknown2a = io.ReadUInt16(); //objd version?
-            MainTreeVersion = io.ReadUInt16();
-            //increases by one each time, one based, essentially an ID for this loaded type. Mostly matches index in array, but I guess it can possibly be different.
-            TypeID = io.ReadUInt16();
-            OBJDType = (OBJDType)io.ReadUInt16();
+            Unknown1 = io.ReadUInt32(); //7 a lot
+            Unknown2 = io.ReadUInt32(); //131074 a lot
+            Unknown3 = io.ReadUInt16(); //increases by one each time, but sometimes skips one. ID?
+            Unknown4 = io.ReadUInt16(); //mostly 4, sometimes 8, sometimes 7 (dollhouse). catalog category? 
             //then the name, null terminated
             Name = io.ReadNullTerminatedString();
-            if (Name.Length % 2 == 0) io.ReadByte(); //pad to short width
-            if (version > 2) io.ReadInt32(); //not sure what this is
+            if (Name.Length%2 == 0) io.ReadByte(); //pad to short width
+            if (version > 2) io.ReadInt32();
         }
     }
 }
