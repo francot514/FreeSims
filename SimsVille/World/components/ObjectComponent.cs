@@ -15,7 +15,6 @@ using FSO.Files.Formats.IFF.Chunks;
 using FSO.LotView.Model;
 using Microsoft.Xna.Framework;
 using FSO.Common.Utils;
-using System.Windows.Forms;
 
 namespace FSO.LotView.Components
 {
@@ -28,18 +27,16 @@ namespace FSO.LotView.Components
         };
 
         public GameObject Obj;
-        public WorldObjectRenderInfo RenderInfo;
+
         private DGRP DrawGroup;
         private DGRPRenderer dgrp;
         public WorldObjectRenderInfo renderInfo;
         public Blueprint blueprint;
         public int DynamicCounter; //how long this sprite has been dynamic without changing sprite
         public List<SLOTItem> ContainerSlots;
-        public float DrawOrder;
+
         public bool HideForCutaway;
         public WallSegments AdjacentWall;
-        public bool Dead = false;
-
 
         public new bool Visible {
             get { return _Visible; }
@@ -87,65 +84,9 @@ namespace FSO.LotView.Components
                 var gid = obj.OBJ.BaseGraphicID;
                 this.DrawGroup = obj.Resource.Get<DGRP>(gid);
             }
-            dgrp = new DGRPRenderer(this.DrawGroup, obj.OBJ);
+            dgrp = new DGRPRenderer(this.DrawGroup);
             dgrp.DynamicSpriteBaseID = obj.OBJ.DynamicSpriteBaseId;
             dgrp.NumDynamicSprites = obj.OBJ.NumDynamicSprites;
-        }
-
-        public void UpdateDrawOrder(WorldState world)
-        {
-            if (world.CameraMode > CameraRenderMode._2DRotate)
-            {
-                if (!Visible) DrawOrder = 0;
-                var w = World;
-                var ctr = w.Translation;
-                var forward = world.ViewProjection.Forward;
-                forward.Z *= 1;
-                if (forward.Z < 0) forward.Y = -forward.Y;
-                DrawOrder = Vector3.Dot(ctr, forward);
-            }
-            else
-            {
-                DrawOrder = world.WorldSpace.GetDepthFromTile(Position);
-            }
-        }
-
-        public virtual BoundingBox GetParticleBounds()
-        {
-            //make an estimation based off of the sprite height
-            var bounds = dgrp.GetBounds();
-            if (bounds != null) return bounds.Value;
-
-            //if (Debug.BoundingBoxCache.TryGetValue(Obj.OBJ.GUID, out var bounds2)) return bounds2;
-
-            //if (world.CameraMode == CameraRenderMode._2D || Mode.HasFlag(ComponentRenderMode._3D)) return  ?? new BoundingBox();
-            if (DGRP == null) return new BoundingBox(new Vector3(-0.4f, 0.1f, -0.4f), new Vector3(0.4f, 0.9f, 0.4f));
-            else
-            {
-                var image = DGRP.GetImage(1, 3, 1);
-                var maxY = int.MinValue;
-                var minY = int.MaxValue;
-                var objOffset = 0f;
-
-                if (image.Sprites.Length == 0) return new BoundingBox(new Vector3(-0.4f, 0.1f, -0.4f), new Vector3(0.4f, 0.9f, 0.4f));
-
-                foreach (var spr in image.Sprites)
-                {
-                    var dim = spr.GetDimensions();
-
-                    var top = spr.SpriteOffset.Y;
-                    var btm = top + dim.Y;
-
-                    if (top < minY) minY = (int)top;
-                    if (btm > maxY) maxY = (int)btm;
-                    objOffset += spr.ObjectOffset.Z * 1f / 5f;
-                }
-                objOffset /= image.Sprites.Length;
-                //128 is a height of zero
-                var topY = Math.Max(0, Math.Min(2.95f, (100 - minY) / 95f));
-                var btmY = Math.Max(0, Math.Min(2.95f, (100 - maxY) / 95f));
-                return new BoundingBox(new Vector3(-0.4f, btmY, -0.4f), new Vector3(0.4f, topY, 0.4f));
-            }
         }
 
         public DGRP DGRP
@@ -249,7 +190,7 @@ namespace FSO.LotView.Components
             }
         }
 
-        public float RadianDirection
+        private float RadianDirection
         {
             get
             {
@@ -308,16 +249,6 @@ namespace FSO.LotView.Components
             if (dgrp != null) {
                 dgrp.InvalidateScroll();
             }
-        }
-
-        public EntityComponent GetBottomContainer()
-        {
-            EntityComponent current = this;
-            while (current.Container != null)
-            {
-                current = current.Container;
-            }
-            return current;
         }
 
         public void ValidateSprite(WorldState world)

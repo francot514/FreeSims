@@ -17,7 +17,6 @@ using FSO.SimAntics.Entities;
 using FSO.SimAntics.Model;
 using Microsoft.Xna.Framework;
 using tso.world.Model;
-using static FSO.Files.Formats.IFF.Chunks.OBJM;
 
 public class VMWorldActivator
 {
@@ -177,25 +176,12 @@ public class VMWorldActivator
 		VM.Context.RegeneratePortalInfo();
 		OBJM objm = iff.Get<OBJM>(1);
 		OBJT objt = iff.Get<OBJT>(0);
-
-        objm.Prepare((ushort typeID) =>
-        {
-            var entry = objt.Entries[typeID - 1];
-            return new OBJMResource()
-            {
-                OBJD = Content.Get().WorldObjects.Get(entry.GUID, false)?.OBJ,
-                OBJT = entry
-            };
-        });
-
-        var target = objm.ObjectData[0];
-        int l = 0;
-		for (ushort k = 0; k < objm.IDToOBJT.Count; k += 2)
+		int l = 0;
+		for (int k = 0; k < objm.IDToOBJT.Length; k += 2)
 		{
-			if (objm.IDToOBJT[(ushort)k] != 0 && objm.ObjectData.TryGetValue(objm.IDToOBJT[(ushort)k], out target))
+			if (objm.IDToOBJT[k] != 0 && objm.ObjectData.TryGetValue(objm.IDToOBJT[k], out var target))
 			{
-                
-                OBJTEntry entry = objt.Entries[objm.IDToOBJT[k] - 1];
+				OBJTEntry entry = objt.Entries[objm.IDToOBJT[k + 1] - 1];
 				target.Name = entry.Name;
 				target.GUID = entry.GUID;
 			}

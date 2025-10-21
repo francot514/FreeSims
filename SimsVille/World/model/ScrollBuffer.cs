@@ -14,12 +14,6 @@ namespace FSO.LotView.Model
         public Vector2 PxOffset;
         public Vector3 WorldPosition;
 
-        public static int BUFFER_PADDING = 512;
-        public Vector2 GetScrollIncrement(Vector2 pxOffset, WorldState state)
-        {
-            var scrollSize = BUFFER_PADDING / state.PreciseZoom;
-            return new Vector2((float)Math.Floor(pxOffset.X / scrollSize) * scrollSize, (float)Math.Floor(pxOffset.Y / scrollSize) * scrollSize);
-        }
         public ScrollBuffer(Texture2D pixel, Texture2D depth, Vector2 px, Vector3 world)
         {
             Pixel = pixel;

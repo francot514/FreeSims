@@ -684,7 +684,6 @@ namespace FSO.LotView
     public class WorldObjectRenderInfo
     {
         public WorldObjectRenderLayer Layer = WorldObjectRenderLayer.STATIC;
-        public int DynamicRemoveCycle;
     }
 
     public enum WorldObjectRenderLayer

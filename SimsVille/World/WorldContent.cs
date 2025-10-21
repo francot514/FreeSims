@@ -12,7 +12,6 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using FSO.Common;
-using FSO.LotView.Effects;
 
 namespace FSO.LotView
 {
@@ -43,11 +42,11 @@ namespace FSO.LotView
             
         }
 
-        public static GrassEffect GrassEffect
+        public static Effect GrassEffect
         {
             get
             {
-                return new GrassEffect(ContentManager.Load<Effect>("Effects/GrassShader"+EffectSuffix));
+                return ContentManager.Load<Effect>("Effects/GrassShader"+EffectSuffix);
             }
             
 

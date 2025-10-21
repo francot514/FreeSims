@@ -23,12 +23,9 @@ namespace FSO.LotView.Model
     {
         public List<BlueprintDamage> Damage = new List<BlueprintDamage>();
 
-        public BlueprintChanges Changes;
-
         public int Width;
         public int Height;
         public sbyte Stories = 5;
-        public short[] AltitudeCenters;
 
         /// <summary>
         /// Only read these arrays, do not modify them!
@@ -36,7 +33,6 @@ namespace FSO.LotView.Model
         public WallTile[][] Walls;
         public List<int>[] WallsAt;
         public WallComponent WallComp;
-        public List<_2DDrawBuffer> WallCache2D = new List<_2DDrawBuffer>();
 
         public FloorTile[][] Floors;
         public FloorComponent FloorComp;
@@ -60,9 +56,7 @@ namespace FSO.LotView.Model
         public RoomLighting[] Light = new RoomLighting[0];
         public uint[][] RoomMap;
         public List<Room> Rooms = new List<Room>();
-        public int BaseAlt;
-        public float TerrainFactor = 3 / 160f;
-        public bool[] FineArea;
+
         public Color[] RoomColors;
         public Rectangle BuildableArea;
         public Rectangle TargetBuildableArea;
@@ -93,15 +87,8 @@ namespace FSO.LotView.Model
                 this.Floors[i] = new FloorTile[numTiles];
             }
             this.Cutaway = new bool[numTiles];
-            FineArea = new bool[numTiles];
-            this.Changes = new BlueprintChanges(this);
         }
 
-        public float GetAltitude(int x, int y)
-        {
-            if (x <= 0 || y <= 0) return 0f;
-            return (AltitudeCenters[((y % Height) * Width + (x % Width))] - BaseAlt) * TerrainFactor;
-        }
         public void GenerateRoomLights()
         {
             var minOut = OutsideColor * (float)(150 / Math.Sqrt(OutsideColor.R * OutsideColor.R + OutsideColor.G * OutsideColor.G + OutsideColor.B * OutsideColor.B));

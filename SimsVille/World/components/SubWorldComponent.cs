@@ -28,11 +28,6 @@ namespace FSO.LotView.Components
         private List<_2DDrawBuffer> StaticArchCache = new List<_2DDrawBuffer>();
         private int TicksSinceLight = 0;
 
-        public void RefreshLighting()
-        {
-            Blueprint.Changes.SetFlag(BlueprintGlobalChanges.OUTDOORS_LIGHTING_CHANGED);
-        }
-
         /// <summary>
         /// Setup anything that needs a GraphicsDevice
         /// </summary>
