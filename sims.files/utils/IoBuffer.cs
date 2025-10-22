@@ -30,6 +30,7 @@ namespace FSO.Files.Utils
         private Stream Stream;
         private BinaryReader Reader;
         public ByteOrder ByteOrder = ByteOrder.BIG_ENDIAN;
+        public long Position => Stream.Position;
 
         /// <summary>
         /// Creates a new IOBuffer instance from a stream.

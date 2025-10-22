@@ -246,25 +246,6 @@ namespace FSO.Files.Formats.IFF.Chunks
             return new Vector2(0, 0);
         }
 
-
-        public Point GetDimensions()
-        {
-            var iff = Parent.ChunkParent;
-            var spr2 = iff.Get<SPR2>((ushort)this.SpriteID);
-            if (spr2 != null)
-            {
-                var frame = spr2.Frames[this.SpriteFrameIndex];
-                return new Point(frame.Width, frame.Height);
-            }
-            var spr1 = iff.Get<SPR>((ushort)this.SpriteID);
-            if (spr1 != null)
-            {
-                var result = new WorldTexture();
-                var frame = spr1.Frames[(int)this.SpriteFrameIndex];
-                return new Point(frame.Width, frame.Height);
-            }
-            return new Point(1, 1);
-        }
         #region ITextureProvider Members
 
         public Microsoft.Xna.Framework.Graphics.Texture2D GetTexture(Microsoft.Xna.Framework.Graphics.GraphicsDevice device){

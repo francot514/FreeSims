@@ -18,6 +18,7 @@ namespace FSO.Files.Formats.IFF.Chunks
         private bool odd = false;
         public byte[] widths = { 5, 8, 13, 16 };
         public byte[] widths2 = { 6, 11, 21, 32 };
+        public byte[] widthsByte = { 2, 4, 6, 8 };
 
         public void setBytePos(int n)
         {
@@ -50,6 +51,77 @@ namespace FSO.Files.Formats.IFF.Chunks
         {
             return (float)ReadField(true);
             //this is incredibly wrong
+        }
+
+        public byte ReadByte()
+        {
+            if (ReadBit() == 0) return 0;
+        
+            return (byte) ReadField(widthsByte);
+        
+        }
+
+        public string BitDebug(int count)
+        {
+            string result = "";
+
+            for (int i = 0; i < count; i++)
+            {
+                var bit = ReadBit();
+
+                result += bit == 1 ? "1" : "0";
+
+                if (bitPos == 0)
+                {
+                    result += "|";
+                }
+            }
+
+            return result;
+        }
+
+        public void Interrupt()
+        {
+            long targetPos = io.Position;
+
+            if (bitPos == 0)
+            {
+                targetPos--;
+            }
+
+            io.Seek(SeekOrigin.Begin, targetPos);
+        }
+
+        public string BitDebugTil(long skipPosition)
+        {
+            long currentPos = bitPos == 0 ? io.Position : io.Position - 1;
+
+            int diff = (int)(skipPosition - currentPos) * 8 - bitPos;
+
+            if (diff < 0)
+            {
+                return "oob";
+            }
+
+            return BitDebug(diff);
+        }
+        
+
+        private long ReadField(byte[] widths)
+        {
+            if (ReadBit() == 0) return 0;
+
+            uint code = ReadBits(2);
+            byte width = widths[code];
+            long value = ReadBits(width);
+            value |= -(value & (1 << (width - 1)));
+
+            if (value == 0)
+            {
+                // not valid
+            }
+
+            return value;
         }
 
         private long ReadField(bool big)
