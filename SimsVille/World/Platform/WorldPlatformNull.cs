@@ -56,7 +56,7 @@ namespace FSO.LotView.Platform
             _2d.Pause();
             _2d.Begin(state.Camera); //clear the sprite buffer before we begin drawing what we're going to cache
             bp.WallComp.Draw(gd, state);
-            ClearDrawBuffer(bp.WallCache2D);
+            //ClearDrawBuffer(bp.WallCache2D);
             //state.PrepareLighting();
             _2d.End();
         }

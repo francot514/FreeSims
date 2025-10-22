@@ -503,6 +503,14 @@
     <Compile Include="World\components\SubWorldComponent.cs" />
     <Compile Include="World\components\TerrainComponent.cs" />
     <Compile Include="World\components\WallComponent.cs" />
+    <Compile Include="World\Effects\GradEffect.cs" />
+    <Compile Include="World\Effects\GrassEffect.cs" />
+    <Compile Include="World\Effects\LightMap2DEffect.cs" />
+    <Compile Include="World\Effects\LightMappedEffect.cs" />
+    <Compile Include="World\Effects\RCObjectEffect.cs" />
+    <Compile Include="World\Effects\SpriteEffect.cs" />
+    <Compile Include="World\Effects\WorldBatchEffect.cs" />
+    <Compile Include="World\Effects\WorldEffect.cs" />
     <Compile Include="World\Model\AvatarDisplayFlags.cs" />
     <Compile Include="World\Model\Blueprint.cs" />
     <Compile Include="World\Model\Direction.cs" />
@@ -519,6 +527,8 @@
     <Compile Include="World\Model\XmlCharacter.cs" />
     <Compile Include="World\Model\XmlCity.cs" />
     <Compile Include="World\Model\XmlHouse.cs" />
+    <Compile Include="World\Platform\IWorldPlatform.cs" />
+    <Compile Include="World\Platform\WorldPlatformNull.cs" />
     <Compile Include="World\utils\DGRPRenderer.cs" />
     <Compile Include="World\utils\IsometricTileIterator.cs" />
     <Compile Include="World\utils\TerrainParallaxVertex.cs" />
