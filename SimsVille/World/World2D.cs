@@ -681,7 +681,7 @@ namespace FSO.LotView
         }
 
 
-    
+    }
 
     public struct WorldTileRenderingInfo
     {

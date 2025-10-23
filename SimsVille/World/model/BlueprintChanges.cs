@@ -39,6 +39,7 @@ namespace FSO.LotView
         public BlueprintChanges(Blueprint blueprint)
         {
             Blueprint = blueprint;
+            
         }
 
         public double LastTimeOfDay = -99999;

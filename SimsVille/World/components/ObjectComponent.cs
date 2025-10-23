@@ -37,6 +37,8 @@ namespace FSO.LotView.Components
         public WorldObjectRenderInfo RenderInfo;
         public bool HideForCutaway;
         public WallSegments AdjacentWall;
+        public float DrawOrder;
+        public bool Dead = false;
 
         public new bool Visible {
             get { return _Visible; }
@@ -254,6 +256,24 @@ namespace FSO.LotView.Components
         public void ValidateSprite(WorldState world)
         {
             dgrp.ValidateSprite(world);
+        }
+
+        public void UpdateDrawOrder(WorldState world)
+        {
+            if (world.CameraMode > CameraRenderMode._2DRotate)
+            {
+                if (!Visible) DrawOrder = 0;
+                var w = new World3D();
+                var ctr = w;
+                var forward = world.CenterTile;
+                forward.X *= 1;
+                if (forward.X < 0) forward.Y = -forward.Y;
+                DrawOrder = Vector2.Dot(new Vector2(0,0), forward);
+            }
+            else
+            {
+                DrawOrder = world.WorldSpace.GetDepthFromTile(Position);
+            }
         }
 
         public override Vector2 GetScreenPos(WorldState world)
