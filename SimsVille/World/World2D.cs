@@ -679,18 +679,9 @@ namespace FSO.LotView
             ClearDrawBuffer(StaticFloorCache);
             ClearDrawBuffer(StaticObjectsCache);
         }
-    }
 
-    public class WorldObjectRenderInfo
-    {
-        public WorldObjectRenderLayer Layer = WorldObjectRenderLayer.STATIC;
-    }
 
-    public enum WorldObjectRenderLayer
-    {
-        STATIC,
-        DYNAMIC
-    }
+    
 
     public struct WorldTileRenderingInfo
     {

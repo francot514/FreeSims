@@ -34,7 +34,7 @@ namespace FSO.LotView.Components
         public Blueprint blueprint;
         public int DynamicCounter; //how long this sprite has been dynamic without changing sprite
         public List<SLOTItem> ContainerSlots;
-
+        public WorldObjectRenderInfo RenderInfo;
         public bool HideForCutaway;
         public WallSegments AdjacentWall;
 

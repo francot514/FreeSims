@@ -22,7 +22,7 @@ namespace FSO.LotView.Model
     public class Blueprint
     {
         public List<BlueprintDamage> Damage = new List<BlueprintDamage>();
-
+        public BlueprintChanges Changes;
         public int Width;
         public int Height;
         public sbyte Stories = 5;

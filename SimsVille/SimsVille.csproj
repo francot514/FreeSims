@@ -513,6 +513,7 @@
     <Compile Include="World\Effects\WorldEffect.cs" />
     <Compile Include="World\Model\AvatarDisplayFlags.cs" />
     <Compile Include="World\Model\Blueprint.cs" />
+    <Compile Include="World\Model\BlueprintChanges.cs" />
     <Compile Include="World\Model\Direction.cs" />
     <Compile Include="World\Model\FloorTile.cs" />
     <Compile Include="World\Model\LotTilePos.cs" />
@@ -521,7 +522,9 @@
     <Compile Include="World\Model\Room.cs" />
     <Compile Include="World\Model\RoomLighting.cs" />
     <Compile Include="World\Model\ScrollBuffer.cs" />
+    <Compile Include="World\Model\TimedDynamicBuffer.cs" />
     <Compile Include="World\Model\WallTile.cs" />
+    <Compile Include="World\Model\WorldObjectRenderInfo.cs" />
     <Compile Include="World\Model\WorldRotation.cs" />
     <Compile Include="World\Model\WorldZoom.cs" />
     <Compile Include="World\Model\XmlCharacter.cs" />
