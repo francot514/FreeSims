@@ -16,49 +16,61 @@ namespace FSO.Common.Utils
 {
     public class TextureUtils
     {
-        public static Texture2D TextureFromColor(GraphicsDevice gd, Color color)
+        public static Color[] Decimate(Color[] old, int w, int h)
         {
-            var tex = new Texture2D(gd, 1, 1);
-            tex.SetData(new[] { color });
-            return tex;
-        }
+            var nw = w / 2;
+            var nh = h / 2;
+            bool linex = false, liney = false;
+            if (nw == 0 && nh == 0) return null;
+            if (nw == 0) { nw = 1; liney = true; }
+            if (nh == 0) { nh = 1; linex = true; }
+            var size = nw * nh;
+            Color[] buffer = new Color[size];
 
-        public static Texture2D TextureFromColor(GraphicsDevice gd, Color color, int width, int height)
-        {
-            var tex = new Texture2D(gd, width, height);
-            var data = new Color[width * height];
-            for (var i = 0; i < data.Length; i++)
+            int tind = 0;
+            int fyind = 0;
+            for (int y = 0; y < nh; y++)
             {
-                data[i] = color;
+                var yb = y * 2 == h || linex;
+                int find = fyind;
+                for (int x = 0; x < nw; x++)
+                {
+                    var xb = x * 2 == h || liney;
+                    var c1 = old[find];
+                    var c2 = (xb) ? Color.Transparent : old[find + 1];
+                    var c3 = (yb) ? Color.Transparent : old[find + w];
+                    var c4 = (xb || yb) ? Color.Transparent : old[find + 1 + w];
+
+                    int r = 0, g = 0, b = 0, t = 0;
+                    if (c1.A > 0)
+                    {
+                        r += c1.R; g += c1.G; b += c1.B; t++;
+                    }
+                    if (c2.A > 0)
+                    {
+                        r += c2.R; g += c2.G; b += c2.B; t++;
+                    }
+                    if (c3.A > 0)
+                    {
+                        r += c3.R; g += c3.G; b += c3.B; t++;
+                    }
+                    if (c4.A > 0)
+                    {
+                        r += c4.R; g += c4.G; b += c4.B; t++;
+                    }
+                    if (t == 0) t = 1;
+
+                    buffer[tind++] = new Color(
+                        (byte)(r / t),
+                        (byte)(g / t),
+                        (byte)(b / t),
+                        Math.Max(Math.Max(Math.Max(c1.A, c2.A), c3.A), c4.A)
+                        );
+                    find += 2;
+                }
+                fyind += w * 2;
             }
-            tex.SetData(data);
-            return tex;
-        }
-
-        /**
-         * Because the buffers can be fairly big, its much quicker to just keep some
-         * in memory and reuse them for resampling textures
-         * 
-         * rhy: yeah, maybe, if the code actually did that. i'm also not sure about keeping ~32MB 
-         * of texture buffers in memory at all times when the game is largely single threaded.
-         */
-        private static List<uint[]> ResampleBuffers = new List<uint[]>();
-        private static ulong MaxResampleBufferSize = 1024 * 768;
-
-        static TextureUtils()
-        {
-            /*for (var i = 0; i < 10; i++)
-            {
-                ResampleBuffers.Add(new uint[MaxResampleBufferSize]);
-            }*/
-        }
-
-        public static Texture2D TextureFromFile(GraphicsDevice gd, string filePath)
-        {
-            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                return Texture2D.FromStream(gd, stream);
-            }
+            return buffer;
         }
 
         public static Color[] AvgDecimate(Color[] old, int w, int h)
@@ -117,8 +129,6 @@ namespace FSO.Common.Utils
             }
             return buffer;
         }
-
-
         public static void UploadWithAvgMips(Texture2D Texture, GraphicsDevice gd, Color[] data)
         {
             int level = 0;
@@ -132,7 +142,13 @@ namespace FSO.Common.Utils
                 h /= 2;
             }
         }
-
+        public static Texture2D TextureFromFile(GraphicsDevice gd, string filePath)
+        {
+            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                return Texture2D.FromStream(gd, stream);
+            }
+        }
         public static Texture2D MipTextureFromFile(GraphicsDevice gd, string filePath)
         {
             var tex = TextureFromFile(gd, filePath);
@@ -142,6 +158,42 @@ namespace FSO.Common.Utils
             UploadWithAvgMips(newTex, gd, data);
             tex.Dispose();
             return newTex;
+        }
+        public static Texture2D TextureFromColor(GraphicsDevice gd, Color color)
+        {
+            var tex = new Texture2D(gd, 1, 1);
+            tex.SetData(new[] { color });
+            return tex;
+        }
+
+        public static Texture2D TextureFromColor(GraphicsDevice gd, Color color, int width, int height)
+        {
+            var tex = new Texture2D(gd, width, height);
+            var data = new Color[width * height];
+            for (var i = 0; i < data.Length; i++)
+            {
+                data[i] = color;
+            }
+            tex.SetData(data);
+            return tex;
+        }
+
+        /**
+         * Because the buffers can be fairly big, its much quicker to just keep some
+         * in memory and reuse them for resampling textures
+         * 
+         * rhy: yeah, maybe, if the code actually did that. i'm also not sure about keeping ~32MB 
+         * of texture buffers in memory at all times when the game is largely single threaded.
+         */
+        private static List<uint[]> ResampleBuffers = new List<uint[]>();
+        private static ulong MaxResampleBufferSize = 1024 * 768;
+
+        static TextureUtils()
+        {
+            /*for (var i = 0; i < 10; i++)
+            {
+                ResampleBuffers.Add(new uint[MaxResampleBufferSize]);
+            }*/
         }
 
         private static uint[] GetBuffer(int size) //todo: maybe implement something like described, old implementation was broken
