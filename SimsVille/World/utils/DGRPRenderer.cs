@@ -4,13 +4,14 @@
  * http://mozilla.org/MPL/2.0/. 
  */
 
+using FSO.Files.Formats.IFF.Chunks;
+using FSO.LotView.Model;
+using FSO.Vitaboy;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Microsoft.Xna.Framework;
-using FSO.Files.Formats.IFF.Chunks;
-using FSO.LotView.Model;
 
 namespace FSO.LotView.Utils
 {
@@ -112,6 +113,15 @@ namespace FSO.LotView.Utils
         public void InvalidateScroll()
         {
             //_Dirty = true;
+        }
+
+        public BoundingBox? GetBounds()
+        {
+            
+            var CMesh = Content.Content.Get().AvatarMeshes.Get(DrawGroup.ChunkID, false);
+            _Dirty &= true;
+            
+            return new BoundingBox();
         }
 
         public void ValidateSprite(WorldState world)
