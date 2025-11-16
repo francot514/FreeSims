@@ -117,7 +117,7 @@ namespace FSO.Common.Model
             return null;
         }
 
-        public float? GetTuning(string type, int table, int index)
+        public float GetTuning(string type, int table, int index)
         {
             Dictionary<int, Dictionary<int, float>> tables;
             if (Tuning.TryGetValue(type, out tables))
@@ -130,7 +130,7 @@ namespace FSO.Common.Model
                         return result;
                 }
             }
-            return null;
+            return 0.0f;
         }
     }
 
