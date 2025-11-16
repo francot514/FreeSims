@@ -26,7 +26,7 @@ namespace FSO.LotView.Model
         public int Width;
         public int Height;
         public sbyte Stories = 5;
-
+        public short[] Altitude;
         /// <summary>
         /// Only read these arrays, do not modify them!
         /// </summary>
@@ -38,9 +38,9 @@ namespace FSO.LotView.Model
         public FloorComponent FloorComp;
 
         public RoofComponent RoofComp;
-
+        public float TerrainFactor = 3 / 160f;
         public bool[][] Supported; //directly the VM's copy at all times. DO NOT MODIFY.
-
+        public bool[] FineArea;
         public List<ObjectComponent> Objects = new List<ObjectComponent>();
         public List<AvatarComponent> Avatars = new List<AvatarComponent>();
         public List<SubWorldComponent> SubWorlds = new List<SubWorldComponent>();
@@ -51,7 +51,7 @@ namespace FSO.LotView.Model
         /// </summary>
         /// 
         public bool[] Cutaway;
-
+        public int BaseAlt;
         public Color OutsideColor = Color.White;
         public RoomLighting[] Light = new RoomLighting[0];
         public uint[][] RoomMap;
@@ -87,8 +87,41 @@ namespace FSO.LotView.Model
                 this.Floors[i] = new FloorTile[numTiles];
             }
             this.Cutaway = new bool[numTiles];
+            this.Changes = new BlueprintChanges(this);
+
         }
 
+        public Rectangle GetFineBounds()
+        {
+            var minx = int.MaxValue;
+            var miny = int.MaxValue;
+            var maxx = 0;
+            var maxy = 0;
+
+            int i = 0;
+            for (int y = 0; y < Height; y++)
+            {
+                for (int x = 0; x < Width; x++)
+                {
+                    if (FineArea[i++])
+                    {
+                        if (x < minx) minx = x;
+                        if (x > maxx) maxx = x;
+                        if (y < miny) miny = y;
+                        if (y > maxy) maxy = y;
+                    }
+                }
+            }
+
+            return new Rectangle(minx, miny, (maxx - minx) + 1, (maxy - miny) + 1);
+        }
+
+        public float GetAltPoint(int x, int y)
+        {
+            //x += 1; y += 1;
+            if (x <= 0 || y <= 0) return 0f;
+            return (Altitude[((y % Height) * Width + (x % Width))]);
+        }
         public void GenerateRoomLights()
         {
             var minOut = OutsideColor * (float)(150 / Math.Sqrt(OutsideColor.R * OutsideColor.R + OutsideColor.G * OutsideColor.G + OutsideColor.B * OutsideColor.B));
