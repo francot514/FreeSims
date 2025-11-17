@@ -73,6 +73,20 @@ namespace FSO.Common.Utils
             return buffer;
         }
 
+        public static void UploadWithMips(Texture2D Texture, GraphicsDevice gd, Color[] data)
+        {
+            int level = 0;
+            int w = Texture.Width;
+            int h = Texture.Height;
+            while (data != null)
+            {
+                Texture.SetData(level++, null, data, 0, data.Length);
+                data = Decimate(data, w, h);
+                w /= 2;
+                h /= 2;
+            }
+        }
+
         public static Color[] AvgDecimate(Color[] old, int w, int h)
         {
             var nw = w / 2;
