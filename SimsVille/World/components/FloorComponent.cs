@@ -27,6 +27,7 @@ namespace FSO.LotView.Components
         private static Rectangle FLOORDEST_MED = new Rectangle(3, 158, 63, 32);
         private static Rectangle FLOORDEST_FAR = new Rectangle(2, 79, 31, 16);
         public Blueprint blueprint;
+        public FloorLevel[] Floors;
         public Rectangle? DrawBound;
 
         private static Point[] PoolDirections =
@@ -47,6 +48,16 @@ namespace FSO.LotView.Components
             {
                 return 801.0f;
             }
+        }
+        public int SetGrassIndices(GraphicsDevice gd, Effect e, WorldState state)
+        {
+            var floor = Floors[0];
+            FloorTileGroup grp = null;
+            if (!floor.GroupForTileType.TryGetValue(0, out grp)) return 0;
+            var dat = grp.GPUData;
+            if (dat == null) return 0;
+            gd.Indices = dat;
+            return dat.IndexCount / 3;
         }
 
         public override void Draw(GraphicsDevice device, WorldState world)
@@ -295,6 +306,145 @@ namespace FSO.LotView.Components
             }
 
             return _Sprite;
+        }
+    }
+
+    public class FloorLevel : IDisposable
+    {
+        public Dictionary<ushort, FloorTileGroup> GroupForTileType = new Dictionary<ushort, FloorTileGroup>();
+        public ushort[] Tiles;
+        private Blueprint Bp;
+
+        public FloorLevel(Blueprint bp)
+        {
+            Bp = bp;
+        }
+
+        public FloorTileGroup AddGroup(ushort tileID)
+        {
+            FloorTileGroup group;
+
+     
+            group = new FloorTileGroup();
+            
+            GroupForTileType[tileID] = group;
+            return group;
+        }
+
+        public void AddTile(ushort tileID, ushort offset)
+        {
+            FloorTileGroup group;
+            if (!GroupForTileType.TryGetValue(tileID, out group))
+            {
+                group = AddGroup(tileID);
+            }
+            group.AddIndex(offset);
+        }
+
+        public void AddTileDiag(ushort tileID, ushort offset, bool side, bool vertical)
+        {
+            FloorTileGroup group;
+            if (!GroupForTileType.TryGetValue(tileID, out group))
+            {
+                group = AddGroup(tileID);
+                GroupForTileType[tileID] = group;
+            }
+            group.AddDiagIndex(offset, side, vertical);
+        }
+
+        public void Regen(GraphicsDevice gd, HashSet<ushort> floors)
+        {
+
+        }
+
+        public void RegenAll(GraphicsDevice gd)
+        {
+            foreach (var group in GroupForTileType)
+            {
+                group.Value.PrepareGPU(gd);
+            }
+
+            //Bp.SM64?.UpdateFloors();
+        }
+
+        public void Clear()
+        {
+            Dispose();
+            GroupForTileType.Clear();
+        }
+
+        public void Dispose()
+        {
+            foreach (var group in GroupForTileType)
+            {
+                group.Value.Dispose();
+            }
+        }
+    }
+
+    public class FloorTileGroup : IDisposable
+    {
+        public Dictionary<ushort, List<int>> GeomForOffset = new Dictionary<ushort, List<int>>();
+        public IndexBuffer GPUData;
+
+        public virtual void PrepareGPU(GraphicsDevice gd)
+        {
+            if (GPUData != null) GPUData.Dispose();
+            var dat = BuildIndexData();
+            GPUData = new IndexBuffer(gd, IndexElementSize.ThirtyTwoBits, dat.Length, BufferUsage.None);
+            GPUData.SetData(dat);
+        }
+
+        private int[] BuildIndexData()
+        {
+            var result = new int[GeomForOffset.Count * 6];
+            int i = 0;
+            foreach (var geom in GeomForOffset.Values)
+            {
+                foreach (var elem in geom)
+                {
+                    result[i++] = elem;
+                }
+            }
+            return result;
+        }
+
+        public void AddIndex(ushort offset)
+        {
+            //
+            var o2 = offset * 4;
+            var result = new List<int> { o2, o2 + 1, o2 + 2, o2 + 2, o2 + 3, o2 };
+            GeomForOffset[offset] = result;
+        }
+
+        public void AddDiagIndex(ushort offset, bool side, bool vertical)
+        {
+            //
+            var o2 = offset * 4;
+            List<int> result;
+            if (vertical)
+            {
+                if (side) result = new List<int> { o2, o2 + 1, o2 + 2 };
+                else result = new List<int> { o2 + 2, o2 + 3, o2 };
+            }
+            else
+            {
+                if (side) result = new List<int> { o2 + 1, o2 + 2, o2 + 3 };
+                else result = new List<int> { o2, o2 + 1, o2 + 3 };
+            }
+            GeomForOffset[(ushort)(offset + (side ? 32768 : 0))] = result;
+        }
+
+
+        public bool RemoveIndex(ushort offset)
+        {
+            GeomForOffset.Remove(offset);
+            return GeomForOffset.Count > 0;
+        }
+
+        public virtual void Dispose()
+        {
+            GPUData?.Dispose();
         }
     }
 
