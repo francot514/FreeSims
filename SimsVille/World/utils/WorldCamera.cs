@@ -58,6 +58,33 @@ namespace FSO.LotView.Utils
             set { _CenterTile = value; m_ViewDirty = true; }
         }
 
+        private Vector3? _RotationAnchor;
+        public Vector3? RotationAnchor
+        {
+            get { return _RotationAnchor; }
+            set { _RotationAnchor = value; m_ViewDirty = true; }
+        }
+
+        private float _RotateOff = 315.0f;
+
+        /// <summary>
+        /// Gets or sets the camera's offset rotation along the y axis.
+        /// A non-zero value MUST be rendered using 3D components.
+        /// </summary>
+        public float RotateOff
+        {
+            get
+            {
+                return _RotateOff;
+            }
+            set
+            {
+                _RotateOff = value;
+                m_ViewDirty = true;
+            }
+        }
+
+
         private WorldRotation _Rotation;
 
         /// <summary>
