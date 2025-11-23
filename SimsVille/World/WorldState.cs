@@ -78,7 +78,8 @@ namespace FSO.LotView
         public Texture2D AmbientLight;
         public Color OutsideColor; //temporary to give this to terrain component. in future it will use ambient light texture
         public bool DynamicCutaway;
-
+        public Matrix Projection => Camera.Projection;
+        public Matrix View => Camera.View;
         public AvatarComponent ScrollAnchor;
 
         private int _WorldSize;
@@ -279,7 +280,7 @@ namespace FSO.LotView
         public float WorldPxWidth;
         public float WorldPxHeight;
         public float OneUnitDistance;
-
+        public Vector2 WorldPx => new Vector2(WorldPxWidth, WorldPxHeight);
         private WorldState State;
 
         /// <summary>

@@ -489,7 +489,7 @@ namespace FSO.LotView
             pxOffset = newOff;
 
             if (recacheTerrain)
-                Blueprint.Terrain.RegenTerrain(gd, state, Blueprint);
+                Blueprint.Terrain.RegenTerrain(gd, Blueprint);
 
             if (recacheWalls)
             {
