@@ -20,6 +20,7 @@ namespace FileParser.Data.Sims
 
             Name = name;
             Houses = new List<House>();
+            Neighborhood = new Neighborhood();
 
 
         }
