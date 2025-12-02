@@ -516,6 +516,7 @@
     <Compile Include="World\Model\BlueprintChanges.cs" />
     <Compile Include="World\Model\Direction.cs" />
     <Compile Include="World\Model\FloorTile.cs" />
+    <Compile Include="World\Model\LightData.cs" />
     <Compile Include="World\Model\LotTilePos.cs" />
     <Compile Include="World\Model\LotTypes.cs" />
     <Compile Include="World\Model\PixelMaskTuple.cs" />
@@ -548,6 +549,7 @@
     <Compile Include="World\World2D.cs" />
     <Compile Include="World\World3D.cs" />
     <Compile Include="World\WorldComponent.cs" />
+    <Compile Include="World\WorldConfig.cs" />
     <Compile Include="World\WorldContent.cs" />
     <Compile Include="World\WorldState.cs" />
   </ItemGroup>
