@@ -177,11 +177,11 @@ public class VMWorldActivator
 		OBJM objm = iff.Get<OBJM>(1);
 		OBJT objt = iff.Get<OBJT>(0);
 		int l = 0;
-		for (int k = 0; k < objm.IDToOBJT.Length; k += 2)
+		for (ushort k = 0; k < objm.IDToOBJT.Count(); k += 2)
 		{
 			if (objm.IDToOBJT[k] != 0 && objm.ObjectData.TryGetValue(objm.IDToOBJT[k], out var target))
 			{
-				OBJTEntry entry = objt.Entries[objm.IDToOBJT[k + 1] - 1];
+				OBJTEntry entry = objt.Entries[objm.IDToOBJT[(ushort)(k + 1)] - 1];
 				target.Name = entry.Name;
 				target.GUID = entry.GUID;
 			}
@@ -584,7 +584,7 @@ public class VMWorldActivator
 	private TerrainComponent CreateTerrain(XmlHouseData model)
 	{
 		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
-		TerrainComponent terrain = new TerrainComponent(new Rectangle(1, 1, model.Size - 2, model.Size - 2));
+		TerrainComponent terrain = new TerrainComponent(new Rectangle(1, 1, model.Size - 2, model.Size - 2), Blueprint);
 		InitWorldComponent(terrain);
 		return terrain;
 	}
@@ -592,7 +592,7 @@ public class VMWorldActivator
 	private TerrainComponent CreateTerrain(short Size)
 	{
 		//IL_0009: Unknown result type (might be due to invalid IL or missing references)
-		TerrainComponent terrain = new TerrainComponent(new Rectangle(1, 1, Size - 2, Size - 2));
+		TerrainComponent terrain = new TerrainComponent(new Rectangle(1, 1, Size - 2, Size - 2), Blueprint);
 		InitWorldComponent(terrain);
 		return terrain;
 	}
