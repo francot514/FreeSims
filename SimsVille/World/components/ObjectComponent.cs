@@ -275,7 +275,54 @@ namespace FSO.LotView.Components
                 DrawOrder = world.WorldSpace.GetDepthFromTile(Position);
             }
         }
+        public virtual BoundingBox GetParticleBounds()
+        {
+            //make an estimation based off of the sprite height
+            var bounds = dgrp.GetBounds();
+            if (bounds != null) return bounds.Value;
 
+            //if (Debug.BoundingBoxCache.TryGetValue(Obj.OBJ.GUID, out var bounds2)) return bounds2;
+
+            //if (world.CameraMode == CameraRenderMode._2D || Mode.HasFlag(ComponentRenderMode._3D)) return  ?? new BoundingBox();
+            if (DGRP == null) return new BoundingBox(new Vector3(-0.4f, 0.1f, -0.4f), new Vector3(0.4f, 0.9f, 0.4f));
+            else
+            {
+                var image = DGRP.GetImage(1, 3, 1);
+                var maxY = int.MinValue;
+                var minY = int.MaxValue;
+                var objOffset = 0f;
+
+                if (image.Sprites.Length == 0) return new BoundingBox(new Vector3(-0.4f, 0.1f, -0.4f), new Vector3(0.4f, 0.9f, 0.4f));
+
+                foreach (var spr in image.Sprites)
+                {
+                    var dim = spr.GetDimensions();
+
+                    var top = spr.SpriteOffset.Y;
+                    var btm = top + dim.Y;
+
+                    if (top < minY) minY = (int)top;
+                    if (btm > maxY) maxY = (int)btm;
+                    objOffset += spr.ObjectOffset.Z * 1f / 5f;
+                }
+                objOffset /= image.Sprites.Length;
+                //128 is a height of zero
+                var topY = Math.Max(0, Math.Min(2.95f, (100 - minY) / 95f));
+                var btmY = Math.Max(0, Math.Min(2.95f, (100 - maxY) / 95f));
+                return new BoundingBox(new Vector3(-0.4f, btmY, -0.4f), new Vector3(0.4f, topY, 0.4f));
+            }
+        }
+
+
+        public EntityComponent GetBottomContainer()
+        {
+            EntityComponent current = this;
+            while (current.Container != null)
+            {
+                current = current.Container;
+            }
+            return current;
+        }
         public override Vector2 GetScreenPos(WorldState world)
         {
             return world.WorldSpace.GetScreenFromTile(Position) + world.WorldSpace.GetScreenOffset() + PosCenterOffsets[(int)world.Zoom - 1];
