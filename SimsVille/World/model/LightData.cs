@@ -47,12 +47,12 @@ namespace FSO.LotView.LMap
             if (comp != null)
             {
                 var bounds = comp.GetParticleBounds();
-                if (bounds != null)
+                if (bounds != default)
                 {
                     var mid = (bounds.Min + bounds.Max) / 2;
                     mid.X = Math.Min(0.35f, Math.Max(-0.35f, mid.X));
                     mid.Z = Math.Min(0.35f, Math.Max(-0.35f, mid.Z));
-                    mid = Vector3.Transform(mid, Matrix.CreateRotationY(-comp.RadianDirection));
+                    mid = Vector3.Transform(mid, Matrix.CreateRotationY(-comp.Position.X));
                     LightPos += new Vector2(mid.X, mid.Z) * 16;
                     Height = Math.Max(mid.Y, bounds.Max.Y - 0.25f) + comp.Position.Z - comp.GetBottomContainer().Position.Z;
                 }
