@@ -45,7 +45,7 @@ namespace FSO.LotView.Model
         public List<AvatarComponent> Avatars = new List<AvatarComponent>();
         public List<SubWorldComponent> SubWorlds = new List<SubWorldComponent>();
         public TerrainComponent Terrain;
-
+        public List<_2DDrawBuffer> WallCache2D = new List<_2DDrawBuffer>();
         /// <summary>
         /// Walls Cutaway sections. Remember to manage these correctly - i.e remove when you're finished with them!
         /// </summary>
