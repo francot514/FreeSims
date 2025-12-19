@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,6 +14,9 @@ namespace FSO.LotView.Components
 {
     public class SubWorldComponent : World
     {
+        public WorldArchitecture Architecture;
+        public BoundingBox Bounds;
+        //public WorldEntities Entities;
         /// <summary>
         /// Creates a new World instance.
         /// </summary>
@@ -27,6 +31,27 @@ namespace FSO.LotView.Components
         private List<_2DDrawBuffer> StaticObjectsCache = new List<_2DDrawBuffer>();
         private List<_2DDrawBuffer> StaticArchCache = new List<_2DDrawBuffer>();
         private int TicksSinceLight = 0;
+
+        public void UpdateBounds()
+        {
+            float minAlt = 0;
+            float maxAlt = 0;
+            foreach (var height in Blueprint.Altitude)
+            {
+                var alt = height * Blueprint.TerrainFactor - Blueprint.BaseAlt;
+                if (alt < minAlt)
+                {
+                    minAlt = alt;
+                }
+                if (alt > maxAlt)
+                {
+                    maxAlt = alt;
+                }
+            }
+            //calculate the maximum floor. shave 1 off to account for buildable area being smaller, but minimum 1 floor as trees are likely on floor 1
+            maxAlt += Math.Max(1, 2) * 2.95f * 3;
+            Bounds = new BoundingBox(new Vector3(GlobalPosition.X * -3, minAlt, GlobalPosition.Y * -3), new Vector3(GlobalPosition.X * -3 + Blueprint.Width * 3, maxAlt, GlobalPosition.Y * -3 + Blueprint.Height * 3));
+        }
 
         public void RefreshLighting()
         {
@@ -54,8 +79,33 @@ namespace FSO.LotView.Components
         public override void InitBlueprint(Blueprint blueprint)
         {
             this.Blueprint = blueprint;
+            Architecture = new WorldArchitecture(blueprint);
             HasInitBlueprint = true;
             HasInit = HasInitGPU & HasInitBlueprint;
+        }
+
+        public void SubDraw(GraphicsDevice gd, WorldState parentState, Action<Vector2> action)
+        {
+            var parentScroll = parentState.CenterTile;
+            //if (parentState.CameraMode > CameraRenderMode._2D)
+               // parentState.Cameras.ModelTranslation = new Vector3(GlobalPosition.X * 3, 0, GlobalPosition.Y * 3);
+            //else parentState.CenterTile += GlobalPosition; //TODO: vertical offset
+            var pxOffset = -parentState.WorldSpace.GetScreenOffset();
+
+            
+            var oldLevel = parentState.Level;
+            parentState.SilentLevel = State.Level;
+
+            action(pxOffset);
+
+            parentState.SilentLevel = oldLevel;
+
+
+        }
+
+        public bool DoDraw(WorldState state)
+        {
+            return state.Frustum.Intersects(Bounds);
         }
 
         /// <summary>
