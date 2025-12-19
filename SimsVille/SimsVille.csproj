@@ -525,6 +525,7 @@
     <Compile Include="World\Model\ScrollBuffer.cs" />
     <Compile Include="World\Model\TimedDynamicBuffer.cs" />
     <Compile Include="World\Model\WallTile.cs" />
+    <Compile Include="World\Model\WorldArchitecture.cs" />
     <Compile Include="World\Model\WorldObjectRenderInfo.cs" />
     <Compile Include="World\Model\WorldRotation.cs" />
     <Compile Include="World\Model\WorldZoom.cs" />
