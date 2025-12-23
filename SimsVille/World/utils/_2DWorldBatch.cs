@@ -49,8 +49,8 @@ namespace FSO.LotView.Utils
         public Texture2D AmbientLight;
 
         private Vector2 Scroll;
-        private int LastWidth;
-        private int LastHeight;
+        public int LastWidth;
+        public int LastHeight;
         private int ScrollBuffer;
 
         public float PreciseZoom;
