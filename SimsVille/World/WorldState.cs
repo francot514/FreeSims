@@ -9,12 +9,14 @@ using FSO.LotView.Components;
 using FSO.LotView.Model;
 using FSO.LotView.Platform;
 using FSO.LotView.Utils;
+using GOLDEngine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Windows.Forms;
 
 namespace FSO.LotView
 {
@@ -35,6 +37,7 @@ namespace FSO.LotView
         public CameraRenderMode CameraMode = CameraRenderMode._2D;
         public bool ForceImmediate = false;
         public Texture2D OutsidePx;
+       
         /// <summary>
         /// Creates a new WorldState instance.
         /// </summary>
@@ -81,7 +84,9 @@ namespace FSO.LotView
         public Matrix Projection => Camera.Projection;
         public Matrix View => Camera.View;
         public AvatarComponent ScrollAnchor;
-
+        public Matrix ViewProjection;
+        public BoundingFrustum Frustum;
+        public Rectangle WorldRectangle;
         private int _WorldSize;
 
         /// <summary>
@@ -242,6 +247,26 @@ namespace FSO.LotView
             InvalidateCamera();
         }
 
+        public void PrepareCulling(Vector2 pxOffset)
+        {
+            var size = new Vector2(_2D.LastWidth, _2D.LastHeight);
+            var mainBd = WorldSpace.GetScreenFromTile(CenterTile);
+            var diff = pxOffset - mainBd;
+            WorldRectangle = new Rectangle((pxOffset).ToPoint(), size.ToPoint());
+            if (PreciseZoom != 1)
+            {
+                var newSize = WorldRectangle.Size.ToVector2() / PreciseZoom;
+                WorldRectangle.Location -= ((newSize - WorldRectangle.Size.ToVector2()) / 2f).ToPoint();
+                WorldRectangle.Size = newSize.ToPoint();
+            }
+
+            var view = View;
+            ViewProjection = view * Projection;
+            Frustum = new BoundingFrustum(ViewProjection);
+        }
+
+
+
         public void InvalidateCamera()
         {
             WorldCamera.CenterTile = CenterTile;
@@ -302,7 +327,7 @@ namespace FSO.LotView
             WorldPxHeight = dim.Y;
         }
 
-
+        
         public float GetDepthFromTile(Vector3 tile)
         {
             var pos = GetScreenFromTile(tile);
