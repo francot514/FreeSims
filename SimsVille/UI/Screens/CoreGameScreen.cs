@@ -39,7 +39,7 @@ using FSO.Vitaboy;
 using FSO.SimAntics.Model.TSOPlatform;
 using Microsoft.Xna.Framework.Graphics;
 using FSO.Files.Formats.IFF;
-using FSO.Debug;
+
 
 namespace FSO.Client.UI.Screens
 {
@@ -681,16 +681,7 @@ namespace FSO.Client.UI.Screens
 
         private void VMDebug_OnButtonClick(UIElement button)
         {
-            
-            if (vm != null) 
-            {
-                var debugTools = new Simantics(vm);
-
-                var window = GameFacade.Game.Window;
-                debugTools.Show();
-                debugTools.Location = new System.Drawing.Point(window.ClientBounds.X + window.ClientBounds.Width, window.ClientBounds.Y);
-                debugTools.UpdateAQLocation();
-            }
+           
 
         }
 
