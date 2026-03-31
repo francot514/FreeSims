@@ -95,44 +95,6 @@
     <Compile Include="ContentManager\WorldObjectProvider.cs" />
     <Compile Include="ContentManager\WorldRoofProvider.cs" />
     <Compile Include="ContentManager\WorldWallProvider.cs" />
-    <Compile Include="Debug\ActionQueue.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Debug\ActionQueue.Designer.cs">
-      <DependentUpon>ActionQueue.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Debug\content\ContentBrowser.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Debug\content\ContentBrowser.Designer.cs">
-      <DependentUpon>ContentBrowser.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Debug\content\preview\IContentPreview.cs" />
-    <Compile Include="Debug\content\preview\MeshPreviewComponent.cs" />
-    <Compile Include="Debug\content\preview\TexturePreview.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Debug\content\preview\TexturePreview.Designer.cs">
-      <DependentUpon>TexturePreview.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Debug\content\preview\VMRoutineInspector.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Debug\content\preview\VMRoutineInspector.Designer.cs">
-      <DependentUpon>VMRoutineInspector.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Debug\controls\VMRoutineDisplay.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Debug\controls\VMRoutineDisplay.Designer.cs">
-      <DependentUpon>VMRoutineDisplay.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Debug\Simantics.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Debug\Simantics.Designer.cs">
-      <DependentUpon>Simantics.cs</DependentUpon>
-    </Compile>
     <Compile Include="GameContent\AppearancesFileIDs.cs" />
     <Compile Include="GameContent\BindingFileIDs.cs" />
     <Compile Include="GameContent\CitiesFileIDs.cs" />
@@ -561,9 +523,8 @@
     <Reference Include="GonzoNet">
       <HintPath>Dependencies\GonzoNet.dll</HintPath>
     </Reference>
-    <Reference Include="MonoGame.Framework, Version=3.1.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>Dependencies\MonoGame.Framework.dll</HintPath>
+    <Reference Include="MonoGame.Framework, Version=3.6.0.1625, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\MonoGame.Framework.WindowsDX.3.6.0.1625\lib\net40\MonoGame.Framework.dll</HintPath>
     </Reference>
     <Reference Include="OpenTK, Version=1.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -572,7 +533,6 @@
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.ServiceModel" />
-    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.XML" />
     <Reference Include="Tao.Sdl, Version=1.2.13.0, Culture=neutral, PublicKeyToken=9c7a200e36c0094e, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -596,31 +556,9 @@
     <None Include="app.config">
       <SubType>Designer</SubType>
     </None>
+    <None Include="packages.config" />
     <None Include="UI\Framework\Parser\UIScript.egt" />
     <None Include="UI\Framework\Parser\UIScript.grm" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Debug\ActionQueue.resx">
-      <DependentUpon>ActionQueue.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Debug\content\ContentBrowser.resx">
-      <DependentUpon>ContentBrowser.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Debug\content\preview\TexturePreview.resx">
-      <DependentUpon>TexturePreview.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Debug\content\preview\VMRoutineInspector.resx">
-      <DependentUpon>VMRoutineInspector.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Debug\controls\VMRoutineDisplay.resx">
-      <DependentUpon>VMRoutineDisplay.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Debug\Simantics.resx">
-      <DependentUpon>Simantics.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
