@@ -147,8 +147,10 @@ namespace FSO.Files.XA
 
             if (m_Channels == 1) //Mono
             {
+                var buffer = new byte[0xF];
                 while (m_Reader.BaseStream.Position < m_Reader.BaseStream.Length)
                 {
+                    m_Reader.ReadByte();
                     DecompressMono(m_Reader.ReadBytes(0xF));
                 }
             }
