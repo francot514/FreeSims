@@ -8,14 +8,21 @@ using System.Threading.Tasks;
 
 namespace FSO.Files.Formats.IFF.Chunks
 {
+    public struct OBJMResource
+    {
+        public OBJD OBJD;
+        public OBJTEntry OBJT;
+    }
+    //work in progress
+
     public class OBJM : IffChunk
     {
         //work in progress
 
         //data body starts with 0x01, but what is after that is unknown.
-
+        
         //empty body from house 0:
-        // 01 00 00 00 | 00 00 00
+        // 01 00 00 00 | 00 00 00ñ
         // 
 
         public ushort[] IDToOBJT;

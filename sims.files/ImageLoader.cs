@@ -14,6 +14,7 @@ using Microsoft.Xna.Framework;
 using System.Runtime.InteropServices;
 using System.Drawing.Imaging;
 
+
 namespace FSO.Files
 {
     public class ImageLoader
@@ -117,6 +118,7 @@ namespace FSO.Files
                 }
                 catch (Exception)
                 {
+                    Console.WriteLine("Cannot load images TGA");
                     return null; //bad bitmap :(
                 }
             }
@@ -133,7 +135,7 @@ namespace FSO.Files
                     {
                         var tga = new TargaImagePCL.TargaImage(str);
                         var tex = new Texture2D(gd, tga.Image.Width, tga.Image.Height);
-                        tex.SetData(tga.Image.ToBGRA(true));
+                        tex.SetData(tga.Image.Data);
                         return tex;
                     }
                     catch (Exception)

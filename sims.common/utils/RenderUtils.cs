@@ -58,7 +58,7 @@ namespace TSO.Common.utils
             if (clear)
             {
                 StencilValue = 1;
-                gd.Clear(Color.TransparentBlack);
+                gd.Clear(Color.Transparent);
                 if (depth != null)
                 {
                     gd.SetRenderTarget(depth);

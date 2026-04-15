@@ -1,0 +1,97 @@
+﻿using FSO.Common;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace FSO.Client
+{
+    public class GlobalSettings : IniConfig
+    {
+        private static GlobalSettings defaultInstance;
+
+        public static GlobalSettings Default
+        {
+            get
+            {
+                if (defaultInstance == null)
+                    defaultInstance = new GlobalSettings(Path.Combine(FSOEnvironment.UserDir, "config.ini"));
+                return defaultInstance;
+            }
+        }
+
+        public GlobalSettings(string path) : base(path) { }
+
+        private Dictionary<string, string> _DefaultValues = new Dictionary<string, string>()
+        {
+            { "UseDirectx", "false"},
+            { "ShowHints", "true"},
+            { "CurrentLang", "0" },
+            { "LoginServerPort", "2106"},
+            { "ClientVersion", "0"},
+            { "DebugEnabled", "false"},
+            { "ScaleUI", "false"},
+            { "CityShadows", "false"},
+            { "ShadowQuality", "2048"},
+            { "SimulationShadows", "true"},
+            { "AntiAlias", "false"},
+            { "EdgeScroll", "true"},
+            { "Lighting", "true"},
+            { "FXVolume", "10"},
+            { "MusicVolume", "10"},
+            { "VoxVolume", "10"},
+            { "AmbienceVolume", "1"},
+            { "StartupPath", ""},
+            { "DocumentsPath", ""},
+            { "LoginServerIP", "127.0.0.1"},
+            { "Windowed", "true"},
+            { "GraphicsWidth", "1024"},
+            { "GraphicsHeight", "768"},
+            { "LastUser", ""},
+            { "SkipIntro", "true"},
+            { "LastHead", "0"},
+            { "LastBody", "0"},
+            { "LastGender", "true"},
+            { "LastSkin", "0"},
+            { "Language", "1"},
+        };
+        public override Dictionary<string, string> DefaultValues
+        {
+            get { return _DefaultValues; }
+            set { _DefaultValues = value; }
+        }
+
+        public bool UseDirectx { get; set; }
+        public bool ShowHints { get; set; }
+        public string CurrentLang { get; set; }
+        public int LoginServerPort { get; set; }
+        public string ClientVersion { get; set; }
+        public bool DebugEnabled { get; set; }
+        public bool ScaleUI { get; set; }
+        public bool CityShadows { get; set; }
+        public int ShadowQuality { get; set; }
+        public bool SimulationShadows { get; set; }
+        public bool AntiAlias { get; set; }
+        public bool EdgeScroll { get; set; }
+        public bool Lighting { get; set; }
+        public byte FXVolume { get; set; }
+        public byte MusicVolume { get; set; }
+        public byte VoxVolume { get; set; }
+        public byte AmbienceVolume { get; set; }
+        public string StartupPath { get; set; }
+        public string DocumentsPath { get; set; }
+        public string LoginServerIP { get; set; }
+        public bool Windowed { get; set; }
+        public int GraphicsWidth { get; set; }
+        public int GraphicsHeight { get; set; }
+        public string LastUser { get; set; }
+        public bool SkipIntro { get; set; }
+        public ulong LastHead { get; set; }
+        public ulong LastBody { get; set; }
+        public bool LastGender { get; set; }
+        public int LastSkin { get; set; }
+        public byte Language { get; set; }
+    }
+}

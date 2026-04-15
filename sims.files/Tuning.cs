@@ -83,7 +83,8 @@ namespace FSO.Files
 
 			uint DecompressedSize = m_Reader.ReadUInt32();
 			uint CompressedSize = m_Reader.ReadUInt32();
-			uint StreamBodySize = m_Reader.ReadUInt32();
+			uint StreamBodySize = m_Reader.ReadUInt32(); //same as compressed size for all current examples
+			//Note: wiki.niotso.org says this is actually one byte Compressor and four bytes CompressionParameters.
 			ushort CompressionID = m_Reader.ReadUInt16();
 
 			if (CompressionID != 0xFB10)

@@ -1,0 +1,17 @@
+﻿// Decompiled with JetBrains decompiler
+// Type: GonzoNet.Logger
+// Assembly: GonzoNet, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+// MVID: 75AA73F1-2E7B-40B2-B711-B42047463A5A
+// Assembly location: C:\Users\Santiago\Documents\Visual Studio 2022\Projects\FreeSims\SimsVille\Dependencies\GonzoNet.dll
+
+#nullable disable
+namespace GonzoNet;
+
+public static class Logger
+{
+  public static event MessageLoggedDelegate OnMessageLogged;
+
+  public static void Log(string Message, LogLevel Lvl)
+  {
+  }
+}
