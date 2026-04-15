@@ -26,10 +26,10 @@ namespace FSO.Client.Utils.GameLocator
             return "game/The Sims/";
         }
 
-        public List<(string description, TS1InstallationType type)> GetAllTheSims1Installations()
+        public List<string> GetAllTheSims1Installations()
         {
             var installations = new List<(string, TS1InstallationType)>();
-
+            var installDir = new List<string>();
             // Check relative path (portable install)
             string localDir = @"../The Sims/";
             if (File.Exists(Path.Combine(localDir, "GameData", "Behavior.iff")))
@@ -44,6 +44,7 @@ namespace FSO.Client.Utils.GameLocator
             if (File.Exists(Path.Combine(steamPath, "GameData", "Behavior.iff")))
             {
                 installations.Add(("Steam - The Sims: Legacy Collection (Proton)", TS1InstallationType.Steam));
+                installDir.Add(steamPath);
             }
 
             // Check Wine (default prefix)
@@ -51,6 +52,7 @@ namespace FSO.Client.Utils.GameLocator
             if (File.Exists(Path.Combine(winePath, "GameData", "Behavior.iff")))
             {
                 installations.Add(("Wine - Default Prefix", TS1InstallationType.Wine));
+                installDir.Add(winePath);
             }
 
             // Check Wine (x86 prefix)
@@ -58,15 +60,17 @@ namespace FSO.Client.Utils.GameLocator
             if (File.Exists(Path.Combine(winePath32, "GameData", "Behavior.iff")))
             {
                 installations.Add(("Wine - Default Prefix (x86)", TS1InstallationType.Wine));
+                installDir.Add(winePath32);
             }
 
             // Check fallback location
             if (File.Exists(Path.Combine("game1/", "GameData", "Behavior.iff")))
             {
                 installations.Add(("Fallback Location", TS1InstallationType.Unknown));
+                installDir.Add("game1/");
             }
 
-            return installations;
+            return installDir;
         }
 
     }
