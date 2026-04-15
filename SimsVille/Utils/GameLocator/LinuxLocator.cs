@@ -28,13 +28,14 @@ namespace FSO.Client.Utils.GameLocator
 
         public List<string> GetAllTheSims1Installations()
         {
-            var installations = new List<(string, TS1InstallationType)>();
+            //var installations = new List<(string, TS1InstallationType)>();
             var installDir = new List<string>();
             // Check relative path (portable install)
             string localDir = @"../The Sims/";
             if (File.Exists(Path.Combine(localDir, "GameData", "Behavior.iff")))
             {
-                installations.Add(("Portable Install (Relative Directory)", TS1InstallationType.Portable));
+                //installations.Add(("Portable Install (Relative Directory)", TS1InstallationType.Portable));
+                installDir.Add(localDir);
             }
 
             var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -43,7 +44,7 @@ namespace FSO.Client.Utils.GameLocator
             var steamPath = Path.Combine(homeDir, ".steam/steam/steamapps/common/The Sims/");
             if (File.Exists(Path.Combine(steamPath, "GameData", "Behavior.iff")))
             {
-                installations.Add(("Steam - The Sims: Legacy Collection (Proton)", TS1InstallationType.Steam));
+                //installations.Add(("Steam - The Sims: Legacy Collection (Proton)", TS1InstallationType.Steam));
                 installDir.Add(steamPath);
             }
 
@@ -51,7 +52,7 @@ namespace FSO.Client.Utils.GameLocator
             var winePath = Path.Combine(homeDir, ".wine/drive_c/Program Files/Maxis/The Sims/");
             if (File.Exists(Path.Combine(winePath, "GameData", "Behavior.iff")))
             {
-                installations.Add(("Wine - Default Prefix", TS1InstallationType.Wine));
+                //installations.Add(("Wine - Default Prefix", TS1InstallationType.Wine));
                 installDir.Add(winePath);
             }
 
@@ -59,14 +60,14 @@ namespace FSO.Client.Utils.GameLocator
             var winePath32 = Path.Combine(homeDir, ".wine/drive_c/Program Files (x86)/Maxis/The Sims/");
             if (File.Exists(Path.Combine(winePath32, "GameData", "Behavior.iff")))
             {
-                installations.Add(("Wine - Default Prefix (x86)", TS1InstallationType.Wine));
+                //installations.Add(("Wine - Default Prefix (x86)", TS1InstallationType.Wine));
                 installDir.Add(winePath32);
             }
 
             // Check fallback location
             if (File.Exists(Path.Combine("game1/", "GameData", "Behavior.iff")))
             {
-                installations.Add(("Fallback Location", TS1InstallationType.Unknown));
+                //installations.Add(("Fallback Location", TS1InstallationType.Unknown));
                 installDir.Add("game1/");
             }
 
