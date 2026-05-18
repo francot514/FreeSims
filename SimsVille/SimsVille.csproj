@@ -71,6 +71,7 @@
     <Compile Include="ContentManager\framework\FAR1Provider.cs" />
     <Compile Include="ContentManager\framework\FAR3Provider.cs" />
     <Compile Include="ContentManager\framework\FileProvider.cs" />
+    <Compile Include="ContentManager\framework\IAudioProvider.cs" />
     <Compile Include="ContentManager\framework\IContentCodec.cs" />
     <Compile Include="ContentManager\framework\PackingslipProvider.cs" />
     <Compile Include="ContentManager\HandgroupProvider.cs" />
@@ -80,6 +81,7 @@
     <Compile Include="ContentManager\model\TextureRef.cs" />
     <Compile Include="ContentManager\model\Wall.cs" />
     <Compile Include="ContentManager\model\WallStyle.cs" />
+    <Compile Include="ContentManager\other\TS1Audio.cs" />
     <Compile Include="ContentManager\other\TS1AvatarTextureProvider.cs" />
     <Compile Include="ContentManager\other\TS1BCFProvider.cs" />
     <Compile Include="ContentManager\other\TS1BMFProvider.cs" />
@@ -446,6 +448,7 @@
     <Compile Include="Utils\Endian.cs" />
     <Compile Include="Utils\GameLocator\ILocator.cs" />
     <Compile Include="Utils\GameLocator\LinuxLocator.cs" />
+    <Compile Include="Utils\GameLocator\MacOSLocator.cs" />
     <Compile Include="Utils\GameLocator\WindowsLocator.cs" />
     <Compile Include="Utils\MathCache.cs" />
     <Compile Include="Utils\MathUtils.cs" />
