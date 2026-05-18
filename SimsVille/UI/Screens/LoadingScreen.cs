@@ -126,7 +126,7 @@ namespace FSO.Client.UI.Screens
         private void CheckPreloadLabel()
         {
             /** Have we preloaded the correct percent? **/
-            var percentDone = ContentManager.PreloadProgress;
+            var percentDone = Content.Content.Get().AllFiles.Length;
             var percentUntilNextLabel = ((float)(CurrentPreloadLabel + 1)) / ((float)PreloadLabels.Length);
 
             //System.Diagnostics.Debug.WriteLine(percentDone);

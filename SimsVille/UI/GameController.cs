@@ -38,7 +38,7 @@ namespace FSO.Client
             screen = new LoadingScreen();
 
             GameFacade.Screens.AddScreen(screen);
-            ContentManager.InitLoading();
+            
         }
 
         /// <summary>
