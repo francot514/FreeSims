@@ -55,7 +55,6 @@ namespace sims.debug
             foreach (OBJT obj in iff.List<OBJT>())
             {
                 var entries = obj.Entries;
-                label9.Text = entries.Count.ToString();
 
                 foreach (OBJTEntry entry in entries)
                     if (entry.Name != null)
@@ -427,8 +426,10 @@ namespace sims.debug
 
             var bmp = iff.Get<BMP>(512);
 
+            var fami = iff.Get<FAMI>(0);
 
-            //int rooms = simi.Rooms();
+            if (fami != null)
+                LoadFamilies(fami.ChunkLabel);
 
         }
 
@@ -459,6 +460,8 @@ namespace sims.debug
 
 
             IffFile file = new IffFile(AppDomain.CurrentDomain.BaseDirectory + current + ".iff");
+
+            label9.Text = file.List<OBJD>().Count.ToString();
 
 
         }
@@ -497,4 +500,3 @@ namespace sims.debug
 
     }
 }
-
