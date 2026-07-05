@@ -69,6 +69,7 @@ namespace FSO.Client.UI.Framework
 
         public Vector2 MeasureString(string text)
         {
+           
             var result = SpriteFont.MeasureString(text);
             return result * Scale;
         }

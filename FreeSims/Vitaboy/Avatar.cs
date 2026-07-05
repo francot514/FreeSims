@@ -246,13 +246,25 @@ namespace FSO.Vitaboy
             if (SkelBones == null) ReloadSkeleton();
             effect.Parameters["SkelBindings"].SetValue(SkelBones);
 
-            foreach (var pass in effect.CurrentTechnique.Passes)
+            lock (Bindings)
             {
-                foreach (var binding in Bindings)
+                foreach (var pass in effect.CurrentTechnique.Passes)
                 {
-                    effect.Parameters["MeshTex"].SetValue(binding.Texture.Get(device));
-                    pass.Apply();
-                    binding.Mesh.Draw(device);
+                    foreach (var binding in Bindings)
+                    {
+
+                        if (binding.Texture != null)
+                        {
+                            var tex = binding.Texture.Get(device);
+                            effect.Parameters["MeshTex"].SetValue(tex);
+                        }
+                        else
+                        {
+                            effect.Parameters["MeshTex"].SetValue((Texture2D)null);
+                        }
+                        pass.Apply();
+                        binding.Mesh.Draw(device);
+                    }
                 }
             }
         }

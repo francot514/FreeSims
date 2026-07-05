@@ -33,8 +33,6 @@ float Alpha;
 float GrassShininess;
 bool UseTexture;
 bool IgnoreColor;
-bool Ceiling;
-float Bias = -999;
 
 float ParallaxHeight = 1.0;
 float4 ParallaxUVTexMat;
@@ -639,7 +637,7 @@ void BasePS(GrassPSVTX input, out float4 color:COLOR0, out float4 depthB : COLOR
         color = float4(1,1,1,1);//*DiffuseColor;
 		if (IgnoreColor == false) color *= input.Color;
 		if (UseTexture == true) {
-			color *= tex2Dbias(TexSampler, float4(LoopUV(input.GrassInfo.yz), 0, Bias));
+			color *= tex2Dbias(TexSampler, float4(LoopUV(input.GrassInfo.yz), 0, -999));
 			if (color.a < 0.5) discard;
 		}
 		color = gammaMul(color, lightProcessRoof(input.ModelPos) * LightDot(input.Normal));
@@ -717,28 +715,18 @@ void BasePS3D(GrassPSVTX input, out float4 color:COLOR0)
 	color = float4(1,1,1,1);
 	if (IgnoreColor == false) color *= input.Color;
 	if (UseTexture == true) {
-		// I cannot for the life of me find out why VFACE doesn't exist on ps4.0.
-		if (Ceiling == false) {
 #if SIMPLE
-			color *= tex2D(TexSampler, LoopUV(input.GrassInfo.yz));
+		color *= tex2D(TexSampler, LoopUV(input.GrassInfo.yz));
 #else
 #if SM4
-			color *= tex2Dgrad(AnisoTexSampler, LoopUV(input.GrassInfo.yz), ddx(input.GrassInfo.yz), ddy(input.GrassInfo.yz));
+		color *= tex2Dgrad(AnisoTexSampler, LoopUV(input.GrassInfo.yz), ddx(input.GrassInfo.yz), ddy(input.GrassInfo.yz));
 #else
-			color *= tex2Dgrad(TexSampler, LoopUV(input.GrassInfo.yz), ddx(input.GrassInfo.yz), ddy(input.GrassInfo.yz));
+		color *= tex2Dgrad(TexSampler, LoopUV(input.GrassInfo.yz), ddx(input.GrassInfo.yz), ddy(input.GrassInfo.yz));
 #endif
 #endif
-
-			if (color.a == 0) discard;
-			color = gammaMad(color, lightProcessRoof(input.ModelPos) * LightDot(input.Normal), LightSpecular(input.Normal, input.ModelPos));
-			color.a *= (1 - RectangleFade(input.ModelPos.xz, FadeWidth / 2));
-		} else {
-			// Ceiling colour.
-			color = float4(0.76, 0.78, 0.80, 1.00);
-
-			color = gammaMad(color, lightProcessRoofCeiling(input.ModelPos) * LightDot(input.Normal), LightSpecular(input.Normal, input.ModelPos));
-			color.a *= (1 - RectangleFade(input.ModelPos.xz, FadeWidth / 2));
-		}
+		if (color.a == 0) discard;
+		color = gammaMad(color, lightProcessRoof(input.ModelPos) * LightDot(input.Normal), LightSpecular(input.Normal, input.ModelPos));
+		color.a *= (1 - RectangleFade(input.ModelPos.xz, FadeWidth / 2));
 	}
 	else {
 		color = gammaMad(color, lightProcessRoof(input.ModelPos) * LightDot(input.Normal), LightSpecular(input.Normal, input.ModelPos));
@@ -955,7 +943,8 @@ technique DrawMask
 		PixelShader = compile ps_4_0_level_9_3 BasePSMul();
 #else
 		VertexShader = compile vs_3_0 GrassVS();
-        PixelShader = compile ps_3_0 BasePSMul();
+		PixelShader = compile ps_3_0 BasePSMul();
 #endif;
-    }
+
+	}
 }

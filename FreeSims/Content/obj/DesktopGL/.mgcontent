@@ -4,15 +4,15 @@
   <Platform>DesktopGL</Platform>
   <Config />
   <SourceFiles>
-    <File>C:/Users/Santiago/Documents/Visual Studio 2022/Projects/FreeSimsNet/FreeSimsNet/Content/Effects/2DWorldBatch.fx</File>
-    <File>C:/Users/Santiago/Documents/Visual Studio 2022/Projects/FreeSimsNet/FreeSimsNet/Content/Effects/colorpoly2D.fx</File>
-    <File>C:/Users/Santiago/Documents/Visual Studio 2022/Projects/FreeSimsNet/FreeSimsNet/Content/Effects/GrassShader.fx</File>
-    <File>C:/Users/Santiago/Documents/Visual Studio 2022/Projects/FreeSimsNet/FreeSimsNet/Content/Effects/LightingCommon.fx</File>
-    <File>C:/Users/Santiago/Documents/Visual Studio 2022/Projects/FreeSimsNet/FreeSimsNet/Content/Effects/PixShader.fx</File>
-    <File>C:/Users/Santiago/Documents/Visual Studio 2022/Projects/FreeSimsNet/FreeSimsNet/Content/Effects/VerShader.fx</File>
-    <File>C:/Users/Santiago/Documents/Visual Studio 2022/Projects/FreeSimsNet/FreeSimsNet/Content/Effects/Vitaboy.fx</File>
-    <File>C:/Users/Santiago/Documents/Visual Studio 2022/Projects/FreeSimsNet/FreeSimsNet/Content/Fonts/File.spritefont</File>
-    <File>C:/Users/Santiago/Documents/Visual Studio 2022/Projects/FreeSimsNet/FreeSimsNet/Content/Fonts/SimsFontBig.spritefont</File>
+    <File>C:/Users/Santiago/Documents/Visual Studio 2022/Projects/FreeSimsNet/FreeSims/Content/Effects/2DWorldBatch.fx</File>
+    <File>C:/Users/Santiago/Documents/Visual Studio 2022/Projects/FreeSimsNet/FreeSims/Content/Effects/colorpoly2D.fx</File>
+    <File>C:/Users/Santiago/Documents/Visual Studio 2022/Projects/FreeSimsNet/FreeSims/Content/Effects/GrassShader.fx</File>
+    <File>C:/Users/Santiago/Documents/Visual Studio 2022/Projects/FreeSimsNet/FreeSims/Content/Effects/LightingCommon.fx</File>
+    <File>C:/Users/Santiago/Documents/Visual Studio 2022/Projects/FreeSimsNet/FreeSims/Content/Effects/PixShader.fx</File>
+    <File>C:/Users/Santiago/Documents/Visual Studio 2022/Projects/FreeSimsNet/FreeSims/Content/Effects/VerShader.fx</File>
+    <File>C:/Users/Santiago/Documents/Visual Studio 2022/Projects/FreeSimsNet/FreeSims/Content/Effects/Vitaboy.fx</File>
+    <File>C:/Users/Santiago/Documents/Visual Studio 2022/Projects/FreeSimsNet/FreeSims/Content/Fonts/File.spritefont</File>
+    <File>C:/Users/Santiago/Documents/Visual Studio 2022/Projects/FreeSimsNet/FreeSims/Content/Fonts/SimsFontBig.spritefont</File>
   </SourceFiles>
   <DestFiles>
     <File xsi:nil="true" />

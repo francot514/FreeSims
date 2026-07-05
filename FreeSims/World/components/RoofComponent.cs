@@ -829,8 +829,8 @@ namespace FSO.LotView.Components
                     if (dg.NumPrimitives == 0) continue;
                     PPXDepthEngine.RenderPPXDepth(Effect, true, (depthMode) =>
                     {
-                        //Effect.View = world.View;
-                        //Effect.Projection = world.Projection;
+                        Effect.View = world.View;
+                        Effect.Projection = world.Projection;
                         Effect.World = Matrix.Identity;
                         Effect.DiffuseColor = new Vector4(world.OutsideColor.R / 255f, world.OutsideColor.G / 255f, world.OutsideColor.B / 255f, 1.0f);
                         Effect.UseTexture = true;

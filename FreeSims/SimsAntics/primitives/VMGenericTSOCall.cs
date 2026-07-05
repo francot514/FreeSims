@@ -74,7 +74,7 @@ namespace FSO.SimAntics.Primitives
                     //todo: set interaction result to value of temp 0. UNUSED.
                     return VMPrimitiveExitCode.GOTO_TRUE;
                 case VMGenericTSOCallMode.DoIOwnThisObject: //19
-                    context.Thread.TempRegisters[0] = (context.StackObject is VMAvatar
+                    context.Thread.TempRegisters[0] = (context.StackObject != null && context.StackObject is VMAvatar
                     || ((VMTSOObjectState)context.StackObject.TSOState).OwnerID != context.Caller.PersistID)
                     ? (short)0 : (short)1;
                     return VMPrimitiveExitCode.GOTO_TRUE;

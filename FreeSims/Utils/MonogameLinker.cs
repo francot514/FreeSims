@@ -49,7 +49,7 @@ namespace FSO.Client.Utils
                 }
 
                 //DirectoryCopy(contentDir, "Content/", true);
-                if (File.Exists("Monogame.Framework.dll")) File.Delete("Monogame.Framework.dll");
+                 //if (File.Exists("Monogame.Framework.dll")) File.Delete("Monogame.Framework.dll");
 
                 AssemblyDir = monogameDir;
             } catch (Exception e)
