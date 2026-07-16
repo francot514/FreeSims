@@ -255,7 +255,7 @@ namespace SimsNet
             }
             catch (Exception) { } //if something bad happens just immediately try to delete everyone
 
-            avatars = new List<VMEntity>(state.Entities.Where(x => x is VMAvatar && (x.PersistID > 65535 || (!(x as VMAvatar).IsPet))));
+            avatars = new List<VMEntity>(state.Entities.Where(x => x is VMAvatar && (x.PersistID > 65535)));
             foreach (var avatar in avatars) avatar.Delete(true, state.Context);
         }
 
@@ -344,7 +344,7 @@ namespace SimsNet
                     state.CloseNet(VMCloseNetReason.Unspecified);
                     Console.WriteLine(e.ToString());
 
-                    if (!TS1 && !Dedicated)
+                    if (!Dedicated)
                         SaveLot();
                     Thread.Sleep(500);
 
