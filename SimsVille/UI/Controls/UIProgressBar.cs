@@ -23,22 +23,20 @@ namespace FSO.Client.UI.Controls
     /// </summary>
     public class UIProgressBar : UIElement
     {
-        public static ITextureRef StandardBackground;
-        public static ITextureRef StandardBar;
+        public static Texture2D StandardBackground;
+        public static Texture2D StandardBar;
         public static TextStyle StandardCaptionStyle;
 
 
         static UIProgressBar()
         {
-            StandardBackground = new SlicedTextureRef(
-                UIElement.GetTexture((ulong)FileIDs.UIFileIDs.dialog_progressbarback),
-                new Microsoft.Xna.Framework.Rectangle(13, 13, 13, 13)
-            );
+            StandardBackground = 
+                UIElement.GetTexture((ulong)FileIDs.UIFileIDs.dialog_progressbarback);
 
             var barTexture = UIElement.GetTexture((ulong)FileIDs.UIFileIDs.dialog_progressbarfront);
             TextureUtils.ManualTextureMask(ref barTexture, new uint[1] { new Color(0x39, 0x51, 0x6B).PackedValue });
 
-            StandardBar = new SlicedTextureRef(barTexture, new Rectangle(18, 7, 18, 7));
+            StandardBar = barTexture;
 
             StandardCaptionStyle = TextStyle.DefaultLabel.Clone();
             StandardCaptionStyle.Color = new Color(0, 0, 0);
@@ -56,7 +54,7 @@ namespace FSO.Client.UI.Controls
             CaptionStyle = StandardCaptionStyle;
         }
 
-        public UIProgressBar(ITextureRef background, ITextureRef bar)
+        public UIProgressBar(Texture2D background, Texture2D bar)
         {
             this.Background = background;
             this.Bar = bar;
@@ -65,8 +63,8 @@ namespace FSO.Client.UI.Controls
         public string Caption = "{0}%";
         public TextStyle CaptionStyle { get; set; }
 
-        public ITextureRef Background { get; set; }
-        public ITextureRef Bar { get; set; }
+        public Texture2D Background { get; set; }
+        public Texture2D Bar { get; set; }
         public Rectangle BarMargin = Rectangle.Empty;
         public Rectangle BarOffset = Rectangle.Empty;
 
@@ -139,7 +137,7 @@ namespace FSO.Client.UI.Controls
         {
             if (Background != null)
             {
-                Background.Draw(SBatch, this, 0, 0, m_Width, m_Height);
+                SBatch.Draw(Background, new Rectangle(0, 0, (int)m_Width, (int)m_Height),Color.White);
             }
 
             
@@ -152,7 +150,7 @@ namespace FSO.Client.UI.Controls
                 var barWidth = BarMargin.Right + (trackSize * percent);
                 var barHeight = m_Height - BarOffset.Bottom;
 
-                Bar.Draw(SBatch, this, BarOffset.Left, BarOffset.Y, barWidth, barHeight);
+                SBatch.Draw(Bar, new Rectangle(BarOffset.Left, BarOffset.Y, (int)barWidth, (int)barHeight), Color.White);
             }
 
             /** Draw value label **/

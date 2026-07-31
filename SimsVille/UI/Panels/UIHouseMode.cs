@@ -1,22 +1,26 @@
 ﻿using FSO.Client.UI.Controls;
 using FSO.Client.UI.Framework;
+using FSO.Client.UI.Framework.Parser;
+using FSO.Client.UI.Model;
+using FSO.Client.UI.Screens;
+using FSO.Client.Utils;
+using FSO.Common;
+using FSO.Common.Rendering.Framework.Model;
 using FSO.Common.Utils;
+using FSO.HIT;
+using FSO.SimAntics;
+using FSO.SimAntics.Entities;
 using FSO.SimAntics.Model;
+using FSO.SimAntics.Model.TSOPlatform;
+using FSO.SimAntics.NetPlay.Model.Commands;
+using FSO.Vitaboy;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using FSO.Common.Rendering.Framework.Model;
-using FSO.SimAntics.NetPlay.Model.Commands;
-using FSO.HIT;
-using FSO.Client.UI.Model;
-using FSO.SimAntics.Model.TSOPlatform;
-using FSO.Client.Utils;
-using FSO.Client.UI.Screens;
 using TSO.HIT;
-using FSO.Vitaboy;
 
 namespace FSO.Client.UI.Panels
 {
@@ -280,7 +284,7 @@ namespace FSO.Client.UI.Panels
                 var baseObj = group.BaseObject;
                 var basePrice = (baseObj == null) ? 0 : BasePrice(group, baseObj);
                 if (basePrice <= 0) continue;
-                var wear = Math.Min(400, (int)((baseObj as VMGameObject)?.ObjectState?.Wear ?? (20 * 4)));
+                var wear = Math.Min(400, (int)((baseObj as VMGameObject)?.TSOState?.Budget.Value ?? (20 * 4)));
                 var price = (basePrice * (400 - wear)) / 400;
                 newValue += basePrice;
                 objValue += price;
@@ -309,13 +313,13 @@ namespace FSO.Client.UI.Panels
         /// </summary>
         private static int BasePrice(VMMultitileGroup group, VMEntity baseObj)
         {
-            if (group.InitialPrice > 0) return group.InitialPrice;
+            if (group.Price > 0) return group.Price;
             var def = baseObj.MasterDefinition ?? baseObj.Object.OBJ;
             return (int)(Content.Content.Get().WorldCatalog.GetItemByGUID(def.GUID)?.Price ?? def.Price);
         }
     }
-	
-	 public class UIStatsBar : UIElement
+
+    public class UIStatsBar : UIElement
     {
         private Texture2D Background;
         private Texture2D Fill;
@@ -346,7 +350,6 @@ namespace FSO.Client.UI.Panels
         }
     }
 
-       
     /// <summary>
     /// Set roommate build permissions. Check buttons disabled as anything but owner.
     /// </summary>

@@ -278,7 +278,7 @@ namespace FSO.Client.UI.Panels.Profile
                 ProgressBar.SetSize(progressBarWidth, 27);
                 ProgressBar.Caption = "";
                 
-                ProgressBar.Background = (ITextureRef)TextureGenerator.GenerateRoundedRectangle(GameFacade.GraphicsDevice, new Color(37, 58, 77), progressBarWidth, 27, 9);
+                ProgressBar.Background = TextureGenerator.GenerateRoundedRectangle(GameFacade.GraphicsDevice, new Color(37, 58, 77), progressBarWidth, 27, 9);
                 this.Add(ProgressBar);
 
                 verticalSpace += sectionHeight + standardVerticalSpace;
