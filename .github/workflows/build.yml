@@ -1,0 +1,166 @@
+#Based on template from: https://github.com/ThreeDeeJay/GitHub-Actions-build-templates/blob/main/Windows-MSBuild.yml
+name: Build
+
+env:
+  GH_TOKEN: ${{github.token}}
+  Branch: ${{github.ref_name}}
+  Artifacts: SimsVille\bin\Release
+  Title: ${{github.event.repository.name}}
+  Solution: SimsVille/SimsVille.sln
+
+on:
+  push:
+    Branches: $Branch
+  pull_request:
+    Branches: $Branch
+  workflow_dispatch:
+
+jobs:
+  Build:
+    name: ${{matrix.Settings.Name}}-${{matrix.Configuration}}
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        Configuration: [Release]
+        Settings:
+        - {
+            Name: "Win32",
+            Platform: "Win32",
+            Architecture: "x86",
+            Triplet: "x86-windows"
+          }
+          
+    steps:
+
+    - name: Clone repo and submodules
+      run: >
+        git
+        clone https://${{github.repository_owner}}:${{github.token}}@github.com/${{github.repository}}.git
+        "${{github.workspace}}"
+        --branch ${{env.Branch}}
+        --recurse-submodules
+        --depth 1
+
+    - name: Install vcpkg
+      uses: lukka/run-vcpkg@v11.5
+      with:
+        vcpkgGitCommitId: c2aeddd80357b17592e59ad965d2adf65a19b22f
+
+    - name: Install VCPKG dependencies
+      run: |
+        vcpkg install sdl2 openal-soft --triplet ${{matrix.Settings.Triplet}}
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Restore
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: nuget restore "${{env.Solution}}"
+
+    - name: Build
+      run: >
+        msbuild
+        /m "${{env.Solution}}"
+        /p:Platform="${{matrix.Settings.Architecture}}"
+        /p:Configuration="${{matrix.Configuration}}"
+        /p:PlatformToolset="v143"
+      
+    - name: List files
+      run: ls -R
+
+    - name: Deploy
+      shell: cmd
+      run: |
+        mkdir "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\MonoGame.Framework.WindowsGL.3.6.0.1625\lib\net40\*.dll" "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\MonoGame.Framework.WindowsGL.3.6.0.1625\lib\net40\*.xml" "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\Ninject.3.3.6\lib\net45\*.dll"                           "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\Ninject.3.3.6\lib\net45\*.xml"                           "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.4.0.1\lib\net45\*.dll"                           "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.4.0.1\lib\net45\*.xml"                           "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.D3DCompiler.4.0.1\lib\net45\*.dll"               "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.D3DCompiler.4.0.1\lib\net45\*.xml"               "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.Direct2D1.4.0.1\lib\net45\*.dll"                 "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.Direct2D1.4.0.1\lib\net45\*.xml"                 "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.Direct3D11.4.0.1\lib\net45\*.dll"                "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.Direct3D11.4.0.1\lib\net45\*.xml"                "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.Direct3D11.Effects.4.0.1\lib\net45\*.dll"        "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.Direct3D11.Effects.4.0.1\lib\net45\*.xml"        "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.Direct3D9.4.0.1\lib\net45\*.dll"                 "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.Direct3D9.4.0.1\lib\net45\*.xml"                 "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.DXGI.4.0.1\lib\net45\*.dll"                      "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.DXGI.4.0.1\lib\net45\*.xml"                      "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.MediaFoundation.4.0.1\lib\net45\*.dll"           "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.MediaFoundation.4.0.1\lib\net45\*.xml"           "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.RawInput.4.0.1\lib\net45\*.dll"                  "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.RawInput.4.0.1\lib\net45\*.xml"                  "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.XAudio2.4.0.1\lib\net45\*.dll"                   "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.XAudio2.4.0.1\lib\net45\*.xml"                   "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.XInput.4.0.1\lib\net45\*.dll"                    "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "SimsVille\packages\SharpDX.XInput.4.0.1\lib\net45\*.xml"                    "${{env.Artifacts}}\Monogame\WindowsGL"
+        move "vcpkg\installed\${{matrix.Settings.Triplet}}\bin\OpenAL32.dll"              "${{env.Artifacts}}\Monogame\WindowsGL\soft_oal.dll"
+        move "vcpkg\installed\${{matrix.Settings.Triplet}}\bin\SDL2.dll"                  "${{env.Artifacts}}\sdl2.dll"
+        move "SimsNet\bin\Release\*.exe"                                                  "${{env.Artifacts}}"
+        move "SimsNet\bin\Release\*.config"                                               "${{env.Artifacts}}"
+        move "SimsVille\Content"                                                          "${{env.Artifacts}}"
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{env.Title}}-${{matrix.Settings.Name}}-${{matrix.Configuration}}
+        path: "${{github.workspace}}/${{env.Artifacts}}/"
+          
+  Release:
+    name: Release
+    runs-on: windows-latest
+    needs: Build
+    steps:
+
+      - name: Clone repo and submodules
+        run: git clone https://${{github.repository_owner}}:${{github.token}}@github.com/${{github.repository}}.git "${{github.workspace}}" --branch ${{env.Branch}} --recurse-submodules
+
+      - name: Get current date, commit hash and count
+        run: |
+          echo "FirstCommitHash=$(git rev-list --max-parents=0 HEAD --first-parent)" >> $env:GITHUB_ENV
+          echo "CommitHash=$(git rev-parse HEAD)" >> $env:GITHUB_ENV
+          echo "CommitHashShort=$(git rev-parse --short=7 HEAD)" >> $env:GITHUB_ENV
+          echo "CommitCount=$(git rev-list --count HEAD)" >> $env:GITHUB_ENV
+          echo "CommitDate=$(git show -s --date=format:'%Y-%m-%d' --format=%cd)" >> $env:GITHUB_ENV
+
+      - name: Download Artifacts - Win32
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{env.Title}}-Win32-Release
+          path: Release/
+
+      - name: Deploy
+        run: |
+          cp "README.md" "Release/ReadMe.txt"
+          cp "LICENSE.md" "Release/License.txt"
+  
+      - name: Compress artifacts
+        if: github.event_name == 'push'
+        run: |
+          7z a "Release/${{env.Title}}.zip" "${{github.workspace}}/Release/*" -mx=9
+          cp "Release/${{env.Title}}.zip" "Release/${{env.Title}}_r${{env.CommitCount}}@${{env.CommitHashShort}}.zip"
+  
+      - name: Purge tag - latest-${{env.Branch}}
+        if: github.event_name == 'push'
+        run: |
+          gh release delete latest-${{env.Branch}} --repo ${{github.repository}} --cleanup-tag --yes || true
+  
+      - name: Release - archive-${{env.Branch}}
+        if: github.event_name == 'push'
+        run: |
+          gh release create archive-${{env.Branch}} --repo ${{github.repository}} --target ${{env.FirstCommitHash}} --latest=false --prerelease --title "${{env.Title}} ${{env.Branch}} build archive" --notes "Latest build: https://github.com/${{github.repository}}/releases/latest-${{env.Branch}}
+          Build logs: https://github.com/${{github.repository}}/actions" || true
+          gh release edit archive-${{env.Branch}} --repo ${{github.repository}} --target ${{env.FirstCommitHash}} --latest=false --prerelease --title "${{env.Title}} ${{env.Branch}} build archive" --notes "Latest build: https://github.com/${{github.repository}}/releases/latest-${{env.Branch}}
+          Build logs: https://github.com/${{github.repository}}/actions" || true
+          gh release upload archive-${{env.Branch}} --repo ${{github.repository}} --clobber "Release/${{env.Title}}_r${{env.CommitCount}}@${{env.CommitHashShort}}.zip"
+  
+      - name: Release - latest-${{env.Branch}}
+        if: github.event_name == 'push'
+        run: |
+          gh release create latest-${{env.Branch}} --repo ${{github.repository}} --target ${{env.CommitHash}} --generate-notes --latest=true --title "${{env.Title}} r${{env.CommitCount}}@${{env.CommitHashShort}}" --notes "Build archive: https://github.com/${{github.repository}}/releases/tag/archive-${{env.Branch}}
+          Build log: https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}"
+          gh release upload latest-${{env.Branch}} --repo ${{github.repository}} --clobber "Release/${{env.Title}}.zip"

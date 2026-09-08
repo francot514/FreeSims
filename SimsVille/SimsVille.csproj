@@ -12,7 +12,7 @@
     <AssemblyName>SimsVille</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <MonoGamePlatform>Linux</MonoGamePlatform>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
