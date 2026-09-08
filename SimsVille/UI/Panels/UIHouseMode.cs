@@ -1,22 +1,26 @@
 ﻿using FSO.Client.UI.Controls;
 using FSO.Client.UI.Framework;
+using FSO.Client.UI.Framework.Parser;
+using FSO.Client.UI.Model;
+using FSO.Client.UI.Screens;
+using FSO.Client.Utils;
+using FSO.Common;
+using FSO.Common.Rendering.Framework.Model;
 using FSO.Common.Utils;
+using FSO.HIT;
+using FSO.SimAntics;
+using FSO.SimAntics.Entities;
 using FSO.SimAntics.Model;
+using FSO.SimAntics.Model.TSOPlatform;
+using FSO.SimAntics.NetPlay.Model.Commands;
+using FSO.Vitaboy;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using FSO.Common.Rendering.Framework.Model;
-using FSO.SimAntics.NetPlay.Model.Commands;
-using FSO.HIT;
-using FSO.Client.UI.Model;
-using FSO.SimAntics.Model.TSOPlatform;
-using FSO.Client.Utils;
-using FSO.Client.UI.Screens;
 using TSO.HIT;
-using FSO.Vitaboy;
 
 namespace FSO.Client.UI.Panels
 {
@@ -177,12 +181,175 @@ namespace FSO.Client.UI.Panels
     /// </summary>
     public class UIStatsPanel : UIContainer
     {
+        public UILabel TitleLabel { get; set; }
+        public UILabel AreaLabel { get; set; }
+        public UILabel BedroomsLabel { get; set; }
+        public UILabel BathroomsLabel { get; set; }
+        public UILabel FloorsLabel { get; set; }
+        public UILabel LotSizeLabel { get; set; }
+        public UILabel AreaValue { get; set; }
+        public UILabel BedroomsValue { get; set; }
+        public UILabel BathroomsValue { get; set; }
+        public UILabel FloorsValue { get; set; }
+        public UILabel LotSizeValue { get; set; }
+        public UILabel SizeLabel { get; set; }
+        public UILabel FurnishingsLabel { get; set; }
+        public UILabel YardLabel { get; set; }
+        public UILabel UpkeepLabel { get; set; }
+        public UILabel LayoutLabel { get; set; }
+        public UIProgressBar SizeProgress { get; set; }
+        public UIProgressBar FurnishingsProgress { get; set; }
+        public UIProgressBar YardProgress { get; set; }
+        public UIProgressBar UpkeepProgress { get; set; }
+        public UIProgressBar LayoutProgress { get; set; }
+
+        private UILotControl LotControl;
+        private UIScript Script;
+        private int RefreshTicks;
+        private UIStatsBar[] Bars;
+
         public UIStatsPanel(UILotControl lotController)
         {
-            this.RenderScript("statisticspanel.uis");
+            LotControl = lotController;
+            Script = this.RenderScript("statisticspanel.uis");
+
+            //the uis alignments (1 left, 5 right) are not mapped by the parser - set directly
+            foreach (var lbl in new[] { AreaLabel, BedroomsLabel, BathroomsLabel, FloorsLabel, LotSizeLabel,
+                SizeLabel, FurnishingsLabel, YardLabel, UpkeepLabel, LayoutLabel })
+                lbl.Alignment = TextAlignment.Right | TextAlignment.Middle;
+            foreach (var val in new[] { AreaValue, BedroomsValue, BathroomsValue, FloorsValue, LotSizeValue })
+                val.Alignment = TextAlignment.Left | TextAlignment.Middle;
+            TitleLabel.Alignment = TextAlignment.Left | TextAlignment.Middle;
+
+            //the script-made progress bars nine-slice EA's tiny bar art into a mess - swap in
+            //plain clipped-fill bars using the same textures
+            Bars = new UIStatsBar[5];
+            var scriptBars = new[] { SizeProgress, FurnishingsProgress, YardProgress, UpkeepProgress, LayoutProgress };
+            for (int i = 0; i < 5; i++)
+            {
+                scriptBars[i].Visible = false;
+                Bars[i] = new UIStatsBar(scriptBars[i].Background, scriptBars[i].Bar);
+                Bars[i].Position = scriptBars[i].Position;
+                Add(Bars[i]);
+            }
+
+            Refresh();
+        }
+
+        public override void Update(UpdateState state)
+        {
+            base.Update(state);
+            if (++RefreshTicks >= FSOEnvironment.RefreshRate * 5)
+            {
+                RefreshTicks = 0;
+                Refresh();
+            }
+        }
+
+        private void Refresh()
+        {
+            var vm = LotControl.vm;
+            if (vm?.Context?.RoomInfo == null) return;
+            var arch = vm.Context.Architecture;
+
+            int interiorArea = 0, insideRooms = 0, bedrooms = 0, bathrooms = 0, reasonableRooms = 0;
+            var seenRooms = new HashSet<ushort>();
+            foreach (var info in vm.Context.RoomInfo)
+            {
+                var room = info.Room;
+                if (room.IsOutside || room.IsPool || room.Area == 0 || !seenRooms.Add(room.RoomID)) continue;
+                insideRooms++;
+                interiorArea += room.Area;
+                if (room.Area >= 9 && room.Area <= 120) reasonableRooms++;
+                if (info.Entities != null)
+                {
+                    if (info.Entities.Any(e => e.SemiGlobal?.Iff?.Filename == "bedsemiglobal.iff")) bedrooms++;
+                    if (info.Entities.Any(e => e.SemiGlobal?.Iff?.Filename == "toiletsemiglobal.iff")) bathrooms++;
+                }
+            }
+
+            var lotSize = vm.TSOState.Size & 255;
+            var lotFloors = ((vm.TSOState.Size >> 8) & 255) + 2; //stored as extra floors above the base 2
+            var buildableTiles = Math.Max(1, arch.BuildableArea.Width * arch.BuildableArea.Height);
+
+            //user object groups: value totals for furnishings/yard/upkeep
+            var groups = new HashSet<VMMultitileGroup>();
+            foreach (var ent in vm.Entities)
+            {
+                if (ent is VMGameObject && ent.PersistID != 0 && ent.MultitileGroup != null) groups.Add(ent.MultitileGroup);
+            }
+            long objValue = 0, outdoorValue = 0, newValue = 0;
+            foreach (var group in groups)
+            {
+                var baseObj = group.BaseObject;
+                var basePrice = (baseObj == null) ? 0 : BasePrice(group, baseObj);
+                if (basePrice <= 0) continue;
+                var wear = Math.Min(400, (int)((baseObj as VMGameObject)?.TSOState?.Budget.Value ?? (20 * 4)));
+                var price = (basePrice * (400 - wear)) / 400;
+                newValue += basePrice;
+                objValue += price;
+                var room = vm.Context.GetObjectRoom(baseObj);
+                if (room < vm.Context.RoomInfo.Length && vm.Context.RoomInfo[room].Room.IsOutside) outdoorValue += price;
+            }
+
+            AreaValue.Caption = interiorArea.ToString();
+            BedroomsValue.Caption = bedrooms.ToString();
+            BathroomsValue.Caption = bathrooms.ToString();
+            FloorsValue.Caption = lotFloors.ToString();
+            LotSizeValue.Caption = (string)Script[(lotSize <= 1) ? "SmallLotSizeText" : ((lotSize <= 3) ? "MediumLotSizeText" : "LargeLotSizeText")];
+
+            //DiscoSO evaluators, 0-10, absolute scales so small properties read low
+            Bars[0].Value = Math.Min(10f, interiorArea / 40f); //Size: 400 interior tiles = max
+            Bars[1].Value = Math.Min(10f, objValue / (interiorArea > 0 ? interiorArea * 50f : 5000f)); //Furnishings
+            Bars[2].Value = Math.Min(10f, outdoorValue / (buildableTiles * 5f)); //Yard
+            Bars[3].Value = (newValue > 0) ? (objValue * 10f) / newValue : 10f; //Upkeep (wear)
+            Bars[4].Value = Math.Min(10f, reasonableRooms * 2f); //Layout: five well-sized rooms = max
+        }
+
+        /// <summary>
+        /// What an object is worth before wear. Donating one zeroes its sellback price outright,
+        /// and everything on a community lot is donated - fall back to the catalog so the stats
+        /// read the furniture that's there rather than what it would fetch resold.
+        /// </summary>
+        private static int BasePrice(VMMultitileGroup group, VMEntity baseObj)
+        {
+            if (group.Price > 0) return group.Price;
+            var def = baseObj.MasterDefinition ?? baseObj.Object.OBJ;
+            return (int)(Content.Content.Get().WorldCatalog.GetItemByGUID(def.GUID)?.Price ?? def.Price);
         }
     }
-    
+
+    public class UIStatsBar : UIElement
+    {
+        private Texture2D Background;
+        private Texture2D Fill;
+        public float Value; //0-10
+
+        public UIStatsBar(Texture2D background, Texture2D fill)
+        {
+            Background = background;
+            Fill = fill;
+        }
+
+        public override void Draw(UISpriteBatch batch)
+        {
+            if (!Visible) return;
+            if (Background != null)
+                DrawLocalTexture(batch, Background, Vector2.Zero);
+            if (Fill != null && Value > 0)
+            {
+                var frac = Math.Min(1f, Value / 10f);
+                var src = new Rectangle(0, 0, (int)(Fill.Width * frac), Fill.Height);
+                if (src.Width > 0) DrawLocalTexture(batch, Fill, src, Vector2.Zero);
+            }
+        }
+
+        public override Rectangle GetBounds()
+        {
+            return new Rectangle(0, 0, Background?.Width ?? 0, Background?.Height ?? 0);
+        }
+    }
+
     /// <summary>
     /// Set roommate build permissions. Check buttons disabled as anything but owner.
     /// </summary>

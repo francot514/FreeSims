@@ -2,14 +2,25 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace FSO.Client.Utils.GameLocator
 {
     public class WindowsLocator : ILocator
     {
+
+        private readonly string SteamRegistryPath = Environment.Is64BitOperatingSystem
+            ? @"HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Valve\Steam"
+            : @"HKEY_LOCAL_MACHINE\SOFTWARE\Valve\Steam";
+
+        private readonly string SteamInstallPath;
+
+
+
         public string FindTheSimsOnline()
         {
             //string Software = "";
@@ -19,7 +30,7 @@ namespace FSO.Client.Utils.GameLocator
                 //Find the path to TSO on the user's system.
                 RegistryKey softwareKey = hklm.OpenSubKey("SOFTWARE");
 
-                
+
                 if (Array.Exists(softwareKey.GetSubKeyNames(), delegate (string s) { return s.Equals("Maxis", StringComparison.InvariantCultureIgnoreCase); }))
                 {
                     RegistryKey maxisKey = softwareKey.OpenSubKey("Maxis");
@@ -35,10 +46,58 @@ namespace FSO.Client.Utils.GameLocator
             return AppDomain.CurrentDomain.BaseDirectory;
         }
 
+        private static bool TryGetInstallDir(string manifestPath, out string installDir)
+        {
+            Regex regex = new Regex("\"installdir\"\\s+\"(?<dir>[^\"]+)\"", RegexOptions.Compiled);
+
+            try
+            {
+                foreach (string line in File.ReadLines(manifestPath))
+                {
+                    var match = regex.Match(line);
+                    if (match.Success)
+                    {
+                        installDir = match.Groups["dir"].Value;
+                        return true;
+                    }
+                }
+            }
+            catch (IOException) { } //ignore
+
+            installDir = string.Empty;
+            return false;
+        }
+
+        private static List<string> GetSteamLibraryPaths(string steamPath)
+        {
+            var libraries = new List<string> { steamPath };
+            string libraryVdfPath = Path.Combine(steamPath, "steamapps", "libraryfolders.vdf");
+
+            if (!File.Exists(libraryVdfPath))
+                return libraries;
+
+            try
+            {
+                foreach (string line in File.ReadLines(libraryVdfPath))
+                {
+                    Regex LibraryPathRegex = new Regex("\"path\"\\s+\"(?<path>[^\"]+)\"", RegexOptions.Compiled);
+                    var match = LibraryPathRegex.Match(line);
+                    if (!match.Success)
+                        continue;
+
+                    string path = match.Groups["path"].Value.Replace(@"\\", @"\");
+                    if (Directory.Exists(path))
+                        libraries.Add(path);
+                }
+            }
+            catch (IOException) { } //ignore if file is locked or unreadable
+
+            return libraries;
+        }
 
         public string FindTheSimsComplete()
         {
-            //string Software = "";
+
 
             using (var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32))
             {
@@ -46,10 +105,10 @@ namespace FSO.Client.Utils.GameLocator
                 RegistryKey softwareKey = hklm.OpenSubKey("SOFTWARE");
 
 
-                if (Array.Exists(softwareKey.GetSubKeyNames(), delegate(string s) { return s.Equals("Maxis", StringComparison.InvariantCultureIgnoreCase); }))
+                if (Array.Exists(softwareKey.GetSubKeyNames(), delegate (string s) { return s.Equals("Maxis", StringComparison.InvariantCultureIgnoreCase); }))
                 {
                     RegistryKey maxisKey = softwareKey.OpenSubKey("Maxis");
-                    if (Array.Exists(maxisKey.GetSubKeyNames(), delegate(string s) { return s.Equals("The Sims", StringComparison.InvariantCultureIgnoreCase); }))
+                    if (Array.Exists(maxisKey.GetSubKeyNames(), delegate (string s) { return s.Equals("The Sims", StringComparison.InvariantCultureIgnoreCase); }))
                     {
                         RegistryKey ts1Key = maxisKey.OpenSubKey("The Sims");
                         string installDir = (string)ts1Key.GetValue("InstallPath");
@@ -57,8 +116,39 @@ namespace FSO.Client.Utils.GameLocator
                     }
                 }
             }
+
+            string path = Registry.GetValue(SteamRegistryPath, "InstallPath", null)?.ToString();
+            if (Directory.Exists(path))
+            {
+
+                string steamPath = SteamInstallPath;
+
+                List<string> libraryVdfPathlibraries = GetSteamLibraryPaths(steamPath);
+
+                List<string> libraries = GetSteamLibraryPaths(steamPath);
+
+
+                foreach (string library in libraries)
+                {
+                    string manifestPath = Path.Combine(library, "steamapps", $"appmanifest_{3314060}.acf");
+                    if (!File.Exists(manifestPath)) continue;
+
+                    if (TryGetInstallDir(manifestPath, out var installDir))
+                    {
+                        string gamePath = Path.Combine(library, "steamapps", "common", installDir);
+                        if (Directory.Exists(gamePath))
+                            return (gamePath + "\\").Replace('\\', '/');
+                    }
+                }
+
+              
+
+            }
+
+
             return AppDomain.CurrentDomain.BaseDirectory;
         }
+
 
 
         private static bool is64BitProcess = (IntPtr.Size == 8);

@@ -10,7 +10,7 @@ namespace FileParser
     public partial class Form1 : Form
     {
         private Game SimsGame;
-
+        string[] Items;
         public Form1()
         {
             InitializeComponent();
@@ -18,7 +18,8 @@ namespace FileParser
 
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            SimsGame = null;
+            Items = new string[3];
         }
 
         private void loadToolStripMenuItem_Click(object sender, EventArgs e)
@@ -87,8 +88,7 @@ namespace FileParser
 
         private void ParseNeighborhoodData()
         {
-
-            string[] Items = new string[3];
+            Items = new string[3];
 
             SimsGame.ParseNGH(openFileDialog1.FileName);
 
@@ -117,5 +117,9 @@ namespace FileParser
 
         }
 
+        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            
+        }
     }
 }

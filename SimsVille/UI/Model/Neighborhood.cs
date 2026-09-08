@@ -91,7 +91,7 @@ namespace SimsVille.UI.Model
         public void LoadContent()
         {
 
-            Stream stream = File.Open("Content/nhood.bmp", FileMode.Open, FileAccess.ReadWrite);
+            Stream stream = File.Open("Content/nhood.png", FileMode.Open, FileAccess.ReadWrite);
             TerrainImage = Texture2D.FromStream(m_GraphicsDevice, stream);
 
             Shader2D = GameFacade.Game.Content.Load<Effect>("Effects\\colorpoly2d");
@@ -363,7 +363,7 @@ namespace SimsVille.UI.Model
             SpriteBatch spriteBatch = new SpriteBatch(m_GraphicsDevice);
             spriteBatch.Begin();
 
-
+                if (TerrainImage != null)
             spriteBatch.Draw(TerrainImage, new Rectangle(0, 0, m_GraphicsDevice.Viewport.Width, m_GraphicsDevice.Viewport.Height), Color.White);
 
             DrawSprites(spriteBatch);

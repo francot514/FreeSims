@@ -1,6 +1,6 @@
 version: 1.0.{build}
 image: 
-- Visual Studio 2017
+- Visual Studio 2019
 - Ubuntu
 configuration: Release
 environment:
@@ -17,3 +17,7 @@ for:
 
   build_script:
   - echo Ubuntu build script
+  
+  artifacts:
+- path: SimsVille\bin\Release\SimsVille.exe
+  name: SimsVille
