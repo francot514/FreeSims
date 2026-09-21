@@ -84,7 +84,9 @@ namespace FSO.Common
                         stream.WriteLine(value.Key + "=" + value.Value);
                 }
             }
-            catch (Exception) { }
+            catch (Exception ex) {
+            Console.WriteLine("An error occurred: " + ex.Message); 
+            }
         }
     }
 }

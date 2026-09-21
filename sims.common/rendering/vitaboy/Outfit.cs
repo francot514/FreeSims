@@ -37,6 +37,29 @@ namespace FSO.Vitaboy
         public string TS1AppearanceID;
         public string TS1TextureID;
         public HandGroup LiteralHandgroup;
+		
+		public void PrepareDefaultHandgroup(string meshCode = "m")
+        {
+            LiteralHandgroup = new HandGroup()
+            {
+                TS1HandSet = true,
+                LightSkin = new HandSet()
+                {
+                    LeftHand = new Hand()
+                    {
+                        Idle = new Gesture() { Name = $"H{meshCode}LO.apr", TexName = "huaolgt" },
+                        Pointing = new Gesture() { Name = $"H{meshCode}LP.apr", TexName = "huaplgt" },
+                        Fist = new Gesture() { Name = $"H{meshCode}LC.apr", TexName = "huaclgt" }
+                    },
+                    RightHand = new Hand()
+                    {
+                        Idle = new Gesture() { Name = $"H{meshCode}RO.apr", TexName = "huaolgt" },
+                        Pointing = new Gesture() { Name = $"H{meshCode}RP.apr", TexName = "huaplgt" },
+                        Fist = new Gesture() { Name = $"H{meshCode}RC.apr", TexName = "huaclgt" }
+                    }
+                }
+            };
+        }
 
         /// <summary>
         /// Gets the ContentID for the appearances referenced by this Outfit.
