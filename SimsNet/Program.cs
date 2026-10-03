@@ -72,8 +72,10 @@ namespace SimsNet
             OperatingSystem os = Environment.OSVersion;
             PlatformID pid = os.Platform;
 
-            bool linux = pid == PlatformID.MacOSX || pid == PlatformID.Unix;
+            bool linux = PlatformID.Unix;
+			bool macos = PlatformID.MacOSX;
             if (linux) locator = new LinuxLocator();
+			else if (macos) locator = new MacOSLocator();
             else locator = new WindowsLocator();
 
             string path = locator.FindTheSimsOnline();
