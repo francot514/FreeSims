@@ -42,7 +42,6 @@ namespace sims.debug
          [XmlAttribute("s")]
          public sbyte Category;
 
-
          [XmlAttribute("p")]
          public uint Price;
 

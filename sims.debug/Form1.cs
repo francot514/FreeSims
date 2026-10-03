@@ -40,8 +40,7 @@ namespace sims.debug
         private void LoadHouse(string path)
         {
            
-
-            
+			listBox4.Items.Clear();
 
             FileInfo housefile = new FileInfo(path);
             label5.Text = housefile.Name;
