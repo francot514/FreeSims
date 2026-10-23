@@ -41,8 +41,10 @@ namespace FSO.Client
             PlatformID pid = os.Platform;
 
             ILocator gameLocator;
-            bool linux = pid == PlatformID.MacOSX || pid == PlatformID.Unix;
-            if (linux) gameLocator = new LinuxLocator();
+            bool linux = pid == PlatformID.Unix;
+			bool macos = pid == PlatformID.MacOSX;
+            if (linux) locator = new LinuxLocator();
+			else if (macos) locator = new MacOSLocator();
             else gameLocator = new WindowsLocator();
 
             bool useDX = false;
