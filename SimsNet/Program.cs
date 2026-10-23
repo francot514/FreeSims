@@ -72,8 +72,8 @@ namespace SimsNet
             OperatingSystem os = Environment.OSVersion;
             PlatformID pid = os.Platform;
 
-            bool linux = PlatformID.Unix;
-			bool macos = PlatformID.MacOSX;
+            bool linux = pid == PlatformID.Unix;
+			bool macos = pid == PlatformID.MacOSX;
             if (linux) locator = new LinuxLocator();
 			else if (macos) locator = new MacOSLocator();
             else locator = new WindowsLocator();
