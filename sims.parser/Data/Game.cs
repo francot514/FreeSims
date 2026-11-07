@@ -11,7 +11,7 @@ namespace FileParser.Data
   public class Game
     {
         
-        public string Name;
+        public string Name, Region;
         public Disc Disc;
         public NGHFile DefaultNgh;
 
@@ -26,7 +26,10 @@ namespace FileParser.Data
 
         public void GetDisc()
         {
+            if (DefaultNgh != null) {
+                Region = "USA";
 
+            }
         }
 
         public void ParseNGH(string file)
